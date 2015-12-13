@@ -7,7 +7,7 @@
   "author": "Remco Jongschaap (SteamingMutt@users.noreply.github.com)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SteamingMutt/DougleyBot.git"
+    "url": "git+https://github.com/SteamingMutt/DougleyBot2.0.git"
   },
   "license": "GPL-3.0",
   "dependencies": {
