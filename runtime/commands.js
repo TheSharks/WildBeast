@@ -16,6 +16,7 @@ Commands['help'] = {
   help: "You're looking at it right now.",
   fn: function(bot, msg, suffix){
     var msgArray = [];
+    var commandnames = []; // Build a array of names from commands.
     if (!suffix) {
       for (index in Commands) {
         commandnames.push(Commands[index].name);
@@ -41,7 +42,7 @@ Commands['help'] = {
         } else {
           msgArray.push("**Usage:** `" + ConfigFile.cmd_prefix + commando.name + "`");
         }
-        msgArray.push("**Description:** " + commando.extendedhelp); // Push the extendedhelp to the array.
+        msgArray.push("**Description:** " + commando.help); // Push the extendedhelp to the array.
         if (commando.hasOwnProperty("adminOnly")) { // Push special message if command is restricted.
           msgArray.push("**This command is restricted to admins.**");
         }

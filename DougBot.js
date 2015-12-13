@@ -39,7 +39,7 @@ bot.on("message", function(msg){
     msg.content = msg.content.substr(1);
     var chunks = msg.content.split(" ");
     var command = chunks[0];
-    var suffix = chunks.slice(1);
+    var suffix = msg.content.substring(command.length + 2);
     if (Commands[command]) {
       Commands[command].fn(bot, msg, suffix);
     } else { return; }
