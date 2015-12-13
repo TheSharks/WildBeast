@@ -1,0 +1,7 @@
+{
+    "email" : "E-mail address from the bot's Discord account",
+    "password" : "Password from the bot's Discord account",
+    "cmd_prefix": "~",
+    "image_folder": "./images",
+    "music_folder": "./music"
+}
