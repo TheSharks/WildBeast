@@ -36,8 +36,8 @@ bot.on("message", function(msg){
   if(msg.author.equals(bot.user)) { return; }
   if(msg.content.charAt(0) === ConfigFile.cmd_prefix) {
     Logger.log("info", "Executing <" + msg.content + "> from " + msg.author.username);
-    msg.content = msg.content.substr(1);
-    var chunks = msg.content.split(" ");
+    var step = msg.content.substr(1);
+    var chunks = step.split(" ");
     var command = chunks[0];
     var suffix = msg.content.substring(command.length + 2);
     if (Commands[command]) {
