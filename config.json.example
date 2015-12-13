@@ -2,6 +2,16 @@
     "email" : "E-mail address from the bot's Discord account",
     "password" : "Password from the bot's Discord account",
     "cmd_prefix": "~",
+    "log_chat": false,
+    "permissions": {
+      "masterUser": "",
+      "level1": "",
+      "level2": "",
+      "level3": "",
+    },
+    "join_on_launch" : [
+      ""
+    ],
     "image_folder": "./images",
     "music_folder": "./music"
 }

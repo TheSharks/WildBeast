@@ -8,34 +8,36 @@ var Logger = require("./runtime/logger.js").Logger;
 var ChatLogger = require("./runtime/logger.js").ChatLog;
 var Commands = require("./runtime/commands.js").Commands;
 var VersionChecker = require("./runtime/versionchecker.js");
-var mainenance;
+var maintenance;
 
 // Error logger
 bot.on("error", function(error){
-  Logger.log("debug", "Got an error: " + error);
-  Logger.log("warn", "Encounterd an error, please report this to the author of this bot, include any log files present in the logs folder.");
+  Logger.debug("Got an error: " + error);
+  Logger.error("Encounterd an error, please report this to the author of this bot, include any log files present in the logs folder.");
 });
 
 // Ready announcment
 bot.on("ready", function(){
-  Logger.log("info", "Connected, logged in as " + bot.user.username + ", and serving " + bot.users.length + " users.");
+  Logger.info("Connected. Logged in as " + bot.user.username + ", and serving " + bot.users.length + " users.");
 });
 
 // Disconnected announcment
 bot.on("disconnected", function(){
-  Logger.log("warn", "Disconnected, if this wasn't a connection issue or on purpose, report this issue to the author of the bot.");
+  Logger.warn("Disconnected, if this wasn't a connection issue or on purpose, report this issue to the author of the bot.");
+  process.exit(1);
 });
 
 // Command checker
 bot.on("message", function(msg){
-  if(ConfigFile.log_chat === true){
+  if(ConfigFile.log_chat === true && msg.channel.server){
     var d = new Date();
     var n = d.toUTCString();
-    ChatLogger.log("info", n + ": " + msg.channel.server.name + ", " + msg.channel.name + ": " + msg.author.username + " said <" + msg + ">");
+    ChatLogger.info(n + ": " + msg.channel.server.name + ", " + msg.channel.name + ": " + msg.author.username + " said <" + msg + ">");
   }
   if(msg.author.equals(bot.user)) { return; }
+  if(maintenance === "true"){ bot.sendMessage("Sorry " + msg.author + ", I can't do that right now, try again later."); return;}
   if(msg.content.charAt(0) === ConfigFile.cmd_prefix) {
-    Logger.log("info", "Executing <" + msg.content + "> from " + msg.author.username);
+    Logger.info("Executing <" + msg.content + "> from " + msg.author.username);
     var step = msg.content.substr(1);
     var chunks = step.split(" ");
     var command = chunks[0];
