@@ -28,7 +28,7 @@ Commands['help'] = {
       msgArray.push("If you have any questions, or if you don't get something, contact <@107904023901777920> or <@110147170740494336>");
       bot.sendMessage(msg.author, msgArray);
       if (msg.channel.server) {
-        bot.sendMessage(msg.channel, "Ok " + msg.sender + ", I've send you a list of commands via DM.");
+        bot.sendMessage(msg.channel, "Ok " + msg.author + ", I've send you a list of commands via DM.");
       }
     }
     if (suffix) {
