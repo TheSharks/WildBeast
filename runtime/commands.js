@@ -4,14 +4,14 @@ var ConfigFile = require("../config.json");
 
 var Commands = [];
 
-Commands['ping'] = {
+Commands.ping = {
   name: "ping",
   help: "I'll reply to you with pong!",
   fn: function(bot, msg){
     bot.sendMessage(msg.channel, "Pong!");
 }};
 
-Commands['help'] = {
+Commands.help = {
   name: "help",
   help: "You're looking at it right now.",
   fn: function(bot, msg, suffix){
