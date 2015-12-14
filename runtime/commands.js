@@ -2,7 +2,7 @@ var Discord = require("discord.js");
 var bot = new Discord.Client();
 var ConfigFile = require("../config.json");
 var imgDirectory = require("../config.json").image_folder;
-
+var Delete = require("./deletion.js").Delete;
 
 var Commands = [];
 
@@ -44,13 +44,7 @@ Commands.iff = {
       if (imgArray.indexOf(suffix) !== -1) {
         bot.sendFile(msg.channel, "./images/" + suffix);
         if (!msg.channel.server){return;}
-        var bot_permissions = msg.channel.permissionsOf(bot.user);
-          if (bot_permissions.hasPermission("manageMessages")) {
-            bot.deleteMessage(msg);
-            return;
-          } else {
-            bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
-          }
+        Delete.command.fn(bot, msg);
         } else {
           bot.sendMessage(msg.channel, "*Invalid input!*");
         }
