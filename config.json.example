@@ -1,16 +1,19 @@
 {
     "email" : "E-mail address from the bot's Discord account",
     "password" : "Password from the bot's Discord account",
+    "imgflip_username": "Imgflip username",
+    "imgflip_password": "Imgflip password",
     "cmd_prefix": "~",
     "log_chat": false,
     "permissions": {
-      "masterUser": "",
-      "level1": "",
-      "level2": "",
-      "level3": "",
+      "masterUser": "Not yet implemented",
+      "level1": "Not yet implemented",
+      "level2": "Not yet implemented",
+      "level3": "Not yet implemented",
     },
     "join_on_launch" : [
-      ""
+      "https://discord.gg/0cFoiR5QVh4agupi",
+      "https://discord.gg/0cFoiR5QVh57Spqg"
     ],
     "image_folder": "./images",
     "music_folder": "./music"

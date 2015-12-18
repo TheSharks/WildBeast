@@ -15,11 +15,11 @@ Delete.command = {
     }
 }};
 
-Delete.message ={
+Delete.purge ={
   fn: function(bot, msg){
     var bot_permissions = msg.channel.permissionsOf(bot.user);
-      if (bot_permissions.hasPermission("manageMessages")) {
-        bot.deleteMessage(msg);
+      if (bot_permissions.hasPermission("manageMessages")){
+          bot.deleteMessage(msg);
         return;
       } else {
         bot.sendMessage(msg.channel, "*I can't do that!*");

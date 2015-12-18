@@ -1,3 +1,5 @@
+// Credits to TehSeph for this code
+
 var Request		= require("request");
 
 var Logger		= require("./logger").Logger;

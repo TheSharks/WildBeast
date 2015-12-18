@@ -1,6 +1,7 @@
 var Discord = require("discord.js");
 var bot = new Discord.Client();
 var ConfigFile = require("../config.json");
+var Logger = require("./logger.js").Logger;
 var imgDirectory = require("../config.json").image_folder;
 var Delete = require("./deletion.js").Delete;
 
@@ -12,6 +13,24 @@ Commands.ping = {
   fn: function(bot, msg){
     bot.sendMessage(msg.channel, "Pong!");
 }};
+
+Commands.meme = {
+  name: "meme",
+  help: "I'll create a meme with your suffixes!",
+  usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
+  fn: function(bot, msg, suffix){
+    var tags = msg.content.split('"');
+    var memetype = tags[0].split(" ")[1];
+    var meme = require("./memes.json");
+    //bot.sendMessage(msg.channel,tags);
+    var Imgflipper = require("imgflipper");
+    var imgflipper = new Imgflipper(ConfigFile.imgflip_username, ConfigFile.imgflip_password);
+    imgflipper.generateMeme(meme[memetype], tags[1] ? tags[1] : "", tags[3] ? tags[3] : "", function(err, image) {
+      //CmdErrorLog.log("debug", arguments);
+      bot.sendMessage(msg.channel, image);
+      if (!msg.channel.server){return;}
+      Delete.command.fn(bot, msg);
+});}};
 
 Commands.status = {
   name: "status",
@@ -112,6 +131,7 @@ Commands.help = {
         if (suffix == "meme") { // If command requested is meme, print avalible meme's
           msgArray.push("");
           var str = "**Currently available memes:\n**";
+          var meme = require("./memes.json");
           for (var m in meme) {
             str += m + ", ";
           }
