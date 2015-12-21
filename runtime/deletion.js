@@ -19,12 +19,27 @@ Delete.purge ={
   fn: function(bot, msg){
     var bot_permissions = msg.channel.permissionsOf(bot.user);
       if (bot_permissions.hasPermission("manageMessages")){
-          bot.deleteMessage(msg);
-        return;
-      } else {
+        bot.getChannelLogs(msg.channel, suffix, function(error, messages){
+          if (error){
+            bot.sendMessage(msg.channel, "Something went wrong while fetching logs.");
+            return;
+          } else {
+            CmdErrorLog.info("Beginning purge...");
+            var todo = messages.length,
+            delcount = 0;
+            for (msg of messages){
+              bot.deleteMessage(msg);
+              todo--;
+              delcount++;
+            if (todo === 0){
+              bot.sendMessage(msg.channel, "Done! Deleted " + delcount + " messages.");
+              CmdErrorLog.info("Ending purge");
+              return;
+              }}
+            }}
+      );} else {
         bot.sendMessage(msg.channel, "*I can't do that!*");
       }
-  }
-};
+}};
 
 exports.Delete = Delete;
