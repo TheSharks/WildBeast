@@ -29,7 +29,7 @@ bot.on("ready", function() {
 // Disconnected announcment
 bot.on("disconnected", function() {
   Logger.warn("Disconnected, if this wasn't a connection issue or on purpose, report this issue to the author of the bot.");
-  process.exit(1);
+  process.exit(0); // Disconnected announcments are not always an error, seeing that disconnections can be triggered by the user.
 });
 
 // Command checker
