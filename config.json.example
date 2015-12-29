@@ -15,6 +15,10 @@
       "https://discord.gg/0cFoiR5QVh4agupi",
       "https://discord.gg/0cFoiR5QVh57Spqg"
     ],
+    "redis" : {
+      "host" : "localhost",
+      "port" : 6379
+    },
     "image_folder": "./images",
     "music_folder": "./music"
 }

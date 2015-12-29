@@ -2,6 +2,7 @@ var Discord = require("discord.js");
 var bot = new Discord.Client();
 var ConfigFile = require("../config.json");
 var Logger = require("./logger.js").Logger;
+var Permissions = require("./permissions.js");
 var imgDirectory = require("../config.json").image_folder;
 var Delete = require("./deletion.js").Delete;
 
@@ -10,14 +11,115 @@ var Commands = [];
 Commands.ping = {
   name: "ping",
   help: "I'll reply to you with pong!",
+  level: 0,
   fn: function(bot, msg){
     bot.sendMessage(msg.channel, "Pong!");
+}};
+
+Commands.testnsfw = {
+  name: "testnsfw",
+  help: "This is a test command.",
+  level: 0,
+  nsfw: true,
+  fn: function(bot, msg){
+    bot.sendMessage(msg.channel, "Executed!");
+}};
+
+Commands.test1 = {
+  name: "test1",
+  help: "This is a test command.",
+  level: 1,
+  fn: function(bot, msg){
+    bot.sendMessage(msg.channel, "Executed!");
+}};
+
+Commands.test2 = {
+  name: "test2",
+  help: "This is a test command.",
+  level: 2,
+  fn: function(bot, msg){
+    bot.sendMessage(msg.channel, "Executed!");
+}};
+
+Commands.test3 = {
+  name: "test3",
+  help: "This is a test command.",
+  level: 3,
+  fn: function(bot, msg){
+    bot.sendMessage(msg.channel, "Executed!");
+}};
+
+Commands.setlevel = {
+  name: "setlevel",
+  help: "This changes the permission level of an user.",
+  level: 3,
+  fn: function(bot, msg, suffix){
+		if (!msg.channel.server) {
+			bot.sendMessage(msg.channel, "I can't do that in a PM!");
+			return;
+		}
+		if (isNaN(suffix[0])) {
+			bot.reply(msg.channel, "your first param is not a number!");
+			return;
+		}
+		if (msg.mentions.length === 0) {
+			bot.reply(msg.channel, "please mention the user(s) you want to set the permission level of.");
+			return;
+		}
+		Permissions.getLevel(msg.author, function(err, level) {
+			if (err) {
+        bot.sendMessage(msg.channel, "Help! Something went wrong!");
+        return;
+      }
+			if (suffix[0] > level) {
+				bot.reply(msg.channel, "you can't set a user's permissions higher than your own!");
+				return;
+			}
+		});
+		msg.mentions.map(function(user) {
+			Permissions.setLevel(msg.channel.server.id, user, suffix[0], function(err, level) {
+				if (err) {
+          bot.sendMessage(msg.channel, "Help! Something went wrong!");
+          return;
+        }
+			});
+		});
+		bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
+}};
+
+Commands.setnsfw = {
+  name: "setnsfw",
+  help: "This changes if the channel allows NSFW commands.",
+  usage: "<on | off>",
+  level: 3,
+  fn: function(bot, msg, suffix){
+		if (!msg.channel.server) {
+			bot.sendMessage(msg.channel, "NSFW commands are always allowed in DM's.");
+			return;
+		}
+		if (suffix[0] === "on" || suffix[0] === "off") {
+			Permissions.setNSFW(msg.channel, suffix[0], function(err, allow) {
+				if (err) {
+          bot.reply(msg.channel, "I've failed to set NSFW flag!");
+        }
+				if (allow === "on") {
+					bot.sendMessage(msg.channel, "NSFW commands are now allowed for " + message.channel);
+				}
+				else if (allow === "off") {
+					bot.sendMessage(msg.channel, "NSFW commands are now disallowed for " + message.channel);
+				}
+				else {
+					bot.reply(msg.channel, "I've failed to set NSFW flag!");
+				}
+			});
+		}
 }};
 
 Commands.meme = {
   name: "meme",
   help: "I'll create a meme with your suffixes!",
   usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
+  level: 0,
   fn: function(bot, msg, suffix){
     var tags = msg.content.split('"');
     var memetype = tags[0].split(" ")[1];
@@ -35,6 +137,7 @@ Commands.meme = {
 Commands.status = {
   name: "status",
   help: "I'll get some info about me, like uptime and currently connected servers.",
+  level: 0,
   fn: function(bot, msg){
     var msgArray = [];
     msgArray.push("Hello, I'm " + bot.user + ", nice to meet you!");
@@ -47,6 +150,7 @@ Commands.iff = {
   name: "iff",
   help: "''**I**mage **F**rom **F**ile'', I'll get a image from the image folder for you and upload it to the channel.",
   usage: "<image>",
+  level: 0,
   fn: function(bot, msg, suffix){
     var fs = require("fs");
     var path = require("path");
@@ -73,6 +177,7 @@ Commands.iff = {
 Commands.imglist = {
   name: "imglist",
   help: "Prints the contents of the images directory to the channel.",
+  level: 0,
   fn: function(bot, msg){
     var fs = require("fs");
     var path = require("path");
@@ -93,6 +198,7 @@ Commands.imglist = {
 Commands.help = {
   name: "help",
   help: "You're looking at it right now.",
+  level: 0,
   fn: function(bot, msg, suffix){
     var msgArray = [];
     var commandnames = []; // Build a array of names from commands.

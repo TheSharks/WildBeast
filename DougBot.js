@@ -9,7 +9,7 @@ var Commands = require("./runtime/commands.js").Commands;
 var Permissions = require("./runtime/permissions.js");
 var VersionChecker = require("./runtime/versionchecker.js");
 var isAllowed;
-var NSFWAllowed;
+var NSFWAllowed = true; // Start with true, as this check can be skipped if command is SFW
 
 // Error logger
 bot.on("error", function(error) {
@@ -19,7 +19,7 @@ bot.on("error", function(error) {
 
 // Ready announcment
 bot.on("ready", function() {
-  Logger.info("Joining pre-defined servers...");
+  Logger.verbose("Joining pre-defined servers...");
   for (var index in ConfigFile.join_on_launch){
     bot.joinServer(ConfigFile.join_on_launch[index], function(error, server){
       if (error) {Logger.warn("Couldn't join a server (" + error + ")");}
@@ -53,31 +53,43 @@ bot.on("message", function(msg) {
     var command = chunks[0];
     var suffix = msg.content.substring(command.length + 2);
     if (Commands[command]) {
+      NSFWAllowed = true; // Reset the value of this variable
       var cmd = Commands[command];
       var LevelNeeded = cmd.level;
-      Permissions.GetLevel(msg.author.id, function (reply){
-        if (reply === LevelNeeded){
+      Permissions.GetLevel(msg.channel.server.id, msg.author.id, function (err, level){ // Check if user has permission to execute this command
+        if (err){
+          Logger.debug("An error occured! <" + err + ">");
+          bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
+          return;
+        }
+        if (level >= LevelNeeded && !err){
           isAllowed = true;
         } else {
           isAllowed = false;
         }
       });
-      Permissions.GetNSFW(msg,channel, function (reply){
-        if (reply === true){
+      if (cmd.hasOwnProperty("nsfw") && !msg.channel.server){ // If command is NSFW and not executed in a DM, check if channel allows them
+      Permissions.GetNSFW(msg.channel, function (err, reply){
+        if (err){
+          Logger.debug("Got an error! <" + err + ">");
+          bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
+          return;
+        }
+        if (reply === "on" && !err){
           NSFWAllowed = true;
         } else {
           NSFWAllowed = false;
         }
-      });
-      if (isAllowed === true && NSFWAllowed === true){
+      });}
+      if (isAllowed === true && NSFWAllowed === true){ // If both checks passed, execute the command
         Commands[command].fn(bot, msg, suffix);
       }
-      if (isAllowed === false){
+      if (isAllowed === false){ // If user has no permissions, throw error
         Logger.verbose("But the user didn't have enough permissions to do so.");
-        bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+        bot.sendMessage(msg.channel, "You don't have permission to use this command in this server!");
         return;
       }
-      if (NSFWAllowed === false){
+      if (NSFWAllowed === false){ // If channel disallows NSFW, throw error
         Logger.verbose("But the channel doesn't allow NSFW.");
         bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
         return;
@@ -102,28 +114,9 @@ function init() {
       Logger.info(status);
     }
   });
-  Logger.verbose("Setting master user...");
-    Permissions.SetMaster(function (reply){
-      if (reply === ConfigFile.masterUser){
-        Logger.info("Success!");
-      } else {
-        Logger.debug("Something went wrong while setting the master user, expected <" + ConfigFile.masterUser + ">, but got <" + reply + ">.");
-        Logger.error("An error occured while setting the master user!");
-        process.exit(1);
-      }
-    });
-  Logger.verbose("Setting global permissions...");
-    Permissions.SetGlobal(function (reply){
-      if (reply === "success"){
-        Logger.info("Success!");
-      } else {
-        Logger.error("An error occured while setting global permissions!");
-        process.exit(1);
-      }
-    });
   Logger.verbose("Creating server permissions storage, this could take a while...");
-    Permissons.MakeStorage(function (reply){
-      if (reply === "success"){
+    Permissons.MakeStorage(function (err, reply){
+      if (reply === 0){
         Logger.info("Success!");
       } else {
         Logger.error("An error occured while creating server permission storage!");
