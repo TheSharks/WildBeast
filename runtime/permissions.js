@@ -4,9 +4,9 @@ var Logger = require("./logger.js").Logger;
 
 var RedisServer = Redis.createClient(ConfigFile.redis.port, ConfigFile.redis.host);
 
-exports.GetLevel = function(server, user, callback){
-  if (user === ConfigFile.masterUser){
-    return callback (null, 10); // Return a massive value if the user is the master user
+exports.GetLevel = function(sum, user, callback){
+  if (user === ConfigFile.permissions.masterUser){
+    return callback (null, 9); // Return a massive value if the user is the master user
   }
   if (user == ConfigFile.permissions.level1){
     return callback (null, 1); // Hardcoded reply if user has a global permission
@@ -18,7 +18,7 @@ exports.GetLevel = function(server, user, callback){
     return callback (null, 3); // Hardcoded reply if user has a global permission
   }
   // Else, connect to the Redis server and fetch the user level
-  RedisServer.get("auth_level:" + server + ", " + user, function(err, reply) {
+  RedisServer.get("auth_level:" + sum, function(err, reply) {
 		if (err) {
       return callback(err, -1);
     }
@@ -31,7 +31,7 @@ exports.GetLevel = function(server, user, callback){
 };
 
 exports.GetNSFW = function(channel, callback){
-  RedisServer.get("auth_nsfw:" + channel.id, function(err, reply) {
+  RedisServer.get("auth_nsfw:" + channel, function(err, reply) {
     if (err) {
       return callback(err, -1);
     }
@@ -43,8 +43,8 @@ exports.GetNSFW = function(channel, callback){
   });
 };
 
-exports.SetLevel = function(server, user, level, callback){
-  RedisServer.set("auth_level:" + server + ", " + user, parseInt(level), function(err, reply) {
+exports.SetLevel = function(sum, level, callback){
+  RedisServer.set("auth_level:" + sum, parseInt(level), function(err, reply) {
     if (err) {
       callback(err, -1);
     }
@@ -75,7 +75,7 @@ exports.MakeStorage = function(server, callback){
 };
 
 exports.SetNSFW = function(channel, allow, callback){
-	RedisServer.set("auth_nsfw:" + channel.id, allow, function(err, reply) {
+	RedisServer.set("auth_nsfw:" + channel, allow, function(err, reply) {
 		if (err) {
       callback(err, -1);
     }

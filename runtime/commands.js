@@ -25,6 +25,19 @@ Commands.testnsfw = {
     bot.sendMessage(msg.channel, "Executed!");
 }};
 
+Commands.level = {
+  name: "level",
+  help: "This is a test command.",
+  level: 0,
+  fn: function(bot, msg){
+    Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
+    	if (err) {
+       return;
+     } else {
+       bot.sendMessage(msg.channel, level);
+     }
+});}};
+
 Commands.test1 = {
   name: "test1",
   help: "This is a test command.",
@@ -66,7 +79,7 @@ Commands.setlevel = {
 			bot.reply(msg.channel, "please mention the user(s) you want to set the permission level of.");
 			return;
 		}
-		Permissions.getLevel(msg.author, function(err, level) {
+		Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
 			if (err) {
         bot.sendMessage(msg.channel, "Help! Something went wrong!");
         return;
@@ -77,7 +90,7 @@ Commands.setlevel = {
 			}
 		});
 		msg.mentions.map(function(user) {
-			Permissions.setLevel(msg.channel.server.id, user, suffix[0], function(err, level) {
+			Permissions.SetLevel((msg.channel.server.id + user.id), suffix[0], function(err, level) {
 				if (err) {
           bot.sendMessage(msg.channel, "Help! Something went wrong!");
           return;
@@ -97,16 +110,16 @@ Commands.setnsfw = {
 			bot.sendMessage(msg.channel, "NSFW commands are always allowed in DM's.");
 			return;
 		}
-		if (suffix[0] === "on" || suffix[0] === "off") {
-			Permissions.setNSFW(msg.channel, suffix[0], function(err, allow) {
+		if (suffix === "on" || suffix === "off") {
+			Permissions.SetNSFW(msg.channel, suffix, function(err, allow) {
 				if (err) {
           bot.reply(msg.channel, "I've failed to set NSFW flag!");
         }
 				if (allow === "on") {
-					bot.sendMessage(msg.channel, "NSFW commands are now allowed for " + message.channel);
+					bot.sendMessage(msg.channel, "NSFW commands are now allowed for " + msg.channel);
 				}
 				else if (allow === "off") {
-					bot.sendMessage(msg.channel, "NSFW commands are now disallowed for " + message.channel);
+					bot.sendMessage(msg.channel, "NSFW commands are now disallowed for " + msg.channel);
 				}
 				else {
 					bot.reply(msg.channel, "I've failed to set NSFW flag!");

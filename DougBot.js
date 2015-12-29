@@ -9,7 +9,7 @@ var Commands = require("./runtime/commands.js").Commands;
 var Permissions = require("./runtime/permissions.js");
 var VersionChecker = require("./runtime/versionchecker.js");
 var isAllowed;
-var NSFWAllowed = true; // Start with true, as this check can be skipped if command is SFW
+var NSFWAllowed;
 
 // Error logger
 bot.on("error", function(error) {
@@ -19,7 +19,7 @@ bot.on("error", function(error) {
 
 // Ready announcment
 bot.on("ready", function() {
-  Logger.verbose("Joining pre-defined servers...");
+  Logger.info("Joining pre-defined servers...");
   for (var index in ConfigFile.join_on_launch){
     bot.joinServer(ConfigFile.join_on_launch[index], function(error, server){
       if (error) {Logger.warn("Couldn't join a server (" + error + ")");}
@@ -62,22 +62,23 @@ bot.on("message", function(msg) {
           bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
           return;
         }
-        if (level >= LevelNeeded && !err){
+        if (level >= LevelNeeded){
           isAllowed = true;
         } else {
           isAllowed = false;
         }
       });
-      if (cmd.hasOwnProperty("nsfw") && !msg.channel.server){ // If command is NSFW and not executed in a DM, check if channel allows them
+      if (cmd.nsfw === true && msg.channel.server){ // If command is NSFW and not executed in a DM, check if channel allows them
       Permissions.GetNSFW(msg.channel, function (err, reply){
         if (err){
           Logger.debug("Got an error! <" + err + ">");
           bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
           return;
         }
-        if (reply === "on" && !err){
+        if (reply === "on"){
           NSFWAllowed = true;
-        } else {
+        }
+        if (reply === "off"){
           NSFWAllowed = false;
         }
       });}
@@ -85,12 +86,12 @@ bot.on("message", function(msg) {
         Commands[command].fn(bot, msg, suffix);
       }
       if (isAllowed === false){ // If user has no permissions, throw error
-        Logger.verbose("But the user didn't have enough permissions to do so.");
+        Logger.info("But the user didn't have enough permissions to do so.");
         bot.sendMessage(msg.channel, "You don't have permission to use this command in this server!");
         return;
       }
       if (NSFWAllowed === false){ // If channel disallows NSFW, throw error
-        Logger.verbose("But the channel doesn't allow NSFW.");
+        Logger.info("But the channel doesn't allow NSFW.");
         bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
         return;
       }
@@ -104,8 +105,8 @@ bot.on("message", function(msg) {
 
 // Initial functions
 function init() {
-  Logger.verbose("Loading DougleyBot...");
-  Logger.verbose("Checking for updates...");
+  Logger.info("Loading DougleyBot...");
+  Logger.info("Checking for updates...");
   VersionChecker.getStatus(function(err, status) {
     if (err) {
       Logger.error(err);
@@ -114,7 +115,7 @@ function init() {
       Logger.info(status);
     }
   });
-  Logger.verbose("Creating server permissions storage, this could take a while...");
+  Logger.info("Creating server permissions storage, this could take a while...");
     Permissons.MakeStorage(function (err, reply){
       if (reply === 0){
         Logger.info("Success!");
