@@ -53,54 +53,35 @@ bot.on("message", function(msg) {
     var command = chunks[0];
     var suffix = msg.content.substring(command.length + 2);
     if (Commands[command]) {
-      NSFWAllowed = true; // Reset the value of this variable
-      var cmd = Commands[command];
-      var LevelNeeded = cmd.level;
-      Permissions.GetLevel(msg.channel.server.id, msg.author.id, function (err, level){ // Check if user has permission to execute this command
+      Permissions.GetLevel((msg.author.id + msg.channel.server.id), msg.author.id, function (err, level){
         if (err){
-          Logger.debug("An error occured! <" + err + ">");
-          bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
+          Logger.debug("An error occured!");
           return;
         }
-        if (level >= LevelNeeded){
-          isAllowed = true;
+        if (level >= Commands[command].level){
+          if (!Commands[command].nsfw || !msg.channel.server){
+            Commands[command].fn(bot, msg, suffix);
+            return;
+          } else {
+            Permissions.GetNSFW(msg.channel, function (err, reply){
+              if (err){
+                Logger.debug("Got an error! <" + err + ">");
+                bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
+                return;
+              }
+              if (reply === "on"){
+                Commands[command].fn(bot, msg, suffix);
+                return;
+              } else {
+                bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
+          }});}
         } else {
-          isAllowed = false;
+              bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+              return;
+            }
+          });
         }
-      });
-      if (cmd.nsfw === true && msg.channel.server){ // If command is NSFW and not executed in a DM, check if channel allows them
-      Permissions.GetNSFW(msg.channel, function (err, reply){
-        if (err){
-          Logger.debug("Got an error! <" + err + ">");
-          bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
-          return;
-        }
-        if (reply === "on"){
-          NSFWAllowed = true;
-        }
-        if (reply === "off"){
-          NSFWAllowed = false;
-        }
-      });}
-      if (isAllowed === true && NSFWAllowed === true){ // If both checks passed, execute the command
-        Commands[command].fn(bot, msg, suffix);
       }
-      if (isAllowed === false){ // If user has no permissions, throw error
-        Logger.info("But the user didn't have enough permissions to do so.");
-        bot.sendMessage(msg.channel, "You don't have permission to use this command in this server!");
-        return;
-      }
-      if (NSFWAllowed === false){ // If channel disallows NSFW, throw error
-        Logger.info("But the channel doesn't allow NSFW.");
-        bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
-        return;
-      }
-    } else {
-      return;
-    }
-  } else {
-    return;
-  }
 });
 
 // Initial functions
@@ -115,15 +96,6 @@ function init() {
       Logger.info(status);
     }
   });
-  Logger.info("Creating server permissions storage, this could take a while...");
-    Permissons.MakeStorage(function (err, reply){
-      if (reply === 0){
-        Logger.info("Success!");
-      } else {
-        Logger.error("An error occured while creating server permission storage!");
-        process.exit(1);
-      }
-    });
-  }
+}
 // Connection starter
 bot.login(ConfigFile.email, ConfigFile.password).then(init);

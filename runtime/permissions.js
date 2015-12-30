@@ -56,24 +56,6 @@ exports.SetLevel = function(sum, level, callback){
   });
 };
 
-exports.MakeStorage = function(server, callback){
-  // This function makes all server founders level 3 for their server
-  var CurrentServers = [];
-  	for (var index in bot.servers) {
-  		CurrentServers[index] = bot.servers[index];
-    }
-    for (server in CurrentServers){
-      SetLevel(server.id, server.owner.id, 3, function(err, reply) {
-        if (err){
-          Logger.error("An error occured during storage making!");
-          return callback(err, -1);
-        } else {
-          return callback(null, 0);
-        }
-    }
-  );}
-};
-
 exports.SetNSFW = function(channel, allow, callback){
 	RedisServer.set("auth_nsfw:" + channel, allow, function(err, reply) {
 		if (err) {

@@ -12,6 +12,7 @@ Commands.ping = {
   name: "ping",
   help: "I'll reply to you with pong!",
   level: 0,
+  nsfw: false,
   fn: function(bot, msg){
     bot.sendMessage(msg.channel, "Pong!");
 }};
@@ -29,6 +30,7 @@ Commands.level = {
   name: "level",
   help: "This is a test command.",
   level: 0,
+  nsfw: false,
   fn: function(bot, msg){
     Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
     	if (err) {
@@ -42,6 +44,7 @@ Commands.test1 = {
   name: "test1",
   help: "This is a test command.",
   level: 1,
+  nsfw: false,
   fn: function(bot, msg){
     bot.sendMessage(msg.channel, "Executed!");
 }};
@@ -50,6 +53,7 @@ Commands.test2 = {
   name: "test2",
   help: "This is a test command.",
   level: 2,
+  nsfw: false,
   fn: function(bot, msg){
     bot.sendMessage(msg.channel, "Executed!");
 }};
@@ -58,6 +62,7 @@ Commands.test3 = {
   name: "test3",
   help: "This is a test command.",
   level: 3,
+  nsfw: false,
   fn: function(bot, msg){
     bot.sendMessage(msg.channel, "Executed!");
 }};
@@ -66,6 +71,7 @@ Commands.setlevel = {
   name: "setlevel",
   help: "This changes the permission level of an user.",
   level: 3,
+  nsfw: false,
   fn: function(bot, msg, suffix){
 		if (!msg.channel.server) {
 			bot.sendMessage(msg.channel, "I can't do that in a PM!");
@@ -105,6 +111,7 @@ Commands.setnsfw = {
   help: "This changes if the channel allows NSFW commands.",
   usage: "<on | off>",
   level: 3,
+  nsfw: false,
   fn: function(bot, msg, suffix){
 		if (!msg.channel.server) {
 			bot.sendMessage(msg.channel, "NSFW commands are always allowed in DM's.");
@@ -128,11 +135,32 @@ Commands.setnsfw = {
 		}
 }};
 
+Commands.setowner = {
+  name: "setowner",
+  help: "This will set the owner of the current server to level 3.",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg){
+    if (!msg.channel.server){
+      bot.sendMessage(msg.channel, "You need to execute this command in a server, dummy!");
+    }
+    Permissions.SetLevel((msg.channel.server.id + msg.channel.server.owner.id), 3, function (err, level){
+      if (err){
+        bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
+        return;
+      }
+      if (level === 3){
+        bot.sendMessage(msg.channel, "Okay! " + msg.channel.server.owner + " is now at level 3!");
+      }
+    });
+}};
+
 Commands.meme = {
   name: "meme",
   help: "I'll create a meme with your suffixes!",
   usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
   level: 0,
+  nsfw: false,
   fn: function(bot, msg, suffix){
     var tags = msg.content.split('"');
     var memetype = tags[0].split(" ")[1];
@@ -151,6 +179,7 @@ Commands.status = {
   name: "status",
   help: "I'll get some info about me, like uptime and currently connected servers.",
   level: 0,
+  nsfw: false,
   fn: function(bot, msg){
     var msgArray = [];
     msgArray.push("Hello, I'm " + bot.user + ", nice to meet you!");
@@ -164,6 +193,7 @@ Commands.iff = {
   help: "''**I**mage **F**rom **F**ile'', I'll get a image from the image folder for you and upload it to the channel.",
   usage: "<image>",
   level: 0,
+  nsfw: false,
   fn: function(bot, msg, suffix){
     var fs = require("fs");
     var path = require("path");
@@ -191,6 +221,7 @@ Commands.imglist = {
   name: "imglist",
   help: "Prints the contents of the images directory to the channel.",
   level: 0,
+  nsfw: false,
   fn: function(bot, msg){
     var fs = require("fs");
     var path = require("path");
@@ -212,6 +243,7 @@ Commands.help = {
   name: "help",
   help: "You're looking at it right now.",
   level: 0,
+  nsfw: false,
   fn: function(bot, msg, suffix){
     var msgArray = [];
     var commandnames = []; // Build a array of names from commands.
