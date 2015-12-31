@@ -8,7 +8,7 @@ var Delete = require("./deletion.js");
 var Giphy = require("./giphy.js");
 var Cleverbot = require('cleverbot-node');
 var cleverbot = new Cleverbot();
-var yt = require("./runtime/youtube_plugin");
+var yt = require("./youtube_plugin");
 var youtube_plugin = new yt();
 
 var Commands = [];
