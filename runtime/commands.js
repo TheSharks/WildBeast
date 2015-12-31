@@ -4,7 +4,12 @@ var ConfigFile = require("../config.json");
 var Logger = require("./logger.js").Logger;
 var Permissions = require("./permissions.js");
 var imgDirectory = require("../config.json").image_folder;
-var Delete = require("./deletion.js").Delete;
+var Delete = require("./deletion.js");
+var Giphy = require("./giphy.js");
+var Cleverbot = require('cleverbot-node');
+var cleverbot = new Cleverbot();
+var yt = require("./runtime/youtube_plugin");
+var youtube_plugin = new yt();
 
 var Commands = [];
 
@@ -17,55 +22,288 @@ Commands.ping = {
     bot.sendMessage(msg.channel, "Pong!");
 }};
 
-Commands.testnsfw = {
-  name: "testnsfw",
-  help: "This is a test command.",
-  level: 0,
-  nsfw: true,
-  fn: function(bot, msg){
-    bot.sendMessage(msg.channel, "Executed!");
-}};
-
-Commands.level = {
-  name: "level",
-  help: "This is a test command.",
+Commands.cleverbot = {
+  name: "cleverbot",
+  help: "I'll act as Cleverbot when you execute this command, remember to enter a message as suffix.",
+  usage: "<message>",
   level: 0,
   nsfw: false,
-  fn: function(bot, msg){
-    Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
-    	if (err) {
-       return;
-     } else {
-       bot.sendMessage(msg.channel, level);
-     }
-});}};
+  fn: function(bot, msg, suffix) {
+    Cleverbot.prepare(function() {
+      bot.startTyping(msg.channel);
+      cleverbot.write(suffix, function(response) {
+        bot.sendMessage(msg.channel, response.message);
+        bot.stopTyping(msg.channel);
+      });
+    });
+  }
+};
 
-Commands.test1 = {
-  name: "test1",
-  help: "This is a test command.",
-  level: 1,
-  nsfw: false,
-  fn: function(bot, msg){
-    bot.sendMessage(msg.channel, "Executed!");
-}};
-
-Commands.test2 = {
-  name: "test2",
-  help: "This is a test command.",
-  level: 2,
-  nsfw: false,
-  fn: function(bot, msg){
-    bot.sendMessage(msg.channel, "Executed!");
-}};
-
-Commands.test3 = {
-  name: "test3",
-  help: "This is a test command.",
+Commands.leave = {
+  name: "leave",
+  help: "I'll leave the server in which the command is executed, you'll need the *Manage server* permission in your role to use this command.",
   level: 3,
   nsfw: false,
-  fn: function(bot, msg){
-    bot.sendMessage(msg.channel, "Executed!");
+  process: function(bot, msg, suffix) {
+    if (msg.channel.server) {
+        bot.sendMessage(msg.channel, "Alright, see ya!");
+        bot.leaveServer(msg.channel.server);
+        Logger.log("info", "I've left a server on request of " + msg.sender.username + ", I'm only in " + bot.servers.length + " servers now.");
+        return;
+    } else {
+      bot.sendMessage(msg.channel, "I can't leave a DM, dummy!");
+      return;
+    }
+  }
+};
+
+Commands.say = {
+  name: "say",
+  help: "I'll echo the suffix of the command to the channel and, if I have sufficient permissions, deletes the command.",
+  usage: "<text>",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    if (suffix.search("!say") === -1) {
+        bot.sendMessage(msg.channel, suffix);
+      if (msg.channel.server){
+      var bot_permissions = msg.channel.permissionsOf(bot.user);
+      if (bot_permissions.hasPermission("manageMessages")) {
+        bot.deleteMessage(msg);
+        return;
+      } else {
+        bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
+      }}
+    } else {
+      bot.sendMessage(msg.channel, "HEY " + msg.sender + " STOP THAT!", {tts:"true"});
+    }
+  }
+};
+
+Commands.online = {
+  name: "online",
+  help: "I'll change my status to online.",
+  level: 4, // If an access level is set to 4 or higher, only the master user can use this
+  nsfw: false,
+  fn: function(bot, msg) {
+    bot.setStatusOnline();
+    Logger.log("debug", "My status has been changed to online.");
+  }
+};
+
+Commands.killswitch = {
+  name: "killswitch",
+  help: "This will instantly terminate all of the running instances of the bot without restarting.",
+  level: 4, // If an access level is set to 4 or higher, only the master user can use this
+  nsfw: false,
+  fn: function(bot, msg) {
+      bot.sendMessage(msg.channel, "An admin has requested to kill all instances of DougleyBot, exiting...");
+      bot.logout();
+      Logger.log("warn", "Disconnected via killswitch!");
+      process.exit(0);
+    } //exit node.js without an error
+};
+
+Commands.image = {
+  name: "image",
+  help: "I'll search teh interwebz for a picture matching your tags.",
+  usage: "<image tags>",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    if(!ConfigFile || !ConfigFile.youtube_api_key || !ConfigFile.google_custom_search){
+          bot.sendMessage(msg.channel, "Image search requires both a YouTube API key and a Google Custom Search key!");
+          return;
+        }
+        //gets us a random result in first 5 pages
+        var page = 1 + Math.floor(Math.random() * 5) * 10; //we request 10 items
+        var request = require("request");
+        request("https://www.googleapis.com/customsearch/v1?key=" + ConfigFile.youtube_api_key + "&cx=" + ConfigFile.google_custom_search + "&q=" + (suffix.replace(/\s/g, '+')) + "&searchType=image&alt=json&num=10&start="+page, function(err, res, body) {
+          var data, error;
+          try {
+            data = JSON.parse(body);
+          } catch (error) {
+            Logger.error(error);
+            return;
+          }
+          if(!data){
+            Logger.debug(data);
+            bot.sendMessage(msg.channel, "Error:\n" + JSON.stringify(data));
+            return;
+          }
+          else if (!data.items || data.items.length === 0){
+            Logger.debug(data);
+            bot.sendMessage(msg.channel, "No result for '" + suffix + "'");
+            return;
+          }
+          var randResult = data.items[Math.floor(Math.random() * data.items.length)];
+          bot.sendMessage(msg.channel, randResult.title + '\n' + randResult.link);
+        });
+    Logger.log("debug", "I've looked for images of " + suffix + " for " + msg.sender.username);
 }};
+
+Commands.pullanddeploy = {
+  name: "pullanddeploy",
+  help: "I'll check if my code is up-to-date with the code from <@107904023901777920>, and restart. **Please note that this does NOT work on Windows!**",
+  level: 4, // If an access level is set to 4 or higher, only the master user can use this
+  nsfw: false,
+  process: function(bot, msg, suffix) {
+    bot.sendMessage(msg.channel, "Fetching updates...", function(error, sentMsg) {
+      Logger.log("info", "Updating...");
+      var spawn = require('child_process').spawn;
+      var log = function(err, stdout, stderr) {
+        if (stdout) {
+          Logger.log("debug", stdout);
+        }
+        if (stderr) {
+          Logger.log("debug", stderr);
+        }
+      };
+      var fetch = spawn('git', ['fetch']);
+      fetch.stdout.on('data', function(data) {
+        Logger("debug", data.toString());
+      });
+      fetch.on("close", function(code) {
+        var reset = spawn('git', ['reset', '--hard', 'origin/master']);
+        reset.stdout.on('data', function(data) {
+          Logger.log("debug", data.toString());
+        });
+        reset.on("close", function(code) {
+          var npm = spawn('npm', ['install']);
+          npm.stdout.on('data', function(data) {
+            Logger.log("debug", data.toString());
+          });
+          npm.on("close", function(code) {
+            Logger.log("info", "Goodbye");
+            bot.sendMessage(msg.channel, "brb!", function() {
+              bot.logout(function() {
+                process.exit();
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+};
+
+Commands.youtube = {
+  name: "youtube",
+  help: "I'll search YouTube for a video matching your given tags.",
+  usage: "<video tags>",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    youtube_plugin.respond(suffix, msg.channel, bot);
+  }
+};
+
+Commands.devs = {
+  name: "devs",
+  help: "This will print the Discord ID's from the developers of DougleyBot to the channel.",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg) {
+    bot.sendMessage(msg.channel, "Made with love by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
+  }
+};
+
+Commands.purge = {
+  name: "purge",
+  usage: "<number-of-messages-to-delete> [force]",
+  extendedhelp: "I'll delete a certain ammount of messages.",
+  level: 2,
+  nsfw: false,
+  process: function(bot, msg, suffix) {
+    if (!msg.channel.server) {
+      bot.sendMessage(msg.channel, "You can't do that in a DM, dummy!");
+      return;
+    }
+    if (!suffix){
+      bot.sendMessage(msg.channel, "Please define an ammount of messages for me to delete!");
+      return;
+    }
+    if (!msg.channel.permissionsOf(msg.sender).hasPermission("manageMessages")) {
+      bot.sendMessage(msg.channel, "Sorry, your permissions doesn't allow that.");
+      return;
+    }
+    if (!msg.channel.permissionsOf(bot.user).hasPermission("manageMessages")) {
+      bot.sendMessage(msg.channel, "I don't have permission to do that!");
+      return;
+    }
+    if (suffix.split(" ")[0] > 20 && msg.content != "force"){
+      bot.sendMessage(msg.channel, "I can't delete that much messages in safe-mode, add `force` to your message to force me to delete.");
+      return;
+    }
+    if (suffix.split(" ")[0] > 100){
+      bot.sendMessage(msg.channel, "The maximum is 100, 20 without `force`.");
+      return;
+    }
+    if (suffix.split(" ")[0] == "force"){
+      bot.sendMessage(msg.channel, "Please put `force` at the end of your message.");
+      return;
+    }
+    Delete.purge(bot, msg, suffix);
+}};
+
+Commands.kappa = {
+  name: "kappa",
+  extendedhelp: "KappaKappaKappaKappaKappaKappaKappaKappaKappaKappa",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    bot.sendFile(msg.channel, "./images/kappa.png");
+    if (msg.channel.server){
+    var bot_permissions = msg.channel.permissionsOf(bot.user);
+    if (bot_permissions.hasPermission("manageMessages")) {
+      bot.deleteMessage(msg);
+      return;
+    } else {
+      bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
+    }}
+  }
+};
+
+Commands.whois = {
+  name: "whois",
+  help: "I'll get some information about the user you've mentioned.",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg){
+    var UserLevel = 0;
+    if (!msg.channel.server) {
+      bot.sendMessage(msg.author, "I can't do that in a DM, sorry.");
+      return;
+    }
+      if (msg.mentions.length === 0) {
+        bot.sendMessage(msg.channel, "Please mention the user that you want to get information of.");
+        return;
+      }
+      msg.mentions.map(function(user) {
+        Permissions.GetLevel((msg.channel.server.id + user.id), user.id, function(err, level) {
+          if (err) {
+            return;
+          } else {
+            UserLevel = level;
+          }
+        var msgArray = [];
+        if (user.avatarURL === null) {
+          msgArray.push("Requested user: `" + user.username + "`");
+          msgArray.push("ID: `" + user.id + "`");
+          msgArray.push("Status: `" + user.status + "`");
+          msgArray.push("Current access level: " + UserLevel);
+          bot.sendMessage(msg.channel, msgArray);
+          return;
+        } else {
+          msgArray.push("Requested user: `" + user.username + "`");
+          msgArray.push("ID: `" + user.id + "`");
+          msgArray.push("Status: `" + user.status + "`");
+          msgArray.push("Avatar: " + user.avatarURL);
+          msgArray.push("Current access level: " + UserLevel);
+          bot.sendMessage(msg.channel, msgArray);
+        }
+      });
+});}};
 
 Commands.setlevel = {
   name: "setlevel",
@@ -155,6 +393,98 @@ Commands.setowner = {
     });
 }};
 
+Commands.hello = {
+  name: "hello",
+  help: "I'll respond to you with hello along with a GitHub link, handy!",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg) {
+    bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me grow by contributing to my GitHub: https://github.com/SteamingMutt/DougleyBot");
+  }
+};
+
+Commands["server-info"] = {
+  name: "server-info",
+  help: "I'll tell you some information about the server and the channel you're currently in.",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    // if we're not in a PM, return some info about the channel
+    if (msg.channel.server) {
+      var msgArray = [];
+      msgArray.push("You are currently in " + msg.channel + " (id: " + msg.channel.id + ")");
+      msgArray.push("on server **" + msg.channel.server.name + "** (id: " + msg.channel.server.id + ") (region: " + msg.channel.server.region + ")");
+      msgArray.push("owned by " + msg.channel.server.owner + " (id: " + msg.channel.server.owner.id + ")");
+      if (msg.channel.topic) {
+        msgArray.push("The current topic is: " + msg.channel.topic);
+      }
+      bot.sendMessage(msg, msgArray);
+    } else {
+      bot.sendMessage(msg, "You can't do that in a DM, dummy!.");
+    }
+  }
+};
+
+Commands.birds = {
+  name: "birds",
+  help: "The best stale meme evahr, IDST.",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg) {
+    var msgArray = [];
+    msgArray.push("https://www.youtube.com/watch?v=Kh0Y2hVe_bw");
+    msgArray.push("We just don't know");
+    bot.sendMessage(msg, msgArray);
+  }
+};
+
+Commands["join-server"] = {
+  name: "join-server",
+  help: "I'll join the server you've requested me to join, as long as the invite is valid and I'm not banned of already in the requested server.",
+  usage: "<bot-username> <instant-invite>",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    suffix = suffix.split(" ");
+    if (suffix[0] === bot.user.username) {
+      Logger.log("debug", bot.joinServer(suffix[1], function(error, server) {
+        Logger.log("debug", "callback: " + arguments);
+        if (error || !server) {
+          Logger.warn("Failed to join a server: " + error);
+          bot.sendMessage(msg.channel, "Something went wrong, try again.");
+        } else {
+          var msgArray = [];
+          msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server.");
+          msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.cmd_prefix + "help** to see what I can do!");
+          msgArray.push("If you don't want me here, you may use **" + ConfigFile.cmd_prefix + "leave** to ask me to leave.");
+          msgArray.push("By the way, to give "+ server.owner +" administrative permissions over me, use **" + ConfigFile.cmd_prefix + "setowner**");
+          bot.sendMessage(server.defaultChannel, msgArray);
+          msgArray = [];
+          msgArray.push("Hey " + server.owner.username + ", I've joined a server in which you're the founder.");
+          msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
+          msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.cmd_prefix + "leave` in the server I'm not welcome in.");
+          msgArray.push("If you do want me, use `" + ConfigFile.cmd_prefix + "help` to see what I can do.");
+          bot.sendMessage(server.owner, msgArray);
+          bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
+        }
+      }));
+    } else {
+      Logger.log("debug", "Ignoring join command meant for another bot.");
+    }
+  }
+};
+
+Commands.idle = {
+  name: "idle",
+  help: "This will change my status to idle.",
+  level: 4, // If an access level is set to 4 or higher, only the master user can use this
+  nsfw: false,
+  fn: function(bot, msg) {
+    bot.setStatusIdle();
+    Logger.log("debug", "My status has been changed to idle.");
+  }
+};
+
 Commands.meme = {
   name: "meme",
   help: "I'll create a meme with your suffixes!",
@@ -172,7 +502,7 @@ Commands.meme = {
       //CmdErrorLog.log("debug", arguments);
       bot.sendMessage(msg.channel, image);
       if (!msg.channel.server){return;}
-      Delete.command.fn(bot, msg);
+      Delete.command(bot, msg);
 });}};
 
 Commands.status = {
@@ -217,6 +547,24 @@ Commands.iff = {
     });
 }};
 
+Commands.gif = {
+  name: "gif",
+  help: "I will search Giphy for a gif matching your tags.",
+  usage: "<image tags>",
+  level: 0,
+  nsfw: false,
+  process: function(bot, msg, suffix) {
+    var tags = suffix.split(" ");
+    Giphy.get_gif(tags, function(id) {
+      if (typeof id !== "undefined") {
+        bot.sendMessage(msg.channel, "http://media.giphy.com/media/" + id + "/giphy.gif [Tags: " + (tags ? tags : "Random GIF") + "]");
+      } else {
+        bot.sendMessage(msg.channel, "Invalid tags, try something different. For example, something that exists [Tags: " + (tags ? tags : "Random GIF") + "]");
+      }
+    });
+  }
+};
+
 Commands.imglist = {
   name: "imglist",
   help: "Prints the contents of the images directory to the channel.",
@@ -237,6 +585,329 @@ Commands.imglist = {
       bot.sendMessage(msg.channel, imgArray);
     });
     }
+};
+
+Commands.stroke = {
+  name: "stroke",
+  help: "I'll stroke someones ego, how nice of me.",
+  usage: "[First name][, [Last name]]",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var name;
+    if (suffix) {
+      name = suffix.split(" ");
+      if (name.length === 1) {
+        name = ["", name];
+      }
+    } else {
+      name = ["Perpetu", "Cake"];
+    }
+    var request = require('request');
+    request('http://api.icndb.com/jokes/random?escape=javascript&firstName=' + name[0] + '&lastName=' + name[1], function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var joke = JSON.parse(body);
+        bot.sendMessage(msg.channel, joke.value.joke);
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.yomomma = {
+  name: "yomomma",
+  help: "I'll get a random yo momma joke for you.",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    request('http://api.yomomma.info/', function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var yomomma = JSON.parse(body);
+        bot.sendMessage(msg.channel, yomomma.joke);
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.advice = {
+  name: "advice",
+  help: "I'll give you some great advice, I'm just too kind.",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    request('http://api.adviceslip.com/advice', function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var advice = JSON.parse(body);
+        bot.sendMessage(msg.channel, advice.slip.advice);
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.yesno = {
+  name: "yesno",
+  help: "Ever wanted a gif displaying your (dis)agreement? Then look no further!",
+  usage: "optional: [force yes/no/maybe]",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    request('http://yesno.wtf/api/?force=' + suffix, function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var yesNo = JSON.parse(body);
+        bot.sendMessage(msg.channel, msg.sender + " " + yesNo.image);
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.urbandictionary = {
+  name: "urbandictionary",
+  help: "Every wanted to know what idiots on the internet thinks something means? Here ya go!",
+  usage: "[string]",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    request('http://api.urbandictionary.com/v0/define?term=' + suffix, function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var uD = JSON.parse(body);
+        if (uD.result_type !== "no_results") {
+          bot.sendMessage(msg.channel, suffix + ": " + uD.list[0].definition + ' "' + uD.list[0].example + '"');
+        } else {
+          bot.sendMessage(msg.channel, suffix + ": This is so screwed up, even Urban Dictionary doesn't have it in it's database");
+        }
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.fact = {
+  name: "fact",
+  help: "I'll give you some interresting facts!",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    var xml2js = require('xml2js');
+    request("http://www.fayd.org/api/fact.xml", function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        //Logger.log("debug", body)
+        xml2js.parseString(body, function(err, result) {
+          bot.sendMessage(msg.channel, result.facts.fact[0]);
+        });
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.xkcd = {
+  name: "xkcd",
+  help: "I'll get a XKCD comic for you, you can define a comic number and I'll fetch that one.",
+  usage: "[current, or comic number]",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    request('http://xkcd.com/info.0.json', function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var xkcdInfo = JSON.parse(body);
+        if (suffix) {
+          var isnum = /^\d+$/.test(suffix);
+          if (isnum) {
+            if ([suffix] < xkcdInfo.num) {
+              request('http://xkcd.com/' + suffix + '/info.0.json', function(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                  xkcdInfo = JSON.parse(body);
+                  bot.sendMessage(msg.channel, xkcdInfo.img);
+                } else {
+                  Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+                }
+              });
+            } else {
+              bot.sendMessage(msg.channel, "There are only " + xkcdInfo.num + " xkcd comics!");
+            }
+          } else {
+            bot.sendMessage(msg.channel, xkcdInfo.img);
+          }
+        } else {
+          var xkcdRandom = Math.floor(Math.random() * (xkcdInfo.num - 1)) + 1;
+          request('http://xkcd.com/' + xkcdRandom + '/info.0.json', function(error, response, body) {
+            if (!error && response.statusCode == 200) {
+              xkcdInfo = JSON.parse(body);
+              bot.sendMessage(msg.channel, xkcdInfo.img);
+            } else {
+              Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+            }
+          });
+        }
+
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.csgoprice = {
+  name: "csgoprice",
+  help: "I'll give you the price of a CS:GO skin.",
+  usage: '[weapon "AK-47"] [skin "Vulcan"] [[wear "Factory New"] [stattrak "(boolean)"]] Quotes are important!',
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    skinInfo = suffix.split('"');
+    var csgomarket = require('csgo-market');
+    csgomarket.getSinglePrice(skinInfo[1], skinInfo[3], skinInfo[5], skinInfo[7], function(err, skinData) {
+      if (err) {
+        Logger.log('error', err);
+        bot.sendMessage(msg.channel, "That skin is so super secret rare, it doesn't even exist!");
+      } else {
+        if (skinData.success === true) {
+          if (skinData.stattrak) {
+            skinData.stattrak = "Stattrak";
+          } else {
+            skinData.stattrak = "";
+          }
+          var msgArray = ["Weapon: " + skinData.wep + " " + skinData.skin + " " + skinData.wear + " " + skinData.stattrak, "Lowest Price: " + skinData.lowest_price, "Number Available: " + skinData.volume, "Median Price: " + skinData.median_price, ];
+          bot.sendMessage(msg.channel, msgArray);
+        }
+      }
+    });
+  }
+};
+
+Commands.dice = {
+  name: "dice",
+  help: "I'll roll some dice for you, handy!",
+  usage: "[numberofdice]d[sidesofdice]",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var dice;
+    if (suffix) {
+      dice = suffix;
+    } else {
+      dice = "d6";
+    }
+    var request = require('request');
+    request('https://rolz.org/api/?' + dice + '.json', function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var roll = JSON.parse(body);
+        bot.sendMessage(msg.channel, "Your " + roll.input + " resulted in " + roll.result + " " + roll.details);
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.fancyinsult = {
+  name: "fancyinsult",
+  help: "I'll insult your friends, in style.",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    request('http://quandyfactory.com/insult/json/', function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var fancyinsult = JSON.parse(body);
+        if (suffix === "") {
+          bot.sendMessage(msg.channel, fancyinsult.insult);
+          bot.deleteMessage(msg);
+        } else {
+          bot.sendMessage(msg.channel, suffix + ", " + fancyinsult.insult);
+          bot.deleteMessage(msg);
+        }
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.imdb = {
+  name: "imdb",
+  help: "I'll search through IMDb for a movie matching your given tags, and post my finds in the channel.",
+  usage: "[title]",
+  fn: function(bot, msg, suffix) {
+    if (suffix) {
+      var request = require('request');
+      request('http://api.myapifilms.com/imdb/title?format=json&title=' + suffix + '&token=' + ConfigFile.myapifilms_token, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+          var imdbInfo = JSON.parse(body);
+          imdbInfo = imdbInfo.data.movies[0];
+          if (imdbInfo) {
+            //Date snatching
+            var y = imdbInfo.releaseDate.substr(0, 4),
+              m = imdbInfo.releaseDate.substr(4, 2),
+              d = imdbInfo.releaseDate.substr(6, 2);
+            var msgArray = [imdbInfo.title, imdbInfo.plot, " ", "Released on: " + m + "/" + d + "/" + y, "Rated: " + imdbInfo.rated + imdbInfo.rating + "/10"];
+            var sendArray = [imdbInfo.urlIMDB, msgArray];
+            for (var i = 0; i < sendArray.length; i++) {
+              bot.sendMessage(msg.channel, sendArray[i]);
+            }
+          } else {
+            bot.sendMessage(msg.channel, "Search for " + suffix + " failed!");
+          }
+        } else {
+          Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+        }
+      });
+    } else {
+      bot.sendMessage(msg.channel, "Usage: !imdb [title]");
+    }
+  }
+};
+
+Commands["8ball"] = {
+  name: "8ball",
+  help: "I'll function as an magic 8 ball for a bit and anwser all of your questions! (So long as you enter the questions as suffixes.)",
+  usage: "<question>",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    request('https://8ball.delegator.com/magic/JSON/0', function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var eightBall = JSON.parse(body);
+        bot.sendMessage(msg.channel, eightBall.magic.answer + ", " + msg.sender);
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
+};
+
+Commands.catfacts = {
+  name: "catfacts",
+  help: "I'll give you some interresting facts about cats!",
+  level: 0,
+  nsfw: false,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    request('http://catfacts-api.appspot.com/api/facts', function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var catFact = JSON.parse(body);
+        bot.sendMessage(msg.channel, catFact.facts[0]);
+      } else {
+        Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    });
+  }
 };
 
 Commands.help = {
@@ -273,12 +944,13 @@ Commands.help = {
           msgArray.push("**Usage:** `" + ConfigFile.cmd_prefix + commando.name + "`");
         }
         msgArray.push("**Description:** " + commando.help); // Push the extendedhelp to the array.
-        if (commando.hasOwnProperty("adminOnly")) { // Push special message if command is restricted.
-          msgArray.push("**This command is restricted to admins.**");
+        if (commando.hasOwnProperty("nsfw")) { // Push special message if command is restricted.
+          msgArray.push("**This command is NSFW, so it's restricted to certain channels and DM's.**");
         }
         if (commando.hasOwnProperty("timeout")) { // Push special message if command has a cooldown
           msgArray.push("**This command has a cooldown of " + commando.timeout + " seconds.**");
         }
+        msgArray.push("**Needed access level:** " + commando.level); // Push the needed access level to the array
         if (suffix == "meme") { // If command requested is meme, print avalible meme's
           msgArray.push("");
           var str = "**Currently available memes:\n**";

@@ -5,19 +5,21 @@
     "imgflip_password": "Imgflip password",
     "cmd_prefix": "~",
     "log_chat": false,
+    "youtube_api_key": "Create one here: https://console.developers.google.com",
+    "google_custom_search": "https://github.com/SteamingMutt/DougleyBot/wiki/CSE",
     "permissions": {
-      "masterUser": "Not yet implemented",
-      "level1": "Not yet implemented",
-      "level2": "Not yet implemented",
-      "level3": "Not yet implemented"
+        "masterUser": "Master user Discord ID",
+        "level1": "Global level 1 user Discord ID",
+        "level2": "Global level 2 user Discord ID",
+        "level3": "Global level 3 user Discord ID"
     },
     "join_on_launch" : [
-      "https://discord.gg/0cFoiR5QVh4agupi",
-      "https://discord.gg/0cFoiR5QVh57Spqg"
+        "https://discord.gg/0cFoiR5QVh4agupi",
+        "https://discord.gg/0cFoiR5QVh57Spqg"
     ],
     "redis" : {
-      "host" : "localhost",
-      "port" : 6379
+        "host" : "localhost",
+        "port" : 6379
     },
     "image_folder": "./images",
     "music_folder": "./music"

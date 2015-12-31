@@ -8,8 +8,6 @@ var ChatLogger = require("./runtime/logger.js").ChatLog;
 var Commands = require("./runtime/commands.js").Commands;
 var Permissions = require("./runtime/permissions.js");
 var VersionChecker = require("./runtime/versionchecker.js");
-var isAllowed;
-var NSFWAllowed;
 
 // Error logger
 bot.on("error", function(error) {
@@ -52,14 +50,19 @@ bot.on("message", function(msg) {
     var chunks = step.split(" ");
     var command = chunks[0];
     var suffix = msg.content.substring(command.length + 2);
+    if (command === "help"){
+      Commands.help.fn(bot, msg, suffix);
+      return;
+    }
     if (Commands[command]) {
-      Permissions.GetLevel((msg.author.id + msg.channel.server.id), msg.author.id, function (err, level){
+      if (msg.channel.server) {
+        Permissions.GetLevel((msg.author.id + msg.channel.server.id), msg.author.id, function (err, level){
         if (err){
           Logger.debug("An error occured!");
           return;
         }
         if (level >= Commands[command].level){
-          if (!Commands[command].nsfw || !msg.channel.server){
+          if (!Commands[command].nsfw){
             Commands[command].fn(bot, msg, suffix);
             return;
           } else {
@@ -80,9 +83,21 @@ bot.on("message", function(msg) {
               return;
             }
           });
-        }
+        } else {
+          Permissions.GetLevel(0, msg.author.id, function (err, level){ // Value of 0 is acting as a placeholder, because in DM's. only global permissions apply.
+          if (err){
+            Logger.debug("An error occured!");
+            return;
+          }
+          if (level >= Commands[command].level){
+              Commands[command].fn(bot, msg, suffix);
+              return;
+            } else {
+              bot.sendMessage(msg.channel, "Only global permissions apply in DM's, your server specific permissions do nothing here!");
+            }
+        });
       }
-});
+}}});
 
 // Initial functions
 function init() {

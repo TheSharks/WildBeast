@@ -13,9 +13,13 @@
   "dependencies": {
     "discord.js": "^5.0.0",
     "winston": "^1.1.1",
+    "cleverbot-node": "0.2.x",
     "request": "^2.61.0",
     "ws": "^0.8.0",
+    "xml2js": "*",
     "imgflipper": "*",
+    "csgo-market": "*",
+    "youtube-node": "1.2.x",
     "redis": "*"
   },
   "main": "DougBot.js"
