@@ -3,7 +3,7 @@
     "password" : "Password from the bot's Discord account",
     "imgflip_username": "Imgflip username",
     "imgflip_password": "Imgflip password",
-    "cmd_prefix": "~",
+    "cmd_prefix": "++",
     "log_chat": false,
     "youtube_api_key": "Create one here: https://console.developers.google.com",
     "google_custom_search": "https://github.com/SteamingMutt/DougleyBot/wiki/CSE",

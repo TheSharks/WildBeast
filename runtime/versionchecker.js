@@ -14,11 +14,12 @@ exports.getCurrentVersion	= function() { return version.join("."); };
 exports.getCurrentMajor		= function() { return version[0]; };
 exports.getCurrentMinor		= function() { return version[1]; };
 exports.getCurrentPatch		= function() { return version[2]; };
+exports.getCurrentBeta		= function() { return version[3]; };
 
 exports.getLatestVersion = function(callback) {
 
 	// fetch latest version number from GitHub
-	Request("https://raw.githubusercontent.com/SteamingMutt/DougleyBot/master/package.json", function (error, response, body) {
+	Request("https://raw.githubusercontent.com/SteamingMutt/DougleyBot2.0/master/package.json", function (error, response, body) {
 
 		if (error) { return callback(error, null); } // error handle
 
@@ -55,6 +56,13 @@ exports.getLatestPatch = function(callback) {
 	});
 };
 
+exports.getLatestBeta = function(callback) {
+	this.getLatest(function(err, latest) {
+		if (err) { return callback(err, null); } // error handle
+		return callback(null, parseInt(latest.split("-")[0]));
+	});
+};
+
 // ========================================================================
 // Version Checking
 // ========================================================================
@@ -74,6 +82,7 @@ exports.getStatus = function(callback) {
 		var majorDiff = parseInt(latest[0]) - parseInt(version[0]);
 		var minorDiff = parseInt(latest[1]) - parseInt(version[1]);
 		var patchDiff = parseInt(latest[2]) - parseInt(version[2]);
+		var betaDiff  = parseInt(latest[3]) - parseInt(version[3]);
 
 		// check for major updates
 		if (majorDiff < 0) {
@@ -94,6 +103,12 @@ exports.getStatus = function(callback) {
 			return callback(null, "Bot is " + Math.abs(patchDiff) + " patch versions ahead! (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
 		} else if (patchDiff > 0) {
 			return callback(null, "Bot is " + Math.abs(patchDiff) + " patch versions behind. (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
+		}
+
+		if (betaDiff < 0) {
+			return callback(null, "Bot is " + Math.abs(betaDiff) + " beta versions ahead! (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
+		} else if (betaDiff > 0) {
+			return callback(null, "Bot is " + Math.abs(betaDiff) + " beta versions behind. (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
 		}
 
 		// up to date :)

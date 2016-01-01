@@ -44,60 +44,62 @@ bot.on("message", function(msg) {
   if (msg.author.equals(bot.user)) {
     return;
   }
-  if (msg.content.charAt(0) === ConfigFile.cmd_prefix) {
-    Logger.info("Executing <" + msg.content + "> from " + msg.author.username);
-    var step = msg.content.substr(1);
-    var chunks = step.split(" ");
-    var command = chunks[0];
-    var suffix = msg.content.substring(command.length + 2);
-    if (command === "help"){
-      Commands.help.fn(bot, msg, suffix);
-      return;
-    }
-    if (Commands[command]) {
-      if (msg.channel.server) {
-        Permissions.GetLevel((msg.author.id + msg.channel.server.id), msg.author.id, function (err, level){
-        if (err){
-          Logger.debug("An error occured!");
-          return;
-        }
-        if (level >= Commands[command].level){
-          if (!Commands[command].nsfw){
-            Commands[command].fn(bot, msg, suffix);
-            return;
-          } else {
-            Permissions.GetNSFW(msg.channel, function (err, reply){
-              if (err){
-                Logger.debug("Got an error! <" + err + ">");
-                bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
-                return;
-              }
-              if (reply === "on"){
-                Commands[command].fn(bot, msg, suffix);
-                return;
-              } else {
-                bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
-          }});}
-        } else {
-              bot.sendMessage(msg.channel, "You don't have permission to use this command!");
-              return;
-            }
-          });
-        } else {
-          Permissions.GetLevel(0, msg.author.id, function (err, level){ // Value of 0 is acting as a placeholder, because in DM's. only global permissions apply.
+  var prefix = ConfigFile.cmd_prefix.split("");
+  if (msg.content.charAt(0) === prefix[0]) {
+    if (msg.content.charAt(1) === prefix[1] ){
+      Logger.info("Executing <" + msg.content + "> from " + msg.author.username);
+      var step = msg.content.substr(2);
+      var chunks = step.split(" ");
+      var command = chunks[0];
+      var suffix = msg.content.substring(command.length + 2);
+      if (command === "help"){
+        Commands.help.fn(bot, msg, suffix);
+        return;
+      }
+      if (Commands[command]) {
+        if (msg.channel.server) {
+          Permissions.GetLevel((msg.author.id + msg.channel.server.id), msg.author.id, function (err, level){
           if (err){
             Logger.debug("An error occured!");
             return;
           }
           if (level >= Commands[command].level){
+            if (!Commands[command].nsfw){
               Commands[command].fn(bot, msg, suffix);
               return;
             } else {
-              bot.sendMessage(msg.channel, "Only global permissions apply in DM's, your server specific permissions do nothing here!");
+              Permissions.GetNSFW(msg.channel, function (err, reply){
+                if (err){
+                  Logger.debug("Got an error! <" + err + ">");
+                  bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
+                  return;
+                }
+                if (reply === "on"){
+                  Commands[command].fn(bot, msg, suffix);
+                  return;
+                } else {
+                  bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
+            }});}
+          } else {
+                bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+                return;
+              }
+            });
+          } else {
+            Permissions.GetLevel(0, msg.author.id, function (err, level){ // Value of 0 is acting as a placeholder, because in DM's. only global permissions apply.
+            if (err){
+              Logger.debug("An error occured!");
+              return;
             }
-        });
-      }
-}}});
+            if (level >= Commands[command].level){
+                Commands[command].fn(bot, msg, suffix);
+                return;
+              } else {
+                bot.sendMessage(msg.channel, "Only global permissions apply in DM's, your server specific permissions do nothing here!");
+              }
+          });
+        }
+  }}}});
 
 // Initial functions
 function init() {

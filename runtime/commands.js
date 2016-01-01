@@ -1,5 +1,3 @@
-var Discord = require("discord.js");
-var bot = new Discord.Client();
 var ConfigFile = require("../config.json");
 var Logger = require("./logger.js").Logger;
 var Permissions = require("./permissions.js");
@@ -10,6 +8,7 @@ var Cleverbot = require('cleverbot-node');
 var cleverbot = new Cleverbot();
 var yt = require("./youtube_plugin");
 var youtube_plugin = new yt();
+var version = require("../package.json").version;
 
 var Commands = [];
 
@@ -20,6 +19,19 @@ Commands.ping = {
   nsfw: false,
   fn: function(bot, msg){
     bot.sendMessage(msg.channel, "Pong!");
+}};
+
+Commands.info = {
+  name: "info",
+  help: "I'll print some information about me.",
+  level: 0,
+  nsfw: false,
+fn: function(bot, msg){
+  var msgArray = [];
+  msgArray.push("**DougleyBot version " + version + "**");
+  msgArray.push("Using latest *Discord.js* version by *hydrabolt*.");
+  msgArray.push("Made by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
+  bot.sendMessage(msg.channel, msgArray);
 }};
 
 Commands.cleverbot = {
