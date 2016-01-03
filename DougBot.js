@@ -51,7 +51,7 @@ bot.on("message", function(msg) {
       var step = msg.content.substr(2);
       var chunks = step.split(" ");
       var command = chunks[0];
-      var suffix = msg.content.substring(command.length + 2);
+      var suffix = msg.content.substring(command.length + 3);
       if (command === "help"){
         Commands.help.fn(bot, msg, suffix);
         return;

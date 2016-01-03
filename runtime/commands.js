@@ -2,13 +2,13 @@ var ConfigFile = require("../config.json");
 var Logger = require("./logger.js").Logger;
 var Permissions = require("./permissions.js");
 var imgDirectory = require("../config.json").image_folder;
-var Delete = require("./deletion.js");
 var Giphy = require("./giphy.js");
 var Cleverbot = require('cleverbot-node');
 var cleverbot = new Cleverbot();
 var yt = require("./youtube_plugin");
 var youtube_plugin = new yt();
 var version = require("../package.json").version;
+var unirest = require('unirest');
 
 var Commands = [];
 
@@ -16,22 +16,55 @@ Commands.ping = {
   name: "ping",
   help: "I'll reply to you with pong!",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg){
     bot.sendMessage(msg.channel, "Pong!");
 }};
+
+Commands.fortunecow = {
+  name: "fortunecow",
+  help: "I'll get a random fortunecow!",
+  level: 0,
+  fn: function(bot, msg){
+    bot.sendMessage(msg.channel, "On it!");
+    unirest.get("https://thibaultcha-fortunecow-v1.p.mashape.com/random")
+    .header("X-Mashape-Key", ConfigFile.mashape_key)
+    .header("Accept", "text/plain")
+    .end(function (result) {
+      bot.sendMessage(msg.channel, "```" + result.body + "```");
+});}};
+
+Commands.leetspeak = {
+  name: "leetspeak",
+  help: "1'Ll 3nc0D3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
+  level: 0,
+  fn: function(bot, msg, suffix){
+    var leetspeak = require("leetspeak");
+    var thing = leetspeak(suffix);
+    bot.sendMessage(msg.channel, thing);
+}};
+
+Commands.randomcat = {
+  name: "randomcat",
+  help: "I'll get a random cat image for you!",
+  level: 0,
+  fn: function(bot, msg, suffix){
+    unirest.get("https://nijikokun-random-cats.p.mashape.com/random")
+    .header("X-Mashape-Key", ConfigFile.mashape_key)
+    .header("Accept", "application/json")
+    .end(function (result) {
+      bot.sendMessage(msg.channel, result.body.source);
+});}};
 
 Commands.info = {
   name: "info",
   help: "I'll print some information about me.",
   level: 0,
-  nsfw: false,
-fn: function(bot, msg){
-  var msgArray = [];
-  msgArray.push("**DougleyBot version " + version + "**");
-  msgArray.push("Using latest *Discord.js* version by *hydrabolt*.");
-  msgArray.push("Made by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
-  bot.sendMessage(msg.channel, msgArray);
+  fn: function(bot, msg){
+    var msgArray = [];
+    msgArray.push("**DougleyBot version " + version + "**");
+    msgArray.push("Using latest *Discord.js* version by *hydrabolt*.");
+    msgArray.push("Made by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
+    bot.sendMessage(msg.channel, msgArray);
 }};
 
 Commands.cleverbot = {
@@ -39,7 +72,6 @@ Commands.cleverbot = {
   help: "I'll act as Cleverbot when you execute this command, remember to enter a message as suffix.",
   usage: "<message>",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     Cleverbot.prepare(function() {
       bot.startTyping(msg.channel);
@@ -55,8 +87,7 @@ Commands.leave = {
   name: "leave",
   help: "I'll leave the server in which the command is executed, you'll need the *Manage server* permission in your role to use this command.",
   level: 3,
-  nsfw: false,
-  process: function(bot, msg, suffix) {
+  fn: function(bot, msg, suffix) {
     if (msg.channel.server) {
         bot.sendMessage(msg.channel, "Alright, see ya!");
         bot.leaveServer(msg.channel.server);
@@ -74,7 +105,6 @@ Commands.say = {
   help: "I'll echo the suffix of the command to the channel and, if I have sufficient permissions, deletes the command.",
   usage: "<text>",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     if (suffix.search("!say") === -1) {
         bot.sendMessage(msg.channel, suffix);
@@ -96,7 +126,6 @@ Commands.online = {
   name: "online",
   help: "I'll change my status to online.",
   level: 4, // If an access level is set to 4 or higher, only the master user can use this
-  nsfw: false,
   fn: function(bot, msg) {
     bot.setStatusOnline();
     Logger.log("debug", "My status has been changed to online.");
@@ -107,7 +136,6 @@ Commands.killswitch = {
   name: "killswitch",
   help: "This will instantly terminate all of the running instances of the bot without restarting.",
   level: 4, // If an access level is set to 4 or higher, only the master user can use this
-  nsfw: false,
   fn: function(bot, msg) {
       bot.sendMessage(msg.channel, "An admin has requested to kill all instances of DougleyBot, exiting...");
       bot.logout();
@@ -121,7 +149,6 @@ Commands.image = {
   help: "I'll search teh interwebz for a picture matching your tags.",
   usage: "<image tags>",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     if(!ConfigFile || !ConfigFile.youtube_api_key || !ConfigFile.google_custom_search){
           bot.sendMessage(msg.channel, "Image search requires both a YouTube API key and a Google Custom Search key!");
@@ -158,8 +185,7 @@ Commands.pullanddeploy = {
   name: "pullanddeploy",
   help: "I'll check if my code is up-to-date with the code from <@107904023901777920>, and restart. **Please note that this does NOT work on Windows!**",
   level: 4, // If an access level is set to 4 or higher, only the master user can use this
-  nsfw: false,
-  process: function(bot, msg, suffix) {
+  fn: function(bot, msg, suffix) {
     bot.sendMessage(msg.channel, "Fetching updates...", function(error, sentMsg) {
       Logger.log("info", "Updating...");
       var spawn = require('child_process').spawn;
@@ -204,7 +230,6 @@ Commands.youtube = {
   help: "I'll search YouTube for a video matching your given tags.",
   usage: "<video tags>",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     youtube_plugin.respond(suffix, msg.channel, bot);
   }
@@ -214,7 +239,6 @@ Commands.devs = {
   name: "devs",
   help: "This will print the Discord ID's from the developers of DougleyBot to the channel.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg) {
     bot.sendMessage(msg.channel, "Made with love by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
   }
@@ -222,11 +246,10 @@ Commands.devs = {
 
 Commands.purge = {
   name: "purge",
+  help: "I'll delete a certain ammount of messages.",
   usage: "<number-of-messages-to-delete> [force]",
-  extendedhelp: "I'll delete a certain ammount of messages.",
   level: 2,
-  nsfw: false,
-  process: function(bot, msg, suffix) {
+  fn: function(bot, msg, suffix) {
     if (!msg.channel.server) {
       bot.sendMessage(msg.channel, "You can't do that in a DM, dummy!");
       return;
@@ -255,14 +278,31 @@ Commands.purge = {
       bot.sendMessage(msg.channel, "Please put `force` at the end of your message.");
       return;
     }
-    Delete.purge(bot, msg, suffix);
-}};
+    bot.getChannelLogs(msg.channel, suffix.split(" ")[0], function(error, messages){
+      if (error){
+        bot.sendMessage(msg.channel, "Something went wrong while fetching logs.");
+        return;
+      } else {
+        Logger.info("Beginning purge...");
+        var todo = messages.length,
+        delcount = 0;
+        for (msg of messages){
+          bot.deleteMessage(msg);
+          todo--;
+          delcount++;
+        if (todo === 0){
+          bot.sendMessage(msg.channel, "Done! Deleted " + delcount + " messages.");
+          Logger.info("Ending purge, deleted " + delcount + " messages.");
+          return;
+          }}
+        }
+      }
+  );}};
 
 Commands.kappa = {
   name: "kappa",
   extendedhelp: "KappaKappaKappaKappaKappaKappaKappaKappaKappaKappa",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     bot.sendFile(msg.channel, "./images/kappa.png");
     if (msg.channel.server){
@@ -280,7 +320,6 @@ Commands.whois = {
   name: "whois",
   help: "I'll get some information about the user you've mentioned.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg){
     var UserLevel = 0;
     if (!msg.channel.server) {
@@ -321,7 +360,6 @@ Commands.setlevel = {
   name: "setlevel",
   help: "This changes the permission level of an user.",
   level: 3,
-  nsfw: false,
   fn: function(bot, msg, suffix){
 		if (!msg.channel.server) {
 			bot.sendMessage(msg.channel, "I can't do that in a PM!");
@@ -361,7 +399,6 @@ Commands.setnsfw = {
   help: "This changes if the channel allows NSFW commands.",
   usage: "<on | off>",
   level: 3,
-  nsfw: false,
   fn: function(bot, msg, suffix){
 		if (!msg.channel.server) {
 			bot.sendMessage(msg.channel, "NSFW commands are always allowed in DM's.");
@@ -389,7 +426,6 @@ Commands.setowner = {
   name: "setowner",
   help: "This will set the owner of the current server to level 3.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg){
     if (!msg.channel.server){
       bot.sendMessage(msg.channel, "You need to execute this command in a server, dummy!");
@@ -409,9 +445,8 @@ Commands.hello = {
   name: "hello",
   help: "I'll respond to you with hello along with a GitHub link, handy!",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg) {
-    bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me grow by contributing to my GitHub: https://github.com/SteamingMutt/DougleyBot");
+    bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me grow by contributing to my GitHub: https://github.com/SteamingMutt/DougleyBot2.0");
   }
 };
 
@@ -419,7 +454,6 @@ Commands["server-info"] = {
   name: "server-info",
   help: "I'll tell you some information about the server and the channel you're currently in.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     // if we're not in a PM, return some info about the channel
     if (msg.channel.server) {
@@ -441,7 +475,6 @@ Commands.birds = {
   name: "birds",
   help: "The best stale meme evahr, IDST.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg) {
     var msgArray = [];
     msgArray.push("https://www.youtube.com/watch?v=Kh0Y2hVe_bw");
@@ -455,7 +488,6 @@ Commands["join-server"] = {
   help: "I'll join the server you've requested me to join, as long as the invite is valid and I'm not banned of already in the requested server.",
   usage: "<bot-username> <instant-invite>",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     suffix = suffix.split(" ");
     if (suffix[0] === bot.user.username) {
@@ -490,7 +522,6 @@ Commands.idle = {
   name: "idle",
   help: "This will change my status to idle.",
   level: 4, // If an access level is set to 4 or higher, only the master user can use this
-  nsfw: false,
   fn: function(bot, msg) {
     bot.setStatusIdle();
     Logger.log("debug", "My status has been changed to idle.");
@@ -502,7 +533,6 @@ Commands.meme = {
   help: "I'll create a meme with your suffixes!",
   usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix){
     var tags = msg.content.split('"');
     var memetype = tags[0].split(" ")[1];
@@ -514,14 +544,44 @@ Commands.meme = {
       //CmdErrorLog.log("debug", arguments);
       bot.sendMessage(msg.channel, image);
       if (!msg.channel.server){return;}
-      Delete.command(bot, msg);
+      var bot_permissions = msg.channel.permissionsOf(bot.user);
+      if (bot_permissions.hasPermission("manageMessages")) {
+        bot.deleteMessage(msg);
+        return;
+      } else {
+        bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
+      }
 });}};
+
+Commands.rule34 = {
+  name: "rule34",
+  help: "Rule#34 : If it exists there is porn of it. If not, start uploading.",
+  level: 0,
+  nsfw: true,
+  fn: function(bot, msg, suffix) {
+    var request = require('request');
+    var xml2js = require('xml2js');
+    var url = "http://rule34.xxx/index.php?page=dapi&s=post&limit=1&q=index&tags="+suffix;
+    request(url, function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+        xml2js.parseString(body, function (err, result) {
+          var util = require('util');
+          var fuckme = util.inspect(result.posts,false,null).split("'");
+          bot.sendMessage(msg.channel,fuckme[13]);
+        }
+      );
+      } else {
+        Logger.error("Got an error: ", error, ", status code: ", response.statusCode);
+      }
+    }
+  );
+ }
+};
 
 Commands.status = {
   name: "status",
   help: "I'll get some info about me, like uptime and currently connected servers.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg){
     var msgArray = [];
     msgArray.push("Hello, I'm " + bot.user + ", nice to meet you!");
@@ -535,7 +595,6 @@ Commands.iff = {
   help: "''**I**mage **F**rom **F**ile'', I'll get a image from the image folder for you and upload it to the channel.",
   usage: "<image>",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix){
     var fs = require("fs");
     var path = require("path");
@@ -552,7 +611,13 @@ Commands.iff = {
       if (imgArray.indexOf(suffix) !== -1) {
         bot.sendFile(msg.channel, "./images/" + suffix);
         if (!msg.channel.server){return;}
-        Delete.command.fn(bot, msg);
+        var bot_permissions = msg.channel.permissionsOf(bot.user);
+        if (bot_permissions.hasPermission("manageMessages")) {
+          bot.deleteMessage(msg);
+          return;
+        } else {
+          bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
+        }
         } else {
           bot.sendMessage(msg.channel, "*Invalid input!*");
         }
@@ -564,8 +629,7 @@ Commands.gif = {
   help: "I will search Giphy for a gif matching your tags.",
   usage: "<image tags>",
   level: 0,
-  nsfw: false,
-  process: function(bot, msg, suffix) {
+  fn: function(bot, msg, suffix) {
     var tags = suffix.split(" ");
     Giphy.get_gif(tags, function(id) {
       if (typeof id !== "undefined") {
@@ -581,7 +645,6 @@ Commands.imglist = {
   name: "imglist",
   help: "Prints the contents of the images directory to the channel.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg){
     var fs = require("fs");
     var path = require("path");
@@ -604,7 +667,6 @@ Commands.stroke = {
   help: "I'll stroke someones ego, how nice of me.",
   usage: "[First name][, [Last name]]",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var name;
     if (suffix) {
@@ -631,7 +693,6 @@ Commands.yomomma = {
   name: "yomomma",
   help: "I'll get a random yo momma joke for you.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var request = require('request');
     request('http://api.yomomma.info/', function(error, response, body) {
@@ -649,7 +710,6 @@ Commands.advice = {
   name: "advice",
   help: "I'll give you some great advice, I'm just too kind.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var request = require('request');
     request('http://api.adviceslip.com/advice', function(error, response, body) {
@@ -668,7 +728,6 @@ Commands.yesno = {
   help: "Ever wanted a gif displaying your (dis)agreement? Then look no further!",
   usage: "optional: [force yes/no/maybe]",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var request = require('request');
     request('http://yesno.wtf/api/?force=' + suffix, function(error, response, body) {
@@ -687,7 +746,6 @@ Commands.urbandictionary = {
   help: "Every wanted to know what idiots on the internet thinks something means? Here ya go!",
   usage: "[string]",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var request = require('request');
     request('http://api.urbandictionary.com/v0/define?term=' + suffix, function(error, response, body) {
@@ -709,7 +767,6 @@ Commands.fact = {
   name: "fact",
   help: "I'll give you some interresting facts!",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var request = require('request');
     var xml2js = require('xml2js');
@@ -731,7 +788,6 @@ Commands.xkcd = {
   help: "I'll get a XKCD comic for you, you can define a comic number and I'll fetch that one.",
   usage: "[current, or comic number]",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var request = require('request');
     request('http://xkcd.com/info.0.json', function(error, response, body) {
@@ -779,7 +835,6 @@ Commands.csgoprice = {
   help: "I'll give you the price of a CS:GO skin.",
   usage: '[weapon "AK-47"] [skin "Vulcan"] [[wear "Factory New"] [stattrak "(boolean)"]] Quotes are important!',
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     skinInfo = suffix.split('"');
     var csgomarket = require('csgo-market');
@@ -807,7 +862,6 @@ Commands.dice = {
   help: "I'll roll some dice for you, handy!",
   usage: "[numberofdice]d[sidesofdice]",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var dice;
     if (suffix) {
@@ -831,7 +885,6 @@ Commands.fancyinsult = {
   name: "fancyinsult",
   help: "I'll insult your friends, in style.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var request = require('request');
     request('http://quandyfactory.com/insult/json/', function(error, response, body) {
@@ -855,6 +908,7 @@ Commands.imdb = {
   name: "imdb",
   help: "I'll search through IMDb for a movie matching your given tags, and post my finds in the channel.",
   usage: "[title]",
+  level: 0,
   fn: function(bot, msg, suffix) {
     if (suffix) {
       var request = require('request');
@@ -890,7 +944,6 @@ Commands["8ball"] = {
   help: "I'll function as an magic 8 ball for a bit and anwser all of your questions! (So long as you enter the questions as suffixes.)",
   usage: "<question>",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var request = require('request');
     request('https://8ball.delegator.com/magic/JSON/0', function(error, response, body) {
@@ -908,7 +961,6 @@ Commands.catfacts = {
   name: "catfacts",
   help: "I'll give you some interresting facts about cats!",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix) {
     var request = require('request');
     request('http://catfacts-api.appspot.com/api/facts', function(error, response, body) {
@@ -926,7 +978,6 @@ Commands.help = {
   name: "help",
   help: "You're looking at it right now.",
   level: 0,
-  nsfw: false,
   fn: function(bot, msg, suffix){
     var msgArray = [];
     var commandnames = []; // Build a array of names from commands.

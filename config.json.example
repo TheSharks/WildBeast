@@ -7,6 +7,7 @@
     "log_chat": false,
     "youtube_api_key": "Create one here: https://console.developers.google.com",
     "google_custom_search": "https://github.com/SteamingMutt/DougleyBot/wiki/CSE",
+    "mashape_key": "https://market.mashape.com/dashboard",
     "permissions": {
         "masterUser": "Master user Discord ID",
         "level1": "Global level 1 user Discord ID",
