@@ -479,9 +479,10 @@ Commands.setowner = {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: SetOwner is being executed.");
     }
-    if (!msg.channel.server){
+    if (msg.channel.isPrivate){
       bot.sendMessage(msg.channel, "You need to execute this command in a server, dummy!");
-    }
+      return;
+    } else {
     Permissions.SetLevel((msg.channel.server.id + msg.channel.server.owner.id), 3, function (err, level){
       if (err){
         bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
@@ -491,7 +492,7 @@ Commands.setowner = {
         bot.sendMessage(msg.channel, "Okay! " + msg.channel.server.owner + " is now at level 3!");
       }
     });
-}};
+}}};
 
 Commands.hello = {
   name: "hello",
