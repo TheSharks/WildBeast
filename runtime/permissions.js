@@ -2,7 +2,11 @@ var ConfigFile = require("../config.json");
 var Redis = require("redis");
 var Logger = require("./logger.js").Logger;
 
-var RedisServer = Redis.createClient(ConfigFile.redis.port, ConfigFile.redis.host);
+if (ConfigFile.redis.url && !ConfigFile.redis.host) {
+  var RedisServer = Redis.createClient(ConfigFile.redis.url);
+} else {
+  var RedisServer = Redis.createClient(ConfigFile.redis.port, ConfigFile.redis.host);
+}
 
 exports.GetLevel = function(sum, user, callback){
   if (user === ConfigFile.permissions.masterUser){

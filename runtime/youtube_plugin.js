@@ -7,7 +7,7 @@ var ConfigFile = require("../config.json");
 function YoutubePlugin () {
 	this.RickrollUrl = 'http://www.youtube.com/watch?v=oHg5SJYRHA0';
 	this.youtube = new youtube_node();
-	this.youtube.setKey(ConfigFile.youtube_api_key);
+	this.youtube.setKey(ConfigFile.api_keys.google_key);
 }
 
 

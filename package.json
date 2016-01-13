@@ -1,6 +1,6 @@
 {
   "name": "DougleyBot",
-  "version": "2.0.0-beta.3",
+  "version": "2.0.0-beta.4",
   "description": "A Discord bot",
   "readme": "README.md",
   "maintainers": ["Perpetucake"],
@@ -22,6 +22,7 @@
     "csgo-market": "*",
     "unirest": "*",
     "youtube-node": "1.2.x",
+    "forever": "*",
     "redis": "*"
   },
   "main": "DougBot.js"

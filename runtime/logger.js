@@ -18,6 +18,34 @@ exports.ChatLog = new Winston.Logger({
   ]
 });
 
+exports.DebugModeLog = new Winston.Logger({
+  transports: [
+    new Winston.transports.DailyRotateFile({
+      handleExceptions: false,
+      name: 'file:debugmodelog',
+      filename: __dirname + '/../logs/debugmodelog',
+      datePattern: 'debugmodelog-dd-MM-yyyy.log',
+      formatter: function(args) { return args.message; },
+      level: 'debug',
+      json: false
+    })
+  ]
+});
+
+exports.VerboseModeLog = new Winston.Logger({
+  transports: [
+    new Winston.transports.DailyRotateFile({
+      handleExceptions: false,
+      name: 'file:verbosemodelog',
+      filename: __dirname + '/../logs/verbosemodelog',
+      datePattern: 'verbosemodelog-dd-MM-yyyy.log',
+      formatter: function(args) { return args.message; },
+      level: 'debug',
+      json: false
+    })
+  ]
+});
+
 // Command Error Logger
 
 exports.Logger = new Winston.Logger({

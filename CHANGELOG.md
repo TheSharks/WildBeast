@@ -1,3 +1,10 @@
+## 2.0.0-beta.4
+Fixed `myapifilms_token` not existing.  
+Fixed problems with `++setowner`.  
+Added `debug_mode` and `verbose_logging`. *(Note, only enable these on request of the devs!)*   
+Added a config value that'll change the way `++help` functions.  
+Updated the layout of `config.json`, **meaning that users need to remake their config files.**
+
 ## 2.0.0-beta.3
 Fixed `giphy.js` not having requires.  
 Fixed `suffix` not behaving accordingly.    

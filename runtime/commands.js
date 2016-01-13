@@ -17,6 +17,9 @@ Commands.ping = {
   help: "I'll reply to you with pong!",
   level: 0,
   fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Ping is being executed.");
+    }
     bot.sendMessage(msg.channel, "Pong!");
 }};
 
@@ -25,9 +28,12 @@ Commands.fortunecow = {
   help: "I'll get a random fortunecow!",
   level: 0,
   fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: FortuneCow is being executed.");
+    }
     bot.sendMessage(msg.channel, "On it!");
     unirest.get("https://thibaultcha-fortunecow-v1.p.mashape.com/random")
-    .header("X-Mashape-Key", ConfigFile.mashape_key)
+    .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
     .header("Accept", "text/plain")
     .end(function (result) {
       bot.sendMessage(msg.channel, "```" + result.body + "```");
@@ -38,6 +44,9 @@ Commands.leetspeak = {
   help: "1'Ll 3nc0D3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
   level: 0,
   fn: function(bot, msg, suffix){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Leetspeak is being executed.");
+    }
     var leetspeak = require("leetspeak");
     var thing = leetspeak(suffix);
     bot.sendMessage(msg.channel, thing);
@@ -48,8 +57,11 @@ Commands.randomcat = {
   help: "I'll get a random cat image for you!",
   level: 0,
   fn: function(bot, msg, suffix){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: RandomCat is being executed.");
+    }
     unirest.get("https://nijikokun-random-cats.p.mashape.com/random")
-    .header("X-Mashape-Key", ConfigFile.mashape_key)
+    .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
     .header("Accept", "application/json")
     .end(function (result) {
       bot.sendMessage(msg.channel, result.body.source);
@@ -60,6 +72,9 @@ Commands.info = {
   help: "I'll print some information about me.",
   level: 0,
   fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Info is being executed.");
+    }
     var msgArray = [];
     msgArray.push("**DougleyBot version " + version + "**");
     msgArray.push("Using latest *Discord.js* version by *hydrabolt*.");
@@ -73,6 +88,9 @@ Commands.cleverbot = {
   usage: "<message>",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Cleverbot is being executed.");
+    }
     Cleverbot.prepare(function() {
       bot.startTyping(msg.channel);
       cleverbot.write(suffix, function(response) {
@@ -88,6 +106,9 @@ Commands.leave = {
   help: "I'll leave the server in which the command is executed, you'll need the *Manage server* permission in your role to use this command.",
   level: 3,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Leave is being executed.");
+    }
     if (msg.channel.server) {
         bot.sendMessage(msg.channel, "Alright, see ya!");
         bot.leaveServer(msg.channel.server);
@@ -106,6 +127,9 @@ Commands.say = {
   usage: "<text>",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Say is being executed.");
+    }
     if (suffix.search("!say") === -1) {
         bot.sendMessage(msg.channel, suffix);
       if (msg.channel.server){
@@ -127,6 +151,9 @@ Commands.online = {
   help: "I'll change my status to online.",
   level: 4, // If an access level is set to 4 or higher, only the master user can use this
   fn: function(bot, msg) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Online is being executed.");
+    }
     bot.setStatusOnline();
     Logger.log("debug", "My status has been changed to online.");
   }
@@ -137,6 +164,9 @@ Commands.killswitch = {
   help: "This will instantly terminate all of the running instances of the bot without restarting.",
   level: 4, // If an access level is set to 4 or higher, only the master user can use this
   fn: function(bot, msg) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Killswitch is being executed.");
+    }
       bot.sendMessage(msg.channel, "An admin has requested to kill all instances of DougleyBot, exiting...");
       bot.logout();
       Logger.log("warn", "Disconnected via killswitch!");
@@ -150,14 +180,17 @@ Commands.image = {
   usage: "<image tags>",
   level: 0,
   fn: function(bot, msg, suffix) {
-    if(!ConfigFile || !ConfigFile.youtube_api_key || !ConfigFile.google_custom_search){
-          bot.sendMessage(msg.channel, "Image search requires both a YouTube API key and a Google Custom Search key!");
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Image is being executed.");
+    }
+    if(!ConfigFile || !ConfigFile.api_keys.google_key || !ConfigFile.api_keys.cse_key){
+          bot.sendMessage(msg.channel, "Image search requires both a Google API key and a CSE key!");
           return;
         }
         //gets us a random result in first 5 pages
         var page = 1 + Math.floor(Math.random() * 5) * 10; //we request 10 items
         var request = require("request");
-        request("https://www.googleapis.com/customsearch/v1?key=" + ConfigFile.youtube_api_key + "&cx=" + ConfigFile.google_custom_search + "&q=" + (suffix.replace(/\s/g, '+')) + "&searchType=image&alt=json&num=10&start="+page, function(err, res, body) {
+        request("https://www.googleapis.com/customsearch/v1?key=" + ConfigFile.api_keys.google_key + "&cx=" + ConfigFile.api_keys.cse_key + "&q=" + (suffix.replace(/\s/g, '+')) + "&searchType=image&alt=json&num=10&start="+page, function(err, res, body) {
           var data, error;
           try {
             data = JSON.parse(body);
@@ -186,6 +219,9 @@ Commands.pullanddeploy = {
   help: "I'll check if my code is up-to-date with the code from <@107904023901777920>, and restart. **Please note that this does NOT work on Windows!**",
   level: 4, // If an access level is set to 4 or higher, only the master user can use this
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: PullAndDeploy is being executed.");
+    }
     bot.sendMessage(msg.channel, "Fetching updates...", function(error, sentMsg) {
       Logger.log("info", "Updating...");
       var spawn = require('child_process').spawn;
@@ -231,6 +267,9 @@ Commands.youtube = {
   usage: "<video tags>",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: YouTube is being executed.");
+    }
     youtube_plugin.respond(suffix, msg.channel, bot);
   }
 };
@@ -240,6 +279,9 @@ Commands.devs = {
   help: "This will print the Discord ID's from the developers of DougleyBot to the channel.",
   level: 0,
   fn: function(bot, msg) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Devs is being executed.");
+    }
     bot.sendMessage(msg.channel, "Made with love by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
   }
 };
@@ -250,6 +292,9 @@ Commands.purge = {
   usage: "<number-of-messages-to-delete> [force]",
   level: 2,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Purge is being executed.");
+    }
     if (!msg.channel.server) {
       bot.sendMessage(msg.channel, "You can't do that in a DM, dummy!");
       return;
@@ -259,26 +304,18 @@ Commands.purge = {
       return;
     }
     if (!msg.channel.permissionsOf(msg.sender).hasPermission("manageMessages")) {
-      bot.sendMessage(msg.channel, "Sorry, your permissions doesn't allow that.");
+      bot.sendMessage(msg.channel, "Sorry, your role in this server does not have enough permissions.");
       return;
     }
     if (!msg.channel.permissionsOf(bot.user).hasPermission("manageMessages")) {
       bot.sendMessage(msg.channel, "I don't have permission to do that!");
       return;
     }
-    if (suffix.split(" ")[0] > 20 && msg.content != "force"){
-      bot.sendMessage(msg.channel, "I can't delete that much messages in safe-mode, add `force` to your message to force me to delete.");
+    if (suffix > 100){
+      bot.sendMessage(msg.channel, "The maximum is 100.");
       return;
     }
-    if (suffix.split(" ")[0] > 100){
-      bot.sendMessage(msg.channel, "The maximum is 100, 20 without `force`.");
-      return;
-    }
-    if (suffix.split(" ")[0] == "force"){
-      bot.sendMessage(msg.channel, "Please put `force` at the end of your message.");
-      return;
-    }
-    bot.getChannelLogs(msg.channel, suffix.split(" ")[0], function(error, messages){
+    bot.getChannelLogs(msg.channel, suffix, function(error, messages){
       if (error){
         bot.sendMessage(msg.channel, "Something went wrong while fetching logs.");
         return;
@@ -304,6 +341,9 @@ Commands.kappa = {
   extendedhelp: "KappaKappaKappaKappaKappaKappaKappaKappaKappaKappa",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Kappa is being executed.");
+    }
     bot.sendFile(msg.channel, "./images/kappa.png");
     if (msg.channel.server){
     var bot_permissions = msg.channel.permissionsOf(bot.user);
@@ -321,6 +361,9 @@ Commands.whois = {
   help: "I'll get some information about the user you've mentioned.",
   level: 0,
   fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: WhoIs is being executed.");
+    }
     var UserLevel = 0;
     if (!msg.channel.server) {
       bot.sendMessage(msg.author, "I can't do that in a DM, sorry.");
@@ -361,6 +404,9 @@ Commands.setlevel = {
   help: "This changes the permission level of an user.",
   level: 3,
   fn: function(bot, msg, suffix){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: SetLevel is being executed.");
+    }
 		if (!msg.channel.server) {
 			bot.sendMessage(msg.channel, "I can't do that in a PM!");
 			return;
@@ -400,6 +446,9 @@ Commands.setnsfw = {
   usage: "<on | off>",
   level: 3,
   fn: function(bot, msg, suffix){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: SetNSFW is being executed.");
+    }
 		if (!msg.channel.server) {
 			bot.sendMessage(msg.channel, "NSFW commands are always allowed in DM's.");
 			return;
@@ -427,6 +476,9 @@ Commands.setowner = {
   help: "This will set the owner of the current server to level 3.",
   level: 0,
   fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: SetOwner is being executed.");
+    }
     if (!msg.channel.server){
       bot.sendMessage(msg.channel, "You need to execute this command in a server, dummy!");
     }
@@ -446,6 +498,9 @@ Commands.hello = {
   help: "I'll respond to you with hello along with a GitHub link, handy!",
   level: 0,
   fn: function(bot, msg) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Hello is being executed.");
+    }
     bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me grow by contributing to my GitHub: https://github.com/SteamingMutt/DougleyBot2.0");
   }
 };
@@ -455,6 +510,9 @@ Commands["server-info"] = {
   help: "I'll tell you some information about the server and the channel you're currently in.",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Server-Info is being executed.");
+    }
     // if we're not in a PM, return some info about the channel
     if (msg.channel.server) {
       var msgArray = [];
@@ -476,6 +534,9 @@ Commands.birds = {
   help: "The best stale meme evahr, IDST.",
   level: 0,
   fn: function(bot, msg) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Birds is being executed.");
+    }
     var msgArray = [];
     msgArray.push("https://www.youtube.com/watch?v=Kh0Y2hVe_bw");
     msgArray.push("We just don't know");
@@ -489,6 +550,9 @@ Commands["join-server"] = {
   usage: "<bot-username> <instant-invite>",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Join-Server is being executed.");
+    }
     suffix = suffix.split(" ");
     if (suffix[0] === bot.user.username) {
       Logger.log("debug", bot.joinServer(suffix[1], function(error, server) {
@@ -499,15 +563,15 @@ Commands["join-server"] = {
         } else {
           var msgArray = [];
           msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server.");
-          msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.cmd_prefix + "help** to see what I can do!");
-          msgArray.push("If you don't want me here, you may use **" + ConfigFile.cmd_prefix + "leave** to ask me to leave.");
-          msgArray.push("By the way, to give "+ server.owner +" administrative permissions over me, use **" + ConfigFile.cmd_prefix + "setowner**");
+          msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
+          msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
+          msgArray.push("By the way, to give "+ server.owner +" administrative permissions over me, use **" + ConfigFile.bot_settings.cmd_prefix + "setowner**");
           bot.sendMessage(server.defaultChannel, msgArray);
           msgArray = [];
           msgArray.push("Hey " + server.owner.username + ", I've joined a server in which you're the founder.");
           msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
-          msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.cmd_prefix + "leave` in the server I'm not welcome in.");
-          msgArray.push("If you do want me, use `" + ConfigFile.cmd_prefix + "help` to see what I can do.");
+          msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
+          msgArray.push("If you do want me, use `" +ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
           bot.sendMessage(server.owner, msgArray);
           bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
         }
@@ -523,6 +587,9 @@ Commands.idle = {
   help: "This will change my status to idle.",
   level: 4, // If an access level is set to 4 or higher, only the master user can use this
   fn: function(bot, msg) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Idle is being executed.");
+    }
     bot.setStatusIdle();
     Logger.log("debug", "My status has been changed to idle.");
   }
@@ -534,12 +601,15 @@ Commands.meme = {
   usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
   level: 0,
   fn: function(bot, msg, suffix){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Meme is being executed.");
+    }
     var tags = msg.content.split('"');
     var memetype = tags[0].split(" ")[1];
     var meme = require("./memes.json");
     //bot.sendMessage(msg.channel,tags);
     var Imgflipper = require("imgflipper");
-    var imgflipper = new Imgflipper(ConfigFile.imgflip_username, ConfigFile.imgflip_password);
+    var imgflipper = new Imgflipper(ConfigFile.imgflip.username, ConfigFile.imgflip.password);
     imgflipper.generateMeme(meme[memetype], tags[1] ? tags[1] : "", tags[3] ? tags[3] : "", function(err, image) {
       //CmdErrorLog.log("debug", arguments);
       bot.sendMessage(msg.channel, image);
@@ -559,6 +629,9 @@ Commands.rule34 = {
   level: 0,
   nsfw: true,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Rule 34 is being executed.");
+    }
     var request = require('request');
     var xml2js = require('xml2js');
     var url = "http://rule34.xxx/index.php?page=dapi&s=post&limit=1&q=index&tags="+suffix;
@@ -583,6 +656,9 @@ Commands.status = {
   help: "I'll get some info about me, like uptime and currently connected servers.",
   level: 0,
   fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Status is being executed.");
+    }
     var msgArray = [];
     msgArray.push("Hello, I'm " + bot.user + ", nice to meet you!");
     msgArray.push("I'm used in " + bot.servers.length + " servers, and in " + bot.channels.length + " channels.");
@@ -596,6 +672,9 @@ Commands.iff = {
   usage: "<image>",
   level: 0,
   fn: function(bot, msg, suffix){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: IFF is being executed.");
+    }
     var fs = require("fs");
     var path = require("path");
     var ext = [".jpg", ".jpeg", ".gif", ".png"];
@@ -630,6 +709,9 @@ Commands.gif = {
   usage: "<image tags>",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Gif is being executed.");
+    }
     var tags = suffix.split(" ");
     Giphy.get_gif(tags, function(id) {
       if (typeof id !== "undefined") {
@@ -646,6 +728,9 @@ Commands.imglist = {
   help: "Prints the contents of the images directory to the channel.",
   level: 0,
   fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: ImgList is being executed.");
+    }
     var fs = require("fs");
     var path = require("path");
     var imgArray = [];
@@ -668,6 +753,9 @@ Commands.stroke = {
   usage: "[First name][, [Last name]]",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Stroke is being executed.");
+    }
     var name;
     if (suffix) {
       name = suffix.split(" ");
@@ -694,6 +782,9 @@ Commands.yomomma = {
   help: "I'll get a random yo momma joke for you.",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: YoMomma is being executed.");
+    }
     var request = require('request');
     request('http://api.yomomma.info/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
@@ -711,6 +802,9 @@ Commands.advice = {
   help: "I'll give you some great advice, I'm just too kind.",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Advice is being executed.");
+    }
     var request = require('request');
     request('http://api.adviceslip.com/advice', function(error, response, body) {
       if (!error && response.statusCode == 200) {
@@ -729,6 +823,9 @@ Commands.yesno = {
   usage: "optional: [force yes/no/maybe]",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: YesNo is being executed.");
+    }
     var request = require('request');
     request('http://yesno.wtf/api/?force=' + suffix, function(error, response, body) {
       if (!error && response.statusCode == 200) {
@@ -747,6 +844,9 @@ Commands.urbandictionary = {
   usage: "[string]",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: UrbanDictionary is being executed.");
+    }
     var request = require('request');
     request('http://api.urbandictionary.com/v0/define?term=' + suffix, function(error, response, body) {
       if (!error && response.statusCode == 200) {
@@ -768,6 +868,9 @@ Commands.fact = {
   help: "I'll give you some interresting facts!",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Fact is being executed.");
+    }
     var request = require('request');
     var xml2js = require('xml2js');
     request("http://www.fayd.org/api/fact.xml", function(error, response, body) {
@@ -789,6 +892,9 @@ Commands.xkcd = {
   usage: "[current, or comic number]",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: XKCD is being executed.");
+    }
     var request = require('request');
     request('http://xkcd.com/info.0.json', function(error, response, body) {
       if (!error && response.statusCode == 200) {
@@ -836,6 +942,9 @@ Commands.csgoprice = {
   usage: '[weapon "AK-47"] [skin "Vulcan"] [[wear "Factory New"] [stattrak "(boolean)"]] Quotes are important!',
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: CSGOPrice is being executed.");
+    }
     skinInfo = suffix.split('"');
     var csgomarket = require('csgo-market');
     csgomarket.getSinglePrice(skinInfo[1], skinInfo[3], skinInfo[5], skinInfo[7], function(err, skinData) {
@@ -863,6 +972,9 @@ Commands.dice = {
   usage: "[numberofdice]d[sidesofdice]",
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Dice is being executed.");
+    }
     var dice;
     if (suffix) {
       dice = suffix;
@@ -912,7 +1024,7 @@ Commands.imdb = {
   fn: function(bot, msg, suffix) {
     if (suffix) {
       var request = require('request');
-      request('http://api.myapifilms.com/imdb/title?format=json&title=' + suffix + '&token=' + ConfigFile.myapifilms_token, function(error, response, body) {
+      request('http://api.myapifilms.com/imdb/title?format=json&title=' + suffix + '&token=' + ConfigFile.api_keys.myapifilms_token, function(error, response, body) {
         if (!error && response.statusCode == 200) {
           var imdbInfo = JSON.parse(body);
           imdbInfo = imdbInfo.data.movies[0];
@@ -985,14 +1097,23 @@ Commands.help = {
       for (index in Commands) {
         commandnames.push(Commands[index].name);
       }
-      msgArray.push("These are the currently avalible commands, use `" + ConfigFile.cmd_prefix + "help <command_name>` to learn more about a specific command.");
+      msgArray.push("These are the currently avalible commands, use `" + ConfigFile.bot_settings.cmd_prefix + "help <command_name>` to learn more about a specific command.");
       msgArray.push("");
       msgArray.push(commandnames.join(", "));
       msgArray.push("");
       msgArray.push("If you have any questions, or if you don't get something, contact <@107904023901777920> or <@110147170740494336>");
-      bot.sendMessage(msg.author, msgArray);
-      if (msg.channel.server) {
-        bot.sendMessage(msg.channel, "Ok " + msg.author + ", I've send you a list of commands via DM.");
+      if (ConfigFile.bot_settings.help_mode === "private"){
+        bot.sendMessage(msg.author, msgArray);
+        Logger.debug("Send help via DM.");
+        if (msg.channel.server) {
+          bot.sendMessage(msg.channel, "Ok " + msg.author + ", I've send you a list of commands via DM.");
+        }
+      } else if (ConfigFile.bot_settings.help_mode === "channel") {
+        bot.sendMessage(msg.channel, msgArray);
+        Logger.debug("Send help to channel.");
+      } else {
+        Logger.error("Config File error! Help mode is incorrectly defined!");
+        bot.sendMessage(msg.channel, "Sorry, my owner didn't configure me correctly!");
       }
     }
     if (suffix) {
@@ -1002,9 +1123,9 @@ Commands.help = {
         msgArray.push("**Command:** `" + commando.name + "`"); // Push the name of the command to the array
         msgArray.push(""); // Leave a whiteline for readability
         if (commando.hasOwnProperty("usage")) { // Push special message if command needs a suffix.
-          msgArray.push("**Usage:** `" + ConfigFile.cmd_prefix + commando.name + " " + commando.usage + "`");
+          msgArray.push("**Usage:** `" + ConfigFile.bot_settings.cmd_prefix + commando.name + " " + commando.usage + "`");
         } else {
-          msgArray.push("**Usage:** `" + ConfigFile.cmd_prefix + commando.name + "`");
+          msgArray.push("**Usage:** `" + ConfigFile.bot_settings.cmd_prefix + commando.name + "`");
         }
         msgArray.push("**Description:** " + commando.help); // Push the extendedhelp to the array.
         if (commando.hasOwnProperty("nsfw")) { // Push special message if command is restricted.
@@ -1023,7 +1144,16 @@ Commands.help = {
           }
           msgArray.push(str);
         }
-        bot.sendMessage(msg.author, msgArray); // Send the array to the user
+        if (ConfigFile.bot_settings.help_mode === "private"){
+          bot.sendMessage(msg.author, msgArray);
+          Logger.debug("Send suffix help via DM.");
+        } else if (ConfigFile.bot_settings.help_mode === "channel"){
+          bot.sendMessage(msg.channel, msgArray);
+          Logger.debug("Send suffix help to channel.");
+        } else {
+          Logger.error("Config File error! Help mode is incorrectly defined!");
+          bot.sendMessage(msg.channel, "Sorry, my owner didn't configure me correctly!");
+        }
       } else {
         bot.sendMessage(msg.channel, "There is no **" + suffix + "** command!");
       }

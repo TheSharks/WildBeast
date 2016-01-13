@@ -1,0 +1,50 @@
+{
+    "useful_comments": [
+        "Please only enable debug_mode or verbose_logging if requested by one of the devs, as enabling this extends the logging capabilities and could potentially include sensitive info.",
+        "Command prefixes are double prefix activation ONLY.",
+        "There can only be 1 master user, 1 global level 1 user, etc.",
+        "If you define a different path to the image or music directory, type it like this:", "C:\\Users\\foobar\\Music",
+        "help_mode can either be `private` or `channel`",
+        "auto_restart tries to reconnect to Discord after an error or disconnection automatically."
+    ],
+
+    "discord" : {
+        "email" : "foo@bar.net",
+        "password" : "hunter2"
+    },
+    "bot_settings" : {
+        "cmd_prefix": "++",
+        "help_mode": "private",
+        "log_chat": false,
+        "verbose_logging": false,
+        "auto_restart": false,
+        "debug_mode": false,
+        "image_folder": "./images",
+        "music_folder": "./music"
+    },
+    "join_on_launch" : [
+        "https://discord.gg/0cFoiR5QVh4agupi",
+        "https://discord.gg/0cFoiR5QVh57Spqg"
+    ],
+    "api_keys" : {
+        "google_key": "Create one here: https://console.developers.google.com",
+        "cse_key": "https://github.com/SteamingMutt/DougleyBot/wiki/CSE",
+        "mashape_key": "https://market.mashape.com/dashboard",
+        "myapifilms_token": "token",
+    },
+    "imgflip" : {
+        "username": "foobar",
+        "password": "hunter2"
+    },
+    "permissions": {
+        "masterUser": "Master user Discord ID",
+        "level1": "Global level 1 user Discord ID",
+        "level2": "Global level 2 user Discord ID",
+        "level3": "Global level 3 user Discord ID"
+    },
+    "redis" : {
+        "host" : "localhost",
+        "port" : 6379,
+        "url" : "If you need to connect to a Redis URL, use this key and remove `host` and `port`, if you don't need this, remove this key and the comma at the end of `port`"
+    },
+}
