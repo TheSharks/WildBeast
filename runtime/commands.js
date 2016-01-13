@@ -9,6 +9,10 @@ var yt = require("./youtube_plugin");
 var youtube_plugin = new yt();
 var version = require("../package.json").version;
 var unirest = require('unirest');
+var VerboseLog = require("../DougBot.js").VerboseLog;
+var DebugLog = require("../DougBot.js").DebugLog;
+var DebugLogger = require("./logger.js").DebugModeLog;
+var VerboseLogger = require("./logger.js").VerboseModeLog;
 
 var Commands = [];
 

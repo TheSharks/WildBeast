@@ -4,8 +4,8 @@ var Discord = require("discord.js");
 var bot = new Discord.Client();
 var ConfigFile = require("./config.json");
 var Logger = require("./runtime/logger.js").Logger;
-var DebugLogger = require("./runtime/logger.js").DebugModeLogger;
-var VerboseLogger = require("./runtime/logger.js").VerboseModeLogger;
+var DebugLogger = require("./runtime/logger.js").DebugModeLog;
+var VerboseLogger = require("./runtime/logger.js").VerboseModeLog;
 var ChatLogger = require("./runtime/logger.js").ChatLog;
 var Commands = require("./runtime/commands.js").Commands;
 var Permissions = require("./runtime/permissions.js");
@@ -109,7 +109,7 @@ bot.on("message", function(msg) {
           DebugLogger.debug("DEBUG MODE LOG: Command detected.");
         }
         if (msg.channel.server) {
-          Permissions.GetLevel((msg.author.id + msg.channel.server.id), msg.author.id, function (err, level){
+          Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level){
           if (err){
             if (DebugMode === true){
               DebugLogger.debug("DEBUG MODE LOG: GetLevel failed, got error: " + err);
