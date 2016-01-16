@@ -1,11 +1,14 @@
 {
     "useful_comments": [
         "Please only enable debug_mode or verbose_logging if requested by one of the devs, as enabling this extends the logging capabilities and could potentially include sensitive info.",
-        "Command prefixes are double prefix activation ONLY.",
+        "Command prefixes are length dynamic, meaning that prefixes can be as long as you want, change the value to `mention` to switch to mention activation.",
         "There can only be 1 master user, 1 global level 1 user, etc.",
         "If you define a different path to the image or music directory, type it like this:", "C:\\Users\\foobar\\Music",
         "help_mode can either be `private` or `channel`",
-        "auto_restart tries to reconnect to Discord after an error or disconnection automatically."
+        "auto_restart tries to reconnect to Discord after an error or disconnection automatically.",
+        "default_server is a server the bot will create at first run, with this you can have a central contol hub for your bot.",
+        "error_printing, periodic_statistics and all of the overrides don't do anything yet.",
+        "If the channel entered in print_to_which_channel doens't exist, the bot will create it."
     ],
 
     "discord" : {
@@ -19,8 +22,17 @@
         "verbose_logging": false,
         "auto_restart": false,
         "debug_mode": false,
+        "welcome_new_members": false,
         "image_folder": "./images",
         "music_folder": "./music"
+    },
+    "default_server" : {
+        "error_printing": true,
+        "periodic_statistics": true,
+        "print_to_which_channel": "logbook",
+        "override_timeouts": false,
+        "override_permissions": false,
+        "override_nsfw": false
     },
     "join_on_launch" : [
         "https://discord.gg/0cFoiR5QVh4agupi",
@@ -30,7 +42,7 @@
         "google_key": "Create one here: https://console.developers.google.com",
         "cse_key": "https://github.com/SteamingMutt/DougleyBot/wiki/CSE",
         "mashape_key": "https://market.mashape.com/dashboard",
-        "myapifilms_token": "token",
+        "myapifilms_token": "token"
     },
     "imgflip" : {
         "username": "foobar",
@@ -46,5 +58,5 @@
         "host" : "localhost",
         "port" : 6379,
         "url" : "If you need to connect to a Redis URL, use this key and remove `host` and `port`, if you don't need this, remove this key and the comma at the end of `port`"
-    },
+    }
 }

@@ -1,18 +1,25 @@
-var ConfigFile = require("../config.json");
-var Logger = require("./logger.js").Logger;
-var Permissions = require("./permissions.js");
-var imgDirectory = require("../config.json").image_folder;
-var Giphy = require("./giphy.js");
-var Cleverbot = require('cleverbot-node');
-var cleverbot = new Cleverbot();
-var yt = require("./youtube_plugin");
-var youtube_plugin = new yt();
-var version = require("../package.json").version;
-var unirest = require('unirest');
-var VerboseLog = require("../DougBot.js").VerboseLog;
-var DebugLog = require("../DougBot.js").DebugLog;
-var DebugLogger = require("./logger.js").DebugModeLog;
-var VerboseLogger = require("./logger.js").VerboseModeLog;
+var ConfigFile = require("../config.json"),
+    Logger = require("./logger.js").Logger,
+    Permissions = require("./permissions.js"),
+    imgDirectory = require("../config.json").image_folder,
+    Giphy = require("./giphy.js"),
+    Cleverbot = require('cleverbot-node'),
+    cleverbot = new Cleverbot(),
+    yt = require("./youtube_plugin"),
+    youtube_plugin = new yt(),
+    version = require("../package.json").version,
+    unirest = require('unirest'),
+    DebugMode,
+    VerboseLog,
+    DebugLogger = require("./logger.js").DebugModeLog,
+    Defaulting = require("./serverdefaulting.js"),
+    VerboseLogger = require("./logger.js").VerboseModeLog;
+
+if (ConfigFile.bot_settings.verbose_logging === true){
+  VerboseLog = true;
+} else {
+  VerboseLog = false;
+}
 
 var Commands = [];
 
@@ -25,6 +32,38 @@ Commands.ping = {
       VerboseLogger.debug("VERBOSE LOG: Ping is being executed.");
     }
     bot.sendMessage(msg.channel, "Pong!");
+}};
+
+Commands.setstatus = {
+  name: "setstatus",
+  help: "This will change my current status to something else",
+  usage: "<online / away> [playing status]",
+  level: 4,
+  fn: function(bot, msg, suffix){
+    var step = suffix.split(" "),
+        status = step[0],
+        playingstep = step.slice(1, step.length),
+        playing = playingstep.join(" ");
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: SetStatus is being executed.");
+    }
+    if (!suffix){
+      bot.sendMessage(msg.channel, "You need a suffix, dummy!");
+      return;
+    }
+    if (status !== "online" && suffix !== "away"){
+      bot.sendMessage(msg.channel, "I can only be `online` or `away`!");
+      return;
+    }
+    bot.setStatus(status, playing, function(error){
+      if (error){
+        bot.sendMessage(msg.channel, "Whoops, that doesn't work, try again.");
+      } else if (playing) {
+        bot.sendMessage(msg.channel, "Okay, I'm now " + status + " and playing " + playing);
+      } else {
+        bot.sendMessage(msg.channel, "Okay, I'm now " + status + ".");
+      }
+    });
 }};
 
 Commands.fortunecow = {

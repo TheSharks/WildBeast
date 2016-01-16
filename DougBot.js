@@ -13,6 +13,7 @@ var VersionChecker = require("./runtime/versionchecker.js");
 var forever = require("forever");
 var DebugMode;
 var VerboseLog;
+var Defaulting = require("./runtime/serverdefaulting.js");
 
 // Declare if debug mode or verbose logging is needed
 if (ConfigFile.bot_settings.debug_mode === true){
@@ -62,6 +63,10 @@ bot.on("ready", function() {
   if (DebugMode === true){
     DebugLogger.debug("DEBUG MODE LOG: Ready event fired.");
   }
+  if (bot.servers.length === 0){
+    Logger.warn("No servers deteted, creating default server.");
+    Defaulting.create(bot);
+  }
   Logger.info("Joining pre-defined servers...");
   for (var index in ConfigFile.join_on_launch){
     bot.joinServer(ConfigFile.join_on_launch[index], function(error, server){
@@ -92,14 +97,22 @@ bot.on("message", function(msg) {
   if (msg.author.equals(bot.user)) {
     return;
   }
-  var prefix = ConfigFile.bot_settings.cmd_prefix.split("");
-  if (msg.content.charAt(0) === prefix[0]) {
-    if (msg.content.charAt(1) === prefix[1] ){
+  var prefix;
+  if (ConfigFile.bot_settings.cmd_prefix != "mention"){
+    prefix = ConfigFile.bot_settings.cmd_prefix;
+  } else if (ConfigFile.bot_settings.cmd_prefix === "mention") {
+    prefix = bot.user + " ";
+  } else {
+    if (DebugMode === true){
+      DebugLogger.debug("DEBUG MODE LOG: Weird prefix detected.");
+    }
+  }
+  if (msg.content.search(prefix) === 0) {
       Logger.info("Executing <" + msg.content + "> from " + msg.author.username);
-      var step = msg.content.substr(2);
+      var step = msg.content.substr(prefix.length);
       var chunks = step.split(" ");
       var command = chunks[0];
-      var suffix = msg.content.substring(command.length + 3);
+      var suffix = msg.content.substring(command.length + (prefix.length + 1));
       if (command === "help"){
         Commands.help.fn(bot, msg, suffix);
         return;
@@ -156,10 +169,10 @@ bot.on("message", function(msg) {
             if (DebugMode === true){
               DebugLogger.debug("DEBUG MODE LOG: User has no permission to use that command.");
             }
-                bot.sendMessage(msg.channel, "You don't have permission to use this command!");
-                return;
-              }
-            });
+              bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+              return;
+            }
+          });
           } else {
             Permissions.GetLevel(0, msg.author.id, function (err, level){ // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
             if (DebugMode === true){
@@ -186,7 +199,7 @@ bot.on("message", function(msg) {
               }
           });
         }
-  }}}});
+  }}});
 
 // Initial functions
 function init(token) {

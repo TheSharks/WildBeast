@@ -1,3 +1,10 @@
+## 2.0.0-beta.5
+Fixes several problems caused by 2.0.0-beta.4   
+Added an *incomplete* server defaulting system.   
+Added `setstatus`.     
+Changed the fixed length of `cmd_prefix` to a dynamic length.   
+Changed the fixed character prefix to switch to mention activation if desired.   
+
 ## 2.0.0-beta.4
 Fixed `myapifilms_token` not existing.  
 Fixed problems with `++setowner`.  
