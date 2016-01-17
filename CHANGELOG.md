@@ -1,3 +1,12 @@
+# Gamma phase
+(Gamma is a real thing in software development by the way, it's a synonym for RC (Release Candidate))
+## 2.0.0-gamma.1
+Added a timeout feature.    
+**GET HYPED FOR MUSIC STREAMING!**      
+Changed `versionchecker.js` ability to check for beta versions to gamma version checking.    
+Moved to LevelDB instead of Redis for handling permission storage and handling timeouts.      
+
+# Beta phase
 ## 2.0.0-beta.5
 Fixes several problems caused by 2.0.0-beta.4   
 Added an *incomplete* server defaulting system.   
@@ -27,3 +36,6 @@ Bot is also compliant with the [Discord bot best practises](https://github.com/m
 
 ## 2.0.0-beta.1
 Initial release of DougBot 2.0, featuring new permission system and stability improvements.
+
+# Alpha phase
+Nothing too interesting lol.

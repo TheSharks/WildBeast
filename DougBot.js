@@ -14,6 +14,7 @@ var forever = require("forever");
 var DebugMode;
 var VerboseLog;
 var Defaulting = require("./runtime/serverdefaulting.js");
+var TimeOut = require("./runtime/timingout.js");
 
 // Declare if debug mode or verbose logging is needed
 if (ConfigFile.bot_settings.debug_mode === true){
@@ -134,11 +135,23 @@ bot.on("message", function(msg) {
             if (DebugMode === true){
               DebugLogger.debug("DEBUG MODE LOG: Execution of command allowed.");
             }
+            if (Commands[command].timeout){
+            TimeOut.timeoutCheck(command, msg.channel.server.id, function(reply){
+              if (reply === "yes"){
+                bot.sendMessage(msg.channel, "Sorry, this command is on cooldown.");
+                return;
+              }});}
             if (!Commands[command].nsfw){
               if (DebugMode === true){
                 DebugLogger.debug("DEBUG MODE LOG: Safe for work command executed.");
               }
               Commands[command].fn(bot, msg, suffix);
+              if (Commands[command].timeout){
+              TimeOut.timeoutSet(command, msg.channel.server.id, Commands[command].timeout, function(reply, err){
+                if (err){
+                  Logger.error("Resetting timeout failed!");
+                }
+              });}
               return;
             } else {
               Permissions.GetNSFW(msg.channel, function (err, reply){
@@ -173,7 +186,7 @@ bot.on("message", function(msg) {
               return;
             }
           });
-          } else {
+        } else {
             Permissions.GetLevel(0, msg.author.id, function (err, level){ // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
             if (DebugMode === true){
               DebugLogger.debug("DEBUG MODE LOG: DM command detected, getting global perms.");

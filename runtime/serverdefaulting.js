@@ -53,7 +53,7 @@ exports.fetch = function(callback){ // TODO: This is the most ridicolous method 
   callback(ServerID);
 };
 
-exports.check = function(callback){
+exports.check = function(callback){ // TODO: Make more reliable, meant to fetch servers in which bot is the owner
   var oldServers = [];
   for (var owner in bot.servers) {
     oldServers[owner] = bot.servers[owner];

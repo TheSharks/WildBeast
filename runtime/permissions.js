@@ -1,12 +1,8 @@
-var ConfigFile = require("../config.json");
-var Redis = require("redis");
-var Logger = require("./logger.js").Logger;
+var ConfigFile = require("../config.json"),
+    LevelUP = require("levelup"),
+    Logger = require("./logger.js").Logger;
 
-if (ConfigFile.redis.url && !ConfigFile.redis.host) {
-  var RedisServer = Redis.createClient(ConfigFile.redis.url);
-} else {
-  var RedisServer = Redis.createClient(ConfigFile.redis.port, ConfigFile.redis.host);
-}
+var db = LevelUP('./runtime/databases/discord_permissions');
 
 exports.GetLevel = function(sum, user, callback){
   if (user === ConfigFile.permissions.masterUser){
@@ -21,54 +17,58 @@ exports.GetLevel = function(sum, user, callback){
   if (user == ConfigFile.permissions.level3){
     return callback (null, 3); // Hardcoded reply if user has a global permission
   }
-  // Else, connect to the Redis server and fetch the user level
-  RedisServer.get("auth_level:" + sum, function(err, reply) {
+  // Else, connect to LevelUP and fetch the user level
+  db.get("auth_level:" + sum, function(err, value) {
 		if (err) {
-      return callback(err, -1);
-    }
-		if (reply) {
-			return callback(null, parseInt(reply));
-		} else {
-			callback(null, 0); // Return 0 if no value present in Redis
+      if (err.notFound) {
+        callback(null, 0); // Return 0 if no value present in LevelUP
+        return;
+    } else {
+      Logger.error("LevelUP error! " + err);
+      callback(err, -1);
+    }}
+		if (value) {
+			return callback(null, parseInt(value));
 		}
 	});
 };
 
 exports.GetNSFW = function(channel, callback){
-  RedisServer.get("auth_nsfw:" + channel, function(err, reply) {
+  db.get("auth_nsfw:" + channel, function(err, value) {
     if (err) {
-      return callback(err, -1);
-    }
-    if (reply) {
-      return callback(null, reply);
+      if (err.notFound) {
+        callback(null, "off"); // Return 0 if no value present in LevelUP
+        return;
     } else {
-      callback(null, "off");
+      Logger.error("LevelUP error! " + err);
+      callback(err, -1);
+    }}
+    if (value) {
+      return callback(null, value);
     }
   });
 };
 
 exports.SetLevel = function(sum, level, callback){
-  RedisServer.set("auth_level:" + sum, parseInt(level), function(err, reply) {
+  db.put("auth_level:" + sum, parseInt(level), function(err) {
     if (err) {
+      Logger.error("LevelUP error! " + err);
       callback(err, -1);
     }
-    if (reply) {
+    if (!err) {
       callback(null, parseInt(level));
-    } else {
-      return callback(null, 0);
     }
   });
 };
 
 exports.SetNSFW = function(channel, allow, callback){
-	RedisServer.set("auth_nsfw:" + channel, allow, function(err, reply) {
+	db.put("auth_nsfw:" + channel, allow, function(err) {
 		if (err) {
+      Logger.error("LevelUP error! " + err);
       callback(err, -1);
     }
-		if (reply) {
+		if (!err) {
 			callback(null, allow);
-		} else {
-			return callback(null, null);
-		}
+    }
 	});
 };

@@ -1,1 +1,3 @@
-//TODO: Actually make functions here, lmao
+exports.checkConfig = function(){
+  // TODO: Finish this function :)
+};

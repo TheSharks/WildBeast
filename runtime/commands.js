@@ -13,7 +13,8 @@ var ConfigFile = require("../config.json"),
     VerboseLog,
     DebugLogger = require("./logger.js").DebugModeLog,
     Defaulting = require("./serverdefaulting.js"),
-    VerboseLogger = require("./logger.js").VerboseModeLog;
+    VerboseLogger = require("./logger.js").VerboseModeLog,
+    DJ = require("./djlogic.js");
 
 if (ConfigFile.bot_settings.verbose_logging === true){
   VerboseLog = true;
@@ -27,11 +28,57 @@ Commands.ping = {
   name: "ping",
   help: "I'll reply to you with pong!",
   level: 0,
+  timeout: 10,
   fn: function(bot, msg){
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Ping is being executed.");
     }
     bot.sendMessage(msg.channel, "Pong!");
+}};
+
+Commands["join-voice"] = {
+  name: "join-voice",
+  help: "I'll join a voice channel!",
+  level: 3,
+  fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: JoinVoice is being executed.");
+    }
+    DJ.joinVoice(bot, msg);
+}};
+
+Commands.play = {
+  name: "play",
+  help: "I'll play a weblink containing music!",
+  usage: "<web-url>",
+  level: 2,
+  fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Play is being executed.");
+    }
+    DJ.playMusicURL(bot, msg);
+}};
+
+Commands.stop = {
+  name: "stop",
+  help: "I'll stop playing music.",
+  level: 3,
+  fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: Stop is being executed.");
+    }
+    DJ.stopPlaying(msg);
+}};
+
+Commands["leave-voice"] = {
+  name: "stop",
+  help: "I'll stop playing music.",
+  level: 3,
+  fn: function(bot, msg){
+    if (VerboseLog === true) {
+      VerboseLogger.debug("VERBOSE LOG: LeaveVoice is being executed.");
+    }
+    DJ.leaveVoice(bot, msg);
 }};
 
 Commands.setstatus = {
@@ -777,8 +824,9 @@ Commands.imglist = {
     }
     var fs = require("fs");
     var path = require("path");
+    var ext = [".jpg", ".jpeg", ".gif", ".png"];
     var imgArray = [];
-    fs.readdir(imgDirectory, function(err, dirContents) {
+    fs.readdir("./images", function(err, dirContents) {
       for (var i = 0; i < dirContents.length; i++) {
         for (var o = 0; o < ext.length; o++) {
           if (path.extname(dirContents[i]) === ext[o]) {

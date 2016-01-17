@@ -14,7 +14,7 @@ exports.getCurrentVersion	= function() { return version.join("."); };
 exports.getCurrentMajor		= function() { return version[0]; };
 exports.getCurrentMinor		= function() { return version[1]; };
 exports.getCurrentPatch		= function() { return version[2]; };
-exports.getCurrentBeta		= function() { return version[3]; };
+exports.getCurrentGamma		= function() { return version[3]; };
 
 exports.getLatestVersion = function(callback) {
 
@@ -56,7 +56,7 @@ exports.getLatestPatch = function(callback) {
 	});
 };
 
-exports.getLatestBeta = function(callback) {
+exports.getLatestGamma = function(callback) {
 	this.getLatest(function(err, latest) {
 		if (err) { return callback(err, null); } // error handle
 		return callback(null, parseInt(latest.split("-")[0]));
@@ -82,7 +82,7 @@ exports.getStatus = function(callback) {
 		var majorDiff = parseInt(latest[0]) - parseInt(version[0]);
 		var minorDiff = parseInt(latest[1]) - parseInt(version[1]);
 		var patchDiff = parseInt(latest[2]) - parseInt(version[2]);
-		var betaDiff  = parseInt(latest[3]) - parseInt(version[3]);
+		var gammaDiff = parseInt(latest[3]) - parseInt(version[3]);
 
 		// check for major updates
 		if (majorDiff < 0) {
@@ -105,10 +105,10 @@ exports.getStatus = function(callback) {
 			return callback(null, "Bot is " + Math.abs(patchDiff) + " patch versions behind. (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
 		}
 
-		if (betaDiff < 0) {
-			return callback(null, "Bot is " + Math.abs(betaDiff) + " beta versions ahead! (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
-		} else if (betaDiff > 0) {
-			return callback(null, "Bot is " + Math.abs(betaDiff) + " beta versions behind. (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
+		if (gammaDiff < 0) {
+			return callback(null, "Bot is " + Math.abs(gammaDiff) + " gamma versions ahead! (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
+		} else if (gammaDiff > 0) {
+			return callback(null, "Bot is " + Math.abs(gammaDiff) + " gamma versions behind. (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
 		}
 
 		// up to date :)
