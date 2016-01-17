@@ -4,7 +4,7 @@
   "repository": "https://github.com/SteamingMutt/DougleyBot2.0",
   "website": "https://dougleybot.ga/",
   "scripts": {
-    "postdeploy": "npm install && sudo apt-get install ffmpeg"
+    "postdeploy": "npm install"
   },
   "logo": "https://dougleybot.ga/images/avatar.png",
   "keywords": ["discord", "bot"]
