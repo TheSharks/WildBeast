@@ -1,0 +1,11 @@
+{
+  "name": "DougleyBot",
+  "description": "A Discord bot made for maximum personalisation and ease of use.",
+  "repository": "https://github.com/SteamingMutt/DougleyBot2.0",
+  "website": "https://dougleybot.ga/",
+  "scripts": {
+    "postdeploy": "npm install && sudo apt-get install ffmpeg"
+  },
+  "logo": "https://dougleybot.ga/images/avatar.png",
+  "keywords": ["discord", "bot"]
+}

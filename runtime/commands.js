@@ -770,7 +770,7 @@ Commands.iff = {
     var path = require("path");
     var ext = [".jpg", ".jpeg", ".gif", ".png"];
     var imgArray = [];
-    fs.readdir(imgDirectory, function(err, dirContents) {
+    fs.readdir("./images", function(err, dirContents) {
       for (var i = 0; i < dirContents.length; i++) {
         for (var o = 0; o < ext.length; o++) {
           if (path.extname(dirContents[i]) === ext[o]) {
