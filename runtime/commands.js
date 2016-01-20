@@ -731,7 +731,13 @@ Commands.rule34 = {
         xml2js.parseString(body, function (err, result) {
           var util = require('util');
           var fuckme = util.inspect(result.posts,false,null).split("'");
-          bot.sendMessage(msg.channel,fuckme[13]);
+          if (fuckme[13].substr(0, 5) != "http:") {
+            var httpstring = 'http:';
+            fuckme = httpstring.concat(fuckme[13]);
+            bot.sendMessage(msg.channel,fuckme);
+          } else {
+              bot.sendMessage(msg.channel,fuckme[13]);
+          }
         }
       );
       } else {
@@ -739,6 +745,8 @@ Commands.rule34 = {
       }
     }
   );
+ }
+};
  }
 };
 
