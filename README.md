@@ -1,4 +1,5 @@
-# DougleyBot 2.0 gamma
+# WildBeast gamma
+##### (Previously DougleyBot 2.0)
 [ ![Codeship Status for SteamingMutt/DougleyBot2.0](https://codeship.com/projects/d0626130-8ac5-0133-4246-7246c649b408/status?branch=master)](https://codeship.com/projects/123527)
 
 #### TIP! If you just want to use this without the hassle of making servers, deploy to Heroku!
