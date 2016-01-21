@@ -18,5 +18,5 @@ The following are a set of guidelines to improve the quality of your contributio
 3. Usage of ES6 code is allowed.
 4. You are free to require additional node modules, but include them in `package.json` if you do.
 5. When adding something users would like to disable/enable, include a `config.json` value that will trigger/disable the function.
-6. When calling the bots name, use `bot.user` or `bot.user.username`, and not DougleyBot.
+6. When calling the bots name, use `bot.user` or `bot.user.username`, and not WildBeast or DougleyBot.
 7. Try to modulate as much of your code as possible, for example; if your code needs a rss feed, try to modulate the calling for the feed.

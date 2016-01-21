@@ -1,7 +1,7 @@
 {
-  "name": "DougleyBot",
+  "name": "WildBeast",
   "description": "A Discord bot made for maximum personalisation and ease of use.",
-  "repository": "https://github.com/SteamingMutt/DougleyBot2.0",
+  "repository": "https://github.com/SteamingMutt/WildBeast",
   "website": "https://dougleybot.ga/",
   "scripts": {
     "postdeploy": "npm install"

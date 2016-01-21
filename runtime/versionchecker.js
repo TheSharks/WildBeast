@@ -19,7 +19,7 @@ exports.getCurrentGamma		= function() { return version[3]; };
 exports.getLatestVersion = function(callback) {
 
 	// fetch latest version number from GitHub
-	Request("https://raw.githubusercontent.com/SteamingMutt/DougleyBot2.0/master/package.json", function (error, response, body) {
+	Request("https://raw.githubusercontent.com/SteamingMutt/WildBeast/master/package.json", function (error, response, body) {
 
 		if (error) { return callback(error, null); } // error handle
 

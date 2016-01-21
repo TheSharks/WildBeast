@@ -220,7 +220,7 @@ function init(token) {
     DebugLogger.debug("DEBUG MODE LOG: Sucessfully logged into Discord, returned token: " + token);
     DebugLogger.debug("DEBUG MODE LOG: Continuing start-up sequence.");
   }
-  Logger.info("Loading DougleyBot...");
+  Logger.info("Loading WildBeast...");
   Logger.info("Checking for updates...");
   VersionChecker.getStatus(function(err, status) {
     if (err) {

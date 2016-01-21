@@ -166,8 +166,8 @@ Commands.info = {
       VerboseLogger.debug("VERBOSE LOG: Info is being executed.");
     }
     var msgArray = [];
-    msgArray.push("**DougleyBot version " + version + "**");
-    msgArray.push("Using latest *Discord.js* version by *hydrabolt*.");
+    msgArray.push("**WildBeast version " + version + "**");
+    msgArray.push("Using latest 5.x.x *Discord.js* version by *hydrabolt*.");
     msgArray.push("Made by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
     bot.sendMessage(msg.channel, msgArray);
 }};
@@ -257,7 +257,7 @@ Commands.killswitch = {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Killswitch is being executed.");
     }
-      bot.sendMessage(msg.channel, "An admin has requested to kill all instances of DougleyBot, exiting...");
+      bot.sendMessage(msg.channel, "An admin has requested to kill all instances of WildBeast, exiting...");
       bot.logout();
       Logger.log("warn", "Disconnected via killswitch!");
       process.exit(0);
@@ -366,7 +366,7 @@ Commands.youtube = {
 
 Commands.devs = {
   name: "devs",
-  help: "This will print the Discord ID's from the developers of DougleyBot to the channel.",
+  help: "This will print the Discord ID's from the developers of WildBeast to the channel.",
   level: 0,
   fn: function(bot, msg) {
     if (VerboseLog === true) {
@@ -592,7 +592,7 @@ Commands.hello = {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Hello is being executed.");
     }
-    bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me grow by contributing to my GitHub: https://github.com/SteamingMutt/DougleyBot2.0");
+    bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me grow by contributing to my GitHub: https://github.com/SteamingMutt/WildBeast");
   }
 };
 
