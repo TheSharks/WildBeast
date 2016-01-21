@@ -108,7 +108,7 @@ bot.on("message", function(msg) {
       DebugLogger.debug("DEBUG MODE LOG: Weird prefix detected.");
     }
   }
-  if (msg.content.search(prefix) === 0) {
+  if (msg.content.indexOf(prefix) === 0) {
       Logger.info("Executing <" + msg.content + "> from " + msg.author.username);
       var step = msg.content.substr(prefix.length);
       var chunks = step.split(" ");

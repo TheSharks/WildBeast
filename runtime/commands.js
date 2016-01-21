@@ -747,8 +747,6 @@ Commands.rule34 = {
   );
  }
 };
- }
-};
 
 Commands.status = {
   name: "status",
