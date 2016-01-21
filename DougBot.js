@@ -17,7 +17,7 @@ var Defaulting = require("./runtime/serverdefaulting.js");
 var TimeOut = require("./runtime/timingout.js");
 
 // Declare if debug mode or verbose logging is needed
-if (ConfigFile.bot_settings.debug_mode === true){
+if (ConfigFile.bot_settings.debug_mode === true) {
   DebugMode = true;
   console.log("WARNING! Debug mode activated! Only use this if you're sure what you're doing!");
   console.log("WARNING! Debug mode log may contain sensitive information, only share it with trustworthy people!.");
@@ -44,7 +44,7 @@ if (ConfigFile.bot_settings.debug_mode === true){
   DebugMode = false;
 }
 
-if (ConfigFile.bot_settings.verbose_logging === true){
+if (ConfigFile.bot_settings.verbose_logging === true) {
   VerboseLog = true;
   console.log("WARNING! Verbose logging activated! Only use this if you're sure what you're doing!");
 } else {
@@ -54,26 +54,31 @@ if (ConfigFile.bot_settings.verbose_logging === true){
 // Error logger
 bot.on("error", function(error) {
   Logger.error("Encounterd an error, please report this to the author of this bot, include any log files present in the logs folder.");
-  if (DebugMode === true){
+  if (DebugMode === true) {
     DebugLogger.debug("DEBUG MODE LOG: Encountered an error with discord.js most likely, got error: " + error);
   }
 });
 
 // Ready announcment
 bot.on("ready", function() {
-  if (DebugMode === true){
+  if (DebugMode === true) {
     DebugLogger.debug("DEBUG MODE LOG: Ready event fired.");
   }
-  if (bot.servers.length === 0){
+  if (bot.servers.length === 0) {
     Logger.warn("No servers deteted, creating default server.");
     Defaulting.create(bot);
   }
   Logger.info("Joining pre-defined servers...");
-  for (var index in ConfigFile.join_on_launch){
-    bot.joinServer(ConfigFile.join_on_launch[index], function(error, server){
-      if (error) {Logger.warn("Couldn't join a server (" + error + ")");}
-      if (server) {Logger.info("Joined " + server.name);}
-  });}
+  for (var index in ConfigFile.join_on_launch) {
+    bot.joinServer(ConfigFile.join_on_launch[index], function(error, server) {
+      if (error) {
+        Logger.warn("Couldn't join a server (" + error + ")");
+      }
+      if (server) {
+        Logger.info("Joined " + server.name);
+      }
+    });
+  }
   Logger.info("Ready to start!");
   Logger.info("Logged in as " + bot.user.username + ".");
   Logger.info("Serving " + bot.users.length + " users, in " + bot.servers.length + " servers.");
@@ -81,7 +86,7 @@ bot.on("ready", function() {
 
 // Disconnected announcment
 bot.on("disconnected", function() {
-  if (DebugMode === true){
+  if (DebugMode === true) {
     DebugLogger.debug("DEBUG MODE LOG: Disconnected from Discord.");
   }
   Logger.warn("Disconnected, if this wasn't a connection issue or on purpose, report this issue to the author of the bot.");
@@ -99,124 +104,131 @@ bot.on("message", function(msg) {
     return;
   }
   var prefix;
-  if (ConfigFile.bot_settings.cmd_prefix != "mention"){
+  if (ConfigFile.bot_settings.cmd_prefix != "mention") {
     prefix = ConfigFile.bot_settings.cmd_prefix;
   } else if (ConfigFile.bot_settings.cmd_prefix === "mention") {
     prefix = bot.user + " ";
   } else {
-    if (DebugMode === true){
+    if (DebugMode === true) {
       DebugLogger.debug("DEBUG MODE LOG: Weird prefix detected.");
     }
   }
   if (msg.content.indexOf(prefix) === 0) {
-      Logger.info("Executing <" + msg.content + "> from " + msg.author.username);
-      var step = msg.content.substr(prefix.length);
-      var chunks = step.split(" ");
-      var command = chunks[0];
-      var suffix = msg.content.substring(command.length + (prefix.length + 1));
-      if (command === "help"){
-        Commands.help.fn(bot, msg, suffix);
-        return;
+    Logger.info("Executing <" + msg.content + "> from " + msg.author.username);
+    var step = msg.content.substr(prefix.length);
+    var chunks = step.split(" ");
+    var command = chunks[0];
+    var suffix = msg.content.substring(command.length + (prefix.length + 1));
+    if (command === "help") {
+      Commands.help.fn(bot, msg, suffix);
+      return;
+    }
+    if (Commands[command]) {
+      if (DebugMode === true) {
+        DebugLogger.debug("DEBUG MODE LOG: Command detected.");
       }
-      if (Commands[command]) {
-        if (DebugMode === true){
-          DebugLogger.debug("DEBUG MODE LOG: Command detected.");
-        }
-        if (msg.channel.server) {
-          Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level){
-          if (err){
-            if (DebugMode === true){
+      if (msg.channel.server) {
+        Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
+          if (err) {
+            if (DebugMode === true) {
               DebugLogger.debug("DEBUG MODE LOG: GetLevel failed, got error: " + err);
             }
             Logger.debug("An error occured!");
             return;
           }
-          if (level >= Commands[command].level){
-            if (DebugMode === true){
+          if (level >= Commands[command].level) {
+            if (DebugMode === true) {
               DebugLogger.debug("DEBUG MODE LOG: Execution of command allowed.");
             }
-            if (Commands[command].timeout){
-            TimeOut.timeoutCheck(command, msg.channel.server.id, function(reply){
-              if (reply === "yes"){
-                bot.sendMessage(msg.channel, "Sorry, this command is on cooldown.");
-                return;
-              }});}
-            if (!Commands[command].nsfw){
-              if (DebugMode === true){
+            if (Commands[command].timeout) {
+              TimeOut.timeoutCheck(command, msg.channel.server.id, function(reply) {
+                if (reply === "yes") {
+                  bot.sendMessage(msg.channel, "Sorry, this command is on cooldown.");
+                  return;
+                }
+              });
+            }
+            if (!Commands[command].nsfw) {
+              if (DebugMode === true) {
                 DebugLogger.debug("DEBUG MODE LOG: Safe for work command executed.");
               }
               Commands[command].fn(bot, msg, suffix);
-              if (Commands[command].timeout){
-              TimeOut.timeoutSet(command, msg.channel.server.id, Commands[command].timeout, function(reply, err){
-                if (err){
-                  Logger.error("Resetting timeout failed!");
-                }
-              });}
+              if (Commands[command].timeout) {
+                TimeOut.timeoutSet(command, msg.channel.server.id, Commands[command].timeout, function(reply, err) {
+                  if (err) {
+                    Logger.error("Resetting timeout failed!");
+                  }
+                });
+              }
               return;
             } else {
-              Permissions.GetNSFW(msg.channel, function (err, reply){
-                if (DebugMode === true){
+              Permissions.GetNSFW(msg.channel, function(err, reply) {
+                if (DebugMode === true) {
                   DebugLogger.debug("DEBUG MODE LOG: Command is NSFW, checking if channel allows that.");
                 }
-                if (err){
+                if (err) {
                   Logger.debug("Got an error! <" + err + ">");
-                  if (DebugMode === true){
+                  if (DebugMode === true) {
                     DebugLogger.debug("DEBUG MODE LOG: NSFW channel check failed, got error: " + err);
                   }
                   bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
                   return;
                 }
-                if (reply === "on"){
-                  if (DebugMode === true){
+                if (reply === "on") {
+                  if (DebugMode === true) {
                     DebugLogger.debug("DEBUG MODE LOG: NSFW command successfully executed.");
                   }
                   Commands[command].fn(bot, msg, suffix);
                   return;
                 } else {
-                  if (DebugMode === true){
+                  if (DebugMode === true) {
                     DebugLogger.debug("DEBUG MODE LOG: NSFW command execution failed because of channel settings.");
                   }
                   bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
-            }});}
+                }
+              });
+            }
           } else {
-            if (DebugMode === true){
+            if (DebugMode === true) {
               DebugLogger.debug("DEBUG MODE LOG: User has no permission to use that command.");
             }
-              bot.sendMessage(msg.channel, "You don't have permission to use this command!");
-              return;
+            bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+            return;
+          }
+        });
+      } else {
+        Permissions.GetLevel(0, msg.author.id, function(err, level) { // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
+          if (DebugMode === true) {
+            DebugLogger.debug("DEBUG MODE LOG: DM command detected, getting global perms.");
+          }
+          if (err) {
+            Logger.debug("An error occured!");
+            if (DebugMode === true) {
+              DebugLogger.debug("DEBUG MODE LOG: GetLevel failed, got error: " + err);
             }
-          });
-        } else {
-            Permissions.GetLevel(0, msg.author.id, function (err, level){ // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
-            if (DebugMode === true){
-              DebugLogger.debug("DEBUG MODE LOG: DM command detected, getting global perms.");
+            return;
+          }
+          if (level >= Commands[command].level) {
+            if (DebugMode === true) {
+              DebugLogger.debug("DEBUG MODE LOG: User has sufficient global perms.");
             }
-            if (err){
-              Logger.debug("An error occured!");
-              if (DebugMode === true){
-                DebugLogger.debug("DEBUG MODE LOG: GetLevel failed, got error: " + err);
-              }
-              return;
+            Commands[command].fn(bot, msg, suffix);
+            return;
+          } else {
+            if (DebugMode === true) {
+              DebugLogger.debug("DEBUG MODE LOG: User does not have enough global permissions.");
             }
-            if (level >= Commands[command].level){
-              if (DebugMode === true){
-                DebugLogger.debug("DEBUG MODE LOG: User has sufficient global perms.");
-              }
-                Commands[command].fn(bot, msg, suffix);
-                return;
-              } else {
-                if (DebugMode === true){
-                  DebugLogger.debug("DEBUG MODE LOG: User does not have enough global permissions.");
-                }
-                bot.sendMessage(msg.channel, "Only global permissions apply in DM's, your server specific permissions do nothing here!");
-              }
-          });
-        }
-  }}});
+            bot.sendMessage(msg.channel, "Only global permissions apply in DM's, your server specific permissions do nothing here!");
+          }
+        });
+      }
+    }
+  }
+});
 
 // Initial functions
 function init(token) {
-  if (DebugMode === true){
+  if (DebugMode === true) {
     DebugLogger.debug("DEBUG MODE LOG: Sucessfully logged into Discord, returned token: " + token);
     DebugLogger.debug("DEBUG MODE LOG: Continuing start-up sequence.");
   }
@@ -225,7 +237,7 @@ function init(token) {
   VersionChecker.getStatus(function(err, status) {
     if (err) {
       Logger.error(err);
-      if (DebugMode === true){
+      if (DebugMode === true) {
         DebugLogger.debug("DEBUG MODE LOG: Version checking failed, got error: " + err);
       }
     } // error handle
@@ -236,17 +248,17 @@ function init(token) {
 }
 
 function err(error) {
-  if (DebugMode === true){
+  if (DebugMode === true) {
     DebugLogger.debug("DEBUG MODE LOG: Logging into Discord probably failed, got error: " + error);
   }
 }
 
 process.on("beforeExit", function() {
-    Logger.info("About to exit Node!");
-    if (ConfigFile.bot_settings.auto_restart === true){
-      Logger.info("Auto restart initiated...");
-      forever.start("-m 1 DougBot.js");
-    }
+  Logger.info("About to exit Node!");
+  if (ConfigFile.bot_settings.auto_restart === true) {
+    Logger.info("Auto restart initiated...");
+    forever.start("-m 1 DougBot.js");
+  }
 });
 // Connection starter
 bot.login(ConfigFile.discord.email, ConfigFile.discord.password).then(init).catch(err);

@@ -1,22 +1,22 @@
 var ConfigFile = require("../config.json"),
-    Logger = require("./logger.js").Logger,
-    Permissions = require("./permissions.js"),
-    imgDirectory = require("../config.json").image_folder,
-    Giphy = require("./giphy.js"),
-    Cleverbot = require('cleverbot-node'),
-    cleverbot = new Cleverbot(),
-    yt = require("./youtube_plugin"),
-    youtube_plugin = new yt(),
-    version = require("../package.json").version,
-    unirest = require('unirest'),
-    DebugMode,
-    VerboseLog,
-    DebugLogger = require("./logger.js").DebugModeLog,
-    Defaulting = require("./serverdefaulting.js"),
-    VerboseLogger = require("./logger.js").VerboseModeLog,
-    DJ = require("./djlogic.js");
+  Logger = require("./logger.js").Logger,
+  Permissions = require("./permissions.js"),
+  imgDirectory = require("../config.json").image_folder,
+  Giphy = require("./giphy.js"),
+  Cleverbot = require('cleverbot-node'),
+  cleverbot = new Cleverbot(),
+  yt = require("./youtube_plugin"),
+  youtube_plugin = new yt(),
+  version = require("../package.json").version,
+  unirest = require('unirest'),
+  DebugMode,
+  VerboseLog,
+  DebugLogger = require("./logger.js").DebugModeLog,
+  Defaulting = require("./serverdefaulting.js"),
+  VerboseLogger = require("./logger.js").VerboseModeLog,
+  DJ = require("./djlogic.js");
 
-if (ConfigFile.bot_settings.verbose_logging === true){
+if (ConfigFile.bot_settings.verbose_logging === true) {
   VerboseLog = true;
 } else {
   VerboseLog = false;
@@ -29,81 +29,87 @@ Commands.ping = {
   help: "I'll reply to you with pong!",
   level: 0,
   timeout: 10,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Ping is being executed.");
     }
     bot.sendMessage(msg.channel, "Pong!");
-}};
+  }
+};
 
 Commands["join-voice"] = {
   name: "join-voice",
   help: "I'll join a voice channel!",
+  usage: "[voice-channel-name]",
   level: 3,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: JoinVoice is being executed.");
     }
     DJ.joinVoice(bot, msg);
-}};
+  }
+};
 
 Commands.play = {
   name: "play",
   help: "I'll play a weblink containing music!",
   usage: "<web-url>",
   level: 2,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Play is being executed.");
     }
     DJ.playMusicURL(bot, msg);
-}};
+  }
+};
 
 Commands.stop = {
   name: "stop",
   help: "I'll stop playing music.",
   level: 3,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Stop is being executed.");
     }
     DJ.stopPlaying(msg);
-}};
+  }
+};
 
 Commands["leave-voice"] = {
-  name: "stop",
-  help: "I'll stop playing music.",
+  name: "leave-voice",
+  help: "I'll leave the current voice channel.",
   level: 3,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: LeaveVoice is being executed.");
     }
     DJ.leaveVoice(bot, msg);
-}};
+  }
+};
 
 Commands.setstatus = {
   name: "setstatus",
   help: "This will change my current status to something else",
   usage: "<online / away> [playing status]",
   level: 4,
-  fn: function(bot, msg, suffix){
+  fn: function(bot, msg, suffix) {
     var step = suffix.split(" "),
-        status = step[0],
-        playingstep = step.slice(1, step.length),
-        playing = playingstep.join(" ");
+      status = step[0],
+      playingstep = step.slice(1, step.length),
+      playing = playingstep.join(" ");
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: SetStatus is being executed.");
     }
-    if (!suffix){
+    if (!suffix) {
       bot.sendMessage(msg.channel, "You need a suffix, dummy!");
       return;
     }
-    if (status !== "online" && suffix !== "away"){
+    if (status !== "online" && suffix !== "away") {
       bot.sendMessage(msg.channel, "I can only be `online` or `away`!");
       return;
     }
-    bot.setStatus(status, playing, function(error){
-      if (error){
+    bot.setStatus(status, playing, function(error) {
+      if (error) {
         bot.sendMessage(msg.channel, "Whoops, that doesn't work, try again.");
       } else if (playing) {
         bot.sendMessage(msg.channel, "Okay, I'm now " + status + " and playing " + playing);
@@ -111,57 +117,63 @@ Commands.setstatus = {
         bot.sendMessage(msg.channel, "Okay, I'm now " + status + ".");
       }
     });
-}};
+  }
+};
 
 Commands.fortunecow = {
   name: "fortunecow",
   help: "I'll get a random fortunecow!",
   level: 0,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: FortuneCow is being executed.");
     }
     bot.sendMessage(msg.channel, "On it!");
     unirest.get("https://thibaultcha-fortunecow-v1.p.mashape.com/random")
-    .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
-    .header("Accept", "text/plain")
-    .end(function (result) {
-      bot.sendMessage(msg.channel, "```" + result.body + "```");
-});}};
+      .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
+      .header("Accept", "text/plain")
+      .end(function(result) {
+        bot.sendMessage(msg.channel, "```" + result.body + "```");
+      });
+  }
+};
 
 Commands.leetspeak = {
   name: "leetspeak",
   help: "1'Ll 3nc0D3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
   level: 0,
-  fn: function(bot, msg, suffix){
+  fn: function(bot, msg, suffix) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Leetspeak is being executed.");
     }
     var leetspeak = require("leetspeak");
     var thing = leetspeak(suffix);
     bot.sendMessage(msg.channel, thing);
-}};
+  }
+};
 
 Commands.randomcat = {
   name: "randomcat",
   help: "I'll get a random cat image for you!",
   level: 0,
-  fn: function(bot, msg, suffix){
+  fn: function(bot, msg, suffix) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: RandomCat is being executed.");
     }
     unirest.get("https://nijikokun-random-cats.p.mashape.com/random")
-    .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
-    .header("Accept", "application/json")
-    .end(function (result) {
-      bot.sendMessage(msg.channel, result.body.source);
-});}};
+      .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
+      .header("Accept", "application/json")
+      .end(function(result) {
+        bot.sendMessage(msg.channel, result.body.source);
+      });
+  }
+};
 
 Commands.info = {
   name: "info",
   help: "I'll print some information about me.",
   level: 0,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Info is being executed.");
     }
@@ -170,7 +182,8 @@ Commands.info = {
     msgArray.push("Using latest 5.x.x *Discord.js* version by *hydrabolt*.");
     msgArray.push("Made by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
     bot.sendMessage(msg.channel, msgArray);
-}};
+  }
+};
 
 Commands.cleverbot = {
   name: "cleverbot",
@@ -200,10 +213,10 @@ Commands.leave = {
       VerboseLogger.debug("VERBOSE LOG: Leave is being executed.");
     }
     if (msg.channel.server) {
-        bot.sendMessage(msg.channel, "Alright, see ya!");
-        bot.leaveServer(msg.channel.server);
-        Logger.log("info", "I've left a server on request of " + msg.sender.username + ", I'm only in " + bot.servers.length + " servers now.");
-        return;
+      bot.sendMessage(msg.channel, "Alright, see ya!");
+      bot.leaveServer(msg.channel.server);
+      Logger.log("info", "I've left a server on request of " + msg.sender.username + ", I'm only in " + bot.servers.length + " servers now.");
+      return;
     } else {
       bot.sendMessage(msg.channel, "I can't leave a DM, dummy!");
       return;
@@ -221,17 +234,20 @@ Commands.say = {
       VerboseLogger.debug("VERBOSE LOG: Say is being executed.");
     }
     if (suffix.search("!say") === -1) {
-        bot.sendMessage(msg.channel, suffix);
-      if (msg.channel.server){
-      var bot_permissions = msg.channel.permissionsOf(bot.user);
-      if (bot_permissions.hasPermission("manageMessages")) {
-        bot.deleteMessage(msg);
-        return;
-      } else {
-        bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
-      }}
+      bot.sendMessage(msg.channel, suffix);
+      if (msg.channel.server) {
+        var bot_permissions = msg.channel.permissionsOf(bot.user);
+        if (bot_permissions.hasPermission("manageMessages")) {
+          bot.deleteMessage(msg);
+          return;
+        } else {
+          bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
+        }
+      }
     } else {
-      bot.sendMessage(msg.channel, "HEY " + msg.sender + " STOP THAT!", {tts:"true"});
+      bot.sendMessage(msg.channel, "HEY " + msg.sender + " STOP THAT!", {
+        tts: "true"
+      });
     }
   }
 };
@@ -254,9 +270,9 @@ Commands.killswitch = {
   help: "This will instantly terminate all of the running instances of the bot without restarting.",
   level: 4, // If an access level is set to 4 or higher, only the master user can use this
   fn: function(bot, msg) {
-    if (VerboseLog === true) {
-      VerboseLogger.debug("VERBOSE LOG: Killswitch is being executed.");
-    }
+      if (VerboseLog === true) {
+        VerboseLogger.debug("VERBOSE LOG: Killswitch is being executed.");
+      }
       bot.sendMessage(msg.channel, "An admin has requested to kill all instances of WildBeast, exiting...");
       bot.logout();
       Logger.log("warn", "Disconnected via killswitch!");
@@ -273,36 +289,36 @@ Commands.image = {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Image is being executed.");
     }
-    if(!ConfigFile || !ConfigFile.api_keys.google_key || !ConfigFile.api_keys.cse_key){
-          bot.sendMessage(msg.channel, "Image search requires both a Google API key and a CSE key!");
-          return;
-        }
-        //gets us a random result in first 5 pages
-        var page = 1 + Math.floor(Math.random() * 5) * 10; //we request 10 items
-        var request = require("request");
-        request("https://www.googleapis.com/customsearch/v1?key=" + ConfigFile.api_keys.google_key + "&cx=" + ConfigFile.api_keys.cse_key + "&q=" + (suffix.replace(/\s/g, '+')) + "&searchType=image&alt=json&num=10&start="+page, function(err, res, body) {
-          var data, error;
-          try {
-            data = JSON.parse(body);
-          } catch (error) {
-            Logger.error(error);
-            return;
-          }
-          if(!data){
-            Logger.debug(data);
-            bot.sendMessage(msg.channel, "Error:\n" + JSON.stringify(data));
-            return;
-          }
-          else if (!data.items || data.items.length === 0){
-            Logger.debug(data);
-            bot.sendMessage(msg.channel, "No result for '" + suffix + "'");
-            return;
-          }
-          var randResult = data.items[Math.floor(Math.random() * data.items.length)];
-          bot.sendMessage(msg.channel, randResult.title + '\n' + randResult.link);
-        });
+    if (!ConfigFile || !ConfigFile.api_keys.google_key || !ConfigFile.api_keys.cse_key) {
+      bot.sendMessage(msg.channel, "Image search requires both a Google API key and a CSE key!");
+      return;
+    }
+    //gets us a random result in first 5 pages
+    var page = 1 + Math.floor(Math.random() * 5) * 10; //we request 10 items
+    var request = require("request");
+    request("https://www.googleapis.com/customsearch/v1?key=" + ConfigFile.api_keys.google_key + "&cx=" + ConfigFile.api_keys.cse_key + "&q=" + (suffix.replace(/\s/g, '+')) + "&searchType=image&alt=json&num=10&start=" + page, function(err, res, body) {
+      var data, error;
+      try {
+        data = JSON.parse(body);
+      } catch (error) {
+        Logger.error(error);
+        return;
+      }
+      if (!data) {
+        Logger.debug(data);
+        bot.sendMessage(msg.channel, "Error:\n" + JSON.stringify(data));
+        return;
+      } else if (!data.items || data.items.length === 0) {
+        Logger.debug(data);
+        bot.sendMessage(msg.channel, "No result for '" + suffix + "'");
+        return;
+      }
+      var randResult = data.items[Math.floor(Math.random() * data.items.length)];
+      bot.sendMessage(msg.channel, randResult.title + '\n' + randResult.link);
+    });
     Logger.log("debug", "I've looked for images of " + suffix + " for " + msg.sender.username);
-}};
+  }
+};
 
 Commands.pullanddeploy = {
   name: "pullanddeploy",
@@ -389,7 +405,7 @@ Commands.purge = {
       bot.sendMessage(msg.channel, "You can't do that in a DM, dummy!");
       return;
     }
-    if (!suffix){
+    if (!suffix) {
       bot.sendMessage(msg.channel, "Please define an ammount of messages for me to delete!");
       return;
     }
@@ -401,30 +417,32 @@ Commands.purge = {
       bot.sendMessage(msg.channel, "I don't have permission to do that!");
       return;
     }
-    if (suffix > 100){
+    if (suffix > 100) {
       bot.sendMessage(msg.channel, "The maximum is 100.");
       return;
     }
-    bot.getChannelLogs(msg.channel, suffix, function(error, messages){
-      if (error){
+    bot.getChannelLogs(msg.channel, suffix, function(error, messages) {
+      if (error) {
         bot.sendMessage(msg.channel, "Something went wrong while fetching logs.");
         return;
       } else {
         Logger.info("Beginning purge...");
         var todo = messages.length,
-        delcount = 0;
-        for (msg of messages){
+          delcount = 0;
+        for (msg of messages) {
           bot.deleteMessage(msg);
           todo--;
           delcount++;
-        if (todo === 0){
-          bot.sendMessage(msg.channel, "Done! Deleted " + delcount + " messages.");
-          Logger.info("Ending purge, deleted " + delcount + " messages.");
-          return;
-          }}
+          if (todo === 0) {
+            bot.sendMessage(msg.channel, "Done! Deleted " + delcount + " messages.");
+            Logger.info("Ending purge, deleted " + delcount + " messages.");
+            return;
+          }
         }
       }
-  );}};
+    });
+  }
+};
 
 Commands.kappa = {
   name: "kappa",
@@ -435,14 +453,15 @@ Commands.kappa = {
       VerboseLogger.debug("VERBOSE LOG: Kappa is being executed.");
     }
     bot.sendFile(msg.channel, "./images/kappa.png");
-    if (msg.channel.server){
-    var bot_permissions = msg.channel.permissionsOf(bot.user);
-    if (bot_permissions.hasPermission("manageMessages")) {
-      bot.deleteMessage(msg);
-      return;
-    } else {
-      bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
-    }}
+    if (msg.channel.server) {
+      var bot_permissions = msg.channel.permissionsOf(bot.user);
+      if (bot_permissions.hasPermission("manageMessages")) {
+        bot.deleteMessage(msg);
+        return;
+      } else {
+        bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
+      }
+    }
   }
 };
 
@@ -450,7 +469,7 @@ Commands.whois = {
   name: "whois",
   help: "I'll get some information about the user you've mentioned.",
   level: 0,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: WhoIs is being executed.");
     }
@@ -459,17 +478,17 @@ Commands.whois = {
       bot.sendMessage(msg.author, "I can't do that in a DM, sorry.");
       return;
     }
-      if (msg.mentions.length === 0) {
-        bot.sendMessage(msg.channel, "Please mention the user that you want to get information of.");
-        return;
-      }
-      msg.mentions.map(function(user) {
-        Permissions.GetLevel((msg.channel.server.id + user.id), user.id, function(err, level) {
-          if (err) {
-            return;
-          } else {
-            UserLevel = level;
-          }
+    if (msg.mentions.length === 0) {
+      bot.sendMessage(msg.channel, "Please mention the user that you want to get information of.");
+      return;
+    }
+    msg.mentions.map(function(user) {
+      Permissions.GetLevel((msg.channel.server.id + user.id), user.id, function(err, level) {
+        if (err) {
+          return;
+        } else {
+          UserLevel = level;
+        }
         var msgArray = [];
         if (user.avatarURL === null) {
           msgArray.push("Requested user: `" + user.username + "`");
@@ -487,102 +506,106 @@ Commands.whois = {
           bot.sendMessage(msg.channel, msgArray);
         }
       });
-});}};
+    });
+  }
+};
 
 Commands.setlevel = {
   name: "setlevel",
   help: "This changes the permission level of an user.",
   level: 3,
-  fn: function(bot, msg, suffix){
+  fn: function(bot, msg, suffix) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: SetLevel is being executed.");
     }
-		if (!msg.channel.server) {
-			bot.sendMessage(msg.channel, "I can't do that in a PM!");
-			return;
-		}
-		if (isNaN(suffix[0])) {
-			bot.reply(msg.channel, "your first param is not a number!");
-			return;
-		}
-		if (msg.mentions.length === 0) {
-			bot.reply(msg.channel, "please mention the user(s) you want to set the permission level of.");
-			return;
-		}
-		Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
-			if (err) {
+    if (!msg.channel.server) {
+      bot.sendMessage(msg.channel, "I can't do that in a PM!");
+      return;
+    }
+    if (isNaN(suffix[0])) {
+      bot.reply(msg.channel, "your first param is not a number!");
+      return;
+    }
+    if (msg.mentions.length === 0) {
+      bot.reply(msg.channel, "please mention the user(s) you want to set the permission level of.");
+      return;
+    }
+    Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
+      if (err) {
         bot.sendMessage(msg.channel, "Help! Something went wrong!");
         return;
       }
-			if (suffix[0] > level) {
-				bot.reply(msg.channel, "you can't set a user's permissions higher than your own!");
-				return;
-			}
-		});
-		msg.mentions.map(function(user) {
-			Permissions.SetLevel((msg.channel.server.id + user.id), suffix[0], function(err, level) {
-				if (err) {
+      if (suffix[0] > level) {
+        bot.reply(msg.channel, "you can't set a user's permissions higher than your own!");
+        return;
+      }
+    });
+    msg.mentions.map(function(user) {
+      Permissions.SetLevel((msg.channel.server.id + user.id), suffix[0], function(err, level) {
+        if (err) {
           bot.sendMessage(msg.channel, "Help! Something went wrong!");
           return;
         }
-			});
-		});
-		bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
-}};
+      });
+    });
+    bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
+  }
+};
 
 Commands.setnsfw = {
   name: "setnsfw",
   help: "This changes if the channel allows NSFW commands.",
   usage: "<on | off>",
   level: 3,
-  fn: function(bot, msg, suffix){
+  fn: function(bot, msg, suffix) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: SetNSFW is being executed.");
     }
-		if (!msg.channel.server) {
-			bot.sendMessage(msg.channel, "NSFW commands are always allowed in DM's.");
-			return;
-		}
-		if (suffix === "on" || suffix === "off") {
-			Permissions.SetNSFW(msg.channel, suffix, function(err, allow) {
-				if (err) {
+    if (!msg.channel.server) {
+      bot.sendMessage(msg.channel, "NSFW commands are always allowed in DM's.");
+      return;
+    }
+    if (suffix === "on" || suffix === "off") {
+      Permissions.SetNSFW(msg.channel, suffix, function(err, allow) {
+        if (err) {
           bot.reply(msg.channel, "I've failed to set NSFW flag!");
         }
-				if (allow === "on") {
-					bot.sendMessage(msg.channel, "NSFW commands are now allowed for " + msg.channel);
-				}
-				else if (allow === "off") {
-					bot.sendMessage(msg.channel, "NSFW commands are now disallowed for " + msg.channel);
-				}
-				else {
-					bot.reply(msg.channel, "I've failed to set NSFW flag!");
-				}
-			});
-		}
-}};
+        if (allow === "on") {
+          bot.sendMessage(msg.channel, "NSFW commands are now allowed for " + msg.channel);
+        } else if (allow === "off") {
+          bot.sendMessage(msg.channel, "NSFW commands are now disallowed for " + msg.channel);
+        } else {
+          bot.reply(msg.channel, "I've failed to set NSFW flag!");
+        }
+      });
+    }
+  }
+};
 
 Commands.setowner = {
   name: "setowner",
   help: "This will set the owner of the current server to level 3.",
   level: 0,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: SetOwner is being executed.");
     }
-    if (msg.channel.isPrivate){
+    if (msg.channel.isPrivate) {
       bot.sendMessage(msg.channel, "You need to execute this command in a server, dummy!");
       return;
     } else {
-    Permissions.SetLevel((msg.channel.server.id + msg.channel.server.owner.id), 3, function (err, level){
-      if (err){
-        bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
-        return;
-      }
-      if (level === 3){
-        bot.sendMessage(msg.channel, "Okay! " + msg.channel.server.owner + " is now at level 3!");
-      }
-    });
-}}};
+      Permissions.SetLevel((msg.channel.server.id + msg.channel.server.owner.id), 3, function(err, level) {
+        if (err) {
+          bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
+          return;
+        }
+        if (level === 3) {
+          bot.sendMessage(msg.channel, "Okay! " + msg.channel.server.owner + " is now at level 3!");
+        }
+      });
+    }
+  }
+};
 
 Commands.hello = {
   name: "hello",
@@ -656,13 +679,13 @@ Commands["join-server"] = {
           msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server.");
           msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
           msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
-          msgArray.push("By the way, to give "+ server.owner +" administrative permissions over me, use **" + ConfigFile.bot_settings.cmd_prefix + "setowner**");
+          msgArray.push("By the way, to give " + server.owner + " administrative permissions over me, use **" + ConfigFile.bot_settings.cmd_prefix + "setowner**");
           bot.sendMessage(server.defaultChannel, msgArray);
           msgArray = [];
           msgArray.push("Hey " + server.owner.username + ", I've joined a server in which you're the founder.");
           msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
           msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
-          msgArray.push("If you do want me, use `" +ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
+          msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
           bot.sendMessage(server.owner, msgArray);
           bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
         }
@@ -691,7 +714,7 @@ Commands.meme = {
   help: "I'll create a meme with your suffixes!",
   usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
   level: 0,
-  fn: function(bot, msg, suffix){
+  fn: function(bot, msg, suffix) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Meme is being executed.");
     }
@@ -704,7 +727,9 @@ Commands.meme = {
     imgflipper.generateMeme(meme[memetype], tags[1] ? tags[1] : "", tags[3] ? tags[3] : "", function(err, image) {
       //CmdErrorLog.log("debug", arguments);
       bot.sendMessage(msg.channel, image);
-      if (!msg.channel.server){return;}
+      if (!msg.channel.server) {
+        return;
+      }
       var bot_permissions = msg.channel.permissionsOf(bot.user);
       if (bot_permissions.hasPermission("manageMessages")) {
         bot.deleteMessage(msg);
@@ -712,7 +737,9 @@ Commands.meme = {
       } else {
         bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
       }
-});}};
+    });
+  }
+};
 
 Commands.rule34 = {
   name: "rule34",
@@ -725,34 +752,32 @@ Commands.rule34 = {
     }
     var request = require('request');
     var xml2js = require('xml2js');
-    var url = "http://rule34.xxx/index.php?page=dapi&s=post&limit=1&q=index&tags="+suffix;
-    request(url, function (error, response, body) {
+    var url = "http://rule34.xxx/index.php?page=dapi&s=post&limit=1&q=index&tags=" + suffix;
+    request(url, function(error, response, body) {
       if (!error && response.statusCode == 200) {
-        xml2js.parseString(body, function (err, result) {
+        xml2js.parseString(body, function(err, result) {
           var util = require('util');
-          var fuckme = util.inspect(result.posts,false,null).split("'");
+          var fuckme = util.inspect(result.posts, false, null).split("'");
           if (fuckme[13].substr(0, 5) != "http:") {
             var httpstring = 'http:';
             fuckme = httpstring.concat(fuckme[13]);
-            bot.sendMessage(msg.channel,fuckme);
+            bot.sendMessage(msg.channel, fuckme);
           } else {
-              bot.sendMessage(msg.channel,fuckme[13]);
+            bot.sendMessage(msg.channel, fuckme[13]);
           }
-        }
-      );
+        });
       } else {
         Logger.error("Got an error: ", error, ", status code: ", response.statusCode);
       }
-    }
-  );
- }
+    });
+  }
 };
 
 Commands.status = {
   name: "status",
   help: "I'll get some info about me, like uptime and currently connected servers.",
   level: 0,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: Status is being executed.");
     }
@@ -761,14 +786,15 @@ Commands.status = {
     msgArray.push("I'm used in " + bot.servers.length + " servers, and in " + bot.channels.length + " channels.");
     msgArray.push("My uptime is " + (Math.round(bot.uptime / (1000 * 60 * 60))) + " hours, " + (Math.round(bot.uptime / (1000 * 60)) % 60) + " minutes, and " + (Math.round(bot.uptime / 1000) % 60) + " seconds.");
     bot.sendMessage(msg.channel, msgArray);
-}};
+  }
+};
 
 Commands.iff = {
   name: "iff",
   help: "''**I**mage **F**rom **F**ile'', I'll get a image from the image folder for you and upload it to the channel.",
   usage: "<image>",
   level: 0,
-  fn: function(bot, msg, suffix){
+  fn: function(bot, msg, suffix) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: IFF is being executed.");
     }
@@ -786,7 +812,9 @@ Commands.iff = {
       }
       if (imgArray.indexOf(suffix) !== -1) {
         bot.sendFile(msg.channel, "./images/" + suffix);
-        if (!msg.channel.server){return;}
+        if (!msg.channel.server) {
+          return;
+        }
         var bot_permissions = msg.channel.permissionsOf(bot.user);
         if (bot_permissions.hasPermission("manageMessages")) {
           bot.deleteMessage(msg);
@@ -794,11 +822,12 @@ Commands.iff = {
         } else {
           bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
         }
-        } else {
-          bot.sendMessage(msg.channel, "*Invalid input!*");
-        }
+      } else {
+        bot.sendMessage(msg.channel, "*Invalid input!*");
+      }
     });
-}};
+  }
+};
 
 Commands.gif = {
   name: "gif",
@@ -824,7 +853,7 @@ Commands.imglist = {
   name: "imglist",
   help: "Prints the contents of the images directory to the channel.",
   level: 0,
-  fn: function(bot, msg){
+  fn: function(bot, msg) {
     if (VerboseLog === true) {
       VerboseLogger.debug("VERBOSE LOG: ImgList is being executed.");
     }
@@ -842,7 +871,7 @@ Commands.imglist = {
       }
       bot.sendMessage(msg.channel, imgArray);
     });
-    }
+  }
 };
 
 Commands.stroke = {
@@ -1188,7 +1217,7 @@ Commands.help = {
   name: "help",
   help: "You're looking at it right now.",
   level: 0,
-  fn: function(bot, msg, suffix){
+  fn: function(bot, msg, suffix) {
     var msgArray = [];
     var commandnames = []; // Build a array of names from commands.
     if (!suffix) {
@@ -1200,7 +1229,7 @@ Commands.help = {
       msgArray.push(commandnames.join(", "));
       msgArray.push("");
       msgArray.push("If you have any questions, or if you don't get something, contact <@107904023901777920> or <@110147170740494336>");
-      if (ConfigFile.bot_settings.help_mode === "private"){
+      if (ConfigFile.bot_settings.help_mode === "private") {
         bot.sendMessage(msg.author, msgArray);
         Logger.debug("Send help via DM.");
         if (msg.channel.server) {
@@ -1242,10 +1271,10 @@ Commands.help = {
           }
           msgArray.push(str);
         }
-        if (ConfigFile.bot_settings.help_mode === "private"){
+        if (ConfigFile.bot_settings.help_mode === "private") {
           bot.sendMessage(msg.author, msgArray);
           Logger.debug("Send suffix help via DM.");
-        } else if (ConfigFile.bot_settings.help_mode === "channel"){
+        } else if (ConfigFile.bot_settings.help_mode === "channel") {
           bot.sendMessage(msg.channel, msgArray);
           Logger.debug("Send suffix help to channel.");
         } else {
@@ -1255,6 +1284,8 @@ Commands.help = {
       } else {
         bot.sendMessage(msg.channel, "There is no **" + suffix + "** command!");
       }
-}}};
+    }
+  }
+};
 
 exports.Commands = Commands;
