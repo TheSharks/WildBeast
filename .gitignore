@@ -8,6 +8,7 @@ config.json
 music
 images
 runtime/databases
+runtime/alias.json
 
 # Runtime data
 pids
