@@ -14,7 +14,8 @@ var ConfigFile = require("../config.json"),
   DebugLogger = require("./logger.js").DebugModeLog,
   Defaulting = require("./serverdefaulting.js"),
   VerboseLogger = require("./logger.js").VerboseModeLog,
-  DJ = require("./djlogic.js");
+  DJ = require("./djlogic.js"),
+  aliases = require("./alias.json");
 
 if (ConfigFile.bot_settings.verbose_logging === true) {
   VerboseLog = true;
@@ -35,6 +36,36 @@ Commands.ping = {
     }
     bot.sendMessage(msg.channel, "Pong!");
   }
+};
+
+Commands.eval = {
+    name: "eval",
+    help: "Allows the execution of arbitrary Javascript code within the context of the bot.",
+    level: 6, // Now 100% sure it can't be used by anyone but the master user.
+    fn: function(bot, msg, suffix) {
+      bot.sendMessage(msg.channel, eval(suffix));
+    }
+};
+
+Commands.alias = {
+  name: "alias",
+  help: "Allows for creating quick custom commands on the fly!",
+  level: 5,
+  fn: function(bot, msg, suffix) {
+			var args = suffix.split(" ");
+			var name = args.shift();
+			if(!name){
+				return;
+			} else if(Commands[name] || name === "help"){
+				bot.sendMessage(msg.channel,"Overwriting commands with aliases is not allowed!");
+			} else {
+				var command = args.shift();
+				aliases[name] = [command, args.join(" ")];
+				//now save the new alias
+				require("fs").writeFile("./runtime/alias.json",JSON.stringify(aliases,null,2), null);
+				bot.sendMessage(msg.channel,"Created alias " + name);
+			}
+		}
 };
 
 Commands["join-voice"] = {

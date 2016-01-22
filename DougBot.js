@@ -13,8 +13,17 @@ var VersionChecker = require("./runtime/versionchecker.js");
 var forever = require("forever");
 var DebugMode;
 var VerboseLog;
+var aliases;
 var Defaulting = require("./runtime/serverdefaulting.js");
 var TimeOut = require("./runtime/timingout.js");
+
+// Declare aliasses
+try{
+	aliases = require("./runtime/alias.json");
+} catch(e) {
+	//No aliases defined
+	aliases = {};
+}
 
 // Declare if debug mode or verbose logging is needed
 if (ConfigFile.bot_settings.debug_mode === true) {
@@ -118,7 +127,12 @@ bot.on("message", function(msg) {
     var step = msg.content.substr(prefix.length);
     var chunks = step.split(" ");
     var command = chunks[0];
+    alias = aliases[command];
     var suffix = msg.content.substring(command.length + (prefix.length + 1));
+    if(alias){
+      command = alias[0];
+      suffix = alias[1] + " " + suffix;
+    }
     if (command === "help") {
       Commands.help.fn(bot, msg, suffix);
       return;
