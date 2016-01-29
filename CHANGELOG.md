@@ -1,5 +1,11 @@
 # Gamma phase
 (Gamma is a real thing in software development by the way, it's a synonym for RC (Release Candidate))
+## 2.0.0-gamma.2
+Added some extra commands.   
+Revamped debug mode and verbose logging.   
+Changed `setowner` to set server owner to level 4 instead of level 3.  
+Changed commands that where at level 4 to level 5.    
+
 ## 2.0.0-gamma.1
 Added a timeout feature.    
 **GET HYPED FOR MUSIC STREAMING!**      

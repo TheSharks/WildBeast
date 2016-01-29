@@ -1,22 +1,22 @@
 {
   "name": "WildBeast",
-  "version": "2.0.0-gamma-1",
+  "version": "2.0.0-gamma.2",
   "description": "A Discord bot",
   "readme": "README.md",
   "maintainers": [
-    "Perpetucake"
+    "Perpetucake (Perpetucake@wildbeast.space)",
+    "Mirrorbreak (Mirrow@wildbeast.space)"
   ],
-  "author": "Remco Jongschaap (SteamingMutt@users.noreply.github.com)",
+  "author": "Remco Jongschaap (Dougley@wildbeast.space)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SteamingMutt/DougleyBot2.0.git"
+    "url": "git+https://github.com/SteamingMutt/WildBeast.git"
   },
   "license": "GPL-3.0",
   "dependencies": {
     "cleverbot-node": "0.2.x",
     "csgo-market": "*",
     "discord.js": "^5.3.0",
-    "forever": "*",
     "imgflipper": "*",
     "leetspeak": "*",
     "leveldown": "^1.4.3",

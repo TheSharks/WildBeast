@@ -53,6 +53,13 @@ exports.fetch = function(callback) { // TODO: This is the most ridicolous method
   callback(ServerID);
 };
 
+exports.setServer = function(id) {
+  ServerID = id;
+};
+
+exports.setChannel = function(id) {
+  LogBookID = id;
+};
 exports.check = function(callback) { // TODO: Make more reliable, meant to fetch servers in which bot is the owner
   var oldServers = [];
   for (var owner in bot.servers) {

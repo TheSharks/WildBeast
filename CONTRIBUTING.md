@@ -20,3 +20,10 @@ The following are a set of guidelines to improve the quality of your contributio
 5. When adding something users would like to disable/enable, include a `config.json` value that will trigger/disable the function.
 6. When calling the bots name, use `bot.user` or `bot.user.username`, and not WildBeast or DougleyBot.
 7. Try to modulate as much of your code as possible, for example; if your code needs a rss feed, try to modulate the calling for the feed.
+
+# Logging
+1. When logging something that users need to see, log them using the `Logger.log("level", "message")` function, or it's shortcut `Logger.level("message")`, **Not** via `console.log`.  
+2. When *debug* logging something, log them using the `Debug.debuglogSomething("invocation", "message", "loglev")`.  
+3. When *verbose* logging something, log them using the `Debug.verboselogSomething("invocation", "message", "loglev")`
+4. `Logger.log` takes `verbose, info, debug, warn, error` as loglevels, `Debug.debuglogSomething` and `Debug.verboselogSomething` takes loglev's present in the `loglevs.json` file located in the runtime folder.   
+5. Debug loggers won't check for a correct loglev, but refrain from using levels that aren't defined in `loglevs.json`.  

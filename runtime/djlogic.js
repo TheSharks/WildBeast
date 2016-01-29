@@ -3,9 +3,11 @@ var Discord = require("discord.js"),
   request = require("request"),
   boundChannel = false,
   stream = false,
-  vol = 0.25;
+  vol = 0.25,
+  Config = require("../config.json");
 
 exports.joinVoice = function(bot, message) {
+  if (Config.bot_settings.disable_music_commands === true) bot.reply(message, "music commands are disabled.");
   if (boundChannel) return;
   var channelToJoin = spliceArguments(message.content)[1];
   for (var channel of message.channel.server.channels) {
@@ -21,6 +23,7 @@ exports.joinVoice = function(bot, message) {
 };
 
 exports.playMusicURL = function(bot, message) {
+  if (Config.bot_settings.disable_music_commands === true) bot.reply(message, "music commands are disabled.");
   var url = message.content.split(" ")[1];
   bot.voiceConnection.playFile(url, {
     volume: 0.25,

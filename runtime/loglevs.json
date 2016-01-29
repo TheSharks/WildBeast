@@ -1,0 +1,16 @@
+{
+  "debug": [
+    "info",
+    "warn",
+    "error",
+    "critical",
+    "fail",
+    "debug"
+  ],
+  "verbose": [
+    "info",
+    "response",
+    "silly",
+    "verbose"
+  ]
+}

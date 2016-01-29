@@ -19,8 +19,8 @@
         "cmd_prefix": "++",
         "help_mode": "private",
         "log_chat": false,
+        "disable_music_commands": false,
         "verbose_logging": false,
-        "auto_restart": false,
         "debug_mode": false,
         "welcome_new_members": false,
         "image_folder": "./images",
@@ -53,10 +53,5 @@
         "level1": "Global level 1 user Discord ID",
         "level2": "Global level 2 user Discord ID",
         "level3": "Global level 3 user Discord ID"
-    },
-    "redis" : {
-        "host" : "localhost",
-        "port" : 6379,
-        "url" : "If you need to connect to a Redis URL, use this key and remove `host` and `port`, if you don't need this, remove this key and the comma at the end of `port`"
     }
 }

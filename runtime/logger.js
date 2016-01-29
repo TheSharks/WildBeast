@@ -24,7 +24,7 @@ exports.DebugModeLog = new Winston.Logger({
       handleExceptions: false,
       name: 'file:debugmodelog',
       filename: __dirname + '/../logs/debugmodelog',
-      datePattern: 'debugmodelog-dd-MM-yyyy.log',
+      datePattern: '-dd-MM-yyyy.log',
       formatter: function(args) { return args.message; },
       level: 'debug',
       json: false
@@ -38,7 +38,7 @@ exports.VerboseModeLog = new Winston.Logger({
       handleExceptions: false,
       name: 'file:verbosemodelog',
       filename: __dirname + '/../logs/verbosemodelog',
-      datePattern: 'verbosemodelog-dd-MM-yyyy.log',
+      datePattern: '-dd-MM-yyyy.log',
       formatter: function(args) { return args.message; },
       level: 'debug',
       json: false
