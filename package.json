@@ -16,7 +16,7 @@
   "dependencies": {
     "cleverbot-node": "0.2.x",
     "csgo-market": "*",
-    "discord.js": "^5.3.0",
+    "discord.js": "^6.0.0",
     "imgflipper": "*",
     "leetspeak": "*",
     "leveldown": "^1.4.3",

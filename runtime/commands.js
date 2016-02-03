@@ -78,7 +78,12 @@ Commands.eval = {
     help: "Allows the execution of arbitrary Javascript code within the context of the bot.",
     level: 6, // Now 100% sure it can't be used by anyone but the master user.
     fn: function(bot, msg, suffix) {
-      bot.sendMessage(msg.channel, eval(suffix));
+      try {
+        bot.sendMessage(msg.channel, eval(suffix));
+      } catch (err) {
+        bot.sendMessage(msg.channel, "Eval failed :(");
+        bot.sendMessage(msg.channel, "```" + err + "```");
+      }
     }
 };
 
@@ -527,6 +532,10 @@ Commands.setlevel = {
     }
     if (isNaN(suffix[0])) {
       bot.reply(msg.channel, "your first param is not a number!");
+      return;
+    }
+    if (suffix[0] > 3) {
+      bot.sendMessage(msg.channel, "Setting a level higher than 3 is not allowed.");
       return;
     }
     if (msg.mentions.length === 0) {
