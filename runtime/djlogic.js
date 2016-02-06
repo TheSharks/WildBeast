@@ -74,6 +74,7 @@ exports.playMusicURL = function(bot, message) {
 exports.stopPlaying = function(message) {
   if (!message.channel.equals(boundChannel)) return;
   if (bot.voiceConnection) bot.voiceConnection.stopPlaying();
+  bot.setStatus("online", null);
   boundChannel.sendMessage("Stream has ended");
   stream = false;
 };
@@ -85,6 +86,7 @@ exports.leaveVoice = function(bot, message) {
   if (!boundChannel) return;
   bot.reply(message, `Unbinding from <#${boundChannel.id}> and destroying voice connection`);
   bot.leaveVoiceChannel();
+  bot.setStatus("online", null);
   boundChannel = false;
   stream = false;
   return;
