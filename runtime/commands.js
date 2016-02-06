@@ -749,7 +749,7 @@ Commands.rule34 = {
     var xml2js = require('xml2js');
     var url = "http://rule34.xxx/index.php?page=dapi&s=post&limit=1&q=index&tags=" + suffix;
     request(url, function(error, response, body) {
-      if (!error && response.statusCode == 200) {
+      if (!error && body.length > 74 && response.statusCode == 200 ) {
         xml2js.parseString(body, function(err, result) {
           var util = require('util');
           var fuckme = util.inspect(result.posts, false, null).split("'");
@@ -763,6 +763,7 @@ Commands.rule34 = {
         });
       } else {
         Logger.error("Got an error: ", error, ", status code: ", response.statusCode);
+        bot.reply(msg, "sorry, an error occured.");
       }
     });
   }
