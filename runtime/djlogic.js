@@ -30,18 +30,21 @@ exports.playYouTube = function(bot, message, query) {
   var fs = require('fs');
   var link = 'http://www.youtube.com/watch?v=';
   var name;
+  var ytdl = YT(link + query, { quality: 140}); // The quality of 140 assures we only download the music stream
   bot.reply(message, "Resolving " + query);
+  ytdl.on('error', function(err){
+    bot.reply(message, "That doesn't work, " + err);
+    return;
+  });
   YT.getInfo(link + query, function(err, info){
     if (err) {
-      bot.reply(message, "An error occured");
       return;
     }
     if (info) name = info.title;
   });
-    YT(link + query, { quality: 140}) // The quality of 140 assures we only download the music stream
-    .pipe(fs.createWriteStream('sound.mp4'))
-    .on('finish', function(){
-      bot.reply(message, "Preparing to play " + name);
+    ytdl.pipe(fs.createWriteStream('sound.mp4'));
+    ytdl.on('finish', function(){
+      bot.sendMessage(message.channel, "Preparing to play " + name);
       bot.voiceConnection.playFile('./sound.mp4', {
         volume: 0.50,
         stereo: true
@@ -49,7 +52,7 @@ exports.playYouTube = function(bot, message, query) {
         if (err) {
           Logger.error("Error while piping YouTube stream! " + err);
         } else if (str) {
-          bot.reply(message, "Playing your request now!");
+          bot.sendMessage(message.channel, "Playing " + message.sender + "'s request right now!");
         }
       });
   });
