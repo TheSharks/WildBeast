@@ -1,9 +1,10 @@
 var Discord = require("discord.js"),
   bot = new Discord.Client(),
+  Logger = require("./logger.js").Logger,
   request = require("request"),
   boundChannel = false,
   stream = false,
-  vol = 0.25,
+  vol = 0.50,
   Config = require("../config.json");
 
 exports.joinVoice = function(bot, message) {
@@ -22,11 +23,43 @@ exports.joinVoice = function(bot, message) {
   }
 };
 
+exports.playYouTube = function(bot, message, query) {
+  if (Config.bot_settings.disable_music_commands === true) bot.reply(message, "music commands are disabled.");
+  if (!message.channel.equals(boundChannel)) return;
+  var YT = require('ytdl-core');
+  var fs = require('fs');
+  var link = 'http://www.youtube.com/watch?v=';
+  var name;
+  bot.reply(message, "Resolving " + query);
+  YT.getInfo(link + query, function(err, info){
+    if (err) {
+      bot.reply(message, "An error occured");
+      return;
+    }
+    if (info) name = info.title;
+  });
+    YT(link + query, { quality: 140}) // The quality of 140 assures we only download the music stream
+    .pipe(fs.createWriteStream('sound.mp4'))
+    .on('finish', function(){
+      bot.reply(message, "Preparing to play " + name);
+      bot.voiceConnection.playFile('./sound.mp4', {
+        volume: 0.50,
+        stereo: true
+      }, function(err, str){
+        if (err) {
+          Logger.error("Error while piping YouTube stream! " + err);
+        } else if (str) {
+          bot.reply(message, "Playing your request now!");
+        }
+      });
+  });
+};
+
 exports.playMusicURL = function(bot, message) {
   if (Config.bot_settings.disable_music_commands === true) bot.reply(message, "music commands are disabled.");
   var url = message.content.split(" ")[1];
   bot.voiceConnection.playFile(url, {
-    volume: 0.25,
+    volume: 0.50,
     stereo: true
   });
   bot.reply(message, "Now playing " + url);
@@ -36,7 +69,8 @@ exports.playMusicURL = function(bot, message) {
 
 exports.stopPlaying = function(message) {
   if (!message.channel.equals(boundChannel)) return;
-  stopped();
+  if (bot.voiceConnection) bot.voiceConnection.stopPlaying();
+  boundChannel.sendMessage("Stream has ended");
   stream = false;
 };
 
@@ -57,9 +91,4 @@ function spliceArguments(message, after) {
   var rest = message.split(' ');
   var removed = rest.splice(0, after);
   return [removed.join(' '), rest.join(' ')];
-}
-
-function stopped() {
-  if (bot.internal.voiceConnection) bot.internal.voiceConnection.stopPlaying();
-  boundChannel.sendMessage("Stream has ended");
 }

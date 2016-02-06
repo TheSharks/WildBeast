@@ -1,5 +1,9 @@
 # Gamma phase
 (Gamma is a real thing in software development by the way, it's a synonym for RC (Release Candidate))
+## 2.0.0-gamma.3
+*This is a relative small update.*   
+Added YouTube streaming.   
+
 ## 2.0.0-gamma.2
 Added some extra commands.   
 Revamped debug mode and verbose logging.   

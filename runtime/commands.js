@@ -128,6 +128,16 @@ Commands.play = {
   }
 };
 
+Commands['yt-play'] = {
+  name: "yt-play",
+  help: "I'll play a YouTube video over voice!",
+  usage: "<video-id> If the youtube link is https://www.youtube.com/watch?v=duqZrupkuQA, duqZrupkuQA is the video-id",
+  level: 1,
+  fn: function(bot, msg, suffix) {
+    DJ.playYouTube(bot, msg, suffix);
+  }
+};
+
 Commands.stop = {
   name: "stop",
   help: "I'll stop playing music.",
