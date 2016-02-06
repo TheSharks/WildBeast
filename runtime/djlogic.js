@@ -41,6 +41,7 @@ exports.playYouTube = function(bot, message, query) {
       return;
     }
     if (info) name = info.title;
+    bot.setStatus("online", name); // :)
   });
     ytdl.pipe(fs.createWriteStream('sound.mp4'));
     ytdl.on('finish', function(){
