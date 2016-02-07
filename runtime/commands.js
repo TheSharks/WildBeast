@@ -700,6 +700,15 @@ Commands["join-server"] = {
   }
 };
 
+Commands['check-voice'] = {
+  name: "check-voice",
+  help: "I'll check if I'm avalible to stream music right now.",
+  level: 0,
+  fn: function(bot, msg) {
+    DJ.checkIfAvalible(bot, msg);
+  }
+};
+
 Commands.idle = {
   name: "idle",
   help: "This will change my status to idle.",

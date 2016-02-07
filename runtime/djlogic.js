@@ -2,6 +2,8 @@ var Discord = require("discord.js"),
   bot = new Discord.Client(),
   Logger = require("./logger.js").Logger,
   request = require("request"),
+  time,
+  pretime,
   boundChannel = false,
   stream = false,
   vol = 0.50,
@@ -21,9 +23,13 @@ exports.joinVoice = function(bot, message) {
       }
     }
   }
+  bot.sendMessage(boundChannel, "If nothing happens in 15 seconds, the voice connection is destroyed.");
+  pretime = setTimeout(function(){bot.sendMessage(boundChannel, "Times up! Destroying voice connection...");bot.leaveVoiceChannel();boundChannel = false;stream = false;}, 15000);
 };
 
 exports.playYouTube = function(bot, message, query) {
+  clearTimeout(time);
+  clearTimeout(pretime);
   if (Config.bot_settings.disable_music_commands === true) bot.reply(message, "music commands are disabled.");
   if (!message.channel.equals(boundChannel)) return;
   var YT = require('ytdl-core');
@@ -54,21 +60,38 @@ exports.playYouTube = function(bot, message, query) {
           Logger.error("Error while piping YouTube stream! " + err);
         } else if (str) {
           bot.sendMessage(message.channel, "Playing " + message.sender + "'s request right now!");
+          str.on('end', function(){
+            bot.sendMessage(boundChannel, "Finished playing " + name + ", destroying voice connection if nothing else is played in 15 seconds.");
+            bot.setStatus("online", null);
+            time = setTimeout(function(){bot.sendMessage(boundChannel, "Times up! Destroying voice connection...");bot.leaveVoiceChannel();boundChannel = false;stream = false;}, 15000);
+          });
         }
       });
   });
 };
 
 exports.playMusicURL = function(bot, message) {
+  clearTimeout(pretime);
+  clearTimeout(time);
+  bot.reply(message, "The preferred method is to play YouTube videos, this feature may be retired in the future.");
   if (Config.bot_settings.disable_music_commands === true) bot.reply(message, "music commands are disabled.");
   var url = message.content.split(" ")[1];
   bot.voiceConnection.playFile(url, {
     volume: 0.50,
     stereo: true
+  }, function(err, str){
+    if (err) {
+      bot.reply(message, "Failed streaming that.");
+      bot.leaveVoiceChannel();
+    } else if (str){
+      bot.reply(message, "Now playing " + url);
+      str.on("end", function(){
+        bot.sendMessage(boundChannel, "Stream has ended, destroying voice connection if nothing else is played in 15 seconds.");
+        bot.setStatus("online", null);
+        time = setTimeout(function(){bot.sendMessage(boundChannel, "Times up! Destroying voice connection...");bot.leaveVoiceChannel();boundChannel = false;stream = false;}, 15000);
+      });
+    }
   });
-  bot.reply(message, "Now playing " + url);
-  bot.voiceConnection.emit("end");
-  bot.sendMessage("Stream has ended");
 };
 
 exports.stopPlaying = function(message) {
@@ -77,6 +100,11 @@ exports.stopPlaying = function(message) {
   bot.setStatus("online", null);
   boundChannel.sendMessage("Stream has ended");
   stream = false;
+};
+
+exports.checkIfAvalible = function(bot, message) {
+  if (bot.voiceConnection) bot.sendMessage(message.channel, "I'm not avalible to play music right now, sorry.");
+  if (!bot.voiceConnection) bot.sendMessage(message.channel, "I'm avalible to play music right now, use `join-voice <channel-name>` to initiate me!");
 };
 
 exports.leaveVoice = function(bot, message) {
