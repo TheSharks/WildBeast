@@ -71,6 +71,27 @@ bot.on("message", function(msg) {
   if (msg.author.equals(bot.user)) {
     return;
   }
+	if (msg.channel.isPrivate && msg.content.indexOf("https://discord.gg") === 0){
+		bot.joinServer(msg.content, function(err, server) {
+			if (err) {
+				bot.sendMessage(msg.author, "Something went wrong with that invite.");
+			} else if (server) {
+				var msgArray = [];
+				msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server.");
+				msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
+				msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
+				msgArray.push("By the way, to give " + server.owner + " administrative permissions over me, use **" + ConfigFile.bot_settings.cmd_prefix + "setowner**");
+				bot.sendMessage(server.defaultChannel, msgArray);
+				msgArray = [];
+				msgArray.push("Hey " + server.owner.username + ", I've joined a server in which you're the founder.");
+				msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
+				msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
+				msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
+				bot.sendMessage(server.owner, msgArray);
+				bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
+			}
+		});
+	}
   var prefix;
   if (ConfigFile.bot_settings.cmd_prefix != "mention") {
     prefix = ConfigFile.bot_settings.cmd_prefix;
