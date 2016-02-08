@@ -9,6 +9,7 @@ music
 images
 runtime/databases
 runtime/alias.json
+sound.mp4
 
 # Runtime data
 pids
