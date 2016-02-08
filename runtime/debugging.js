@@ -49,7 +49,7 @@ exports.verboselogSomething = function(cmd, text, loglev) {
   if (Config.bot_settings.verbose_logging === false) return;
   var d = new Date();
   var timestamp = d.toUTCString();
-  Verbose.debug(cmd + " logged something at " + timestamp + " with level " < + loglev + ">");
+  Verbose.debug(cmd + " logged something at " + timestamp + " with level <" + loglev + ">");
   Verbose.debug(text);
   Verbose.debug("=================================================================================");
 };

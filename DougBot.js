@@ -19,17 +19,17 @@ Debug.prepareDebug();
 
 // Declare aliasses
 try {
-	aliases = require("./runtime/alias.json");
-} catch(e) {
-	//No aliases defined
-	aliases = {};
+  aliases = require("./runtime/alias.json");
+} catch (e) {
+  //No aliases defined
+  aliases = {};
 }
 
 // Error logger
 bot.on("error", function(error) {
   Logger.error("Encounterd an error, please report this to the author of this bot, include any log files present in the logs folder.");
   Debug.debuglogSomething("Discord.js", "Encountered an error with discord.js most likely, got error: " + error, "error");
-	});
+});
 
 // Ready announcment
 bot.on("ready", function() {
@@ -66,32 +66,34 @@ bot.on("message", function(msg) {
   if (ConfigFile.bot_settings.log_chat === true && msg.channel.server) {
     var d = new Date();
     var n = d.toUTCString();
-    ChatLogger.info(n + ": " + msg.channel.server.name + ", " + msg.channel.name + ": " + msg.author.username + " said <" + msg + ">");
+    ChatLogger.info(n + ": " + msg.channel.server.name + ", " + msg.channel.name + ": " + msg.author.username + " said <" + msg.cleanContent + ">");
   }
   if (msg.author.equals(bot.user)) {
     return;
   }
-	if (msg.channel.isPrivate && msg.content.indexOf("https://discord.gg") === 0){
-		bot.joinServer(msg.content, function(err, server) {
-			if (err) {
-				bot.sendMessage(msg.author, "Something went wrong with that invite.");
-			} else if (server) {
-				var msgArray = [];
-				msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server.");
-				msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
-				msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
-				msgArray.push("By the way, to give " + server.owner + " administrative permissions over me, use **" + ConfigFile.bot_settings.cmd_prefix + "setowner**");
-				bot.sendMessage(server.defaultChannel, msgArray);
-				msgArray = [];
-				msgArray.push("Hey " + server.owner.username + ", I've joined a server in which you're the founder.");
-				msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
-				msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
-				msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
-				bot.sendMessage(server.owner, msgArray);
-				bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
-			}
-		});
-	}
+  if (msg.channel.isPrivate && msg.content.indexOf("https://discord.gg") === 0) {
+    bot.joinServer(msg.content, function(err, server) {
+      if (err) {
+        Debug.debuglogSomething("DougBot", "Failed to join a server on DM request.", "warn");
+        bot.sendMessage(msg.author, "Something went wrong with that invite.");
+      } else if (server) {
+        Debug.debuglogSomething("DougBot", "Joined a server on DM request.", "info");
+        var msgArray = [];
+        msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server.");
+        msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
+        msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
+        msgArray.push("By the way, to give " + server.owner + " administrative permissions over me, use **" + ConfigFile.bot_settings.cmd_prefix + "setowner**");
+        bot.sendMessage(server.defaultChannel, msgArray);
+        msgArray = [];
+        msgArray.push("Hey " + server.owner.username + ", I've joined a server in which you're the founder.");
+        msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
+        msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
+        msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
+        bot.sendMessage(server.owner, msgArray);
+        bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
+      }
+    });
+  }
   var prefix;
   if (ConfigFile.bot_settings.cmd_prefix != "mention") {
     prefix = ConfigFile.bot_settings.cmd_prefix;
@@ -101,7 +103,7 @@ bot.on("message", function(msg) {
     Debug.debuglogSomething("DougBot", "Weird prefix detected.", "warn");
   }
   if (msg.content.indexOf(prefix) === 0) {
-    Logger.info("Executing <" + msg.content + "> from " + msg.author.username);
+    Logger.info("Executing <" + msg.cleanContent + "> from " + msg.author.username);
     var step = msg.content.substr(prefix.length);
     var chunks = step.split(" ");
     var command = chunks[0];
@@ -129,14 +131,14 @@ bot.on("message", function(msg) {
             if (Commands[command].timeout) {
               TimeOut.timeoutCheck(command, msg.channel.server.id, function(reply) {
                 if (reply === "yes") {
-									Debug.debuglogSomething("DougBot", "Command is on cooldown, execution halted.", "info");
+                  Debug.debuglogSomething("DougBot", "Command is on cooldown, execution halted.", "info");
                   bot.sendMessage(msg.channel, "Sorry, this command is on cooldown.");
                   return;
                 }
               });
             }
             if (!Commands[command].nsfw) {
-							Debug.debuglogSomething("DougBot", "Safe for work command executed.", "info");
+              Debug.debuglogSomething("DougBot", "Safe for work command executed.", "info");
               Commands[command].fn(bot, msg, suffix);
               if (Commands[command].timeout) {
                 TimeOut.timeoutSet(command, msg.channel.server.id, Commands[command].timeout, function(reply, err) {
@@ -149,7 +151,7 @@ bot.on("message", function(msg) {
             } else {
               Permissions.GetNSFW(msg.channel, function(err, reply) {
                 Debug.debuglogSomething("DougBot", "Command is NSFW, checking if channel allows that.", "info");
-     						if (err) {
+                if (err) {
                   Logger.debug("Got an error! <" + err + ">");
                   Debug.debuglogSomething("LevelDB", "NSFW channel check failed, got error: " + err, "error");
                   bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
@@ -211,6 +213,12 @@ function init(token) {
     }
   });
 }
+
+// New user welcomer
+bot.on("serverNewMember", function(server, user) {
+  if (ConfigFile.bot_settings.welcome_new_members === false) return;
+  bot.sendMessage(server.defaultChannel, "Welcome " + user.username + " to " + server.name + "!");
+});
 
 function err(error) {
   Debug.debuglogSomething("Discord", "Logging into Discord probably failed, got error: " + error, "error");

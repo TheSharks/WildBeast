@@ -11,7 +11,9 @@ exports.ChatLog = new Winston.Logger({
       name: 'file:chat',
       filename: __dirname + '/../logs/chat',
       datePattern: '-dd-MM-yyyy.log',
-      formatter: function(args) { return args.message; },
+      formatter: function(args) {
+        return args.message;
+      },
       level: 'info',
       json: false
     })
@@ -25,7 +27,9 @@ exports.DebugModeLog = new Winston.Logger({
       name: 'file:debugmodelog',
       filename: __dirname + '/../logs/debugmodelog',
       datePattern: '-dd-MM-yyyy.log',
-      formatter: function(args) { return args.message; },
+      formatter: function(args) {
+        return args.message;
+      },
       level: 'debug',
       json: false
     })
@@ -39,7 +43,9 @@ exports.VerboseModeLog = new Winston.Logger({
       name: 'file:verbosemodelog',
       filename: __dirname + '/../logs/verbosemodelog',
       datePattern: '-dd-MM-yyyy.log',
-      formatter: function(args) { return args.message; },
+      formatter: function(args) {
+        return args.message;
+      },
       level: 'debug',
       json: false
     })
@@ -75,18 +81,18 @@ exports.Logger = new Winston.Logger({
       json: false
     }),
     new Winston.transports.DailyRotateFile({
-    	handleExceptions: false,
-    	name: 'file:console',
-    	filename: __dirname + '/../logs/console',
-    	datePattern: '-dd-MM-yyyy.log',
-    	level: 'debug',
-    	json: false
+      handleExceptions: false,
+      name: 'file:console',
+      filename: __dirname + '/../logs/console',
+      datePattern: '-dd-MM-yyyy.log',
+      level: 'debug',
+      json: false
     }),
     new Winston.transports.Console({
-    	handleExceptions: true,
-    	level: 'verbose',
-    	colorize: true,
-    	json: false
+      handleExceptions: true,
+      level: 'verbose',
+      colorize: true,
+      json: false
     })
   ],
   exitOnError: true

@@ -57,7 +57,7 @@ Commands.e621 = {
     bot.startTyping(msg.channel);
     unirest.post("https://e621.net/post/index.json?limit=30&tags=" + suffix) // Fetching 30 posts from E621 with the given tags
       .end(function(result) {
-        if (result.body.length < 1){
+        if (result.body.length < 1) {
           bot.sendMessage(msg.channel, "Sorry, nothing found.");
           bot.stopTyping(msg.channel);
           return;
@@ -68,23 +68,23 @@ Commands.e621 = {
           FurryArray.push(result.body[count].file_url);
           bot.sendMessage(msg.channel, FurryArray);
           bot.stopTyping(msg.channel);
-      }
-    });
+        }
+      });
   }
 };
 
 Commands.eval = {
-    name: "eval",
-    help: "Allows the execution of arbitrary Javascript code within the context of the bot.",
-    level: 6, // Now 100% sure it can't be used by anyone but the master user.
-    fn: function(bot, msg, suffix) {
-      try {
-        bot.sendMessage(msg.channel, eval(suffix));
-      } catch (err) {
-        bot.sendMessage(msg.channel, "Eval failed :(");
-        bot.sendMessage(msg.channel, "```" + err + "```");
-      }
+  name: "eval",
+  help: "Allows the execution of arbitrary Javascript code within the context of the bot.",
+  level: 6, // Now 100% sure it can't be used by anyone but the master user.
+  fn: function(bot, msg, suffix) {
+    try {
+      bot.sendMessage(msg.channel, eval(suffix));
+    } catch (err) {
+      bot.sendMessage(msg.channel, "Eval failed :(");
+      bot.sendMessage(msg.channel, "```" + err + "```");
     }
+  }
 };
 
 Commands.alias = {
@@ -92,20 +92,20 @@ Commands.alias = {
   help: "Allows for creating quick custom commands on the fly!",
   level: 5,
   fn: function(bot, msg, suffix) {
-			var args = suffix.split(" ");
-			var name = args.shift();
-			if(!name){
-				return;
-			} else if(Commands[name] || name === "help"){
-				bot.sendMessage(msg.channel,"Overwriting commands with aliases is not allowed!");
-			} else {
-				var command = args.shift();
-				aliases[name] = [command, args.join(" ")];
-				//now save the new alias
-				require("fs").writeFile("./runtime/alias.json",JSON.stringify(aliases,null,2), null);
-				bot.sendMessage(msg.channel,"Created alias " + name);
-			}
-		}
+    var args = suffix.split(" ");
+    var name = args.shift();
+    if (!name) {
+      return;
+    } else if (Commands[name] || name === "help") {
+      bot.sendMessage(msg.channel, "Overwriting commands with aliases is not allowed!");
+    } else {
+      var command = args.shift();
+      aliases[name] = [command, args.join(" ")];
+      //now save the new alias
+      require("fs").writeFile("./runtime/alias.json", JSON.stringify(aliases, null, 2), null);
+      bot.sendMessage(msg.channel, "Created alias " + name);
+    }
+  }
 };
 
 Commands["join-voice"] = {
@@ -181,9 +181,10 @@ Commands.setstatus = {
         }
       });
     } else {
-    bot.sendMessage(msg.channel, "I can only be `online` or `away`!");
-    return;
-  }}
+      bot.sendMessage(msg.channel, "I can only be `online` or `away`!");
+      return;
+    }
+  }
 };
 
 Commands.fortunecow = {
@@ -758,7 +759,7 @@ Commands.rule34 = {
     var xml2js = require('xml2js');
     var url = "http://rule34.xxx/index.php?page=dapi&s=post&limit=1&q=index&tags=" + suffix;
     request(url, function(error, response, body) {
-      if (!error && body.length > 74 && response.statusCode == 200 ) {
+      if (!error && body.length > 74 && response.statusCode == 200) {
         xml2js.parseString(body, function(err, result) {
           var util = require('util');
           var fuckme = util.inspect(result.posts, false, null).split("'");
