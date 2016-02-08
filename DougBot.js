@@ -2,6 +2,9 @@
 // Define variables first
 var Discord = require("discord.js");
 var bot = new Discord.Client();
+var pmx = require("pmx");
+var probe = pmx.probe();
+var usercount, channelcount, servercount, comcount, mescount; // PMX vars
 var ConfigFile = require("./config.json");
 var Logger = require("./runtime/logger.js").Logger;
 var Debug = require("./runtime/debugging.js");
@@ -10,6 +13,7 @@ var Commands = require("./runtime/commands.js").Commands;
 var Permissions = require("./runtime/permissions.js");
 var VersionChecker = require("./runtime/versionchecker.js");
 var aliases;
+var keymetrics;
 var Defaulting = require("./runtime/serverdefaulting.js");
 var TimeOut = require("./runtime/timingout.js");
 var Ignore = require("./runtime/ignoring.js");
@@ -23,6 +27,13 @@ try {
 } catch (e) {
   //No aliases defined
   aliases = {};
+}
+
+// Declare if Keymetrics analytics is needed
+if (ConfigFile.bot_settings.keymetrics === true) {
+  keymetrics = true;
+} else {
+  keymetrics = false;
 }
 
 // Error logger
@@ -52,6 +63,33 @@ bot.on("ready", function() {
   Logger.info("Ready to start!");
   Logger.info("Logged in as " + bot.user.username + ".");
   Logger.info("Serving " + bot.users.length + " users, in " + bot.servers.length + " servers.");
+  if (keymetrics === false) return;
+  else {
+    usercount = probe.metric({
+      name: 'Users',
+      value: function() {
+        return bot.users.length;
+      }
+    });
+    servercount = probe.metric({
+      name: 'Servers',
+      value: function() {
+        return bot.servers.length;
+      }
+    });
+    channelcount = probe.metric({
+      name: 'Channels',
+      value: function() {
+        return bot.channels.length;
+      }
+    });
+    comcount = probe.counter({
+      name: 'Commands executed'
+    });
+    mescount = probe.counter({
+      name: 'Messages recieved'
+    });
+  }
 });
 
 // Disconnected announcment
@@ -63,6 +101,7 @@ bot.on("disconnected", function() {
 
 // Command checker
 bot.on("message", function(msg) {
+  if (keymetrics === true) mescount.inc();
   if (ConfigFile.bot_settings.log_chat === true && msg.channel.server) {
     var d = new Date();
     var n = d.toUTCString();
@@ -103,6 +142,7 @@ bot.on("message", function(msg) {
     Debug.debuglogSomething("DougBot", "Weird prefix detected.", "warn");
   }
   if (msg.content.indexOf(prefix) === 0) {
+    if (keymetrics === true) comcount.inc();
     Logger.info("Executing <" + msg.cleanContent + "> from " + msg.author.username);
     var step = msg.content.substr(prefix.length);
     var chunks = step.split(" ");

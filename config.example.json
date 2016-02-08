@@ -22,6 +22,7 @@
         "disable_music_commands": false,
         "verbose_logging": false,
         "debug_mode": false,
+        "keymetrics": false,
         "welcome_new_members": false,
         "image_folder": "./images",
         "music_folder": "./music"
