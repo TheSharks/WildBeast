@@ -433,7 +433,7 @@ Commands.purge = {
       bot.sendMessage(msg.channel, "You can't do that in a DM, dummy!");
       return;
     }
-    if (!suffix) {
+    if (!suffix || isNaN(suffix)) {
       bot.sendMessage(msg.channel, "Please define an ammount of messages for me to delete!");
       return;
     }
