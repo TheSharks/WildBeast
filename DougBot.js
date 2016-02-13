@@ -1,22 +1,26 @@
 // DougBot 2.0 beta
 // Define variables first
-var Discord = require("discord.js");
-var bot = new Discord.Client();
-var pmx = require("pmx");
-var probe = pmx.probe();
-var usercount, channelcount, servercount, comcount, mescount; // PMX vars
-var ConfigFile = require("./config.json");
-var Logger = require("./runtime/logger.js").Logger;
-var Debug = require("./runtime/debugging.js");
-var ChatLogger = require("./runtime/logger.js").ChatLog;
-var Commands = require("./runtime/commands.js").Commands;
-var Permissions = require("./runtime/permissions.js");
-var VersionChecker = require("./runtime/versionchecker.js");
-var aliases;
-var keymetrics;
-var Defaulting = require("./runtime/serverdefaulting.js");
-var TimeOut = require("./runtime/timingout.js");
-var Ignore = require("./runtime/ignoring.js");
+var Discord = require("discord.js"),
+  bot = new Discord.Client(),
+  pmx = require("pmx"),
+  probe = pmx.probe(),
+  usercount, channelcount, servercount, comcount, mescount, // PMX vars
+  ConfigFile = require("./config.json"),
+  Logger = require("./runtime/logger.js").Logger,
+  Debug = require("./runtime/debugging.js"),
+  ChatLogger = require("./runtime/logger.js").ChatLog,
+  Commands = require("./runtime/commands.js").Commands,
+  Permissions = require("./runtime/permissions.js"),
+  VersionChecker = require("./runtime/versionchecker.js"),
+  aliases,
+  keymetrics,
+  Defaulting = require("./runtime/serverdefaulting.js"),
+  TimeOut = require("./runtime/timingout.js"),
+  Ignore = require("./runtime/ignoring.js");
+
+// Initial logger saying that script is being loaded.
+// Should NOT be placed in init() anymore since that runs after ready
+Logger.info("Loading WildBeast...");
 
 // Start debug mode, if needed
 Debug.prepareDebug();
@@ -239,7 +243,6 @@ bot.on("message", function(msg) {
 function init(token) {
   Debug.debuglogSomething("Discord", "Sucessfully logged into Discord, returned token: " + token, "info");
   Debug.debuglogSomething("DougBot", "Continuing start-up sequence.", "info");
-  Logger.info("Loading WildBeast...");
   Logger.info("Checking for updates...");
   VersionChecker.getStatus(function(err, status) {
     if (err) {

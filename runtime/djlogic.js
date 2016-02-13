@@ -44,7 +44,7 @@ exports.playYouTube = function(bot, message, query) {
   var ytdl = YT(link + query, {
     quality: 140
   }); // The quality of 140 assures we only download the music stream
-  bot.reply(message, "Resolving " + query);
+  bot.reply(message, "Resolving and downloading " + query + ", please wait...");
   ytdl.on('error', function(err) {
     bot.reply(message, "That doesn't work, " + err);
     return;
@@ -66,6 +66,8 @@ exports.playYouTube = function(bot, message, query) {
       if (err) {
         Logger.error("Error while piping YouTube stream! " + err);
       } else if (str) {
+        clearTimeout(time);
+        clearTimeout(pretime);
         bot.sendMessage(message.channel, "Playing " + message.sender + "'s request right now!");
         str.on('end', function() {
           bot.sendMessage(boundChannel, "Finished playing " + name + ", destroying voice connection if nothing else is played in 15 seconds.");
