@@ -112,7 +112,8 @@ Commands["join-voice"] = {
   name: "join-voice",
   help: "I'll join a voice channel!",
   usage: "[voice-channel-name]",
-  level: 3,
+  level: 0,
+  music: true,
   fn: function(bot, msg) {
     DJ.joinVoice(bot, msg);
   }
@@ -122,7 +123,8 @@ Commands.play = {
   name: "play",
   help: "I'll play a weblink containing music!",
   usage: "<web-url>",
-  level: 2,
+  level: 0,
+  music: true,
   fn: function(bot, msg) {
     DJ.playMusicURL(bot, msg);
   }
@@ -132,7 +134,8 @@ Commands['yt-play'] = {
   name: "yt-play",
   help: "I'll play a YouTube video over voice!",
   usage: "<video-id> If the youtube link is https://www.youtube.com/watch?v=duqZrupkuQA, duqZrupkuQA is the video-id",
-  level: 1,
+  level: 0,
+  music: true,
   fn: function(bot, msg, suffix) {
     DJ.playYouTube(bot, msg, suffix);
   }
@@ -141,7 +144,8 @@ Commands['yt-play'] = {
 Commands.stop = {
   name: "stop",
   help: "I'll stop playing music.",
-  level: 3,
+  level: 0,
+  music: true,
   fn: function(bot, msg) {
     DJ.stopPlaying(msg);
   }
@@ -150,7 +154,8 @@ Commands.stop = {
 Commands["leave-voice"] = {
   name: "leave-voice",
   help: "I'll leave the current voice channel.",
-  level: 3,
+  level: 0,
+  music: true,
   fn: function(bot, msg) {
     DJ.leaveVoice(bot, msg);
   }
@@ -237,8 +242,8 @@ Commands.info = {
   fn: function(bot, msg) {
     var msgArray = [];
     msgArray.push("**WildBeast version " + version + "**");
-    msgArray.push("Using latest 5.x.x *Discord.js* version by *hydrabolt*.");
-    msgArray.push("Made by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
+    msgArray.push("Using latest 6.x.x *Discord.js* version by *hydrabolt*.");
+    msgArray.push("Made primarily by Dougley, Mirrow and Perpetucake.");
     bot.sendMessage(msg.channel, msgArray);
   }
 };
@@ -261,7 +266,7 @@ Commands.cleverbot = {
 
 Commands.leave = {
   name: "leave",
-  help: "I'll leave the server in which the command is executed, you'll need the *Manage server* permission in your role to use this command.",
+  help: "I'll leave the server in which the command is executed.",
   level: 3,
   fn: function(bot, msg, suffix) {
     if (msg.channel.server) {
@@ -282,7 +287,7 @@ Commands.say = {
   usage: "<text>",
   level: 0,
   fn: function(bot, msg, suffix) {
-    if (suffix.search("!say") === -1) {
+    if (suffix.search(ConfigFile.bot_settings.cmd_prefix + "say") === -1) {
       bot.sendMessage(msg.channel, suffix);
       if (msg.channel.server) {
         var bot_permissions = msg.channel.permissionsOf(bot.user);
@@ -840,6 +845,100 @@ Commands.iff = {
   }
 };
 
+Commands.ban = {
+  name: "ban",
+  help: "Swing the banhammer on someone!",
+  usage: "<user-mention>",
+  level: 2,
+  fn: function(bot, msg) {
+    if (!msg.channel.permissionsOf(msg.sender).hasPermission("banMembers")) {
+      bot.sendMessage(msg.channel, "Sorry, your role in this server does not have enough permissions.");
+      return;
+    }
+    if (!msg.channel.permissionsOf(bot.user).hasPermission("banMembers")) {
+      bot.sendMessage(msg.channel, "I don't have enough permissions to do this!");
+      return;
+    }
+    if (msg.mentions.length === 0) {
+      bot.sendMessage(msg.channel, "Please mention the user(s) you want to ban.");
+      return;
+    }
+    msg.mentions.map(function(user) {
+      bot.banMember(user.id, msg.channel.server.id, function(error) {
+        if (error) {
+          bot.sendMessage(msg.channel, "Failed to ban " + user);
+        } else if (!error) {
+          bot.sendMessage(msg.channel, "Banned " + user);
+        }
+      });
+    });
+  }
+};
+
+Commands.purgeban = {
+  name: "purgeban",
+  help: "Swing the banhammer and delete messages at the same time!",
+  usage: "<days-to-delete> <user-mention>",
+  level: 2,
+  fn: function(bot, msg, suffix) {
+    if (!msg.channel.permissionsOf(msg.sender).hasPermission("banMembers")) {
+      bot.sendMessage(msg.channel, "Sorry, your role in this server does not have enough permissions.");
+      return;
+    }
+    if (!msg.channel.permissionsOf(bot.user).hasPermission("banMembers")) {
+      bot.sendMessage(msg.channel, "I don't have enough permissions to do this!");
+      return;
+    }
+    if (msg.mentions.length === 0) {
+      bot.sendMessage(msg.channel, "Please mention the user(s) you want to ban.");
+      return;
+    }
+    if (isNaN(suffix[0])) {
+      bot.sendMessage(msg.channel, "Your first parameter is not a number, use `ban` to ban without deleting messages.");
+      return;
+    }
+    msg.mentions.map(function(user) {
+      bot.banMember(user.id, msg.channel.server.id, suffix[0], function(error) {
+        if (error) {
+          bot.sendMessage(msg.channel, "Failed to ban " + user);
+        } else if (!error) {
+          bot.sendMessage(msg.channel, "Banned " + user + " and deleted " + suffix[0] + " days worth of messages.");
+        }
+      });
+    });
+  }
+};
+
+Commands.kick = {
+  name: "kick",
+  help: "Kick an user out of the server!",
+  usage: "<user-mention>",
+  level: 1,
+  fn: function(bot, msg) {
+    if (!msg.channel.permissionsOf(msg.sender).hasPermission("kickMembers")) {
+      bot.sendMessage(msg.channel, "Sorry, your role in this server does not have enough permissions.");
+      return;
+    }
+    if (!msg.channel.permissionsOf(bot.user).hasPermission("kickMembers")) {
+      bot.sendMessage(msg.channel, "I don't have enough permissions to do this!");
+      return;
+    }
+    if (msg.mentions.length === 0) {
+      bot.sendMessage(msg.channel, "Please mention the user(s) you want to kick.");
+      return;
+    }
+    msg.mentions.map(function(user) {
+      bot.kickMember(user.id, msg.channel.server.id, function(error) {
+        if (error) {
+          bot.sendMessage(msg.channel, "Failed to kick " + user);
+        } else if (!error) {
+          bot.sendMessage(msg.channel, "Kicked " + user);
+        }
+      });
+    });
+  }
+};
+
 Commands.gif = {
   name: "gif",
   help: "I will search Giphy for a gif matching your tags.",
@@ -1055,6 +1154,7 @@ Commands.csgoprice = {
   fn: function(bot, msg, suffix) {
     skinInfo = suffix.split('"');
     var csgomarket = require('csgo-market');
+    csgomarket.strictNameMode = false;
     csgomarket.getSinglePrice(skinInfo[1], skinInfo[3], skinInfo[5], skinInfo[7], function(err, skinData) {
       if (err) {
         Logger.log('error', err);
@@ -1151,7 +1251,7 @@ Commands.imdb = {
         }
       });
     } else {
-      bot.sendMessage(msg.channel, "Usage: !imdb [title]");
+      bot.sendMessage(msg.channel, "Usage: `imdb [title]`");
     }
   }
 };
@@ -1239,7 +1339,12 @@ Commands.help = {
         if (commando.hasOwnProperty("timeout")) { // Push special message if command has a cooldown
           msgArray.push("**This command has a cooldown of " + commando.timeout + " seconds.**");
         }
-        msgArray.push("**Needed access level:** " + commando.level); // Push the needed access level to the array
+        if (commando.hasOwnProperty('level')) {
+          msgArray.push("**Needed access level:** " + commando.level); // Push the needed access level to the array
+        }
+        if (commando.hasOwnProperty('music')) { // Push music message if command is musical.
+          msgArray.push("**This is a music related command, you'll need a role called** `Radio Master` **to use this command.**");
+        }
         if (suffix == "meme") { // If command requested is meme, print avalible meme's
           msgArray.push("");
           var str = "**Currently available memes:\n**";

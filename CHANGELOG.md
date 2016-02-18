@@ -1,5 +1,11 @@
 # Gamma phase
 (Gamma is a real thing in software development by the way, it's a synonym for RC (Release Candidate))
+## 2.0.0-gamma.4
+Revamped music streaming permissions due to the way the normal permissions handle.    
+Added some extra commands.    
+Hopefully improved the reliability of `stop` for music streaming.   
+Made preparations for a future update.    
+
 ## 2.0.0-gamma.3
 *This is a relative small update.*   
 Added YouTube streaming.   

@@ -10,6 +10,7 @@ var Discord = require("discord.js"),
   Debug = require("./runtime/debugging.js"),
   ChatLogger = require("./runtime/logger.js").ChatLog,
   Commands = require("./runtime/commands.js").Commands,
+  DJ = require("./runtime/djlogic.js"),
   Permissions = require("./runtime/permissions.js"),
   VersionChecker = require("./runtime/versionchecker.js"),
   aliases,
@@ -44,6 +45,17 @@ if (ConfigFile.bot_settings.keymetrics === true) {
 bot.on("error", function(error) {
   Logger.error("Encounterd an error, please report this to the author of this bot, include any log files present in the logs folder.");
   Debug.debuglogSomething("Discord.js", "Encountered an error with discord.js most likely, got error: " + error, "error");
+});
+
+// Warning logger
+bot.on('warn', function(warn) {
+  Logger.warn("Something went wrong internally, if this problem persists, report this to the author of the bot.");
+  Debug.debuglogSomething('Discord.js', "Encountered a Discord.js warn: " + warn, "warn");
+});
+
+// Debug stuff
+bot.on('debug', function(debug) {
+  Debug.debuglogSomething('Discord.js', "Debug message: " + debug, "debug");
 });
 
 // Ready announcment
@@ -114,7 +126,7 @@ bot.on("message", function(msg) {
   if (msg.author.equals(bot.user)) {
     return;
   }
-  if (msg.channel.isPrivate && msg.content.indexOf("https://discord.gg") === 0) {
+  if (msg.channel.isPrivate && msg.content.indexOf("https://discord.gg") === 0) { // TODO: This needs cleanup.
     bot.joinServer(msg.content, function(err, server) {
       if (err) {
         Debug.debuglogSomething("DougBot", "Failed to join a server on DM request.", "warn");
@@ -125,10 +137,17 @@ bot.on("message", function(msg) {
         msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server.");
         msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
         msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
-        msgArray.push("By the way, to give " + server.owner + " administrative permissions over me, use **" + ConfigFile.bot_settings.cmd_prefix + "setowner**");
+        Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
+          if (err) {
+            msgArray.push("An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
+          }
+          if (level === 4) {
+            msgArray.push("I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
+          }
+        });
         bot.sendMessage(server.defaultChannel, msgArray);
         msgArray = [];
-        msgArray.push("Hey " + server.owner.username + ", I've joined a server in which you're the founder.");
+        msgArray.push("Hey " + server.owner.username + ", I've joined " + server.name + " in which you're the founder.");
         msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
         msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
         msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
@@ -163,7 +182,25 @@ bot.on("message", function(msg) {
     }
     if (Commands[command]) {
       Debug.debuglogSomething("DougBot", "Command detected, trying to execute.", "info");
-      if (msg.channel.server) {
+      if (Commands[command].music && msg.channel.server) {
+        Debug.debuglogSomething("DougBot", "Musical command detected, checking for user role.", "info");
+        DJ.checkPerms(msg.channel.server, msg.author, function(err, reply) {
+          if (reply === 1 && !err) {
+            Commands[command].fn(bot, msg, suffix);
+          } else if (reply === 0 && !err) {
+            bot.reply(msg, "you need a role called `Radio Master` to use music related commands, even if you're the server owner.");
+            return;
+          } else if (err) {
+            bot.sendMessage(msg.channel, "Something went wrong, try again later.");
+            return;
+          }
+        });
+      } else if (Commands[command].music && !msg.channel.server) {
+        Debug.debuglogSomething("DougBot", "Musical command detected, but was excuted in a DM.", "info");
+        bot.sendMessage(msg.channel, "You cannot use music commands in a DM, dummy!");
+        return;
+      }
+      if (msg.channel.server && !Commands[command].music) {
         Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
           if (err) {
             Debug.debuglogSomething("LevelDB", "GetLevel failed, got error: " + err, "error");
@@ -217,7 +254,7 @@ bot.on("message", function(msg) {
             return;
           }
         });
-      } else {
+      } else if (!msg.channel.server) {
         Permissions.GetLevel(0, msg.author.id, function(err, level) { // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
           Debug.debuglogSomething("DougBot", "DM command detected, getting global perms.", "info");
           if (err) {
@@ -247,9 +284,7 @@ function init(token) {
   VersionChecker.getStatus(function(err, status) {
     if (err) {
       Logger.error(err);
-      if (DebugMode === true) {
-        Debug.debuglogSomething("VersionChecker", "Version checking failed, got error: " + err, "error");
-      }
+      Debug.debuglogSomething("VersionChecker", "Version checking failed, got error: " + err, "error");
     } // error handle
     if (status && status !== "failed") {
       Logger.info(status);

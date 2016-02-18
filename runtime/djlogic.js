@@ -113,9 +113,24 @@ exports.playMusicURL = function(bot, message) {
   });
 };
 
+exports.checkPerms = function(server, author, callback) {
+  if (autor.id === Config.permissions.masterUser) {
+    return callback(null, 1);
+  }
+  var array = server.rolesOfUser(author);
+  for (i = 0; i < array.length; i++) {
+    if (array[i].name === "Radio Master") {
+      return callback(null, 1);
+    }
+  }
+  return callback(null, 0);
+};
+
 exports.stopPlaying = function(message) {
   if (!message.channel.equals(boundChannel)) return;
-  if (bot.voiceConnection) bot.voiceConnection.stopPlaying();
+  if (bot.voiceConnection){
+     bot.voiceConnection.stopPlaying();
+   }
   bot.setStatus("online", null);
   boundChannel.sendMessage("Stream has ended");
   stream = false;
