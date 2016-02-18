@@ -114,7 +114,7 @@ exports.playMusicURL = function(bot, message) {
 };
 
 exports.checkPerms = function(server, author, callback) {
-  if (autor.id === Config.permissions.masterUser) {
+  if (author.id === Config.permissions.masterUser) {
     return callback(null, 1);
   }
   var array = server.rolesOfUser(author);
