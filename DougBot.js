@@ -49,7 +49,6 @@ bot.on("error", function(error) {
 
 // Warning logger
 bot.on('warn', function(warn) {
-  Logger.warn("Something went wrong internally, if this problem persists, report this to the author of the bot.");
   Debug.debuglogSomething('Discord.js', "Encountered a Discord.js warn: " + warn, "warn");
 });
 
