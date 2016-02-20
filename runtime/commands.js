@@ -287,7 +287,7 @@ Commands.say = {
   usage: "<text>",
   level: 0,
   fn: function(bot, msg, suffix) {
-    if (suffix.search(ConfigFile.bot_settings.cmd_prefix + "say") === -1) {
+    if (suffix.indexOf(ConfigFile.bot_settings.cmd_prefix + "say") === -1) {
       bot.sendMessage(msg.channel, suffix);
       if (msg.channel.server) {
         var bot_permissions = msg.channel.permissionsOf(bot.user);
