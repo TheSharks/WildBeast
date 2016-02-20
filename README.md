@@ -9,8 +9,10 @@
 
 WildBeast is build as a framework for multi-purpose Discord bots, being both super customisable and easy to use.
 
+========
+
 # Installation
-Installing WildBeast is easy.   
+Installing WildBeast is easy, **easier if you decide to use [Vagrant.](https://github.com/SteamingMutt/WildBeast/wiki/Vagrant)**   
 First, you're required to install [Node.js](http://nodejs.org), WildBeast is build run on Node.js version 5.x.x so install a 5.x.x version  
 Next up, FFMPEG, installing this will be documented in the [wiki.](https://github.com/SteamingMutt/WildBeast/wiki/Music#FFMPEG)   
 When that's all installed, now is a great time to make your config.json file, if you haven't already. An example is included within this repo.   
