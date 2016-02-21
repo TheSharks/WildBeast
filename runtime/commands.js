@@ -49,8 +49,8 @@ Commands["overwrite-logbook"] = {
 
 Commands.e621 = {
   name: "e621",
-  help: "e621, the defenition of *Stop taking the Internet so seriously.*",
-  usage: "<tags> multi-word tags need to be typed like: wildbeast_is_a_discord_bot",
+  help: "e621, the definition of *Stop taking the Internet so seriously.*",
+  usage: "<tags> multiword tags need to be typed like: wildbeast_is_a_discord_bot",
   level: 0,
   nsfw: true,
   fn: function(bot, msg, suffix) {
@@ -283,7 +283,7 @@ Commands.leave = {
 
 Commands.say = {
   name: "say",
-  help: "I'll echo the suffix of the command to the channel and, if I have sufficient permissions, deletes the command.",
+  help: "I'll echo the suffix of the command to the channel and, if I have sufficient permissions, I will delete the command.",
   usage: "<text>",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -719,10 +719,10 @@ Commands["join-server"] = {
 
 Commands['check-voice'] = {
   name: "check-voice",
-  help: "I'll check if I'm avalible to stream music right now.",
+  help: "I'll check if I'm available to stream music right now.",
   level: 0,
   fn: function(bot, msg) {
-    DJ.checkIfAvalible(bot, msg);
+    DJ.checkIfAvailable(bot, msg);
   }
 };
 
@@ -1059,7 +1059,7 @@ Commands.yesno = {
 
 Commands.urbandictionary = {
   name: "urbandictionary",
-  help: "Every wanted to know what idiots on the internet thinks something means? Here ya go!",
+  help: "Ever wanted to know what idiots on the internet thinks something means? Here ya go!",
   usage: "[string]",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1081,7 +1081,7 @@ Commands.urbandictionary = {
 
 Commands.fact = {
   name: "fact",
-  help: "I'll give you some interresting facts!",
+  help: "I'll give you some interesting facts!",
   level: 0,
   fn: function(bot, msg, suffix) {
     var request = require('request');
@@ -1258,7 +1258,7 @@ Commands.imdb = {
 
 Commands["8ball"] = {
   name: "8ball",
-  help: "I'll function as an magic 8 ball for a bit and anwser all of your questions! (So long as you enter the questions as suffixes.)",
+  help: "I'll function as an magic 8 ball for a bit and answer all of your questions! (So long as you enter the questions as suffixes.)",
   usage: "<question>",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1276,7 +1276,7 @@ Commands["8ball"] = {
 
 Commands.catfacts = {
   name: "catfacts",
-  help: "I'll give you some interresting facts about cats!",
+  help: "I'll give you some interesting facts about cats!",
   level: 0,
   fn: function(bot, msg, suffix) {
     var request = require('request');
@@ -1302,7 +1302,7 @@ Commands.help = {
       for (index in Commands) {
         commandnames.push(Commands[index].name);
       }
-      msgArray.push("These are the currently avalible commands, use `" + ConfigFile.bot_settings.cmd_prefix + "help <command_name>` to learn more about a specific command.");
+      msgArray.push("These are the currently available commands, use `" + ConfigFile.bot_settings.cmd_prefix + "help <command_name>` to learn more about a specific command.");
       msgArray.push("");
       msgArray.push(commandnames.join(", "));
       msgArray.push("");
@@ -1311,7 +1311,7 @@ Commands.help = {
         bot.sendMessage(msg.author, msgArray);
         Logger.debug("Send help via DM.");
         if (msg.channel.server) {
-          bot.sendMessage(msg.channel, "Ok " + msg.author + ", I've send you a list of commands via DM.");
+          bot.sendMessage(msg.channel, "Ok " + msg.author + ", I've sent you a list of commands via DM.");
         }
       } else if (ConfigFile.bot_settings.help_mode === "channel") {
         bot.sendMessage(msg.channel, msgArray);
