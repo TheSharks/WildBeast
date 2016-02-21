@@ -39,6 +39,7 @@ exports.joinVoice = function(bot, message) {
 };
 
 exports.playlistAdd = function(bot, message, suffix) {
+  clearTimeout(pretime);
   if (Config.bot_settings.disable_music_commands === true) {
     bot.reply(message, "music commands are disabled.");
     return;
@@ -53,7 +54,6 @@ exports.playlistAdd = function(bot, message, suffix) {
       return;
     }
   }, 120000);
-  clearTimeout(pretime);
   if (!bot.voiceConnection) {
     bot.reply(message, "Not in voice right now.");
   }
