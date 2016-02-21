@@ -136,7 +136,7 @@ exports.stopPlaying = function(message) {
   stream = false;
 };
 
-exports.checkIfAvalible = function(bot, message) {
+exports.checkIfAvailable = function(bot, message) {
   if (bot.voiceConnection) bot.sendMessage(message.channel, "I'm not available to play music right now, sorry.");
   if (!bot.voiceConnection) bot.sendMessage(message.channel, "I'm available to play music right now, use `join-voice <channel-name>` to initiate me!");
 };
