@@ -27,6 +27,54 @@ Commands.ping = {
   }
 };
 
+Commands.nowplaying = {
+  name: "nowplaying",
+  help: "Returns what video is currently playing.",
+  music: true,
+  level: 0,
+  fn: function(bot, msg) {
+    DJ.returnNowPlaying(bot, msg);
+  }
+};
+
+Commands.forceskip = {
+  name: "forceskip",
+  help: "Forces a song to skip.",
+  level: 2,
+  fn: function(bot, msg) {
+    DJ.expSkip(bot, msg);
+  }
+};
+
+Commands.request = {
+  name: "request",
+  help: "Adds a video to the playlist.",
+  level: 0,
+  music: true,
+  fn: function(bot, msg, suffix) {
+    DJ.playlistAdd(bot, msg, suffix);
+  }
+};
+
+Commands.playlist = {
+  name: "playlist",
+  help: "Returns the playlist.",
+  level: 0,
+  fn: function(bot, msg) {
+    DJ.playlistFetch(bot, msg);
+  }
+};
+
+Commands.playliststart = {
+  name: "playliststart",
+  help: "Starts the playlist!",
+  music: true,
+  level: 0,
+  fn: function(bot, msg) {
+    DJ.startPlaylist(bot, msg);
+  }
+};
+
 Commands["overwrite-devserver"] = {
   name: "overwrite-devserver",
   help: "Overwrites the ID for the default server.",
@@ -218,6 +266,7 @@ Commands.leetspeak = {
     bot.sendMessage(msg.channel, thing);
   }
 };
+
 
 Commands.randomcat = {
   name: "randomcat",

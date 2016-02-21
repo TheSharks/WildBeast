@@ -1,5 +1,9 @@
 # Gamma phase
 (Gamma is a real thing in software development by the way, it's a synonym for RC (Release Candidate))
+## 2.0.0-gamma.5
+Removed `play` and `yt-play`.    
+Added playlisting for YouTube video's.    
+
 ## 2.0.0-gamma.4
 Revamped music streaming permissions due to the way the normal permissions handle.    
 Added some extra commands.    

@@ -4,13 +4,19 @@ var Discord = require("discord.js"),
   request = require("request"),
   time,
   pretime,
+  playlistid = [],
+  playlistinfo = [],
+  playlistuser = [],
   boundChannel = false,
   stream = false,
   vol = 0.50,
   Config = require("../config.json");
 
 exports.joinVoice = function(bot, message) {
-  if (Config.bot_settings.disable_music_commands === true) bot.reply(message, "music commands are disabled.");
+  if (Config.bot_settings.disable_music_commands === true) {
+    bot.reply(message, "music commands are disabled.");
+    return;
+  }
   if (boundChannel) return;
   var channelToJoin = spliceArguments(message.content)[1];
   for (var channel of message.channel.server.channels) {
@@ -32,85 +38,145 @@ exports.joinVoice = function(bot, message) {
   }, 15000);
 };
 
-exports.playYouTube = function(bot, message, query) {
-  clearTimeout(time);
+exports.playlistAdd = function(bot, message, suffix) {
+  if (Config.bot_settings.disable_music_commands === true) {
+    bot.reply(message, "music commands are disabled.");
+    return;
+  }
+  time = setTimeout(function() {
+    if (!bot.voiceConnection.playing) {
+      bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
+      bot.voiceConnection.destroy();
+      playlistid = [];
+      playlistinfo = [];
+      playlistuser = [];
+      return;
+    }
+  }, 120000);
   clearTimeout(pretime);
-  if (Config.bot_settings.disable_music_commands === true) bot.reply(message, "music commands are disabled.");
+  if (!bot.voiceConnection) {
+    bot.reply(message, "Not in voice right now.");
+  }
   if (!message.channel.equals(boundChannel)) return;
+  if (playlistid.length === 20) {
+    bot.reply(message, "The playlist is full, sorry.");
+    return;
+  }
+  if (!suffix) {
+    bot.sendMessage(message.channel, "Please specify a video ID!");
+    return;
+  }
+  var YT = require('ytdl-core');
+  var link = 'http://www.youtube.com/watch?v=';
+  YT.getInfo(link + suffix, function(err, info) {
+    if (err) {
+      bot.reply(message, "Incorrect video ID, I only accept YouTube video's!");
+      return;
+    }
+    if (info) {
+      if (info.length_seconds > 900) { // 15 minutes translated into seconds
+        bot.reply(message, "Too long, videos can be max 15 minutes long!");
+        return;
+      }
+      playlistid.push(suffix);
+      playlistinfo.push(info.title);
+      playlistuser.push(message.author.username);
+      bot.reply(message, "Your request has been added to the playlist!");
+    }
+  });
+};
+
+exports.returnNowPlaying = function(bot, message) {
+  if (Config.bot_settings.disable_music_commands === true) {
+    bot.reply(message, "music commands are disabled.");
+    return;
+  }
+  if (!bot.voiceConnection) {
+    bot.reply(message, "Not in voice right now.");
+  }
+  if (!message.channel.equals(boundChannel)) return;
+  bot.sendMessage(message.channel, "Currently playing http://www.youtube.com/watch?v=" + playlistid[0] + " for " + playlistuser[0]);
+};
+
+exports.playlistFetch = function(bot, message) {
+  if (Config.bot_settings.disable_music_commands === true) {
+    bot.reply(message, "music commands are disabled.");
+    return;
+  }
+  if (!bot.voiceConnection) {
+    bot.reply(message, "Not in voice right now.");
+  }
+  if (!message.channel.equals(boundChannel)) return;
+  var ar = [];
+  if (playlistid.length === 0) ar.push("The playlist is empty :(");
+  for (i = 0; i < playlistid.length; i++) {
+    ar.push((i + 1) + ". **" + playlistinfo[i] + "** Requested by " + playlistuser[i]);
+    if (i === 9) break;
+  }
+  bot.sendMessage(message.channel, ar);
+};
+
+function playlistPlay(bot, message) {
   var YT = require('ytdl-core');
   var fs = require('fs');
   var link = 'http://www.youtube.com/watch?v=';
-  var name;
-  var ytdl = YT(link + query, {
+  var ytdl = YT(link + playlistid[0], {
     quality: 140
   }); // The quality of 140 assures we only download the music stream
-  bot.reply(message, "Resolving and downloading " + query + ", please wait...");
-  ytdl.on('error', function(err) {
-    bot.reply(message, "That doesn't work, " + err);
+  ytdl.on('error', function() {
+    Logger.debug("Piping issue detected, maybe because the playlist is empty.");
     return;
   });
-  YT.getInfo(link + query, function(err, info) {
-    if (err) {
-      return;
-    }
-    if (info) name = info.title;
-    bot.setStatus("online", name); // :)
-  });
-  ytdl.pipe(fs.createWriteStream('sound.mp4'));
-  ytdl.on('finish', function() {
-    bot.sendMessage(message.channel, "Preparing to play " + name);
-    bot.voiceConnection.playFile('./sound.mp4', {
+    bot.voiceConnection.playRawStream(ytdl, { // Stream the video directly instead of buffering it to the disk.
       volume: 0.50,
       stereo: true
     }, function(err, str) {
       if (err) {
         Logger.error("Error while piping YouTube stream! " + err);
       } else if (str) {
-        clearTimeout(time);
-        clearTimeout(pretime);
-        bot.sendMessage(message.channel, "Playing " + message.sender + "'s request right now!");
-        str.on('end', function() {
-          bot.sendMessage(boundChannel, "Finished playing " + name + ", destroying voice connection if nothing else is played in 15 seconds.");
-          bot.setStatus("online", null);
-          time = setTimeout(function() {
-            bot.sendMessage(boundChannel, "Times up! Destroying voice connection...");
-            bot.leaveVoiceChannel();
-            boundChannel = false;
-            stream = false;
-          }, 15000);
-        });
+        bot.setStatus('online', playlistinfo[0]);
       }
+      str.on('end', function() {
+        playlistid.splice(0, 1);
+        playlistinfo.splice(0, 1);
+        playlistuser.splice(0, 1);
+        if (playlistid[0] === undefined) {
+          bot.sendMessage(message.channel, "The playlist is finished, destroying voice connection.");
+          bot.setStatus("online", null);
+          bot.voiceConnection.destroy();
+          playlistid = [];
+          playlistinfo = [];
+          playlistuser = [];
+          return;
+        } else {
+          playlistPlay(bot, message);
+        }
+      });
     });
-  });
+}
+
+exports.startPlaylist = function(bot, message) {
+  if (Config.bot_settings.disable_music_commands === true) {
+    bot.reply(message, "music commands are disabled.");
+    return;
+  }
+  if (!bot.voiceConnection) {
+    bot.reply(message, "Not in voice right now.");
+  }
+  if (!message.channel.equals(boundChannel)) return;
+  playlistPlay(bot, message);
 };
 
-exports.playMusicURL = function(bot, message) {
-  clearTimeout(pretime);
-  clearTimeout(time);
-  bot.reply(message, "The preferred method is to play YouTube videos, this feature may be retired in the future.");
-  if (Config.bot_settings.disable_music_commands === true) bot.reply(message, "music commands are disabled.");
-  var url = message.content.split(" ")[1];
-  bot.voiceConnection.playFile(url, {
-    volume: 0.50,
-    stereo: true
-  }, function(err, str) {
-    if (err) {
-      bot.reply(message, "Failed streaming that.");
-      bot.leaveVoiceChannel();
-    } else if (str) {
-      bot.reply(message, "Now playing " + url);
-      str.on("end", function() {
-        bot.sendMessage(boundChannel, "Stream has ended, destroying voice connection if nothing else is played in 15 seconds.");
-        bot.setStatus("online", null);
-        time = setTimeout(function() {
-          bot.sendMessage(boundChannel, "Times up! Destroying voice connection...");
-          bot.leaveVoiceChannel();
-          boundChannel = false;
-          stream = false;
-        }, 15000);
-      });
-    }
-  });
+exports.expSkip = function(bot, message) {
+  if (Config.bot_settings.disable_music_commands === true) {
+    bot.reply(message, "music commands are disabled.");
+    return;
+  }
+  if (!bot.voiceConnection) {
+    bot.reply(message, "Not in voice right now.");
+  }
+  if (!message.channel.equals(boundChannel)) return;
+  bot.voiceConnection.stopPlaying();
 };
 
 exports.checkPerms = function(server, author, callback) {
@@ -127,16 +193,24 @@ exports.checkPerms = function(server, author, callback) {
 };
 
 exports.stopPlaying = function(message) {
+  if (Config.bot_settings.disable_music_commands === true) {
+    bot.reply(message, "music commands are disabled.");
+    return;
+  }
   if (!message.channel.equals(boundChannel)) return;
-  if (bot.voiceConnection){
-     bot.voiceConnection.stopPlaying();
-   }
+  if (bot.voiceConnection) {
+    bot.voiceConnection.stopPlaying();
+  }
   bot.setStatus("online", null);
   boundChannel.sendMessage("Stream has ended");
   stream = false;
 };
 
 exports.checkIfAvailable = function(bot, message) {
+  if (Config.bot_settings.disable_music_commands === true) {
+    bot.reply(message, "music commands are disabled.");
+    return;
+  }
   if (bot.voiceConnection) bot.sendMessage(message.channel, "I'm not available to play music right now, sorry.");
   if (!bot.voiceConnection) bot.sendMessage(message.channel, "I'm available to play music right now, use `join-voice <channel-name>` to initiate me!");
 };

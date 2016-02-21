@@ -25,8 +25,19 @@ fetchSaldo = function(user, callback) {
 exports.credit = function(user, cash, callback) {
   fetchSaldo(user, function(err, reply) {
     if (reply) {
-      // TODO: Do some DB shit here.
-      return callback(null, Math.round(reply + cash));
+      db.del(user, function(err) {
+        if (err) {
+          return callback(err, null);
+        } else if (!err) {
+          db.put(user + ":" + reply + cash, function(err) {
+            if (err) {
+              return callback(err, null);
+            } else if (!err) {
+              return callback(null, Math.round(reply + cash));
+            }
+          });
+        }
+      });
     }
     if (err) return callback(err, null);
   });
@@ -38,7 +49,19 @@ exports.debit = function(user, cash, callback) {
     if (reply < cash) {
       return callback(2, null);
     } else if (reply > cash) {
-      return callback(null, Math.round(reply - cash));
+      db.del(user, function(err){
+        if (err) {
+          return callback(err, null);
+        } else {
+          db.put(user + ":" + Math.round(reply - cash), function(err) {
+            if (err) {
+              return callback(err, null);
+            } else {
+              return callback(null, Math.round(reply - cash));
+            }
+          });
+        }
+      });
     }
   });
 };
