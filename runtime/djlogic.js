@@ -44,6 +44,15 @@ exports.playlistAdd = function(bot, message, suffix) {
     bot.reply(message, "music commands are disabled.");
     return;
   }
+  if (!bot.voiceConnection) {
+    bot.reply(message, "Not in voice right now.");
+    return;
+  }
+  if (!message.channel.equals(boundChannel)) return;
+  if (playlistid.length === 20) {
+    bot.reply(message, "The playlist is full, sorry.");
+    return;
+  }
   time = setTimeout(function() {
     if (!bot.voiceConnection.playing) {
       bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
@@ -54,14 +63,6 @@ exports.playlistAdd = function(bot, message, suffix) {
       return;
     }
   }, 120000);
-  if (!bot.voiceConnection) {
-    bot.reply(message, "Not in voice right now.");
-  }
-  if (!message.channel.equals(boundChannel)) return;
-  if (playlistid.length === 20) {
-    bot.reply(message, "The playlist is full, sorry.");
-    return;
-  }
   if (!suffix) {
     bot.sendMessage(message.channel, "Please specify a video ID!");
     return;
@@ -127,32 +128,32 @@ function playlistPlay(bot, message) {
     Logger.debug("Piping issue detected, maybe because the playlist is empty.");
     return;
   });
-    bot.voiceConnection.playRawStream(ytdl, { // Stream the video directly instead of buffering it to the disk.
-      volume: 0.50,
-      stereo: true
-    }, function(err, str) {
-      if (err) {
-        Logger.error("Error while piping YouTube stream! " + err);
-      } else if (str) {
-        bot.setStatus('online', playlistinfo[0]);
+  bot.voiceConnection.playRawStream(ytdl, { // Stream the video directly instead of buffering it to the disk.
+    volume: 0.50,
+    stereo: true
+  }, function(err, str) {
+    if (err) {
+      Logger.error("Error while piping YouTube stream! " + err);
+    } else if (str) {
+      bot.setStatus('online', playlistinfo[0]);
+    }
+    str.on('end', function() {
+      playlistid.splice(0, 1);
+      playlistinfo.splice(0, 1);
+      playlistuser.splice(0, 1);
+      if (playlistid[0] === undefined) {
+        bot.sendMessage(message.channel, "The playlist is finished, destroying voice connection.");
+        bot.setStatus("online", null);
+        bot.voiceConnection.destroy();
+        playlistid = [];
+        playlistinfo = [];
+        playlistuser = [];
+        return;
+      } else {
+        playlistPlay(bot, message);
       }
-      str.on('end', function() {
-        playlistid.splice(0, 1);
-        playlistinfo.splice(0, 1);
-        playlistuser.splice(0, 1);
-        if (playlistid[0] === undefined) {
-          bot.sendMessage(message.channel, "The playlist is finished, destroying voice connection.");
-          bot.setStatus("online", null);
-          bot.voiceConnection.destroy();
-          playlistid = [];
-          playlistinfo = [];
-          playlistuser = [];
-          return;
-        } else {
-          playlistPlay(bot, message);
-        }
-      });
     });
+  });
 }
 
 exports.startPlaylist = function(bot, message) {
@@ -176,7 +177,19 @@ exports.expSkip = function(bot, message) {
     bot.reply(message, "Not in voice right now.");
   }
   if (!message.channel.equals(boundChannel)) return;
-  bot.voiceConnection.stopPlaying();
+  if (playlistid.length === 0) {
+    bot.reply(message, "Ending playlist, as the skipped song is the last one in the playlist.");
+    bot.voiceConnection.destroy();
+    playlistid = [];
+    playlistinfo = [];
+    playlistuser = [];
+    return;
+  }
+  bot.reply(message, "Skipping...");
+  playlistid.splice(0, 1);
+  playlistinfo.splice(0, 1);
+  playlistuser.splice(0, 1);
+  playlistPlay(bot, message);
 };
 
 exports.checkPerms = function(server, author, callback) {
