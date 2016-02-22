@@ -177,7 +177,7 @@ exports.expSkip = function(bot, message) {
     bot.reply(message, "Not in voice right now.");
   }
   if (!message.channel.equals(boundChannel)) return;
-  if (playlistid.length === 0) {
+  if (playlistid.length === 1) {
     bot.reply(message, "Ending playlist, as the skipped song is the last one in the playlist.");
     bot.voiceConnection.destroy();
     playlistid = [];
