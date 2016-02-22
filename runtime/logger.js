@@ -6,48 +6,30 @@ Winston.emitErrs = true;
 
 exports.ChatLog = new Winston.Logger({
   transports: [
-    new Winston.transports.DailyRotateFile({
-      handleExceptions: false,
-      name: 'file:chat',
-      filename: __dirname + '/../logs/chat',
-      datePattern: '-dd-MM-yyyy.log',
-      formatter: function(args) {
-        return args.message;
-      },
+    new (require('winston-daily-rotate-file'))({
       level: 'info',
-      json: false
+      filename: __dirname + '/../logs/chatlog',
+      datePattern: '-dd-MM-yyyy.log'
     })
   ]
 });
 
 exports.DebugModeLog = new Winston.Logger({
   transports: [
-    new Winston.transports.DailyRotateFile({
-      handleExceptions: false,
-      name: 'file:debugmodelog',
-      filename: __dirname + '/../logs/debugmodelog',
-      datePattern: '-dd-MM-yyyy.log',
-      formatter: function(args) {
-        return args.message;
-      },
+    new (require('winston-daily-rotate-file'))({
       level: 'debug',
-      json: false
+      filename: __dirname + '/../logs/debugmodelog',
+      datePattern: '-dd-MM-yyyy.log'
     })
   ]
 });
 
 exports.VerboseModeLog = new Winston.Logger({
   transports: [
-    new Winston.transports.DailyRotateFile({
-      handleExceptions: false,
-      name: 'file:verbosemodelog',
-      filename: __dirname + '/../logs/verbosemodelog',
+    new (require('winston-daily-rotate-file'))({
+      level: 'info',
       datePattern: '-dd-MM-yyyy.log',
-      formatter: function(args) {
-        return args.message;
-      },
-      level: 'debug',
-      json: false
+      filename: __dirname + '/../logs/verbosemodelog'
     })
   ]
 });
@@ -63,33 +45,30 @@ exports.Logger = new Winston.Logger({
     error: 'red'
   },
   transports: [
-    new Winston.transports.DailyRotateFile({
+    new (require('winston-daily-rotate-file'))({
       humanReadableUnhandledException: true,
-      handleExceptions: true,
       name: 'file:exceptions',
       filename: __dirname + '/../logs/exceptions',
       datePattern: '-dd-MM-yyyy.log',
       level: 'exception',
       json: false
     }),
-    new Winston.transports.DailyRotateFile({
-      handleExceptions: false,
+    new (require('winston-daily-rotate-file'))({
       name: 'file:error',
       filename: __dirname + '/../logs/errors',
       datePattern: '-dd-MM-yyyy.log',
       level: 'error',
       json: false
     }),
-    new Winston.transports.DailyRotateFile({
-      handleExceptions: false,
+    new (require('winston-daily-rotate-file'))({
       name: 'file:console',
       filename: __dirname + '/../logs/console',
       datePattern: '-dd-MM-yyyy.log',
       level: 'debug',
       json: false
     }),
-    new Winston.transports.Console({
-      handleExceptions: true,
+    new (Winston.transports.Console)({
+      humanReadableUnhandledException: true,
       level: 'verbose',
       colorize: true,
       json: false
