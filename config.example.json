@@ -50,9 +50,8 @@
         "password": "hunter2"
     },
     "permissions": {
-        "masterUser": "Master user Discord ID",
-        "level1": "Global level 1 user Discord ID",
-        "level2": "Global level 2 user Discord ID",
-        "level3": "Global level 3 user Discord ID"
-    }
+        "masterUser": ["Master", "Users", "Discord", "ID"],
+        "level1": ["Global", "level 1", "users", "Discord", "ID"],
+        "level2": ["Global", "level 2", "users", "Discord", "ID"],
+        "level3": ["Global", "level 3", "users", "Discord", "ID"]
 }

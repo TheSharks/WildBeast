@@ -5,16 +5,16 @@ var ConfigFile = require("../config.json"),
 var db = LevelUP('./runtime/databases/discord_permissions');
 
 exports.GetLevel = function(sum, user, callback) {
-  if (user === ConfigFile.permissions.masterUser) {
+  if (ConfigFile.permissions.masterUser.indexOf(user) > -1) {
     return callback(null, 9); // Return a massive value if the user is the master user
   }
-  if (user == ConfigFile.permissions.level1) {
+  if (ConfigFile.permissions.level1.indexOf(user) > -1) {
     return callback(null, 1); // Hardcoded reply if user has a global permission
   }
-  if (user == ConfigFile.permissions.level2) {
+  if (ConfigFile.permissions.level2.indexOf(user) > -1) {
     return callback(null, 2); // Hardcoded reply if user has a global permission
   }
-  if (user == ConfigFile.permissions.level3) {
+  if (ConfigFile.permissions.level3.indexOf(user) > -1) {
     return callback(null, 3); // Hardcoded reply if user has a global permission
   }
   // Else, connect to LevelUP and fetch the user level
