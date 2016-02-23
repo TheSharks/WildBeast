@@ -165,6 +165,10 @@ exports.startPlaylist = function(bot, message) {
     bot.reply(message, "Not in voice right now.");
   }
   if (!message.channel.equals(boundChannel)) return;
+  if (bot.voiceConnection.playing) {
+    bot.reply(message, "I'm already playing.");
+    return;
+  }
   playlistPlay(bot, message);
 };
 
