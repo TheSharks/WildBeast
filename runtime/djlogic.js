@@ -194,7 +194,7 @@ exports.expSkip = function(bot, message) {
 };
 
 exports.checkPerms = function(server, author, callback) {
-  if (ConfigFile.permissions.masterUser.indexOf(author.id) > -1) {
+  if (Config.permissions.masterUser.indexOf(author.id) > -1) {
     return callback(null, 1);
   }
   var array = server.rolesOfUser(author);
