@@ -23,7 +23,7 @@ Commands.ping = {
   level: 0,
   timeout: 10,
   fn: function(bot, msg) {
-    bot.sendMessage(msg.channel, "Pong!");
+    bot.sendMessage(msg.channel, msg.sender + ", Pong!"); // Easy for moderation
   }
 };
 
@@ -284,7 +284,7 @@ Commands.cleverbot = {
     Cleverbot.prepare(function() {
       bot.startTyping(msg.channel);
       cleverbot.write(suffix, function(response) {
-        bot.sendMessage(msg.channel, response.message);
+        bot.sendMessage(msg.channel, msg.sender + ", " + response.message);
         bot.stopTyping(msg.channel);
       });
     });
@@ -315,14 +315,14 @@ Commands.say = {
   level: 0,
   fn: function(bot, msg, suffix) {
     if (suffix.indexOf(ConfigFile.bot_settings.cmd_prefix + "say") === -1) {
-      bot.sendMessage(msg.channel, suffix);
+      bot.sendMessage(msg.channel, msg.sender + ", " + suffix);
       if (msg.channel.server) {
         var bot_permissions = msg.channel.permissionsOf(bot.user);
         if (bot_permissions.hasPermission("manageMessages")) {
           bot.deleteMessage(msg);
           return;
         } else {
-          bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
+          bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*"); // Note that this can be spammy if server owner doesn't care.
         }
       }
     } else {
@@ -506,6 +506,7 @@ Commands.purge = {
 
 Commands.kappa = {
   name: "kappa",
+  help: "Sends kappa picture",
   extendedhelp: "KappaKappaKappaKappaKappaKappaKappaKappaKappaKappa",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -545,6 +546,7 @@ Commands.whois = {
         }
         var msgArray = [];
         if (user.avatarURL === null) {
+          msgArray.push("Information requested by " + msg.sender);
           msgArray.push("Requested user: `" + user.username + "`");
           msgArray.push("ID: `" + user.id + "`");
           msgArray.push("Status: `" + user.status + "`");
@@ -552,6 +554,7 @@ Commands.whois = {
           bot.sendMessage(msg.channel, msgArray);
           return;
         } else {
+          msgArray.push("Information requested by " + msg.sender);
           msgArray.push("Requested user: `" + user.username + "`");
           msgArray.push("ID: `" + user.id + "`");
           msgArray.push("Status: `" + user.status + "`");
@@ -673,6 +676,7 @@ Commands["server-info"] = {
     // if we're not in a PM, return some info about the channel
     if (msg.channel.server) {
       var msgArray = [];
+      msgArray.push("Information requested by " + msg.sender);
       msgArray.push("You are currently in " + msg.channel + " (id: " + msg.channel.id + ")");
       msgArray.push("on server **" + msg.channel.server.name + "** (id: " + msg.channel.server.id + ") (region: " + msg.channel.server.region + ")");
       msgArray.push("owned by " + msg.channel.server.owner + " (id: " + msg.channel.server.owner.id + ")");
@@ -693,7 +697,7 @@ Commands.birds = {
   fn: function(bot, msg) {
     var msgArray = [];
     msgArray.push("https://www.youtube.com/watch?v=Kh0Y2hVe_bw");
-    msgArray.push("We just don't know");
+    msgArray.push(msg.sender + ", we just don't know");
     bot.sendMessage(msg, msgArray);
   }
 };
