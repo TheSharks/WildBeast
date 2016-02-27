@@ -138,10 +138,10 @@ bot.on("message", function(msg) {
         msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
         Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
           if (err) {
-            msgArray.push("An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
+            bot.sendMessage(server.defaultChannel, "An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
           }
           if (level === 4) {
-            msgArray.push("I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
+            bot.sendMessage(server.defaultChannel, "I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
           }
         });
         bot.sendMessage(server.defaultChannel, msgArray);

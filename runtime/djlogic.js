@@ -56,7 +56,7 @@ exports.playlistAdd = function(bot, message, suffix) {
   time = setTimeout(function() {
     if (!bot.voiceConnection.playing) {
       bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
-      bot.voiceConnection.destroy();
+      bot.leaveVoiceChannel();
       playlistid = [];
       playlistinfo = [];
       playlistuser = [];
@@ -183,21 +183,18 @@ exports.expSkip = function(bot, message) {
   if (!message.channel.equals(boundChannel)) return;
   if (playlistid.length === 1) {
     bot.reply(message, "Ending playlist, as the skipped song is the last one in the playlist.");
-    bot.voiceConnection.destroy();
+    bot.leaveVoiceChannel();
     playlistid = [];
     playlistinfo = [];
     playlistuser = [];
     return;
   }
   bot.reply(message, "Skipping...");
-  playlistid.splice(0, 1);
-  playlistinfo.splice(0, 1);
-  playlistuser.splice(0, 1);
   playlistPlay(bot, message);
 };
 
 exports.checkPerms = function(server, author, callback) {
-  if (author.id === Config.permissions.masterUser) {
+  if (ConfigFile.permissions.masterUser.indexOf(author.id) > -1) {
     return callback(null, 1);
   }
   var array = server.rolesOfUser(author);
