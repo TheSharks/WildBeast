@@ -33,6 +33,7 @@ Commands.nowplaying = {
   music: true,
   level: 0,
   fn: function(bot, msg) {
+    bot.sendMessage(msg.channel, msg.sender + " " + "requested what's playing right now."); // Easy for moderation #2
     DJ.returnNowPlaying(bot, msg);
   }
 };
@@ -61,6 +62,7 @@ Commands.playlist = {
   help: "Returns the playlist.",
   level: 0,
   fn: function(bot, msg) {
+    bot.sendMessage(msg.channel, msg.sender + ", " + "currently playing these songs.");
     DJ.playlistFetch(bot, msg);
   }
 };
@@ -106,13 +108,13 @@ Commands.e621 = {
     unirest.post("https://e621.net/post/index.json?limit=30&tags=" + suffix) // Fetching 30 posts from E621 with the given tags
       .end(function(result) {
         if (result.body.length < 1) {
-          bot.sendMessage(msg.channel, "Sorry, nothing found.");
+          bot.sendMessage(msg.channel, msg.sender + ", " + "sorry, nothing found."); // Correct me if it's wrong.
           bot.stopTyping(msg.channel);
           return;
         } else {
           var count = Math.floor((Math.random() * result.body.length));
           var FurryArray = [];
-          FurryArray.push("You've searched for `" + suffix + "`");
+          FurryArray.push(msg.sender + "You've searched for `" + suffix + "`"); // hehe no privacy if you do the nsfw commands now.
           FurryArray.push(result.body[count].file_url);
           bot.sendMessage(msg.channel, FurryArray);
           bot.stopTyping(msg.channel);
@@ -228,6 +230,7 @@ Commands.fortunecow = {
       .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
       .header("Accept", "text/plain")
       .end(function(result) {
+        bot.sendMessage(msg.channel, msg.sender + ", " + "here is your requested fortunecow.");
         bot.sendMessage(msg.channel, "```" + result.body + "```");
         bot.stopTyping(msg.channel);
       });
@@ -241,7 +244,7 @@ Commands.leetspeak = {
   fn: function(bot, msg, suffix) {
     var leetspeak = require("leetspeak");
     var thing = leetspeak(suffix);
-    bot.sendMessage(msg.channel, thing);
+    bot.sendMessage(msg.channel, msg.sender + ", " + thing);
   }
 };
 
@@ -256,6 +259,7 @@ Commands.randomcat = {
       .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
       .header("Accept", "application/json")
       .end(function(result) {
+        bot.sendMessage(msg.channel, msg.sender + ", " + "here is your random cat;");
         bot.sendMessage(msg.channel, result.body.source);
         bot.stopTyping(msg.channel);
       });
@@ -268,6 +272,7 @@ Commands.info = {
   level: 0,
   fn: function(bot, msg) {
     var msgArray = [];
+    msgArray.push(msg.sender + ", " + "you have requested some information.");
     msgArray.push("**WildBeast version " + version + "**");
     msgArray.push("Using latest 6.x.x *Discord.js* version by *hydrabolt*.");
     msgArray.push("Made primarily by Dougley, Mirrow and Perpetucake.");
@@ -451,7 +456,7 @@ Commands.devs = {
   help: "This will print the Discord ID's from the developers of WildBeast to the channel.",
   level: 0,
   fn: function(bot, msg) {
-    bot.sendMessage(msg.channel, "Made with love by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
+    bot.sendMessage(msg.channel, msg.sender + ", " "this bot is made with love by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
   }
 };
 
@@ -511,6 +516,7 @@ Commands.kappa = {
   level: 0,
   fn: function(bot, msg, suffix) {
     bot.sendFile(msg.channel, "./images/kappa.png");
+    bot.sendMessage(msg.channel, msg.sender + ", " + "here's your kappa.")
     if (msg.channel.server) {
       var bot_permissions = msg.channel.permissionsOf(bot.user);
       if (bot_permissions.hasPermission("manageMessages")) {
@@ -777,6 +783,7 @@ Commands.meme = {
     var imgflipper = new Imgflipper(ConfigFile.imgflip.username, ConfigFile.imgflip.password);
     imgflipper.generateMeme(meme[memetype], tags[1] ? tags[1] : "", tags[3] ? tags[3] : "", function(err, image) {
       //CmdErrorLog.log("debug", arguments);
+      bot.sendMessage(msg.channel, msg.sender + ", " + "here's your requested meme.")
       bot.sendMessage(msg.channel, image);
       if (!msg.channel.server) {
         return;
@@ -809,9 +816,9 @@ Commands.rule34 = {
           if (fuckme[13].substr(0, 5) != "http:") {
             var httpstring = 'http:';
             fuckme = httpstring.concat(fuckme[13]);
-            bot.sendMessage(msg.channel, fuckme);
+            bot.sendMessage(msg.channel, msg.sender + ", " +  fuckme);
           } else {
-            bot.sendMessage(msg.channel, fuckme[13]);
+            bot.sendMessage(msg.channel, msg.sender + ", " + fuckme[13]);
           }
         });
       } else {
@@ -828,7 +835,7 @@ Commands.status = {
   level: 0,
   fn: function(bot, msg) {
     var msgArray = [];
-    msgArray.push("Hello, I'm " + bot.user + ", nice to meet you!");
+    msgArray.push("Hello, " + msg.sender + ", " "I'm " + bot.user + ", nice to meet you!");
     msgArray.push("I'm used in " + bot.servers.length + " servers, in " + bot.channels.length + " channels and by " + bot.users.length + " users.");
     msgArray.push("My uptime is " + (Math.round(bot.uptime / (1000 * 60 * 60))) + " hours, " + (Math.round(bot.uptime / (1000 * 60)) % 60) + " minutes, and " + (Math.round(bot.uptime / 1000) % 60) + " seconds.");
     bot.sendMessage(msg.channel, msgArray);
@@ -854,6 +861,7 @@ Commands.iff = {
         }
       }
       if (imgArray.indexOf(suffix) !== -1) {
+        bot.sendMessage(msg.channel, msg.sender + ", " + "here's your picture.");
         bot.sendFile(msg.channel, "./images/" + suffix);
         if (!msg.channel.server) {
           return;
@@ -975,9 +983,9 @@ Commands.gif = {
     var tags = suffix.split(" ");
     Giphy.get_gif(tags, function(id) {
       if (typeof id !== "undefined") {
-        bot.sendMessage(msg.channel, "http://media.giphy.com/media/" + id + "/giphy.gif [Tags: " + (tags ? tags : "Random GIF") + "]");
+        bot.sendMessage(msg.channel, msg.sender + ", " + "here's the gif you requested. " "http://media.giphy.com/media/" + id + "/giphy.gif [Tags: " + (tags ? tags : "Random GIF") + "]");
       } else {
-        bot.sendMessage(msg.channel, "Invalid tags, try something different. For example, something that exists [Tags: " + (tags ? tags : "Random GIF") + "]");
+        bot.sendMessage(msg.channel, msg.sender + ", " + "sorry! Invalid tags, try something different. For example, something that exists [Tags: " + (tags ? tags : "Random GIF") + "]");
       }
     });
   }
@@ -1000,7 +1008,7 @@ Commands.imglist = {
           }
         }
       }
-      bot.sendMessage(msg.channel, imgArray);
+      bot.sendMessage(msg.channel, msg.sender + ", " + imgArray);
     });
   }
 };
@@ -1041,7 +1049,7 @@ Commands.yomomma = {
     request('http://api.yomomma.info/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var yomomma = JSON.parse(body);
-        bot.sendMessage(msg.channel, yomomma.joke);
+        bot.sendMessage(msg.channel, msg.sender + ", " + "here's a yomomma joke. " + yomomma.joke);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
@@ -1058,7 +1066,7 @@ Commands.advice = {
     request('http://api.adviceslip.com/advice', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var advice = JSON.parse(body);
-        bot.sendMessage(msg.channel, advice.slip.advice);
+        bot.sendMessage(msg.channel, msg.sender + ", " + advice.slip.advice);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
@@ -1076,7 +1084,7 @@ Commands.yesno = {
     request('http://yesno.wtf/api/?force=' + suffix, function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var yesNo = JSON.parse(body);
-        bot.sendMessage(msg.channel, msg.sender + " " + yesNo.image);
+        bot.sendMessage(msg.channel, msg.sender + ", " + yesNo.image);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
@@ -1095,9 +1103,9 @@ Commands.urbandictionary = {
       if (!error && response.statusCode == 200) {
         var uD = JSON.parse(body);
         if (uD.result_type !== "no_results") {
-          bot.sendMessage(msg.channel, suffix + ": " + uD.list[0].definition + ' "' + uD.list[0].example + '"');
+          bot.sendMessage(msg.channel, msg.sender + ", " + suffix + ": " + uD.list[0].definition + ' "' + uD.list[0].example + '"');
         } else {
-          bot.sendMessage(msg.channel, suffix + ": This is so screwed up, even Urban Dictionary doesn't have it in it's database");
+          bot.sendMessage(msg.channel, msg.sender + ", " + suffix + ": This is so screwed up, even Urban Dictionary doesn't have it in it's database");
         }
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
@@ -1117,7 +1125,7 @@ Commands.fact = {
       if (!error && response.statusCode == 200) {
         //Logger.log("debug", body)
         xml2js.parseString(body, function(err, result) {
-          bot.sendMessage(msg.channel, result.facts.fact[0]);
+          bot.sendMessage(msg.channel, msg.sender + "," + result.facts.fact[0]);
         });
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
@@ -1143,7 +1151,7 @@ Commands.xkcd = {
               request('http://xkcd.com/' + suffix + '/info.0.json', function(error, response, body) {
                 if (!error && response.statusCode == 200) {
                   xkcdInfo = JSON.parse(body);
-                  bot.sendMessage(msg.channel, xkcdInfo.img);
+                  bot.sendMessage(msg.channel, msg.sender + ", " + xkcdInfo.img);
                 } else {
                   Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
                 }
@@ -1159,7 +1167,7 @@ Commands.xkcd = {
           request('http://xkcd.com/' + xkcdRandom + '/info.0.json', function(error, response, body) {
             if (!error && response.statusCode == 200) {
               xkcdInfo = JSON.parse(body);
-              bot.sendMessage(msg.channel, xkcdInfo.img);
+              bot.sendMessage(msg.channel, msg.sender + ", " + xkcdInfo.img);
             } else {
               Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
             }
@@ -1185,7 +1193,7 @@ Commands.csgoprice = {
     csgomarket.getSinglePrice(skinInfo[1], skinInfo[3], skinInfo[5], skinInfo[7], function(err, skinData) {
       if (err) {
         Logger.log('error', err);
-        bot.sendMessage(msg.channel, "That skin is so super secret rare, it doesn't even exist!");
+        bot.sendMessage(msg.channel, msg.sender + ", " "that skin is so super secret rare, it doesn't even exist!");
       } else {
         if (skinData.success === true) {
           if (skinData.stattrak) {
@@ -1194,7 +1202,7 @@ Commands.csgoprice = {
             skinData.stattrak = "";
           }
           var msgArray = ["Weapon: " + skinData.wep + " " + skinData.skin + " " + skinData.wear + " " + skinData.stattrak, "Lowest Price: " + skinData.lowest_price, "Number Available: " + skinData.volume, "Median Price: " + skinData.median_price, ];
-          bot.sendMessage(msg.channel, msgArray);
+          bot.sendMessage(msg.channel, msg.sender + ", " + msgArray);
         }
       }
     });
@@ -1310,7 +1318,7 @@ Commands.catfacts = {
     request('http://catfacts-api.appspot.com/api/facts', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var catFact = JSON.parse(body);
-        bot.sendMessage(msg.channel, catFact.facts[0]);
+        bot.sendMessage(msg.channel, msg.sender + ", " + catFact.facts[0]);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
