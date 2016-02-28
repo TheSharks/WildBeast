@@ -6,11 +6,9 @@ var Discord = require("discord.js"),
   pretime,
   counter = 0,
   playlistid = [],
+  vidarray = [],
   playlistinfo = [],
   playlistuser = [],
-  playlistidstep = [],
-  playlistinfostep = [],
-  playlistuserstep = [],
   boundChannel = false,
   stream = false,
   vol = 0.50,
@@ -97,13 +95,28 @@ exports.playlistAdd = function(bot, message, suffix) {
         bot.sendMessage(message.channel, "Something went wrong, try again.");
         return;
       } else if (data) {
-        for (var i in data.items) {
-          playlistid.push(data.items[i].snippet.resourceId.videoId);
-          playlistinfo.push(data.items[i].snippet.title);
-          playlistuser.push(message.author.username);
+        for (var x in data.items) {
+          vidarray.push(data.items[x].snippet.resourceId.videoId);
+          var link = 'http://www.youtube.com/watch?v=';
+          var YT = require('ytdl-core');
+          YT.getInfo(link + vidarray[vidarray.length - 1], function(err, info) {
+            if (err) {
+              Logger.debug("Error while evaluating playlist videos.");
+              return;
+            } else if (info) {
+              if (info.length_seconds > 900) { // 15 minutes translated into seconds
+                Logger.debug("Ignored video longer than 15 minutes.");
+                return;
+              }
+              playlistid.push(vidarray[vidarray.length - 1]);
+              playlistinfo.push(info.title);
+              playlistuser.push(message.author.username);
+            }
+          });
         }
+        counter = 0;
+        bot.reply(message, "done! Added all videos that are shorter than 15 minutes to the request queue!");
       }
-      bot.reply(message, "done! Added all videos that are shorter than 15 minutes to the request queue!");
     });
   } else {
     var YT = require('ytdl-core');
@@ -282,9 +295,6 @@ exports.leaveVoice = function(bot, message) {
   bot.reply(message, `unbinding from <#${boundChannel.id}> and destroying voice connection`);
   bot.leaveVoiceChannel();
   bot.setStatus("online", null);
-  playlistid = [];
-  playlistinfo = [];
-  playlistuser = [];
   boundChannel = false;
   stream = false;
   return;
