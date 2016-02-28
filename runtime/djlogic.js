@@ -114,25 +114,26 @@ exports.playlistAdd = function(bot, message, suffix) {
         bot.reply(message, "done! Added all videos that are shorter than 15 minutes to the request queue!");
       }
     });
-  }
-  var YT = require('ytdl-core');
-  var link = 'http://www.youtube.com/watch?v=';
-  YT.getInfo(link + suffix, function(err, info) {
-    if (err) {
-      bot.reply(message, "Incorrect video ID, I only accept YouTube video's!");
-      return;
-    }
-    if (info) {
-      if (info.length_seconds > 900) { // 15 minutes translated into seconds
-        bot.reply(message, "too long, videos can be max 15 minutes long!");
+  } else {
+    var YT = require('ytdl-core');
+    var link = 'http://www.youtube.com/watch?v=';
+    YT.getInfo(link + suffix, function(err, info) {
+      if (err) {
+        bot.reply(message, "Incorrect video ID, I only accept YouTube video's!");
         return;
       }
-      playlistid.push(suffix);
-      playlistinfo.push(info.title);
-      playlistuser.push(message.author.username);
-      bot.reply(message, "added **" + info.title + "** to play at position " + playlistid.length);
-    }
-  });
+      if (info) {
+        if (info.length_seconds > 900) { // 15 minutes translated into seconds
+          bot.reply(message, "too long, videos can be max 15 minutes long!");
+          return;
+        }
+        playlistid.push(suffix);
+        playlistinfo.push(info.title);
+        playlistuser.push(message.author.username);
+        bot.reply(message, "added **" + info.title + "** to play at position " + playlistid.length);
+      }
+    });
+  }
 };
 
 exports.returnNowPlaying = function(bot, message) {
