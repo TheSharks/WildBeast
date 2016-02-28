@@ -71,7 +71,6 @@ Commands.playliststart = {
   music: true,
   level: 0,
   fn: function(bot, msg) {
-    bot.reply(msg, "I have started the playlist.");
     DJ.startPlaylist(bot, msg);
   }
 };

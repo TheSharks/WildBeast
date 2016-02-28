@@ -4,7 +4,7 @@ var Discord = require("discord.js"),
   request = require("request"),
   time,
   pretime,
-  counter = 0,
+  counter,
   playlistid = [],
   vidarray = [],
   playlistinfo = [],
@@ -96,21 +96,25 @@ exports.playlistAdd = function(bot, message, suffix) {
         return;
       } else if (data) {
         for (var x in data.items) {
-          vidarray.push(data.items[x].snippet.resourceId.videoId);
+          playlistid.push(data.items[x].snippet.resourceId.videoId);
+          playlistinfo.push(data.items[x].snippet.title);
+          playlistuser.push(message.author.username);
           var link = 'http://www.youtube.com/watch?v=';
           var YT = require('ytdl-core');
-          YT.getInfo(link + vidarray[vidarray.length - 1], function(err, info) {
+          YT.getInfo(link + playlistid[playlistid.length - 1], function(err, info) {
             if (err) {
               Logger.debug("Error while evaluating playlist videos.");
               return;
             } else if (info) {
               if (info.length_seconds > 900) { // 15 minutes translated into seconds
+                playlistid.splice(playlistid.length - 1, 1);
+                playlistinfo.splice(playlistinfo.length - 1, 1);
+                playlistuser.splice(playlistuser.length - 1, 1);
                 Logger.debug("Ignored video longer than 15 minutes.");
                 return;
+              } else {
+                return;
               }
-              playlistid.push(vidarray[vidarray.length - 1]);
-              playlistinfo.push(info.title);
-              playlistuser.push(message.author.username);
             }
           });
         }
@@ -225,6 +229,7 @@ exports.startPlaylist = function(bot, message) {
     return;
   }
   playlistPlay(bot, message);
+  bot.reply(message, "I have started the playlist.");
 };
 
 exports.expSkip = function(bot, message) {
