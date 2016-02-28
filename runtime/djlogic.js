@@ -75,7 +75,7 @@ exports.playlistAdd = function(bot, message, suffix) {
   }
   if (suffix.length > 12) {
     Logger.debug("Assuming playlist.");
-    bot.sendMessage(msg.channel, "Resolving playlist...");
+    bot.sendMessage(message.channel, "Resolving playlist...");
     var yt = require("youtube-api");
     var ammount = 20 - playlistid.length;
     yt.authenticate({
@@ -90,7 +90,7 @@ exports.playlistAdd = function(bot, message, suffix) {
     }, function(err, data) {
       if (err) {
         Logger.debug("Playlist failiure, " + err);
-        bot.sendMessage(msg.channel, "Something went wrong, try again.");
+        bot.sendMessage(message.channel, "Something went wrong, try again.");
         return;
       } else if (data) {
         for (var x in data.items) {
