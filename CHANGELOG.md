@@ -1,8 +1,5 @@
 # Gamma phase
 (Gamma is a real thing in software development by the way, it's a synonym for RC (Release Candidate))
-## 2.0.0-gamma.6
-Added YouTube playlist support.    
-
 ## 2.0.0-gamma.5
 Removed `play` and `yt-play`.    
 Added playlisting for YouTube video's.    
