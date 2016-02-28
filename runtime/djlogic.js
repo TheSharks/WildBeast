@@ -94,13 +94,12 @@ exports.playlistAdd = function(bot, message, suffix) {
         bot.sendMessage(message.channel, "Something went wrong, try again.");
         return;
       } else if (data) {
+        var counter = 0;
         for (var x in data.items) {
           vidarray.push(data.items[x].snippet.resourceId.videoId);
-        }
-        for (i = 0; i < vidarray.length; i++) {
           var link = 'http://www.youtube.com/watch?v=';
           var YT = require('ytdl-core');
-          YT.getInfo(link + vidarray[i], function(err, info) {
+          YT.getInfo(link + vidarray[counter], function(err, info) {
             if (err) {
               Logger.debug("Error while evaluating playlist videos.");
               return;
@@ -109,12 +108,14 @@ exports.playlistAdd = function(bot, message, suffix) {
                 Logger.debug("Ignored video longer than 15 minutes.");
                 return;
               }
-              playlistid.push(vidarray[i]);
+              playlistid.push(vidarray[counter]);
               playlistinfo.push(info.title);
               playlistuser.push(message.author.username);
+              counter++;
             }
           });
         }
+        counter = 0;
         bot.reply(message, "done! Added all videos that are shorter than 15 minutes to the request queue!");
       }
     });
