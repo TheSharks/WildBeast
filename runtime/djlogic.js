@@ -5,6 +5,7 @@ var Discord = require("discord.js"),
   time,
   pretime,
   playlistid = [],
+  vidarray = [],
   playlistinfo = [],
   playlistuser = [],
   boundChannel = false,
@@ -93,10 +94,13 @@ exports.playlistAdd = function(bot, message, suffix) {
         bot.sendMessage(message.channel, "Something went wrong, try again.");
         return;
       } else if (data) {
-        for (i = 0; i < data.items.length; i++) {
+        for (var x in data.items) {
+          vidarray.push(data.items[x].snippet.resourceId.videoId);
+        }
+        for (i = 0; i < vidarray.length; i++) {
           var link = 'http://www.youtube.com/watch?v=';
           var YT = require('ytdl-core');
-          YT.getInfo(link + data.items[i].snippet.resourceId.videoId, function(err, info) {
+          YT.getInfo(link + vidarray[i], function(err, info) {
             if (err) {
               Logger.debug("Error while evaluating playlist videos.");
               return;
@@ -105,7 +109,7 @@ exports.playlistAdd = function(bot, message, suffix) {
                 Logger.debug("Ignored video longer than 15 minutes.");
                 return;
               }
-              playlistid.push(data.items[i].snippet.resourceId.videoId);
+              playlistid.push(vidarray[i]);
               playlistinfo.push(info.title);
               playlistuser.push(message.author.username);
             }
