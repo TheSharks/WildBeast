@@ -88,7 +88,7 @@ exports.playlistAdd = function(bot, message, suffix) {
       playlistid.push(suffix);
       playlistinfo.push(info.title);
       playlistuser.push(message.author.username);
-      bot.reply(message, "Your request has been added to the playlist!");
+      bot.reply(message, "Queued **" + playlistinfo[playlistinfo.length - 1] + "** to play at position " + playlistinfo.length);
     }
   });
 };
