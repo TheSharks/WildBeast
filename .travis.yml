@@ -1,0 +1,6 @@
+language: node_js
+node_js:
+  - "5.0"
+script:
+  - mv config.example.json config.json
+  - node DougBot.js

@@ -23,7 +23,7 @@ Commands.ping = {
   level: 0,
   timeout: 10,
   fn: function(bot, msg) {
-    bot.sendMessage(msg.channel, msg.sender + ", Pong!"); // Easy for moderation
+    bot.reply(msg, "Pong!"); // Easy for moderation
   }
 };
 
@@ -71,27 +71,8 @@ Commands.playliststart = {
   music: true,
   level: 0,
   fn: function(bot, msg) {
+    bot.reply(msg, "I have started the playlist.");
     DJ.startPlaylist(bot, msg);
-  }
-};
-
-Commands["overwrite-devserver"] = {
-  name: "overwrite-devserver",
-  help: "Overwrites the ID for the default server.",
-  level: 6,
-  fn: function(bot, msg, suffix) {
-    Defaulting.setServer(suffix);
-    bot.sendMessage(msg.channel, "Set default server ID to " + suffix);
-  }
-};
-
-Commands["overwrite-logbook"] = {
-  name: "overwrite-logbook",
-  help: "Overwrites the channel ID for the logbook channel.",
-  level: 6,
-  fn: function(bot, msg, suffix) {
-    Defaulting.setChannel(suffix);
-    bot.sendMessage(msg.channel, "Set logbook ID to " + suffix);
   }
 };
 
@@ -106,13 +87,13 @@ Commands.e621 = {
     unirest.post("https://e621.net/post/index.json?limit=30&tags=" + suffix) // Fetching 30 posts from E621 with the given tags
       .end(function(result) {
         if (result.body.length < 1) {
-          bot.sendMessage(msg.channel, "Sorry, nothing found.");
+          bot.reply(msg, "sorry, nothing found."); // Correct me if it's wrong.
           bot.stopTyping(msg.channel);
           return;
         } else {
           var count = Math.floor((Math.random() * result.body.length));
           var FurryArray = [];
-          FurryArray.push("You've searched for `" + suffix + "`");
+          FurryArray.push(msg.sender + ", you've searched for `" + suffix + "`"); // hehe no privacy if you do the nsfw commands now.
           FurryArray.push(result.body[count].file_url);
           bot.sendMessage(msg.channel, FurryArray);
           bot.stopTyping(msg.channel);
@@ -228,7 +209,7 @@ Commands.fortunecow = {
       .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
       .header("Accept", "text/plain")
       .end(function(result) {
-        bot.sendMessage(msg.channel, "```" + result.body + "```");
+        bot.reply(msg, "```" + result.body + "```");
         bot.stopTyping(msg.channel);
       });
   }
@@ -241,7 +222,7 @@ Commands.leetspeak = {
   fn: function(bot, msg, suffix) {
     var leetspeak = require("leetspeak");
     var thing = leetspeak(suffix);
-    bot.sendMessage(msg.channel, thing);
+    bot.reply(msg, thing);
   }
 };
 
@@ -256,7 +237,7 @@ Commands.randomcat = {
       .header("X-Mashape-Key", ConfigFile.api_keys.mashape_key)
       .header("Accept", "application/json")
       .end(function(result) {
-        bot.sendMessage(msg.channel, result.body.source);
+        bot.reply(msg, result.body.source);
         bot.stopTyping(msg.channel);
       });
   }
@@ -284,7 +265,7 @@ Commands.cleverbot = {
     Cleverbot.prepare(function() {
       bot.startTyping(msg.channel);
       cleverbot.write(suffix, function(response) {
-        bot.sendMessage(msg.channel, msg.sender + ", " + response.message);
+        bot.reply(msg, response.message);
         bot.stopTyping(msg.channel);
       });
     });
@@ -443,15 +424,6 @@ Commands.youtube = {
   level: 0,
   fn: function(bot, msg, suffix) {
     youtube_plugin.respond(suffix, msg.channel, bot);
-  }
-};
-
-Commands.devs = {
-  name: "devs",
-  help: "This will print the Discord ID's from the developers of WildBeast to the channel.",
-  level: 0,
-  fn: function(bot, msg) {
-    bot.sendMessage(msg.channel, "Made with love by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
   }
 };
 
@@ -777,7 +749,7 @@ Commands.meme = {
     var imgflipper = new Imgflipper(ConfigFile.imgflip.username, ConfigFile.imgflip.password);
     imgflipper.generateMeme(meme[memetype], tags[1] ? tags[1] : "", tags[3] ? tags[3] : "", function(err, image) {
       //CmdErrorLog.log("debug", arguments);
-      bot.sendMessage(msg.channel, image);
+      bot.reply(msg, image);
       if (!msg.channel.server) {
         return;
       }
@@ -809,9 +781,9 @@ Commands.rule34 = {
           if (fuckme[13].substr(0, 5) != "http:") {
             var httpstring = 'http:';
             fuckme = httpstring.concat(fuckme[13]);
-            bot.sendMessage(msg.channel, fuckme);
+            bot.reply(msg, fuckme);
           } else {
-            bot.sendMessage(msg.channel, fuckme[13]);
+            bot.reply(msg, fuckme[13]);
           }
         });
       } else {
@@ -828,7 +800,7 @@ Commands.status = {
   level: 0,
   fn: function(bot, msg) {
     var msgArray = [];
-    msgArray.push("Hello, I'm " + bot.user + ", nice to meet you!");
+    msgArray.push("Hello " + msg.sender + ", I'm " + bot.user + ", nice to meet you!");
     msgArray.push("I'm used in " + bot.servers.length + " servers, in " + bot.channels.length + " channels and by " + bot.users.length + " users.");
     msgArray.push("My uptime is " + (Math.round(bot.uptime / (1000 * 60 * 60))) + " hours, " + (Math.round(bot.uptime / (1000 * 60)) % 60) + " minutes, and " + (Math.round(bot.uptime / 1000) % 60) + " seconds.");
     bot.sendMessage(msg.channel, msgArray);
@@ -975,9 +947,9 @@ Commands.gif = {
     var tags = suffix.split(" ");
     Giphy.get_gif(tags, function(id) {
       if (typeof id !== "undefined") {
-        bot.sendMessage(msg.channel, "http://media.giphy.com/media/" + id + "/giphy.gif [Tags: " + (tags ? tags : "Random GIF") + "]");
+        bot.reply(msg, "http://media.giphy.com/media/" + id + "/giphy.gif [Tags: " + (tags ? tags : "Random GIF") + "]");
       } else {
-        bot.sendMessage(msg.channel, "Invalid tags, try something different. For example, something that exists [Tags: " + (tags ? tags : "Random GIF") + "]");
+        bot.reply(msg, "sorry! Invalid tags, try something different. For example, something that exists [Tags: " + (tags ? tags : "Random GIF") + "]");
       }
     });
   }
@@ -1000,7 +972,7 @@ Commands.imglist = {
           }
         }
       }
-      bot.sendMessage(msg.channel, imgArray);
+      bot.reply(msg, imgArray);
     });
   }
 };
@@ -1041,7 +1013,7 @@ Commands.yomomma = {
     request('http://api.yomomma.info/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var yomomma = JSON.parse(body);
-        bot.sendMessage(msg.channel, yomomma.joke);
+        bot.reply(msg, + yomomma.joke);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
@@ -1058,7 +1030,7 @@ Commands.advice = {
     request('http://api.adviceslip.com/advice', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var advice = JSON.parse(body);
-        bot.sendMessage(msg.channel, advice.slip.advice);
+        bot.sendMessage(msg.reply + advice.slip.advice);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
@@ -1076,7 +1048,7 @@ Commands.yesno = {
     request('http://yesno.wtf/api/?force=' + suffix, function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var yesNo = JSON.parse(body);
-        bot.sendMessage(msg.channel, msg.sender + " " + yesNo.image);
+        bot.reply(msg, yesNo.image);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
@@ -1095,9 +1067,9 @@ Commands.urbandictionary = {
       if (!error && response.statusCode == 200) {
         var uD = JSON.parse(body);
         if (uD.result_type !== "no_results") {
-          bot.sendMessage(msg.channel, suffix + ": " + uD.list[0].definition + ' "' + uD.list[0].example + '"');
+          bot.reply(msg, suffix + ": " + uD.list[0].definition + ' "' + uD.list[0].example + '"');
         } else {
-          bot.sendMessage(msg.channel, suffix + ": This is so screwed up, even Urban Dictionary doesn't have it in it's database");
+          bot.reply(msg, suffix + ": This is so screwed up, even Urban Dictionary doesn't have it in it's database");
         }
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
@@ -1117,7 +1089,7 @@ Commands.fact = {
       if (!error && response.statusCode == 200) {
         //Logger.log("debug", body)
         xml2js.parseString(body, function(err, result) {
-          bot.sendMessage(msg.channel, result.facts.fact[0]);
+          bot.reply(msg, result.facts.fact[0]);
         });
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
@@ -1143,23 +1115,23 @@ Commands.xkcd = {
               request('http://xkcd.com/' + suffix + '/info.0.json', function(error, response, body) {
                 if (!error && response.statusCode == 200) {
                   xkcdInfo = JSON.parse(body);
-                  bot.sendMessage(msg.channel, xkcdInfo.img);
+                  bot.reply(msg, xkcdInfo.img);
                 } else {
                   Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
                 }
               });
             } else {
-              bot.sendMessage(msg.channel, "There are only " + xkcdInfo.num + " xkcd comics!");
+              bot.reply(msg, "there are only " + xkcdInfo.num + " xkcd comics!");
             }
           } else {
-            bot.sendMessage(msg.channel, xkcdInfo.img);
+            bot.reply(msg, xkcdInfo.img);
           }
         } else {
           var xkcdRandom = Math.floor(Math.random() * (xkcdInfo.num - 1)) + 1;
           request('http://xkcd.com/' + xkcdRandom + '/info.0.json', function(error, response, body) {
             if (!error && response.statusCode == 200) {
               xkcdInfo = JSON.parse(body);
-              bot.sendMessage(msg.channel, xkcdInfo.img);
+              bot.reply(msg, xkcdInfo.img);
             } else {
               Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
             }
@@ -1185,7 +1157,7 @@ Commands.csgoprice = {
     csgomarket.getSinglePrice(skinInfo[1], skinInfo[3], skinInfo[5], skinInfo[7], function(err, skinData) {
       if (err) {
         Logger.log('error', err);
-        bot.sendMessage(msg.channel, "That skin is so super secret rare, it doesn't even exist!");
+        bot.reply(msg, "that skin is so super secret rare, it doesn't even exist!");
       } else {
         if (skinData.success === true) {
           if (skinData.stattrak) {
@@ -1194,7 +1166,7 @@ Commands.csgoprice = {
             skinData.stattrak = "";
           }
           var msgArray = ["Weapon: " + skinData.wep + " " + skinData.skin + " " + skinData.wear + " " + skinData.stattrak, "Lowest Price: " + skinData.lowest_price, "Number Available: " + skinData.volume, "Median Price: " + skinData.median_price, ];
-          bot.sendMessage(msg.channel, msgArray);
+          bot.reply(msg, msgArray);
         }
       }
     });
@@ -1217,7 +1189,7 @@ Commands.dice = {
     request('https://rolz.org/api/?' + dice + '.json', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var roll = JSON.parse(body);
-        bot.sendMessage(msg.channel, "Your " + roll.input + " resulted in " + roll.result + " " + roll.details);
+        bot.reply(msg, "your " + roll.input + " resulted in " + roll.result + " " + roll.details);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
@@ -1235,10 +1207,10 @@ Commands.fancyinsult = {
       if (!error && response.statusCode == 200) {
         var fancyinsult = JSON.parse(body);
         if (suffix === "") {
-          bot.sendMessage(msg.channel, fancyinsult.insult);
+          bot.reply(msg, fancyinsult.insult);
           bot.deleteMessage(msg);
         } else {
-          bot.sendMessage(msg.channel, suffix + ", " + fancyinsult.insult);
+          bot.reply(msg, suffix + ", " + fancyinsult.insult);
           bot.deleteMessage(msg);
         }
       } else {
@@ -1310,7 +1282,7 @@ Commands.catfacts = {
     request('http://catfacts-api.appspot.com/api/facts', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var catFact = JSON.parse(body);
-        bot.sendMessage(msg.channel, catFact.facts[0]);
+        bot.replye(msg, catFact.facts[0]);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
