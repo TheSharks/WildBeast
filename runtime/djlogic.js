@@ -73,24 +73,67 @@ exports.playlistAdd = function(bot, message, suffix) {
     bot.sendMessage(message.channel, "Please specify a video ID!");
     return;
   }
-  var YT = require('ytdl-core');
-  var link = 'http://www.youtube.com/watch?v=';
-  YT.getInfo(link + suffix, function(err, info) {
-    if (err) {
-      bot.reply(message, "Incorrect video ID, I only accept YouTube video's!");
-      return;
-    }
-    if (info) {
-      if (info.length_seconds > 900) { // 15 minutes translated into seconds
-        bot.reply(message, "too long, videos can be max 15 minutes long!");
+  if (suffix.length > 12) {
+    Logger.debug("Assuming playlist.");
+    bot.sendMessage(message.channel, "Resolving playlist...");
+    var yt = require("youtube-api");
+    var ammount = 20 - playlistid.length;
+    yt.authenticate({
+      type: 'key',
+      key: Config.api_keys.google_key
+    });
+    yt.playlistItems.list({
+      part: 'snippet',
+      pageToken: [],
+      maxResults: ammount,
+      playlistId: suffix,
+    }, function(err, data) {
+      if (err) {
+        Logger.debug("Playlist failiure, " + err);
+        bot.sendMessage(message.channel, "Something went wrong, try again.");
+        return;
+      } else if (data) {
+        for (var x in data.items) {
+          var link = 'http://www.youtube.com/watch?v=';
+          var YT = require('ytdl-core');
+          YT.getInfo(link + data.items[x].snippet.resourceId.videoId, function(err, info) {
+            if (err) {
+              Logger.debug("Error while evaluating playlist videos.");
+              return;
+            } else if (info) {
+              if (info.length_seconds > 900) { // 15 minutes translated into seconds
+                Logger.debug("Ignored video longer than 15 minutes.");
+                return;
+              }
+              playlistid.push(data.items[x].snippet.resourceId.videoId);
+              playlistinfo.push(info.title);
+              playlistuser.push(message.author.username);
+            }
+          });
+        }
+        bot.reply(message, "done! Added all videos that are shorter than 15 minutes to the request queue!");
+      }
+    });
+  } else {
+    var YT = require('ytdl-core');
+    var link = 'http://www.youtube.com/watch?v=';
+    YT.getInfo(link + suffix, function(err, info) {
+      if (err) {
+        bot.reply(message, "Incorrect video ID, I only accept YouTube video's!");
         return;
       }
-      playlistid.push(suffix);
-      playlistinfo.push(info.title);
-      playlistuser.push(message.author.username);
-      bot.reply(message, "your request has been added to the playlist!");
-    }
-  });
+      if (info) {
+        if (info.length_seconds > 900) { // 15 minutes translated into seconds
+          bot.reply(message, "too long, videos can be max 15 minutes long!");
+          return;
+        }
+        playlistid.push(suffix);
+        playlistinfo.push(info.title);
+        playlistuser.push(message.author.username);
+        bot.reply(message, "added **" + info.title + "** to play at position " + playlistid.length);
+      }
+    });
+  }
 };
 
 exports.returnNowPlaying = function(bot, message) {
