@@ -519,19 +519,19 @@ Commands.whois = {
         var msgArray = [];
         if (user.avatarURL === null) {
           msgArray.push("Information requested by " + msg.sender);
-          msgArray.push("Requested user: `" + user.username + "`");
-          msgArray.push("ID: `" + user.id + "`");
-          msgArray.push("Status: `" + user.status + "`");
-          msgArray.push("Current access level: " + UserLevel);
+          msgArray.push("```Requested user: '" + user.username + "'");
+          msgArray.push("ID: '" + user.id + "'");
+          msgArray.push("Status: '" + user.status + "'");
+          msgArray.push("Current access level: " + UserLevel + "```");
           bot.sendMessage(msg.channel, msgArray);
           return;
         } else {
           msgArray.push("Information requested by " + msg.sender);
-          msgArray.push("Requested user: `" + user.username + "`");
+          msgArray.push("```Requested user: `" + user.username + "`");
           msgArray.push("ID: `" + user.id + "`");
           msgArray.push("Status: `" + user.status + "`");
           msgArray.push("Avatar: " + user.avatarURL);
-          msgArray.push("Current access level: " + UserLevel);
+          msgArray.push("Current access level: " + UserLevel + "```");
           bot.sendMessage(msg.channel, msgArray);
         }
       });
