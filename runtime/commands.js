@@ -520,6 +520,7 @@ Commands.whois = {
           msgArray.push("Information requested by " + msg.sender);
           msgArray.push("Requested user: `" + user.username + "`");
           msgArray.push("ID: `" + user.id + "`");
+          msgArray.push("Discriminator: `#" + user.discriminator + "`");
           msgArray.push("Status: `" + user.status + "`");
           msgArray.push("Current access level: " + UserLevel);
           bot.sendMessage(msg.channel, msgArray);
@@ -528,6 +529,7 @@ Commands.whois = {
           msgArray.push("Information requested by " + msg.sender);
           msgArray.push("Requested user: `" + user.username + "`");
           msgArray.push("ID: `" + user.id + "`");
+          msgArray.push("Discriminator: `#" + user.discriminator + "`");
           msgArray.push("Status: `" + user.status + "`");
           msgArray.push("Avatar: " + user.avatarURL);
           msgArray.push("Current access level: " + UserLevel);
