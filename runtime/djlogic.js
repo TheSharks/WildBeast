@@ -93,10 +93,10 @@ exports.playlistAdd = function(bot, message, suffix) {
         bot.sendMessage(message.channel, "Something went wrong, try again.");
         return;
       } else if (data) {
-        for (var x in data.items) {
+        for (i = 0; i < data.items.length; i++) {
           var link = 'http://www.youtube.com/watch?v=';
           var YT = require('ytdl-core');
-          YT.getInfo(link + data.items[x].snippet.resourceId.videoId, function(err, info) {
+          YT.getInfo(link + data.items[i].snippet.resourceId.videoId, function(err, info) {
             if (err) {
               Logger.debug("Error while evaluating playlist videos.");
               return;
@@ -105,7 +105,7 @@ exports.playlistAdd = function(bot, message, suffix) {
                 Logger.debug("Ignored video longer than 15 minutes.");
                 return;
               }
-              playlistid.push(data.items[x].snippet.resourceId.videoId);
+              playlistid.push(data.items[i].snippet.resourceId.videoId);
               playlistinfo.push(info.title);
               playlistuser.push(message.author.username);
             }
