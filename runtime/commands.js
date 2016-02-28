@@ -61,7 +61,6 @@ Commands.playlist = {
   help: "Returns the playlist.",
   level: 0,
   fn: function(bot, msg) {
-    bot.reply(msg, "currently playing these songs.");
     DJ.playlistFetch(bot, msg);
   }
 };
