@@ -94,7 +94,7 @@ Commands.e621 = {
         } else {
           var count = Math.floor((Math.random() * result.body.length));
           var FurryArray = [];
-          FurryArray.push(msg.sender + "You've searched for `" + suffix + "`"); // hehe no privacy if you do the nsfw commands now.
+          FurryArray.push(msg.sender + ", you've searched for `" + suffix + "`"); // hehe no privacy if you do the nsfw commands now.
           FurryArray.push(result.body[count].file_url);
           bot.sendMessage(msg.channel, FurryArray);
           bot.stopTyping(msg.channel);
@@ -750,8 +750,7 @@ Commands.meme = {
     var imgflipper = new Imgflipper(ConfigFile.imgflip.username, ConfigFile.imgflip.password);
     imgflipper.generateMeme(meme[memetype], tags[1] ? tags[1] : "", tags[3] ? tags[3] : "", function(err, image) {
       //CmdErrorLog.log("debug", arguments);
-      bot.reply(msg, "here's your requested meme.");
-      bot.sendMessage(msg.channel, image);
+      bot.reply(msg, image);
       if (!msg.channel.server) {
         return;
       }
@@ -828,7 +827,6 @@ Commands.iff = {
         }
       }
       if (imgArray.indexOf(suffix) !== -1) {
-        bot.reply(msg, "here's your picture.");
         bot.sendFile(msg.channel, "./images/" + suffix);
         if (!msg.channel.server) {
           return;
