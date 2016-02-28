@@ -33,7 +33,6 @@ Commands.nowplaying = {
   music: true,
   level: 0,
   fn: function(bot, msg) {
-    bot.reply(msg, "bot is currently playing."); // Easy for moderation #2
     DJ.returnNowPlaying(bot, msg);
   }
 };
@@ -75,26 +74,6 @@ Commands.playliststart = {
   fn: function(bot, msg) {
     bot.reply(msg, "I have started the playlist.");
     DJ.startPlaylist(bot, msg);
-  }
-};
-
-Commands["overwrite-devserver"] = {
-  name: "overwrite-devserver",
-  help: "Overwrites the ID for the default server.",
-  level: 6,
-  fn: function(bot, msg, suffix) {
-    Defaulting.setServer(suffix);
-    bot.sendMessage(msg.channel, "Set default server ID to " + suffix);
-  }
-};
-
-Commands["overwrite-logbook"] = {
-  name: "overwrite-logbook",
-  help: "Overwrites the channel ID for the logbook channel.",
-  level: 6,
-  fn: function(bot, msg, suffix) {
-    Defaulting.setChannel(suffix);
-    bot.sendMessage(msg.channel, "Set logbook ID to " + suffix);
   }
 };
 
@@ -271,7 +250,6 @@ Commands.info = {
   level: 0,
   fn: function(bot, msg) {
     var msgArray = [];
-    msgArray.push(msg.sender + ", " + "you have requested some information.");
     msgArray.push("**WildBeast version " + version + "**");
     msgArray.push("Using latest 6.x.x *Discord.js* version by *hydrabolt*.");
     msgArray.push("Made primarily by Dougley, Mirrow and Perpetucake.");
@@ -450,15 +428,6 @@ Commands.youtube = {
   }
 };
 
-Commands.devs = {
-  name: "devs",
-  help: "This will print the Discord ID's from the developers of WildBeast to the channel.",
-  level: 0,
-  fn: function(bot, msg) {
-    bot.reply(msg, "this bot is made with love by <@107904023901777920>, <@108125505714139136> and <@110147170740494336>.");
-  }
-};
-
 Commands.purge = {
   name: "purge",
   help: "I'll delete a certain ammount of messages.",
@@ -515,7 +484,6 @@ Commands.kappa = {
   level: 0,
   fn: function(bot, msg, suffix) {
     bot.sendFile(msg.channel, "./images/kappa.png");
-    bot.reply(msg, "here's your kappa.")
     if (msg.channel.server) {
       var bot_permissions = msg.channel.permissionsOf(bot.user);
       if (bot_permissions.hasPermission("manageMessages")) {
@@ -834,7 +802,7 @@ Commands.status = {
   level: 0,
   fn: function(bot, msg) {
     var msgArray = [];
-    msgArray.push("Hello, " + msg.sender + ", " "I'm " + bot.user + ", nice to meet you!");
+    msgArray.push("Hello " + msg.sender + ", I'm " + bot.user + ", nice to meet you!");
     msgArray.push("I'm used in " + bot.servers.length + " servers, in " + bot.channels.length + " channels and by " + bot.users.length + " users.");
     msgArray.push("My uptime is " + (Math.round(bot.uptime / (1000 * 60 * 60))) + " hours, " + (Math.round(bot.uptime / (1000 * 60)) % 60) + " minutes, and " + (Math.round(bot.uptime / 1000) % 60) + " seconds.");
     bot.sendMessage(msg.channel, msgArray);
@@ -982,7 +950,7 @@ Commands.gif = {
     var tags = suffix.split(" ");
     Giphy.get_gif(tags, function(id) {
       if (typeof id !== "undefined") {
-        bot.reply(msg, "here's the gif you requested. " "http://media.giphy.com/media/" + id + "/giphy.gif [Tags: " + (tags ? tags : "Random GIF") + "]");
+        bot.reply(msg, "http://media.giphy.com/media/" + id + "/giphy.gif [Tags: " + (tags ? tags : "Random GIF") + "]");
       } else {
         bot.reply(msg, "sorry! Invalid tags, try something different. For example, something that exists [Tags: " + (tags ? tags : "Random GIF") + "]");
       }
@@ -1048,7 +1016,7 @@ Commands.yomomma = {
     request('http://api.yomomma.info/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var yomomma = JSON.parse(body);
-        bot.reply(msg, "here's a yomomma joke. " + yomomma.joke);
+        bot.reply(msg, + yomomma.joke);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }

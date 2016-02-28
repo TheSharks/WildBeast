@@ -102,7 +102,7 @@ exports.returnNowPlaying = function(bot, message) {
     bot.reply(message, "Not in voice right now.");
   }
   if (!message.channel.equals(boundChannel)) return;
-  bot.sendMessage(message.channel, "Currently playing http://www.youtube.com/watch?v=" + playlistid[0] + " for " + playlistuser[0]);
+  bot.reply(message, "currently playing http://www.youtube.com/watch?v=" + playlistid[0] + " for " + playlistuser[0]);
 };
 
 exports.playlistFetch = function(bot, message) {
