@@ -23,7 +23,7 @@ exports.joinVoice = function(bot, message) {
     if (channel instanceof Discord.VoiceChannel) {
       if (!channelToJoin || channel.name === channelToJoin) {
         boundChannel = message.channel;
-        bot.reply(message, `Binding to text channel <#${boundChannel.id}> and voice channel **${channel.name}** \`(${channel.id})\``);
+        bot.reply(message, `binding to text channel <#${boundChannel.id}> and voice channel **${channel.name}** \`(${channel.id})\``);
         bot.joinVoiceChannel(channel);
         break;
       }
@@ -82,13 +82,13 @@ exports.playlistAdd = function(bot, message, suffix) {
     }
     if (info) {
       if (info.length_seconds > 900) { // 15 minutes translated into seconds
-        bot.reply(message, "Too long, videos can be max 15 minutes long!");
+        bot.reply(message, "too long, videos can be max 15 minutes long!");
         return;
       }
       playlistid.push(suffix);
       playlistinfo.push(info.title);
       playlistuser.push(message.author.username);
-      bot.reply(message, "Queued **" + playlistinfo[playlistinfo.length - 1] + "** to play at position " + playlistinfo.length);
+      bot.reply(message, "your request has been added to the playlist!");
     }
   });
 };
@@ -99,10 +99,10 @@ exports.returnNowPlaying = function(bot, message) {
     return;
   }
   if (!bot.voiceConnection) {
-    bot.reply(message, "Not in voice right now.");
+    bot.reply(message, "not in voice right now.");
   }
   if (!message.channel.equals(boundChannel)) return;
-  bot.reply(message, "currently playing http://www.youtube.com/watch?v=" + playlistid[0] + " for " + playlistuser[0]);
+  bot.sendMessage(message.channel, "Currently playing http://www.youtube.com/watch?v=" + playlistid[0] + " for " + playlistuser[0]);
 };
 
 exports.playlistFetch = function(bot, message) {
@@ -111,7 +111,7 @@ exports.playlistFetch = function(bot, message) {
     return;
   }
   if (!bot.voiceConnection) {
-    bot.reply(message, "Not in voice right now.");
+    bot.reply(message, "not in voice right now.");
   }
   if (!message.channel.equals(boundChannel)) return;
   var ar = [];
@@ -170,7 +170,7 @@ exports.startPlaylist = function(bot, message) {
     return;
   }
   if (!bot.voiceConnection) {
-    bot.reply(message, "Not in voice right now.");
+    bot.reply(message, "not in voice right now.");
   }
   if (!message.channel.equals(boundChannel)) return;
   if (bot.voiceConnection.playing) {
@@ -186,7 +186,7 @@ exports.expSkip = function(bot, message) {
     return;
   }
   if (!bot.voiceConnection) {
-    bot.reply(message, "Not in voice right now.");
+    bot.reply(message, "not in voice right now.");
   }
   if (!message.channel.equals(boundChannel)) return;
   if (playlistid.length === 1) {
@@ -243,9 +243,9 @@ exports.checkIfAvailable = function(bot, message) {
 exports.leaveVoice = function(bot, message) {
   if (!message.channel.equals(boundChannel)) return;
   if (!boundChannel)
-    bot.sendMessage(message, "Can't leave what I'm not in!");
+    bot.sendMessage(message, "can't leave what I'm not in!");
   if (!boundChannel) return;
-  bot.reply(message, `Unbinding from <#${boundChannel.id}> and destroying voice connection`);
+  bot.reply(message, `unbinding from <#${boundChannel.id}> and destroying voice connection`);
   bot.leaveVoiceChannel();
   bot.setStatus("online", null);
   boundChannel = false;
