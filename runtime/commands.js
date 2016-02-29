@@ -775,7 +775,7 @@ Commands.rule34 = {
     unirest.post("http://rule34.xxx/index.php?page=dapi&s=post&q=index&tags=" + suffix) // Fetching 100 rule34 pics
       .end(function(result) {
         var xml2js = require('xml2js');
-        if (result.body.length < 74) {
+        if (result.body.length < 75) {
           bot.reply(msg, "sorry, nothing found."); // Correct me if it's wrong.
           bot.stopTyping(msg.channel);
           return;

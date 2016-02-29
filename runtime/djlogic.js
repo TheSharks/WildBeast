@@ -301,6 +301,7 @@ exports.leaveVoice = function(bot, message) {
   if (!boundChannel)
     bot.sendMessage(message, "can't leave what I'm not in!");
   if (!boundChannel) return;
+  clearTimeout(time);
   bot.reply(message, `unbinding from <#${boundChannel.id}> and destroying voice connection`);
   bot.leaveVoiceChannel();
   bot.setStatus("online", null);
