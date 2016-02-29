@@ -550,7 +550,7 @@ Commands.setlevel = {
       return;
     }
     if (isNaN(suffix[0])) {
-      bot.reply(msg.channel, "your first param is not a number!");
+      bot.reply(msg, "your first param is not a number!");
       return;
     }
     if (suffix[0] > 3) {
@@ -558,7 +558,7 @@ Commands.setlevel = {
       return;
     }
     if (msg.mentions.length === 0) {
-      bot.reply(msg.channel, "please mention the user(s) you want to set the permission level of.");
+      bot.reply(msg, "please mention the user(s) you want to set the permission level of.");
       return;
     }
     Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
@@ -567,7 +567,7 @@ Commands.setlevel = {
         return;
       }
       if (suffix[0] > level) {
-        bot.reply(msg.channel, "you can't set a user's permissions higher than your own!");
+        bot.reply(msg, "you can't set a user's permissions higher than your own!");
         return;
       }
     });
@@ -771,27 +771,25 @@ Commands.rule34 = {
   level: 0,
   nsfw: true,
   fn: function(bot, msg, suffix) {
-    var request = require('request');
-    var xml2js = require('xml2js');
-    var url = "http://rule34.xxx/index.php?page=dapi&s=post&limit=1&q=index&tags=" + suffix;
-    request(url, function(error, response, body) {
-      if (!error && body.length > 74 && response.statusCode == 200) {
-        xml2js.parseString(body, function(err, result) {
-          var util = require('util');
-          var fuckme = util.inspect(result.posts, false, null).split("'");
-          if (fuckme[13].substr(0, 5) != "http:") {
-            var httpstring = 'http:';
-            fuckme = httpstring.concat(fuckme[13]);
-            bot.reply(msg, fuckme);
-          } else {
-            bot.reply(msg, fuckme[13]);
-          }
-        });
-      } else {
-        Logger.error("Got an error: ", error, ", status code: ", response.statusCode);
-        bot.reply(msg, "sorry, an error occured.");
-      }
-    });
+    bot.startTyping(msg.channel);
+    unirest.post("http://rule34.xxx/index.php?page=dapi&s=post&q=index&tags=" + suffix) // Fetching 100 rule34 pics
+      .end(function(result) {
+        var xml2js = require('xml2js');
+        if (result.body.length < 74) {
+          bot.reply(msg, "sorry, nothing found."); // Correct me if it's wrong.
+          bot.stopTyping(msg.channel);
+          return;
+        } else {
+          xml2js.parseString(result.body, function(err, reply) {
+            var count = Math.floor((Math.random() * reply.posts.post.length));
+            var FurryArray = [];
+            FurryArray.push(msg.sender + ", you've searched for `" + suffix + "`"); // hehe no privacy if you do the nsfw commands now.
+            FurryArray.push("http:" + reply.posts.post[count].$.file_url);
+            bot.sendMessage(msg.channel, FurryArray);
+            bot.stopTyping(msg.channel);
+          });
+        }
+      });
   }
 };
 
@@ -1014,7 +1012,7 @@ Commands.yomomma = {
     request('http://api.yomomma.info/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var yomomma = JSON.parse(body);
-        bot.reply(msg, + yomomma.joke);
+        bot.reply(msg, +yomomma.joke);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
