@@ -130,7 +130,7 @@ exports.playlistAdd = function(bot, message, suffix) {
     var link = 'http://www.youtube.com/watch?v=';
     YT.getInfo(link + suffix, function(err, info) {
       if (err) {
-        bot.reply(message, "Incorrect video ID, I only accept YouTube video's!");
+        bot.reply(message, "Incorrect video ID, I only accept YouTube videos!");
         return;
       }
       if (info) {
