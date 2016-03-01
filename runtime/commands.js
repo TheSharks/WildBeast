@@ -1281,7 +1281,7 @@ Commands.catfacts = {
     request('http://catfacts-api.appspot.com/api/facts', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var catFact = JSON.parse(body);
-        bot.replye(msg, catFact.facts[0]);
+        bot.reply(msg, catFact.facts[0]);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
