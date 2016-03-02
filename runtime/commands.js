@@ -971,7 +971,8 @@ Commands.imglist = {
           }
         }
       }
-      bot.reply(msg, imgArray);
+      bot.sendMessage(msg.channel, imgArray);
+	    bot.reply(msg, "here you go!"); // 2 messages, but screw it, atleast it's not fucked up.
     });
   }
 };
