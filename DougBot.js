@@ -300,5 +300,17 @@ bot.on("serverNewMember", function(server, user) {
 function err(error) {
   Debug.debuglogSomething("Discord", "Logging into Discord probably failed, got error: " + error, "error");
 }
+
+process.on('uncaughtException', function(err) {
+  if (err.code === 'ECONNRESET') {
+    Logger.warn("Got an ECONNRESET error, this is most likely *not* a bug with WildBeast");
+    Logger.debug(err.stack);
+  } else {
+    Logger.error("UncaughtException! Please report this to the author of the bot!");
+    Logger.debug(err);
+    Logger.debug(err.stack);
+    process.exit(1);
+  }
+});
 // Connection starter
 bot.login(ConfigFile.discord.email, ConfigFile.discord.password).then(init).catch(err);
