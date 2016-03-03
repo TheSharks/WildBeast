@@ -216,12 +216,16 @@ Commands.fortunecow = {
 
 Commands.leetspeak = {
   name: "leetspeak",
-  help: "1'Ll 3nc0D3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
+  help: "1'Ll 3nc0D3 Y0uR Me5s@g3 1Nt0 l337sp3@!",
   level: 0,
   fn: function(bot, msg, suffix) {
-    var leetspeak = require("leetspeak");
-    var thing = leetspeak(suffix);
-    bot.reply(msg, thing);
+    if (suffix.length > 0 ) {
+       var leetspeak = require("leetspeak");
+       var thing = leetspeak(suffix);
+       bot.reply(msg, thing);
+	} else {
+       bot.reply(msg, "*You need to type something to encode your message into l337sp3@!*");
+    }
   }
 };
 
