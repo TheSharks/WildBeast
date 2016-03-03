@@ -298,6 +298,8 @@ exports.checkIfAvailable = function(bot, message) {
 };
 
 exports.leaveVoice = function(bot, message) {
+  clearTimeout(pretime);
+  clearTimeout(time);
   if (!message.channel.equals(boundChannel)) return;
   if (!boundChannel)
     bot.sendMessage(message, "can't leave what I'm not in!");
