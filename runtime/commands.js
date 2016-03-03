@@ -229,7 +229,6 @@ Commands.leetspeak = {
   }
 };
 
-
 Commands.randomcat = {
   name: "randomcat",
   help: "I'll get a random cat image for you!",
@@ -482,7 +481,6 @@ Commands.purge = {
 Commands.kappa = {
   name: "kappa",
   help: "Sends kappa picture",
-  extendedhelp: "KappaKappaKappaKappaKappaKappaKappaKappaKappaKappa",
   level: 0,
   fn: function(bot, msg, suffix) {
     bot.sendFile(msg.channel, "./images/kappa.png");
@@ -647,18 +645,27 @@ Commands.hello = {
 
 Commands["server-info"] = {
   name: "server-info",
-  help: "I'll tell you some information about the server and the channel you're currently in.",
+  help: "I'll tell you some information about the server you're currently in.",
   level: 0,
   fn: function(bot, msg, suffix) {
     // if we're not in a PM, return some info about the channel
     if (msg.channel.server) {
       var msgArray = [];
       msgArray.push("Information requested by " + msg.sender);
-      msgArray.push("You are currently in " + msg.channel + " (id: " + msg.channel.id + ")");
-      msgArray.push("on server **" + msg.channel.server.name + "** (id: " + msg.channel.server.id + ") (region: " + msg.channel.server.region + ")");
-      msgArray.push("owned by " + msg.channel.server.owner + " (id: " + msg.channel.server.owner.id + ")");
-      if (msg.channel.topic) {
-        msgArray.push("The current topic is: " + msg.channel.topic);
+      msgArray.push("Server name: **" + msg.channel.server.name + "** (id: `" + msg.channel.server.id +"`)");
+      msgArray.push("Owned by **" + msg.channel.server.owner.username + "** (id: `" + msg.channel.server.owner.id + "`)");
+      msgArray.push("Current region: **" + msg.channel.server.region + '**.');
+      msgArray.push('This server has **' + msg.channel.server.members.length + '** members, and **' + msg.channel.server.channels.length + '** channels. (Including voice channels)');
+      msgArray.push('This server has **' + msg.channel.server.roles.length + '** roles registered.');
+      if (msg.channel.server.icon === null) {
+        msgArray.push('No server icon present.');
+      } else {
+        msgArray.push('Server icon: ' + msg.channel.server.iconURL);
+      }
+      if (msg.channel.server.afkChannel === null) {
+        msgArray.push('No voice AFK-channel present.');
+      } else {
+        msgArray.push('Voice AFK-channel: **' + msg.channel.server.afkChannel.name + "** (id: `" + msg.channel.server.afkChannel.id + "`)");
       }
       bot.sendMessage(msg, msgArray);
     } else {
