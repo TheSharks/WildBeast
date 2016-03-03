@@ -26,6 +26,40 @@ Commands.ping = {
     bot.reply(msg, "Pong!"); // Easy for moderation
   }
 };
+Commands.slap = {
+  name: "slap",
+  help: "Slap someone you mention!",
+  level: 0,
+  fn: function(bot, msg) {
+    var UserLevel = 0;
+    if (!msg.channel.server) {
+      bot.sendMessage(msg.author, "I can't do that in a DM, sorry.");
+      return;
+    }
+    if (msg.mentions.length === 0) {
+      bot.sendMessage(msg.channel, "Please mention the user that you want to slap!");
+      return;
+    }
+    msg.mentions.map(function(user) {
+      Permissions.GetLevel((msg.channel.server.id + user.id), user.id, function(err, level) {
+        if (err) {
+          return;
+        } else {
+          UserLevel = level;
+        }
+        var msgArray = [];
+        if (user.avatarURL === null) {
+          msgArray.push(msg.sender + " just slapped <@" + user.id + ">" + " leaving a huge red mark. ");
+          bot.sendMessage(msg.channel, msgArray);
+          return;
+        } else {
+          msgArray.push(msg.sender + " just slapped <@" + user.id + ">" + " leaving a huge red mark. ");
+          bot.sendMessage(msg.channel, msgArray);
+        }
+      });
+    });
+  }
+};
 
 Commands.nowplaying = {
   name: "nowplaying",
