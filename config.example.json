@@ -2,7 +2,7 @@
     "useful_comments": [
         "Please only enable debug_mode or verbose_logging if requested by one of the devs, as enabling this extends the logging capabilities and could potentially include sensitive info.",
         "Command prefixes are length dynamic, meaning that prefixes can be as long as you want, change the value to `mention` to switch to mention activation.",
-        "There can only be 1 master user, 1 global level 1 user, etc.",
+        "There can only be 4 master users, 5 global level 1 users, etc.",
         "If you define a different path to the image or music directory, type it like this:", "C:\\Users\\foobar\\Music",
         "help_mode can either be `private` or `channel`",
         "auto_restart tries to reconnect to Discord after an error or disconnection automatically.",
@@ -51,9 +51,9 @@
         "password": "hunter2"
     },
     "permissions": {
-        "masterUser": ["Master", "Users", "Discord", "ID"],
-        "level1": ["Global", "level 1", "users", "Discord", "ID"],
-        "level2": ["Global", "level 2", "users", "Discord", "ID"],
-        "level3": ["Global", "level 3", "users", "Discord", "ID"]
+        "masterUser": ["Master", "Users", "Discord", "ID"], /* Replace the quotes inside [] for Master user */
+        "level1": ["Global", "level 1", "users", "Discord", "ID"], /* Replace the quotes inside [] for Global level 1 */
+        "level2": ["Global", "level 2", "users", "Discord", "ID"], /* Replace the quotes inside [] for Global level 2 */
+        "level3": ["Global", "level 3", "users", "Discord", "ID"] /* Replace the quotes inside [] for Global level 3 */
     }
 }
