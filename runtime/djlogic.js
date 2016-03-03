@@ -171,7 +171,7 @@ exports.playlistFetch = function(bot, message) {
   var ar = [];
   if (playlistid.length === 0) ar.push("The playlist is empty :(");
   for (i = 0; i < playlistid.length; i++) {
-    ar.push((i + 1) + ". **" + playlistinfo[i] + "** Requested by " + playlistuser[i]);
+    ar.push((i + 1) + ". **" + playlistinfo[i] + "** requested by " + playlistuser[i]);
     if (i === 9) break;
   }
   bot.sendMessage(message.channel, ar);
@@ -256,7 +256,7 @@ exports.expSkip = function(bot, message) {
     playlistuser = [];
     return;
   }
-  bot.reply(message, "Skipping...");
+  bot.reply(message, "skipping...");
   bot.voiceConnection.stopPlaying();
 };
 
