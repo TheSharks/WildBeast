@@ -1023,7 +1023,7 @@ Commands.yomomma = {
     request('http://api.yomomma.info/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var yomomma = JSON.parse(body);
-        bot.reply(msg, +yomomma.joke);
+        bot.reply(msg, yomomma.joke);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }

@@ -123,6 +123,7 @@ exports.playlistAdd = function(bot, message, suffix) {
           });
         }
         bot.reply(message, "done! Added " + counter + " videos to the queue!");
+        counter = 0;
       }
     });
   } else {
