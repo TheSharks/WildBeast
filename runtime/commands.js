@@ -1161,6 +1161,10 @@ Commands.csgoprice = {
   usage: '[weapon "AK-47"] [skin "Vulcan"] [[wear "Factory New"] [stattrak "(boolean)"]] Quotes are important!',
   level: 0,
   fn: function(bot, msg, suffix) {
+    if (!suffix) {
+      bot.reply(msg, "enter a weapon query!");
+      return;
+    }
     skinInfo = suffix.split('"');
     var csgomarket = require('csgo-market');
     csgomarket.strictNameMode = false;
