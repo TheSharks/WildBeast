@@ -267,7 +267,7 @@ bot.on("message", function(msg) {
             return;
           } else {
             Debug.debuglogSomething("DougBot", "User does not have enough global permissions.", "info");
-            bot.sendMessage(msg.channel, "Only global permissions apply in DM's, your server specific permissions do nothing here!");
+            bot.sendMessage(msg.channel, "You do not have sufficient global permissions to execute this command in DM.");
           }
         });
       }
