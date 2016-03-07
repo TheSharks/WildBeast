@@ -153,7 +153,7 @@ Commands.stop = {
   level: 0,
   music: true,
   fn: function(bot, msg) {
-    DJ.stopPlaying(msg);
+    DJ.stopPlaying(bot, msg);
   }
 };
 

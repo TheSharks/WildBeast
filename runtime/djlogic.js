@@ -61,7 +61,7 @@ exports.playlistAdd = function(bot, message, suffix) {
   }
   if (Config.bot_settings.music_timeouts === true) {
     time = setTimeout(function() {
-      if (!bot.voiceConnection.playing) {
+      if (!bot.voiceConnection.playing || !bot.voiceConnection) {
         bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
         bot.leaveVoiceChannel();
         playlistid = [];
@@ -274,7 +274,7 @@ exports.checkPerms = function(server, author, callback) {
   return callback(null, 0);
 };
 
-exports.stopPlaying = function(message) {
+exports.stopPlaying = function(bot, message) {
   if (Config.bot_settings.disable_music_commands === true) {
     bot.reply(message, "music commands are disabled.");
     return;
