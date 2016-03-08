@@ -4,7 +4,7 @@ var Discord = require("discord.js"),
   request = require("request"),
   time,
   pretime,
-  counter,
+  counter = 0,
   playlistid = [],
   vidarray = [],
   playlistinfo = [],
@@ -61,12 +61,14 @@ exports.playlistAdd = function(bot, message, suffix) {
   }
   if (Config.bot_settings.music_timeouts === true) {
     time = setTimeout(function() {
-      if (!bot.voiceConnection.playing) {
+      if (!bot.voiceConnection.playing || !bot.voiceConnection) {
         bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
         bot.leaveVoiceChannel();
         playlistid = [];
         playlistinfo = [];
         playlistuser = [];
+        boundChannel = false;
+        stream = false;
         return;
       }
     }, 120000);
@@ -96,6 +98,7 @@ exports.playlistAdd = function(bot, message, suffix) {
         return;
       } else if (data) {
         for (var x in data.items) {
+          counter++;
           playlistid.push(data.items[x].snippet.resourceId.videoId);
           playlistinfo.push(data.items[x].snippet.title);
           playlistuser.push(message.author.username);
@@ -107,6 +110,7 @@ exports.playlistAdd = function(bot, message, suffix) {
               return;
             } else if (info) {
               if (info.length_seconds > 900) { // 15 minutes translated into seconds
+                counter--;
                 playlistid.splice(playlistid.length - 1, 1);
                 playlistinfo.splice(playlistinfo.length - 1, 1);
                 playlistuser.splice(playlistuser.length - 1, 1);
@@ -118,8 +122,8 @@ exports.playlistAdd = function(bot, message, suffix) {
             }
           });
         }
+        bot.reply(message, "done! Added " + counter + " videos to the queue!");
         counter = 0;
-        bot.reply(message, "done! Added all videos that are shorter than 15 minutes to the request queue!");
       }
     });
   } else {
@@ -127,7 +131,7 @@ exports.playlistAdd = function(bot, message, suffix) {
     var link = 'http://www.youtube.com/watch?v=';
     YT.getInfo(link + suffix, function(err, info) {
       if (err) {
-        bot.reply(message, "Incorrect video ID, I only accept YouTube video's!");
+        bot.reply(message, "Incorrect video ID, I only accept YouTube videos!");
         return;
       }
       if (info) {
@@ -168,7 +172,7 @@ exports.playlistFetch = function(bot, message) {
   var ar = [];
   if (playlistid.length === 0) ar.push("The playlist is empty :(");
   for (i = 0; i < playlistid.length; i++) {
-    ar.push((i + 1) + ". **" + playlistinfo[i] + "** Requested by " + playlistuser[i]);
+    ar.push((i + 1) + ". **" + playlistinfo[i] + "** requested by " + playlistuser[i]);
     if (i === 9) break;
   }
   bot.sendMessage(message.channel, ar);
@@ -204,6 +208,8 @@ function playlistPlay(bot, message) {
         bot.sendMessage(message.channel, "The playlist is finished, destroying voice connection.");
         bot.setStatus("online", null);
         bot.leaveVoiceChannel();
+        boundChannel = false;
+        stream = false;
         playlistid = [];
         playlistinfo = [];
         playlistuser = [];
@@ -243,17 +249,16 @@ exports.expSkip = function(bot, message) {
   if (!message.channel.equals(boundChannel)) return;
   if (playlistid.length === 1) {
     bot.reply(message, "Ending playlist, as the skipped song is the last one in the playlist.");
+    boundChannel = false;
+    stream = false;
     bot.leaveVoiceChannel();
     playlistid = [];
     playlistinfo = [];
     playlistuser = [];
     return;
   }
-  bot.reply(message, "Skipping...");
-  playlistid.splice(0, 1);
-  playlistinfo.splice(0, 1);
-  playlistuser.splice(0, 1);
-  playlistPlay(bot, message);
+  bot.reply(message, "skipping...");
+  bot.voiceConnection.stopPlaying();
 };
 
 exports.checkPerms = function(server, author, callback) {
@@ -269,7 +274,7 @@ exports.checkPerms = function(server, author, callback) {
   return callback(null, 0);
 };
 
-exports.stopPlaying = function(message) {
+exports.stopPlaying = function(bot, message) {
   if (Config.bot_settings.disable_music_commands === true) {
     bot.reply(message, "music commands are disabled.");
     return;
@@ -293,10 +298,13 @@ exports.checkIfAvailable = function(bot, message) {
 };
 
 exports.leaveVoice = function(bot, message) {
+  clearTimeout(pretime);
+  clearTimeout(time);
   if (!message.channel.equals(boundChannel)) return;
   if (!boundChannel)
     bot.sendMessage(message, "can't leave what I'm not in!");
   if (!boundChannel) return;
+  clearTimeout(time);
   bot.reply(message, `unbinding from <#${boundChannel.id}> and destroying voice connection`);
   bot.leaveVoiceChannel();
   bot.setStatus("online", null);

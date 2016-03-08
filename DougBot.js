@@ -125,35 +125,8 @@ bot.on("message", function(msg) {
   if (msg.author.equals(bot.user)) {
     return;
   }
-  if (msg.channel.isPrivate && msg.content.indexOf("https://discord.gg") === 0) { // TODO: This needs cleanup.
-    bot.joinServer(msg.content, function(err, server) {
-      if (err) {
-        Debug.debuglogSomething("DougBot", "Failed to join a server on DM request.", "warn");
-        bot.sendMessage(msg.author, "Something went wrong with that invite.");
-      } else if (server) {
-        Debug.debuglogSomething("DougBot", "Joined a server on DM request.", "info");
-        var msgArray = [];
-        msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server.");
-        msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
-        msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
-        Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
-          if (err) {
-            bot.sendMessage(server.defaultChannel, "An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
-          }
-          if (level === 4) {
-            bot.sendMessage(server.defaultChannel, "I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
-          }
-        });
-        bot.sendMessage(server.defaultChannel, msgArray);
-        msgArray = [];
-        msgArray.push("Hey " + server.owner.username + ", I've joined " + server.name + " in which you're the founder.");
-        msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
-        msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
-        msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
-        bot.sendMessage(server.owner, msgArray);
-        bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
-      }
-    });
+  if (msg.channel.isPrivate && msg.content.indexOf("https://discord.gg") === 0) {
+    Commands['join-server'].fn(bot, msg, msg.content);
   }
   var prefix;
   if (ConfigFile.bot_settings.cmd_prefix != "mention") {
@@ -267,7 +240,7 @@ bot.on("message", function(msg) {
             return;
           } else {
             Debug.debuglogSomething("DougBot", "User does not have enough global permissions.", "info");
-            bot.sendMessage(msg.channel, "Only global permissions apply in DM's, your server specific permissions do nothing here!");
+            bot.sendMessage(msg.channel, "You do not have sufficient global permissions to execute this command in DM.");
           }
         });
       }
@@ -293,12 +266,27 @@ function init(token) {
 
 // New user welcomer
 bot.on("serverNewMember", function(server, user) {
+  var welcomeWhitelist = require('./runtime/welcoming-whitelist.json');
   if (ConfigFile.bot_settings.welcome_new_members === false) return;
-  bot.sendMessage(server.defaultChannel, "Welcome " + user.username + " to " + server.name + "!");
+  if (welcomeWhitelist.indexOf(server.id) > -1) {
+    bot.sendMessage(server.defaultChannel, "Welcome " + user.username + " to " + server.name + "!");
+  }
 });
 
 function err(error) {
   Debug.debuglogSomething("Discord", "Logging into Discord probably failed, got error: " + error, "error");
 }
+
+process.on('uncaughtException', function(err) {
+  if (err.code === 'ECONNRESET') {
+    Logger.warn("Got an ECONNRESET error, this is most likely *not* a bug with WildBeast");
+    Logger.debug(err.stack);
+  } else {
+    Logger.error("UncaughtException! Please report this to the author of the bot!");
+    Logger.debug(err);
+    Logger.debug(err.stack);
+    process.exit(1);
+  }
+});
 // Connection starter
 bot.login(ConfigFile.discord.email, ConfigFile.discord.password).then(init).catch(err);
