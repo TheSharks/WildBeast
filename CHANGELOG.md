@@ -1,5 +1,10 @@
 # Gamma phase
 (Gamma is a real thing in software development by the way, it's a synonym for RC (Release Candidate))
+## 2.0.0-gamma.7
+Changed welcoming system to adhere to a whitelist instead of being global.    
+Added server blacklisting for `join-server`.    
+**IMPORTANT** Changed `join-server` to use mentions instead of usernames, the new invocation is `join-server @WildBeast <instant-invite>`, change `WildBeast` with your bots username.
+
 ## 2.0.0-gamma.6
 Added YouTube playlist support.    
 

@@ -219,12 +219,12 @@ Commands.leetspeak = {
   help: "1'Ll 3nc0D3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
   level: 0,
   fn: function(bot, msg, suffix) {
-    if (suffix.length > 0 ) {
-       var leetspeak = require("leetspeak");
-       var thing = leetspeak(suffix);
-       bot.reply(msg, thing);
-	} else {
-       bot.reply(msg, "*You need to type something to encode your message into l337sp3@K!*");
+    if (suffix.length > 0) {
+      var leetspeak = require("leetspeak");
+      var thing = leetspeak(suffix);
+      bot.reply(msg, thing);
+    } else {
+      bot.reply(msg, "*You need to type something to encode your message into l337sp3@K!*");
     }
   }
 };
@@ -518,25 +518,16 @@ Commands.whois = {
           UserLevel = level;
         }
         var msgArray = [];
-        if (user.avatarURL === null) {
-          msgArray.push("Information requested by " + msg.sender);
-          msgArray.push("Requested user: `" + user.username + "`");
-          msgArray.push("ID: `" + user.id + "`");
-          msgArray.push("Discriminator: `#" + user.discriminator + "`");
-          msgArray.push("Status: `" + user.status + "`");
-          msgArray.push("Current access level: " + UserLevel);
-          bot.sendMessage(msg.channel, msgArray);
-          return;
-        } else {
-          msgArray.push("Information requested by " + msg.sender);
-          msgArray.push("Requested user: `" + user.username + "`");
-          msgArray.push("ID: `" + user.id + "`");
-          msgArray.push("Discriminator: `#" + user.discriminator + "`");
-          msgArray.push("Status: `" + user.status + "`");
+        msgArray.push("Information requested by " + msg.sender);
+        msgArray.push("Requested user: `" + user.username + "`");
+        msgArray.push("ID: `" + user.id + "`");
+        msgArray.push("Discriminator: `#" + user.discriminator + "`");
+        msgArray.push("Status: `" + user.status + "`");
+        if (user.avatarURL !== null) {
           msgArray.push("Avatar: " + user.avatarURL);
-          msgArray.push("Current access level: " + UserLevel);
-          bot.sendMessage(msg.channel, msgArray);
         }
+        msgArray.push("Current access level: " + UserLevel);
+        bot.sendMessage(msg.channel, msgArray);
       });
     });
   }
@@ -652,7 +643,7 @@ Commands["server-info"] = {
     if (msg.channel.server) {
       var msgArray = [];
       msgArray.push("Information requested by " + msg.sender);
-      msgArray.push("Server name: **" + msg.channel.server.name + "** (id: `" + msg.channel.server.id +"`)");
+      msgArray.push("Server name: **" + msg.channel.server.name + "** (id: `" + msg.channel.server.id + "`)");
       msgArray.push("Owned by **" + msg.channel.server.owner.username + "** (id: `" + msg.channel.server.owner.id + "`)");
       msgArray.push("Current region: **" + msg.channel.server.region + '**.');
       msgArray.push('This server has **' + msg.channel.server.members.length + '** members, and **' + msg.channel.server.channels.length + '** channels. (Including voice channels)');
@@ -689,41 +680,102 @@ Commands.birds = {
 Commands["join-server"] = {
   name: "join-server",
   help: "I'll join the server you've requested me to join, as long as the invite is valid and I'm not banned of already in the requested server.",
-  usage: "<bot-username> <instant-invite>",
+  usage: "<bot-mention> <instant-invite>",
   level: 0,
   fn: function(bot, msg, suffix) {
-    suffix = suffix.split(" ");
-    if (suffix[0] === bot.user.username) {
-      Logger.log("debug", bot.joinServer(suffix[1], function(error, server) {
-        Logger.log("debug", "callback: " + arguments);
-        if (error || !server) {
-          Logger.warn("Failed to join a server: " + error);
-          bot.sendMessage(msg.channel, "Something went wrong, try again.");
-        } else {
-          var msgArray = [];
-          msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server.");
-          msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
-          msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
-          Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
-            if (err) {
-              bot.sendMessage(server.defaultChannel, "An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
-            }
-            if (level === 4) {
-              bot.sendMessage(server.defaultChannel, "I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
-            }
-          });
-          bot.sendMessage(server.defaultChannel, msgArray);
-          msgArray = [];
-          msgArray.push("Hey " + server.owner.username + ", I've joined " + server.name + " in which you're the founder.");
-          msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
-          msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
-          msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
-          bot.sendMessage(server.owner, msgArray);
-          bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
+    var invmak;
+    var serverBlacklist = require('./server-blacklist.json');
+    if (!msg.channel.isPrivate && msg.isMentioned(bot.user)) {
+      suffix = suffix.split(' ');
+      bot.getInvite(suffix[1], function(err, inv) {
+        if (err) {
+          bot.reply("something went wrong while resolving that invite, make sure your formatting is correct.");
+          return;
+        } else if (inv) {
+          if (serverBlacklist.hasOwnProperty(inv.server.id)) {
+            var array = [];
+            array.push('Sorry, that server is on my internal blacklist.');
+            array.push('Reason: `' + serverBlacklist[inv.server.id] + '`');
+            array.push('Contact <@' + ConfigFile.permissions.masterUser[0] + '> to get it removed.');
+            bot.sendMessage(msg, array);
+            return;
+          } else {
+            Logger.log("debug", bot.joinServer(suffix[1], function(error, server) {
+              Logger.log("debug", "callback: " + arguments);
+              if (error || !server) {
+                Logger.warn("Failed to join a server: " + error);
+                bot.sendMessage(msg.channel, "Something went wrong, try again.");
+              } else {
+                var msgArray = [];
+                msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server");
+                msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
+                msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
+                Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
+                  if (err) {
+                    bot.sendMessage(server.defaultChannel, "An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
+                  }
+                  if (level === 4) {
+                    bot.sendMessage(server.defaultChannel, "I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
+                  }
+                });
+                bot.sendMessage(server.defaultChannel, msgArray);
+                msgArray = [];
+                msgArray.push("Hey " + server.owner.username + ", I've joined " + server.name + " in which you're the founder.");
+                msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
+                msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
+                msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
+                bot.sendMessage(server.owner, msgArray);
+                bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
+              }
+            }));
+          }
         }
-      }));
-    } else {
-      Logger.log("debug", "Ignoring join command meant for another bot.");
+      });
+    } else if (msg.channel.isPrivate) {
+      bot.getInvite(suffix, function(err, inv) {
+        if (err) {
+          bot.reply('something went wrong while resolving that invite.');
+          return;
+        } else if (inv) {
+          if (serverBlacklist.hasOwnProperty(inv.server.id)) {
+            var array = [];
+            array.push('Sorry, that server is on my internal blacklist.');
+            array.push('Reason: `' + serverBlacklist[inv.server.id] + '`');
+            array.push('Contact <@' + ConfigFile.permissions.masterUser[0] + '> to get it removed.');
+            bot.sendMessage(msg, array);
+            return;
+          } else {
+            Logger.log("debug", bot.joinServer(suffix, function(error, server) {
+              Logger.log("debug", "callback: " + arguments);
+              if (error || !server) {
+                Logger.warn("Failed to join a server: " + error);
+                bot.sendMessage(msg.channel, "Something went wrong, try again.");
+              } else {
+                var msgArray = [];
+                msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server");
+                msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
+                msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
+                Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
+                  if (err) {
+                    bot.sendMessage(server.defaultChannel, "An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
+                  }
+                  if (level === 4) {
+                    bot.sendMessage(server.defaultChannel, "I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
+                  }
+                });
+                bot.sendMessage(server.defaultChannel, msgArray);
+                msgArray = [];
+                msgArray.push("Hey " + server.owner.username + ", I've joined " + server.name + " in which you're the founder.");
+                msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
+                msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
+                msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
+                bot.sendMessage(server.owner, msgArray);
+                bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
+              }
+            }));
+          }
+        }
+      });
     }
   }
 };
