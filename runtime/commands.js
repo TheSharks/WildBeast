@@ -26,7 +26,42 @@ Commands.ping = {
     bot.reply(msg, "Pong!"); // Easy for moderation
   }
 };
-
+Commands.stream = {
+  name: "stream",
+  help: "Tells you if a specified streamer is live on Twitch.tv",
+  level: 0,
+  fn: function(bot, msg, suffix){
+    if(!suffix){
+      bot.sendMessage(msg.channel, "No channel specified!");
+      return;
+    }
+    var request = require("request");
+    var url = "https://api.twitch.tv/kraken/streams/" + suffix;
+    request({url: url, headers: {"Accept": "application/vnd.twitchtv.v3+json"}}, function(error, response, body){
+      if (!error && response.statusCode == 200){
+        var resp, error;
+        try{
+          resp = JSON.parse(body);
+        } catch(error){
+          Logger.error(error);
+          return;
+        }
+        if(resp.stream != null){
+          bot.sendMessage(msg.channel, suffix + " is currently live at https://www.twitch.tv/" + suffix);
+          return;
+        }
+        else if(resp.stream == null){
+          bot.sendMessage(msg.channel, suffix + " is not currently streaming");
+          return;
+        }
+      }
+      else if (!error && response.statusCode == 404){
+        bot.sendMessage(msg.channel, "Channel does not exist!");
+        return;
+      }
+    });
+  }
+};
 Commands.nowplaying = {
   name: "nowplaying",
   help: "Returns what video is currently playing.",
