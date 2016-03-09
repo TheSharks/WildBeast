@@ -173,9 +173,9 @@ bot.on("message", function(msg) {
         return;
       }
       if (msg.channel.server && !Commands[command].music) {
-        Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
+        Permissions.GetLevel(msg.channel.server, msg.author.id, function(err, level) {
           if (err) {
-            Debug.debuglogSomething("LevelDB", "GetLevel failed, got error: " + err, "error");
+            Debug.debuglogSomething("NeDB", "GetLevel failed, got error: " + err, "error");
             Logger.debug("An error occured!");
             return;
           }
@@ -202,11 +202,11 @@ bot.on("message", function(msg) {
               }
               return;
             } else {
-              Permissions.GetNSFW(msg.channel, function(err, reply) {
+              Permissions.GetNSFW(msg.channel.server, msg.channel.id, function(err, reply) {
                 Debug.debuglogSomething("DougBot", "Command is NSFW, checking if channel allows that.", "info");
                 if (err) {
                   Logger.debug("Got an error! <" + err + ">");
-                  Debug.debuglogSomething("LevelDB", "NSFW channel check failed, got error: " + err, "error");
+                  Debug.debuglogSomething("NeDB", "NSFW channel check failed, got error: " + err, "error");
                   bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
                   return;
                 }
@@ -227,7 +227,7 @@ bot.on("message", function(msg) {
           }
         });
       } else if (!msg.channel.server) {
-        Permissions.GetLevel(0, msg.author.id, function(err, level) { // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
+        Permissions.GetLevel(null, msg.author.id, function(err, level) { // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
           Debug.debuglogSomething("DougBot", "DM command detected, getting global perms.", "info");
           if (err) {
             Logger.debug("An error occured!");
@@ -282,9 +282,7 @@ process.on('uncaughtException', function(err) {
     Logger.warn("Got an ECONNRESET error, this is most likely *not* a bug with WildBeast");
     Logger.debug(err.stack);
   } else {
-    Logger.error("UncaughtException! Please report this to the author of the bot!");
-    Logger.debug(err);
-    Logger.debug(err.stack);
+    Logger.error(err.stack);
     process.exit(1);
   }
 });
