@@ -280,6 +280,18 @@ Commands.randomcat = {
   }
 };
 
+Commands.customize = {
+  name: "customize",
+  help: "Change almost everything about my behaviour in this server!",
+  usage: "<method> <change_to>",
+  methods: ["welcome_message", "no_permission_response", "nswf_disallowed_response", "not_usable_response", "radio_master_role_checking"],
+  vars: ["user", "bot", "message", "channel"],
+  level: 3,
+  fn: function(bot, msg) {
+    bot.reply(msg, "Soon :tm:");
+  }
+};
+
 Commands.info = {
   name: "info",
   help: "I'll print some information about me.",
@@ -546,7 +558,7 @@ Commands.whois = {
       return;
     }
     msg.mentions.map(function(user) {
-      Permissions.GetLevel((msg.channel.server.id + user.id), user.id, function(err, level) {
+      Permissions.GetLevel(msg.channel.server, user.id, function(err, level) {
         if (err) {
           return;
         } else {
@@ -589,9 +601,10 @@ Commands.setlevel = {
       bot.reply(msg, "please mention the user(s) you want to set the permission level of.");
       return;
     }
-    Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
+    Permissions.GetLevel(msg.channel.server, msg.author.id, function(err, level) {
       if (err) {
         bot.sendMessage(msg.channel, "Help! Something went wrong!");
+        console.log(err);
         return;
       }
       if (suffix[0] > level) {
@@ -600,8 +613,9 @@ Commands.setlevel = {
       }
     });
     msg.mentions.map(function(user) {
-      Permissions.SetLevel((msg.channel.server.id + user.id), suffix[0], function(err, level) {
+      Permissions.SetLevel(msg.channel.server, user.id, suffix[0], function(err, level) {
         if (err) {
+          console.log(err);
           bot.sendMessage(msg.channel, "Help! Something went wrong!");
           return;
         }
@@ -622,7 +636,7 @@ Commands.setnsfw = {
       return;
     }
     if (suffix === "on" || suffix === "off") {
-      Permissions.SetNSFW(msg.channel, suffix, function(err, allow) {
+      Permissions.SetNSFW(msg.channel.server, msg.channel.id, suffix, function(err, allow) {
         if (err) {
           bot.reply(msg.channel, "I've failed to set NSFW flag!");
         }
@@ -632,28 +646,6 @@ Commands.setnsfw = {
           bot.sendMessage(msg.channel, "NSFW commands are now disallowed for " + msg.channel);
         } else {
           bot.reply(msg.channel, "I've failed to set NSFW flag!");
-        }
-      });
-    }
-  }
-};
-
-Commands.setowner = {
-  name: "setowner",
-  help: "This will set the owner of the current server to level 4.",
-  level: 0,
-  fn: function(bot, msg) {
-    if (msg.channel.isPrivate) {
-      bot.sendMessage(msg.channel, "You need to execute this command in a server, dummy!");
-      return;
-    } else {
-      Permissions.SetLevel((msg.channel.server.id + msg.channel.server.owner.id), 4, function(err, level) {
-        if (err) {
-          bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
-          return;
-        }
-        if (level === 4) {
-          bot.sendMessage(msg.channel, "Okay! " + msg.channel.server.owner + " is now at level 4!");
         }
       });
     }
@@ -741,18 +733,17 @@ Commands["join-server"] = {
                 Logger.warn("Failed to join a server: " + error);
                 bot.sendMessage(msg.channel, "Something went wrong, try again.");
               } else {
+                Permissions.initializeServer(server, function(err, reply) {
+                  if (err) {
+                    Logger.error('Databse error! ' + err);
+                  } else if (reply === 0) {
+                    Logger.debug('Sucessfully made a datadase document for this server.');
+                  }
+                });
                 var msgArray = [];
                 msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server");
                 msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
                 msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
-                Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
-                  if (err) {
-                    bot.sendMessage(server.defaultChannel, "An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
-                  }
-                  if (level === 4) {
-                    bot.sendMessage(server.defaultChannel, "I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
-                  }
-                });
                 bot.sendMessage(server.defaultChannel, msgArray);
                 msgArray = [];
                 msgArray.push("Hey " + server.owner.username + ", I've joined " + server.name + " in which you're the founder.");
@@ -786,18 +777,17 @@ Commands["join-server"] = {
                 Logger.warn("Failed to join a server: " + error);
                 bot.sendMessage(msg.channel, "Something went wrong, try again.");
               } else {
+                Permissions.initializeServer(server, function(err, reply) {
+                  if (err) {
+                    Logger.error('Databse error! ' + err);
+                  } else if (reply === 0) {
+                    Logger.debug('Sucessfully made a datadase document for this server.');
+                  }
+                });
                 var msgArray = [];
                 msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server");
                 msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
                 msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
-                Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
-                  if (err) {
-                    bot.sendMessage(server.defaultChannel, "An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
-                  }
-                  if (level === 4) {
-                    bot.sendMessage(server.defaultChannel, "I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
-                  }
-                });
                 bot.sendMessage(server.defaultChannel, msgArray);
                 msgArray = [];
                 msgArray.push("Hey " + server.owner.username + ", I've joined " + server.name + " in which you're the founder.");
