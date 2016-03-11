@@ -1074,6 +1074,12 @@ Commands.yomomma = {
     var request = require('request');
     request('http://api.yomomma.info/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var yomomma = JSON.parse(body);
         bot.reply(msg, yomomma.joke);
       } else {
