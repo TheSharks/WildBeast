@@ -72,34 +72,31 @@ exports.handle = function(what, server, callback) {
           return callback(null, 1);
         });
       } else if (what[0] === 'no_permission_response') {
-        var message = what.splice(0, 1).join(' ');
         db.update({
           _id: server.id
         }, {
           $set: {
-            'responses.no_permission_response': message
+            'responses.no_permission_response': what.join(' ')
           }
         }, {}, function() {
           return callback(null, 1);
         });
       } else if (what[0] === 'nsfw_disallowed_response') {
-        var message = what.splice(0, 1).join(' ');
         db.update({
           _id: server.id
         }, {
           $set: {
-            'responses.nsfw_disallowed_response': message
+            'responses.nsfw_disallowed_response': what.join(' ')
           }
         }, {}, function() {
           return callback(null, 1);
         });
       } else if (what[0] === 'not_usable_response') {
-        var message = what.splice(0, 1).join(' ');
         db.update({
           _id: server.id
         }, {
           $set: {
-            'responses.not_usable_response': message
+            'responses.not_usable_response': what.join(' ')
           }
         }, {}, function() {
           return callback(null, 1);
