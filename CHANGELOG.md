@@ -1,3 +1,16 @@
+# Release phase
+## 2.0.0
+Revamped database system.
+Added token login support for the upcoming official Discord API.         
+Added expansive server-specific customization options.     
+Added user tracking for playtime and namechanges.      
+Added an upgrade script for users to upgrade from gamma.7 to 2.0.0     
+Removed server defaulting system.     
+Removed unneeded and unfinished files in `runtime`.      
+Removed unnecessary fluff from `config.json`.      
+Removed `welcoming-whitellist.json`, this is now handled by `customize`.     
+Changed server blacklisting system.      
+
 # Gamma phase
 (Gamma is a real thing in software development by the way, it's a synonym for RC (Release Candidate))
 ## 2.0.0-gamma.7

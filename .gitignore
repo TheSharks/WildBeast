@@ -9,8 +9,6 @@ music
 images
 runtime/databases
 runtime/alias.json
-runtime/server-blacklist.json
-runtime/welcoming-whitelist.json
 
 # Runtime data
 pids

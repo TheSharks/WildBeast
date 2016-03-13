@@ -7,6 +7,19 @@ var db = new Datastore({
   autoload: true
 });
 
+exports.removeServer = function(server) {
+  db.remove({
+    _id: server.id
+  }, {}, function(err, success) {
+    if (err) {
+      Logger.error('Error removing database document! ' + err);
+    } else if (success === 1) {
+      Logger.info('Removed database documents.');
+    }
+  });
+};
+
+
 exports.GetLevel = function(server, user, callback) {
   if (ConfigFile.permissions.masterUser.indexOf(user) > -1) {
     return callback(null, 9);
@@ -95,7 +108,7 @@ exports.SetLevel = function(server, user, level, callback) {
             // ...and replace it with the new one
             if (level === 0) {
               // The user's permission is already removed, so we can exit the function
-              return callback(null , 0);
+              return callback(null, 0);
             }
             if (level === 1) {
               db.update({
@@ -171,6 +184,58 @@ exports.SetLevel = function(server, user, level, callback) {
   });
 };
 
+exports.setSuperBlacklist = function(what, server, callback) {
+  if (what === 'add') {
+    db.update({
+      _id: server.id
+    }, {
+      $set: {
+        server_is_blacklisted: true
+      }
+    }, {}, function() {
+      return callback(null, 1);
+    });
+  } else if (what === 'remove') {
+    db.update({
+      _id: server.id
+    }, {
+      $set: {
+        server_is_blacklisted: false
+      }
+    }, {}, function() {
+      return callback(null, 0);
+    });
+  }
+};
+
+exports.setNormalBlacklist = function(what, server, channel, user, callback) {
+
+};
+
+exports.checkServerBlacklists = function(server, author, channel, command, callback) {
+  db.find({
+    _id: server.id
+  }, function(err, result) {
+    if (err) {
+      return callback(err, -1);
+    }
+    if (!result) {
+      return callback('notFound', -1);
+    } else {
+      if (result[0].blacklists.users.indexOf(author.id) > -1) {
+        return callback(null , 1);
+      }
+      if (result[0].blacklists.channels.indexOf(channel.id) > -1) {
+        return callback(null , 1);
+      }
+      if (result[0].blacklists.commands.indexOf(command) > -1) {
+        return callback(null , 1);
+      }
+      return callback(null , 0);
+    }
+  });
+};
+
 exports.SetNSFW = function(server, channel, allow, callback) {
   db.find({
     _id: server.id
@@ -188,7 +253,7 @@ exports.SetNSFW = function(server, channel, allow, callback) {
           $pull: {
             'nsfw_permissions.allowed': channel
           }
-        }, {}, function(){
+        }, {}, function() {
           return callback(null, 'off');
         });
       } else if (allow === 'on') {
@@ -206,10 +271,25 @@ exports.SetNSFW = function(server, channel, allow, callback) {
   });
 };
 
-exports.initializeServer = function(server, callback) {
+exports.onlySuperBlacklist = function(what, server, callback) { // Used to make DB docs that only blacklist the server
+  var doc = {
+    _id: server,
+    server_is_blacklisted: true
+  };
+  db.insert(doc, function(err, result) {
+    if (err) {
+      Logger.error('Error while initializing server! ' + err);
+    } else if (result) {
+      Logger.debug('Successfully made a server doc.');
+    }
+  });
+};
+
+exports.initializeServer = function(server) {
   // The NaN values are acting as placeholders
   var doc = {
     _id: server.id,
+    server_is_blacklisted: false,
     superUser: server.owner.id,
     blacklists: {
       users: ["NaN"],
@@ -227,9 +307,9 @@ exports.initializeServer = function(server, callback) {
   };
   db.insert(doc, function(err, result) {
     if (err) {
-      return callback(err, -1);
+      Logger.error('Error while initializing server! ' + err);
     } else if (result) {
-      return callback(null, 0);
+      Logger.debug('Successfully made a server doc.');
     }
   });
 };

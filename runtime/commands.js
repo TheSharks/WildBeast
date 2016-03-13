@@ -6,14 +6,13 @@ var ConfigFile = require("../config.json"),
   Cleverbot = require('cleverbot-node'),
   cleverbot = new Cleverbot(),
   yt = require("./youtube_plugin"),
+  Customize = require('./customization.js'),
   youtube_plugin = new yt(),
   version = require("../package.json").version,
   unirest = require('unirest'),
   Debug = require("./debugging.js"),
-  Defaulting = require("./serverdefaulting.js"),
   DJ = require("./djlogic.js"),
-  aliases = require("./alias.json"),
-  ignore = require("./ignoring.js");
+  aliases = require("./alias.json");
 
 var Commands = [];
 
@@ -26,42 +25,47 @@ Commands.ping = {
     bot.reply(msg, "Pong!"); // Easy for moderation
   }
 };
+
 Commands.stream = {
   name: "stream",
   help: "Tells you if a specified streamer is live on Twitch.tv",
   level: 0,
-  fn: function(bot, msg, suffix){
-    if(!suffix){
+  fn: function(bot, msg, suffix) {
+    if (!suffix) {
       bot.sendMessage(msg.channel, "No channel specified!");
       return;
     }
     var request = require("request");
     var url = "https://api.twitch.tv/kraken/streams/" + suffix;
-    request({url: url, headers: {"Accept": "application/vnd.twitchtv.v3+json"}}, function(error, response, body){
-      if (!error && response.statusCode == 200){
+    request({
+      url: url,
+      headers: {
+        "Accept": "application/vnd.twitchtv.v3+json"
+      }
+    }, function(error, response, body) {
+      if (!error && response.statusCode == 200) {
         var resp, error;
-        try{
+        try {
           resp = JSON.parse(body);
-        } catch(error){
+        } catch (error) {
           Logger.error(error);
           return;
         }
-        if(resp.stream != null){
+        if (resp.stream !== null) {
           bot.sendMessage(msg.channel, suffix + " is currently live at https://www.twitch.tv/" + suffix);
           return;
-        }
-        else if(resp.stream == null){
+        } else if (resp.stream === null) {
           bot.sendMessage(msg.channel, suffix + " is not currently streaming");
           return;
         }
-      }
-      else if (!error && response.statusCode == 404){
+      } else if (!error && response.statusCode == 404) {
         bot.sendMessage(msg.channel, "Channel does not exist!");
         return;
       }
     });
   }
 };
+
 Commands.nowplaying = {
   name: "nowplaying",
   help: "Returns what video is currently playing.",
@@ -284,11 +288,25 @@ Commands.customize = {
   name: "customize",
   help: "Change almost everything about my behaviour in this server!",
   usage: "<method> <change_to>",
-  methods: ["welcome_message", "no_permission_response", "nswf_disallowed_response", "not_usable_response", "radio_master_role_checking"],
-  vars: ["user", "bot", "message", "channel"],
+  methods: ["welcoming", "welcome_message", "no_permission_response", "nswf_disallowed_response", "not_usable_response"],
+  vars: ["%user", "%channel", "%server"],
   level: 3,
-  fn: function(bot, msg) {
-    bot.reply(msg, "Soon :tm:");
+  fn: function(bot, msg, suffix) {
+    if (this.methods.indexOf(suffix[0] > -1)) {
+      Customize.handle(suffix, msg.channel.server, function(err, reply) {
+        if (err) {
+          if (err === 'notSupported') {
+            bot.reply(msg, "I don't support that!");
+          } else {
+            bot.sendMessage(msg, "Something went wrong, try again.");
+          }
+        } else if (reply) {
+          bot.sendMessage(msg, "Sucessfully saved customization settings!");
+        }
+      });
+    } else {
+      bot.reply(msg, "I don't support that!");
+    }
   }
 };
 
@@ -1082,6 +1100,12 @@ Commands.stroke = {
     var request = require('request');
     request('http://api.icndb.com/jokes/random?escape=javascript&firstName=' + name[0] + '&lastName=' + name[1], function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var joke = JSON.parse(body);
         bot.sendMessage(msg.channel, joke.value.joke);
       } else {
@@ -1099,6 +1123,12 @@ Commands.yomomma = {
     var request = require('request');
     request('http://api.yomomma.info/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var yomomma = JSON.parse(body);
         bot.reply(msg, yomomma.joke);
       } else {
@@ -1116,6 +1146,12 @@ Commands.advice = {
     var request = require('request');
     request('http://api.adviceslip.com/advice', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var advice = JSON.parse(body);
         bot.sendMessage(msg.reply + advice.slip.advice);
       } else {
@@ -1134,6 +1170,12 @@ Commands.yesno = {
     var request = require('request');
     request('http://yesno.wtf/api/?force=' + suffix, function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var yesNo = JSON.parse(body);
         bot.reply(msg, yesNo.image);
       } else {
@@ -1152,6 +1194,12 @@ Commands.urbandictionary = {
     var request = require('request');
     request('http://api.urbandictionary.com/v0/define?term=' + suffix, function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var uD = JSON.parse(body);
         if (uD.result_type !== "no_results") {
           bot.reply(msg, suffix + ": " + uD.list[0].definition + ' "' + uD.list[0].example + '"');
@@ -1194,6 +1242,12 @@ Commands.xkcd = {
     var request = require('request');
     request('http://xkcd.com/info.0.json', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var xkcdInfo = JSON.parse(body);
         if (suffix) {
           var isnum = /^\d+$/.test(suffix);
@@ -1279,6 +1333,12 @@ Commands.dice = {
     var request = require('request');
     request('https://rolz.org/api/?' + dice + '.json', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var roll = JSON.parse(body);
         bot.reply(msg, "your " + roll.input + " resulted in " + roll.result + " " + roll.details);
       } else {
@@ -1296,6 +1356,12 @@ Commands.fancyinsult = {
     var request = require('request');
     request('http://quandyfactory.com/insult/json/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var fancyinsult = JSON.parse(body);
         if (suffix === "") {
           bot.reply(msg, fancyinsult.insult);
@@ -1321,6 +1387,12 @@ Commands.imdb = {
       var request = require('request');
       request('http://api.myapifilms.com/imdb/title?format=json&title=' + suffix + '&token=' + ConfigFile.api_keys.myapifilms_token, function(error, response, body) {
         if (!error && response.statusCode == 200) {
+          try {
+            JSON.parse(body);
+          } catch (e) {
+            bot.sendMessage(msg, 'The API returned an unconventional response.');
+            return;
+          }
           var imdbInfo = JSON.parse(body);
           imdbInfo = imdbInfo.data.movies[0];
           if (imdbInfo) {
@@ -1355,6 +1427,12 @@ Commands["8ball"] = {
     var request = require('request');
     request('https://8ball.delegator.com/magic/JSON/0', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var eightBall = JSON.parse(body);
         bot.sendMessage(msg.channel, eightBall.magic.answer + ", " + msg.sender);
       } else {
@@ -1372,6 +1450,12 @@ Commands.catfacts = {
     var request = require('request');
     request('http://catfacts-api.appspot.com/api/facts', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var catFact = JSON.parse(body);
         bot.reply(msg, catFact.facts[0]);
       } else {
@@ -1431,6 +1515,12 @@ Commands.help = {
         }
         if (commando.hasOwnProperty('level')) {
           msgArray.push("**Needed access level:** " + commando.level); // Push the needed access level to the array
+        }
+        if (commando.hasOwnProperty('methods')) {
+          msgArray.push('Avalible methods to change: ' + commando.methods.join(', '));
+        }
+        if (commando.hasOwnProperty('vars')) {
+          msgArray.push('Special words, they will dynamically change if the method supports it: ' + commando.vars.join(', '));
         }
         if (commando.hasOwnProperty('music')) { // Push music message if command is musical.
           msgArray.push("**This is a music related command, you'll need a role called** `Radio Master` **to use this command.**");

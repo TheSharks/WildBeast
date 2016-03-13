@@ -14,10 +14,10 @@ var Discord = require("discord.js"),
   Permissions = require("./runtime/permissions.js"),
   VersionChecker = require("./runtime/versionchecker.js"),
   aliases,
-  keymetrics,
-  Defaulting = require("./runtime/serverdefaulting.js"),
-  TimeOut = require("./runtime/timingout.js"),
-  Ignore = require("./runtime/ignoring.js");
+  UserDB = require('./runtime/user_nsa.js'),
+  Upgrade = require('./runtime/upgrading.js'),
+  Customize = require('./runtime/customization.js'),
+  keymetrics;
 
 // Initial logger saying that script is being loaded.
 // Should NOT be placed in init() anymore since that runs after ready
@@ -59,6 +59,8 @@ bot.on('debug', function(debug) {
 
 // Ready announcment
 bot.on("ready", function() {
+  // Upgrade the database if needed
+  Upgrade.databaseSystem(bot);
   Debug.debuglogSomething("Discord", "Ready event fired.", "info");
   if (bot.servers.length === 0) {
     Logger.warn("No servers deteted, creating default server.");
@@ -116,6 +118,7 @@ bot.on("disconnected", function() {
 
 // Command checker
 bot.on("message", function(msg) {
+  UserDB.checkIfKnown(msg.sender);
   if (keymetrics === true) mescount.inc();
   if (ConfigFile.bot_settings.log_chat === true && msg.channel.server) {
     var d = new Date();
@@ -153,6 +156,41 @@ bot.on("message", function(msg) {
       return;
     }
     if (Commands[command]) {
+      if (!msg.channel.isPrivate) {
+        Permissions.checkServerBlacklists(msg.channel.server, msg.author, msg.channel, command, function(err, reply) {
+          if (err) {
+            Logger.error('Blacklist check failed!' + err);
+          } else if (reply && !err) {
+            if (reply === 1) {
+              Debug.debuglogSomething("DougBot", "Blacklist check was positive, aborting execution.", "info");
+              return; // Since the blacklist check was positive, return without doing anything
+            } else if (reply === 0) {
+              // We still don't know for sure if the user is allowed to execute a command, we need to check if he's globally blacklisted
+              UserDB.checkUserBlacklists(msg.author, function(err, reply) {
+                if (err) {
+                  Logger.error('Blacklist check failed!' + err);
+                } else if (reply && !err) {
+                  if (reply === 1) {
+                    Debug.debuglogSomething("DougBot", "Blacklist check was positive, aborting execution.", "info");
+                    return; // Since the blacklist check was positive, return without doing anything
+                  } // We don't need another else statement here, all checks where negative so the execution is allowed
+                }
+              });
+            }
+          }
+        });
+      } else if (msg.channel.isPrivate) { // Since server blacklists don't apply in DM, we only need to check global blacklists
+        UserDB.checkUserBlacklists(msg.author, function(err, reply) {
+          if (err) {
+            Logger.error('Blacklist check failed!' + err);
+          } else if (reply && !err) {
+            if (reply === 1) {
+              Debug.debuglogSomething("DougBot", "Blacklist check was positive, aborting execution.", "info");
+              return; // Since the blacklist check was positive, return without doing anything
+            }
+          }
+        });
+      }
       Debug.debuglogSomething("DougBot", "Command detected, trying to execute.", "info");
       if (Commands[command].music && msg.channel.server) {
         Debug.debuglogSomething("DougBot", "Musical command detected, checking for user role.", "info");
@@ -181,25 +219,9 @@ bot.on("message", function(msg) {
           }
           if (level >= Commands[command].level) {
             Debug.debuglogSomething("DougBot", "Execution of command allowed.", "info");
-            if (Commands[command].timeout) {
-              TimeOut.timeoutCheck(command, msg.channel.server.id, function(reply) {
-                if (reply === "yes") {
-                  Debug.debuglogSomething("DougBot", "Command is on cooldown, execution halted.", "info");
-                  bot.sendMessage(msg.channel, "Sorry, this command is on cooldown.");
-                  return;
-                }
-              });
-            }
             if (!Commands[command].nsfw) {
               Debug.debuglogSomething("DougBot", "Safe for work command executed.", "info");
               Commands[command].fn(bot, msg, suffix);
-              if (Commands[command].timeout) {
-                TimeOut.timeoutSet(command, msg.channel.server.id, Commands[command].timeout, function(reply, err) {
-                  if (err) {
-                    Logger.error("Resetting timeout failed!");
-                  }
-                });
-              }
               return;
             } else {
               Permissions.GetNSFW(msg.channel.server, msg.channel.id, function(err, reply) {
@@ -231,7 +253,7 @@ bot.on("message", function(msg) {
           Debug.debuglogSomething("DougBot", "DM command detected, getting global perms.", "info");
           if (err) {
             Logger.debug("An error occured!");
-            Debug.debuglogSomething("LevelDB", "GetLevel failed, got error: " + err, "error");
+            Debug.debuglogSomething("NeDB", "GetLevel failed, got error: " + err, "error");
             return;
           }
           if (level >= Commands[command].level) {
@@ -266,11 +288,32 @@ function init(token) {
 
 // New user welcomer
 bot.on("serverNewMember", function(server, user) {
-  var welcomeWhitelist = require('./runtime/welcoming-whitelist.json');
-  if (ConfigFile.bot_settings.welcome_new_members === false) return;
-  if (welcomeWhitelist.indexOf(server.id) > -1) {
-    bot.sendMessage(server.defaultChannel, "Welcome " + user.username + " to " + server.name + "!");
-  }
+  UserDB.trackNewUser(user);
+  Customize.checkWelcoming(server, function(err, message, reply) {
+    console.log(message);
+    if (err) {
+      Logger.error('Welcoming check error! ' + err);
+      return;
+    } else if (reply && !err) {
+      console.log(message);
+      if (reply === true) {
+        if (message === 'default') {
+          bot.sendMessage(server.defaultChannel, 'Welcome ' + user.username + ' to **' + server.name + '**!');
+        } else {
+          var userstep = message.replace(/%user/g, user.username);
+          var final = userstep.replace(/%server/g, server.name);
+          bot.sendMessage(server.defaultChannel, final);
+        }
+      }
+    }
+  });
+});
+
+// Log server leaves, so database won't get cluttered with ghost documents
+bot.on('serverDeleted', function(server) {
+  Customize.removeServer(server);
+  Permissions.removeServer(server);
+  Logger.info('Left a server and removed database documents.');
 });
 
 function err(error) {
@@ -286,5 +329,19 @@ process.on('uncaughtException', function(err) {
     process.exit(1);
   }
 });
-// Connection starter
-bot.login(ConfigFile.discord.email, ConfigFile.discord.password).then(init).catch(err);
+
+bot.on('presence', function(olduser, newuser) {
+  // We only handle namechanges, nothing else
+  if (olduser.username === newuser.username) {
+    return;
+  } else {
+    UserDB.handleNamechange(newuser);
+  }
+});
+
+// Support direct API logins with tokens via 'token_mode'
+if (ConfigFile.discord.token_mode === true) {
+  bot.loginWithToken(ConfigFile.discord.token).then(init).catch(err);
+} else if (ConfigFile.discord.token_mode === false) {
+  bot.login(ConfigFile.discord.email, ConfigFile.discord.password).then(init).catch(err);
+}
