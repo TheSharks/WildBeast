@@ -59,50 +59,53 @@ exports.handle = function(what, server, callback) {
     if (!result) {
       return callback('notFound', -1);
     } else {
-      what = what.split(' ');
-      if (what[0] === 'welcome_message') {
-        var message = what.splice(0, 1).join(' ');
+      var what1 = what.split(' ');
+      if (what1[0] === 'welcome_message') {
+        var what2 = what1.slice(1, what1.length);
         db.update({
           _id: server.id
         }, {
           $set: {
-            'responses.welcome_message': what.join(' ')
+            'responses.welcome_message': what2.join(' ')
           }
         }, {}, function() {
           return callback(null, 1);
         });
-      } else if (what[0] === 'no_permission_response') {
+      } else if (what1[0] === 'no_permission_response') {
+        var what2 = what1.slice(1, what1.length);
         db.update({
           _id: server.id
         }, {
           $set: {
-            'responses.no_permission_response': what.join(' ')
+            'responses.no_permission_response': what2.join(' ')
           }
         }, {}, function() {
           return callback(null, 1);
         });
-      } else if (what[0] === 'nsfw_disallowed_response') {
+      } else if (what1[0] === 'nsfw_disallowed_response') {
+        var what2 = what1.slice(1, what1.length);
         db.update({
           _id: server.id
         }, {
           $set: {
-            'responses.nsfw_disallowed_response': what.join(' ')
+            'responses.nsfw_disallowed_response': what2.join(' ')
           }
         }, {}, function() {
           return callback(null, 1);
         });
-      } else if (what[0] === 'not_usable_response') {
+      } else if (what1[0] === 'not_usable_response') {
+        var what2 = what1.slice(1, what1.length);
         db.update({
           _id: server.id
         }, {
           $set: {
-            'responses.not_usable_response': what.join(' ')
+            'responses.not_usable_response': what2.join(' ')
           }
         }, {}, function() {
           return callback(null, 1);
         });
-      } else if (what[0] === 'welcoming') {
-        if (what[1] === 'off') {
+      } else if (what1[0] === 'welcoming') {
+        if (what1[1] === 'off') {
           db.update({
             _id: server.id
           }, {
@@ -113,7 +116,7 @@ exports.handle = function(what, server, callback) {
             return callback(null, 1);
           });
         }
-        if (what[1] === 'on') {
+        if (what1[1] === 'on') {
           db.update({
             _id: server.id
           }, {
