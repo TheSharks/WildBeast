@@ -292,6 +292,10 @@ Commands.customize = {
   vars: ["%user", "%channel", "%server"],
   level: 3,
   fn: function(bot, msg, suffix) {
+    if (msg.channel.isPrivate) {
+      bot.sendMessage(msg.channel, "You can't use this in DM, dummy!");
+      return;
+    }
     if (this.methods.indexOf(suffix[0] > -1)) {
       Customize.handle(suffix, msg.channel.server, function(err, reply) {
         if (err) {
