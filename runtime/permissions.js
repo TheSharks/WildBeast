@@ -7,6 +7,8 @@ var db = new Datastore({
   autoload: true
 });
 
+db.persistence.setAutocompactionInterval(30000);
+
 exports.removeServer = function(server) {
   db.remove({
     _id: server.id

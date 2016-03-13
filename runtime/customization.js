@@ -7,6 +7,8 @@ var db = new Datastore({
   autoload: true
 });
 
+db.persistence.setAutocompactionInterval(30000);
+
 exports.checkWelcoming = function(server, callback) {
   db.find({
     _id: server.id
@@ -21,6 +23,27 @@ exports.checkWelcoming = function(server, callback) {
         return callback(null, result[0].responses.welcome_message, true);
       } else {
         return callback(null, null, false);
+      }
+    }
+  });
+};
+
+exports.replyCheck = function(what, server, callback) {
+  db.find({
+    _id: server.id
+  }, function(err, result) {
+    if (err) {
+      return callback(err, -1);
+    }
+    if (!result) {
+      return callback('notFound', -1);
+    } else {
+      if (what === 'no_permission_response') {
+        return callback(null, result[0].responses.no_permission_response);
+      } else if (what === 'nsfw_disallowed_response') {
+        return callback(null, result[0].responses.nsfw_disallowed_response);
+      } else if (what === 'not_usable_response') {
+        return callback(null, result[0].responses.not_usable_response);
       }
     }
   });

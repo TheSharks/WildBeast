@@ -144,7 +144,7 @@ bot.on("message", function(msg) {
     Logger.info("Executing <" + msg.cleanContent + "> from " + msg.author.username);
     var step = msg.content.substr(prefix.length);
     var chunks = step.split(" ");
-    var command = chunks[0];
+    var command = chunks[0].toLowerCase();
     alias = aliases[command];
     var suffix = msg.content.substring(command.length + (prefix.length + 1));
     if (alias) {
@@ -238,14 +238,38 @@ bot.on("message", function(msg) {
                   return;
                 } else {
                   Debug.debuglogSomething("DougBot", "NSFW command execution failed because of channel settings.", "info");
-                  bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
+                  Customize.replyCheck('nsfw_disallowed_response', msg.channel.server, function(err, reply) {
+                    if (err) {
+                      Logger.error('Response error! ' + err);
+                    } else if (reply) {
+                      if (reply === 'default') {
+                        bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
+                      } else {
+                        var userstep = reply.replace(/%user/g, msg.author.username);
+                        var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+                        var final = serverstep.replace(/%channel/, msg.channel);
+                        bot.sendMessage(msg.channel, final);
+                      }
+                    }
+                  });
                 }
               });
             }
           } else {
             Debug.debuglogSomething("DougBot", "User has no permission to use that command.", "info");
-            bot.sendMessage(msg.channel, "You don't have permission to use this command!");
-            return;
+            Customize.replyCheck('no_permission_response', msg.channel.server, function(err, reply) {
+              if (err) {
+                Logger.error('Response error! ' + err);
+              } else if (reply) {
+                if (reply === 'default') {
+                  bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+                }
+                var userstep = reply.replace(/%user/g, msg.author.username);
+                var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+                var final = serverstep.replace(/%channel/, msg.channel);
+                bot.sendMessage(msg.channel, final);
+              }
+            });
           }
         });
       } else if (!msg.channel.server) {
@@ -290,12 +314,10 @@ function init(token) {
 bot.on("serverNewMember", function(server, user) {
   UserDB.trackNewUser(user);
   Customize.checkWelcoming(server, function(err, message, reply) {
-    console.log(message);
     if (err) {
       Logger.error('Welcoming check error! ' + err);
       return;
     } else if (reply && !err) {
-      console.log(message);
       if (reply === true) {
         if (message === 'default') {
           bot.sendMessage(server.defaultChannel, 'Welcome ' + user.username + ' to **' + server.name + '**!');

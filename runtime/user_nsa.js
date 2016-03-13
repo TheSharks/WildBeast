@@ -9,6 +9,8 @@ var db = new Datastore({
   autoload: true
 });
 
+db.persistence.setAutocompactionInterval(30000);
+
 exports.trackNewUser = function(user) { // Most of the time, this function does not need to be called directly, the script will auto-track users
   var doc = {
     _id: user.id,
