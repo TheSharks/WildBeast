@@ -211,7 +211,53 @@ exports.setSuperBlacklist = function(what, server, callback) {
 };
 
 exports.setNormalBlacklist = function(what, server, channel, user, callback) {
-
+  what = what.split(' ');
+  if (what[0] === 'user') {
+    if (what[1] === 'add') {
+      db.update({
+        _id: server.id
+      }, {
+        $push: {
+          'blacklists.users': user.id
+        }
+      }, {}, function() {
+        return callback(null, 1);
+      });
+    } else if (what[1] === 'remove') {
+      db.update({
+        _id: server.id
+      }, {
+        $pull: {
+          'blacklists.users': user.id
+        }
+      }, {}, function() {
+        return callback(null, 1);
+      });
+    }
+  }
+  if (what[0] === 'channel') {
+    if (what[1] === 'add') {
+      db.update({
+        _id: server.id
+      }, {
+        $push: {
+          'blacklists.channels': channel.id
+        }
+      }, {}, function() {
+        return callback(null, 1);
+      });
+    } else if (what[1] === 'remove') {
+      db.update({
+        _id: server.id
+      }, {
+        $pull: {
+          'blacklists.channels': channel.id
+        }
+      }, {}, function() {
+        return callback(null, 1);
+      });
+    }
+  }
 };
 
 exports.checkServerBlacklists = function(server, author, channel, command, callback) {
@@ -225,15 +271,15 @@ exports.checkServerBlacklists = function(server, author, channel, command, callb
       return callback('notFound', -1);
     } else {
       if (result[0].blacklists.users.indexOf(author.id) > -1) {
-        return callback(null , 1);
+        return callback(null, 1);
       }
       if (result[0].blacklists.channels.indexOf(channel.id) > -1) {
-        return callback(null , 1);
+        return callback(null, 1);
       }
       if (result[0].blacklists.commands.indexOf(command) > -1) {
-        return callback(null , 1);
+        return callback(null, 1);
       }
-      return callback(null , 0);
+      return callback(null, 0);
     }
   });
 };
@@ -273,7 +319,7 @@ exports.SetNSFW = function(server, channel, allow, callback) {
   });
 };
 
-exports.onlySuperBlacklist = function(what, server, callback) { // Used to make DB docs that only blacklist the server
+exports.onlySuperBlacklist = function(server, callback) { // Used to make DB docs that only blacklist the server
   var doc = {
     _id: server,
     server_is_blacklisted: true

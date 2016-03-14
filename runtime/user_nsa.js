@@ -20,7 +20,7 @@ exports.trackNewUser = function(user) { // Most of the time, this function does 
   };
   db.insert(doc, function(err, result) {
     if (err) {
-      Logger.error('Error making user document! ' + err);
+      Logger.warn('Error making user document! ' + err); // Since the script auto-tracks, errors get too verbose sometimes
     } else if (result) {
       Logger.debug('Sucess making an UserDB doc');
     }

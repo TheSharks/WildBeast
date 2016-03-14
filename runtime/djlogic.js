@@ -61,7 +61,7 @@ exports.playlistAdd = function(bot, message, suffix) {
   }
   if (Config.bot_settings.music_timeouts === true) {
     time = setTimeout(function() {
-      if (!bot.voiceConnection.playing || !bot.voiceConnection) {
+      if (!bot.voiceConnection || !bot.voiceConnection.playing) {
         bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
         bot.leaveVoiceChannel();
         playlistid = [];
@@ -207,7 +207,7 @@ function playlistPlay(bot, message) {
       if (playlistid[0] === undefined) {
         bot.sendMessage(message.channel, "The playlist is finished, destroying voice connection.");
         bot.setStatus("online", null);
-        bot.leaveVoiceChannel();
+        bot.voiceConnection.destroy();
         boundChannel = false;
         stream = false;
         playlistid = [];

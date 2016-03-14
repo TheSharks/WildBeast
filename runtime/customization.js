@@ -146,14 +146,13 @@ exports.removeServer = function(server) {
   });
 };
 
-exports.initializeServer = function(server, callback) {
+exports.initializeServer = function(server) {
   var doc = {
     _id: server.id,
     responses: {
       welcome_message: 'default',
       no_permission_response: 'default',
-      nsfw_disallowed_response: 'default',
-      not_usable_response: 'default'
+      nsfw_disallowed_response: 'default'
     },
     settings: {
       welcoming: false

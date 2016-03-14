@@ -9,7 +9,8 @@
         "email" : "foo@bar.net",
         "password" : "hunter2",
         "token_mode" : false,
-        "token": "Valid Discord API token, only needed when token_mode is true"
+        "token": "Valid Discord API token, only needed when token_mode is true",
+        "oauth_url": "Valid OAuth URL, this will be send to users who try to use join-server if token_mode is true"
     },
     "bot_settings" : {
         "cmd_prefix": "++",

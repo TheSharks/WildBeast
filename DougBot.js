@@ -312,7 +312,7 @@ function init(token) {
 
 // New user welcomer
 bot.on("serverNewMember", function(server, user) {
-  UserDB.trackNewUser(user);
+  UserDB.checkIfKnown(user);
   Customize.checkWelcoming(server, function(err, message, reply) {
     if (err) {
       Logger.error('Welcoming check error! ' + err);
@@ -340,6 +340,8 @@ bot.on('serverDeleted', function(server) {
 
 function err(error) {
   Debug.debuglogSomething("Discord", "Logging into Discord probably failed, got error: " + error, "error");
+  Logger.error('Failed to log into Discord! Make sure the login details are correct.');
+  process.exit(0);
 }
 
 process.on('uncaughtException', function(err) {
@@ -350,6 +352,20 @@ process.on('uncaughtException', function(err) {
     Logger.error(err.stack);
     process.exit(1);
   }
+});
+
+bot.on('serverCreated', function(server) {
+  // Since join-server doenst work for oauth bots, we need to be creative with the joined announcement
+  var msgArray = [];
+  Permissions.initializeServer(server);
+  Customize.initializeServer(server);
+  msgArray.push("Hey! I'm " + bot.username);
+  if (ConfigFile.discord.token_mode === true) {
+    msgArray.push("Someone with `manage server` permissions invited me to this server via OAuth.");
+  }
+  msgArray.push("If I'm intended to be here, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
+  msgArray.push("Else, use `" + ConfigFile.bot_settings.cmd_prefix + "leave` or just kick me.");
+  bot.sendMessage(server.defaultChannel, msgArray);
 });
 
 bot.on('presence', function(olduser, newuser) {
