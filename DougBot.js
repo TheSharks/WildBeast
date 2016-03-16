@@ -60,10 +60,6 @@ bot.on('debug', function(debug) {
 // Ready announcment
 bot.on("ready", function() {
   Debug.debuglogSomething("Discord", "Ready event fired.", "info");
-  if (bot.servers.length === 0) {
-    Logger.warn("No servers deteted, creating default server.");
-    Defaulting.create(bot);
-  }
   Logger.info("Joining pre-defined servers...");
   for (var index in ConfigFile.join_on_launch) {
     bot.joinServer(ConfigFile.join_on_launch[index], function(error, server) {
@@ -204,6 +200,9 @@ bot.on("message", function(msg) {
                   Debug.debuglogSomething("DougBot", "NSFW command execution failed because of channel settings.", "info");
                   Customize.replyCheck('nsfw_disallowed_response', msg.channel.server, function(err, reply) {
                     if (err) {
+                      if (err === 'notFound') {
+                        Customize.initializeServer(server);
+                      }
                       Logger.error('Response error! ' + err);
                     } else if (reply) {
                       if (reply === 'default') {
@@ -223,6 +222,9 @@ bot.on("message", function(msg) {
             Debug.debuglogSomething("DougBot", "User has no permission to use that command.", "info");
             Customize.replyCheck('no_permission_response', msg.channel.server, function(err, reply) {
               if (err) {
+                if (err === 'notFound') {
+                  Customize.initializeServer(server);
+                }
                 Logger.error('Response error! ' + err);
               } else if (reply) {
                 if (reply === 'default') {
@@ -279,6 +281,9 @@ bot.on("serverNewMember", function(server, user) {
   UserDB.checkIfKnown(user);
   Customize.checkWelcoming(server, function(err, message, reply) {
     if (err) {
+      if (err === 'notFound') {
+        Customize.initializeServer(server);
+      }
       Logger.error('Welcoming check error! ' + err);
       return;
     } else if (reply && !err) {
@@ -323,7 +328,7 @@ bot.on('serverCreated', function(server) {
   var msgArray = [];
   Permissions.initializeServer(server);
   Customize.initializeServer(server);
-  msgArray.push("Hey! I'm " + bot.username);
+  msgArray.push("Hey! I'm " + bot.user.username);
   if (ConfigFile.discord.token_mode === true) {
     msgArray.push("Someone with `manage server` permissions invited me to this server via OAuth.");
   } else {

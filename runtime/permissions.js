@@ -44,7 +44,7 @@ exports.GetLevel = function(server, user, callback) {
     if (err) {
       return callback(err, -1);
     }
-    if (!result) {
+    if (result.length === 0) {
       return callback('notFound', -1);
     } else {
       if (result[0].superUser === user) {
@@ -69,7 +69,7 @@ exports.GetNSFW = function(server, channel, callback) {
     if (err) {
       return callback(err, -1);
     }
-    if (!result) {
+    if (result.length === 0) {
       return callback('notFound', -1);
     } else {
       if (result[0].nsfw_permissions.allowed.indexOf(channel) > -1) {
@@ -89,7 +89,7 @@ exports.SetLevel = function(server, user, level, callback) {
     if (err) {
       return callback(err, -1);
     }
-    if (!result) {
+    if (result.length === 0) {
       return callback('notFound', -1);
     } else {
       level = parseInt(level);
@@ -218,7 +218,7 @@ exports.SetNSFW = function(server, channel, allow, callback) {
     if (err) {
       return callback(err, -1);
     }
-    if (!result) {
+    if (result.length === 0) {
       return callback('notFound', -1);
     } else {
       if (allow === 'off') {

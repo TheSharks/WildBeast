@@ -16,7 +16,7 @@ exports.checkWelcoming = function(server, callback) {
     if (err) {
       return callback(err, null, -1);
     }
-    if (!result) {
+    if (result.length === 0) {
       return callback('notFound', null, -1);
     } else {
       if (result[0].settings.welcoming === true) {
@@ -35,7 +35,7 @@ exports.replyCheck = function(what, server, callback) {
     if (err) {
       return callback(err, -1);
     }
-    if (!result) {
+    if (result.length === 0) {
       return callback('notFound', -1);
     } else {
       if (what === 'no_permission_response') {
@@ -56,7 +56,7 @@ exports.handle = function(what, server, callback) {
     if (err) {
       return callback(err, -1);
     }
-    if (!result) {
+    if (result.length === 0) {
       return callback('notFound', -1);
     } else {
       var what1 = what.split(' ');

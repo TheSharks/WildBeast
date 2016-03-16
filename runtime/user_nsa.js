@@ -27,6 +27,22 @@ exports.trackNewUser = function(user) { // Most of the time, this function does 
   });
 };
 
+function trackNewUser(user) { // Most of the time, this function does not need to be called directly, the script will auto-track users
+  var doc = {
+    _id: user.id,
+    known_names: [user.username],
+    user_is_blacklisted: false,
+    user_is_vip: false
+  };
+  db.insert(doc, function(err, result) {
+    if (err) {
+      Logger.warn('Error making user document! ' + err); // Since the script auto-tracks, errors get too verbose sometimes
+    } else if (result) {
+      Logger.debug('Sucess making an UserDB doc');
+    }
+  });
+};
+
 exports.handleNamechange = function(user) {
   db.find({
     _id: user.id
@@ -35,7 +51,7 @@ exports.handleNamechange = function(user) {
       Logger.error('Error handing namechange! ' + err);
     }
     if (!result) {
-      this.trackNewUser(user);
+      trackNewUser(user);
     } else {
       if (result[0].known_names.length > 20) {
         db.update({
@@ -65,7 +81,7 @@ exports.returnNamechanges = function(user, callback) {
       Logger.error('Error checking user knowledge! ' + err);
     }
     if (!result) {
-      this.trackNewUser(user);
+      trackNewUser(user);
       return callback('notfound', -1);
     } else {
       return callback(null, result[0].known_names);
@@ -81,7 +97,7 @@ exports.checkIfKnown = function(user) {
       Logger.error('Error checking user knowledge! ' + err);
     }
     if (!result) {
-      this.trackNewUser(user);
+      trackNewUser(user);
     } else {
       return; // User is known, so exit the function
     }
