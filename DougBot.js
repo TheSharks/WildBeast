@@ -59,8 +59,6 @@ bot.on('debug', function(debug) {
 
 // Ready announcment
 bot.on("ready", function() {
-  // Upgrade the database if needed
-  Upgrade.databaseSystem(bot);
   Debug.debuglogSomething("Discord", "Ready event fired.", "info");
   if (bot.servers.length === 0) {
     Logger.warn("No servers deteted, creating default server.");
@@ -107,6 +105,7 @@ bot.on("ready", function() {
       name: 'Messages recieved'
     });
   }
+  Upgrade.databaseSystem(bot);
 });
 
 // Disconnected announcment
