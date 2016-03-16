@@ -260,30 +260,6 @@ exports.setNormalBlacklist = function(what, server, channel, user, callback) {
   }
 };
 
-exports.checkServerBlacklists = function(server, author, channel, command, callback) {
-  db.find({
-    _id: server.id
-  }, function(err, result) {
-    if (err) {
-      return callback(err, -1);
-    }
-    if (!result) {
-      return callback('notFound', -1);
-    } else {
-      if (result[0].blacklists.users.indexOf(author.id) > -1) {
-        return callback(null, 1);
-      }
-      if (result[0].blacklists.channels.indexOf(channel.id) > -1) {
-        return callback(null, 1);
-      }
-      if (result[0].blacklists.commands.indexOf(command) > -1) {
-        return callback(null, 1);
-      }
-      return callback(null, 0);
-    }
-  });
-};
-
 exports.SetNSFW = function(server, channel, allow, callback) {
   db.find({
     _id: server.id
@@ -332,18 +308,12 @@ exports.onlySuperBlacklist = function(server, callback) { // Used to make DB doc
     }
   });
 };
-
 exports.initializeServer = function(server) {
   // The NaN values are acting as placeholders
   var doc = {
     _id: server.id,
     server_is_blacklisted: false,
     superUser: server.owner.id,
-    blacklists: {
-      users: ["NaN"],
-      commands: ["NaN"],
-      channels: ["NaN"]
-    },
     permissions: {
       level1: ["NaN"],
       level2: ["NaN"],

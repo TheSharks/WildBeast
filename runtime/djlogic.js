@@ -1,3 +1,10 @@
+/*
+TODO: Rewrite this entire file to support multiple voice connections
+TODO: Make bindings unique to server instead of channel
+TODO: Remove timeouts when script supports multiple voice connections
+IDEA: Make playlists save to a file, and make them recall with a code, so users dont need to make YouTube playlists
+*/
+
 var Discord = require("discord.js"),
   bot = new Discord.Client(),
   Logger = require("./logger.js").Logger,

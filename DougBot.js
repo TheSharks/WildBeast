@@ -156,41 +156,6 @@ bot.on("message", function(msg) {
       return;
     }
     if (Commands[command]) {
-      if (!msg.channel.isPrivate) {
-        Permissions.checkServerBlacklists(msg.channel.server, msg.author, msg.channel, command, function(err, reply) {
-          if (err) {
-            Logger.error('Blacklist check failed!' + err);
-          } else if (reply && !err) {
-            if (reply === 1) {
-              Debug.debuglogSomething("DougBot", "Blacklist check was positive, aborting execution.", "info");
-              return; // Since the blacklist check was positive, return without doing anything
-            } else if (reply === 0) {
-              // We still don't know for sure if the user is allowed to execute a command, we need to check if he's globally blacklisted
-              UserDB.checkUserBlacklists(msg.author, function(err, reply) {
-                if (err) {
-                  Logger.error('Blacklist check failed!' + err);
-                } else if (reply && !err) {
-                  if (reply === 1) {
-                    Debug.debuglogSomething("DougBot", "Blacklist check was positive, aborting execution.", "info");
-                    return; // Since the blacklist check was positive, return without doing anything
-                  } // We don't need another else statement here, all checks where negative so the execution is allowed
-                }
-              });
-            }
-          }
-        });
-      } else if (msg.channel.isPrivate) { // Since server blacklists don't apply in DM, we only need to check global blacklists
-        UserDB.checkUserBlacklists(msg.author, function(err, reply) {
-          if (err) {
-            Logger.error('Blacklist check failed!' + err);
-          } else if (reply && !err) {
-            if (reply === 1) {
-              Debug.debuglogSomething("DougBot", "Blacklist check was positive, aborting execution.", "info");
-              return; // Since the blacklist check was positive, return without doing anything
-            }
-          }
-        });
-      }
       Debug.debuglogSomething("DougBot", "Command detected, trying to execute.", "info");
       if (Commands[command].music && msg.channel.server) {
         Debug.debuglogSomething("DougBot", "Musical command detected, checking for user role.", "info");
@@ -362,6 +327,8 @@ bot.on('serverCreated', function(server) {
   msgArray.push("Hey! I'm " + bot.username);
   if (ConfigFile.discord.token_mode === true) {
     msgArray.push("Someone with `manage server` permissions invited me to this server via OAuth.");
+  } else {
+    msgArray.push('I followed an instant-invite from someone.'); // TODO: We need something to resolve the invite we just followed and return who invited the bot.
   }
   msgArray.push("If I'm intended to be here, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
   msgArray.push("Else, use `" + ConfigFile.bot_settings.cmd_prefix + "leave` or just kick me.");

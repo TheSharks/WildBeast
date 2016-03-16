@@ -27,26 +27,27 @@ exports.trackNewUser = function(user) { // Most of the time, this function does 
   });
 };
 
-exports.checkUserBlacklists = function(user, callback) {
+exports.handleNamechange = function(user) {
   db.find({
     _id: user.id
   }, function(err, result) {
     if (err) {
-      Logger.error('Error checking user knowledge! ' + err);
+      Logger.error('Error handing namechange! ' + err);
     }
     if (!result) {
-      return callback('notFound', -1);
+      this.trackNewUser(user);
     } else {
-      if (result[0].user_is_blacklisted === true) {
-        return callback(null, 1);
-      } else {
-        return callback(null, 0);
+      if (result[0].known_names.length > 20) {
+        db.update({
+          _id: user.id
+        }, {
+          $pop: {
+            known_names: 1
+          }
+        }, {});
       }
     }
   });
-};
-
-exports.handleNamechange = function(user) {
   db.update({
     _id: user.id
   }, {
@@ -54,6 +55,22 @@ exports.handleNamechange = function(user) {
       known_names: user.username
     }
   }, {});
+};
+
+exports.returnNamechanges = function(user, callback) {
+  db.find({
+    _id: user.id
+  }, function(err, result) {
+    if (err) {
+      Logger.error('Error checking user knowledge! ' + err);
+    }
+    if (!result) {
+      this.trackNewUser(user);
+      return callback('notfound', -1);
+    } else {
+      return callback(null, result[0].known_names);
+    }
+  });
 };
 
 exports.checkIfKnown = function(user) {

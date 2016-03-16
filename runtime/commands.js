@@ -67,7 +67,7 @@ Commands.stream = {
   }
 };
 
-Commands.nowplaying = {
+Commands.nowplaying = { // TODO: Make unique per server
   name: "nowplaying",
   help: "Returns what video is currently playing.",
   music: true,
@@ -77,7 +77,7 @@ Commands.nowplaying = {
   }
 };
 
-Commands.forceskip = {
+Commands.forceskip = { // TODO: Make unique per server
   name: "forceskip",
   help: "Forces a song to skip.",
   level: 2,
@@ -86,7 +86,7 @@ Commands.forceskip = {
   }
 };
 
-Commands.request = {
+Commands.request = { // TODO: Make unique per server
   name: "request",
   help: "Adds a video to the playlist.",
   level: 0,
@@ -96,7 +96,7 @@ Commands.request = {
   }
 };
 
-Commands.playlist = {
+Commands.playlist = { // TODO: Make unique per server
   name: "playlist",
   help: "Returns the playlist.",
   level: 0,
@@ -105,7 +105,7 @@ Commands.playlist = {
   }
 };
 
-Commands.playliststart = {
+Commands.playliststart = { // TODO: Try to retire this function, and instead start the playlist after a certain timeframe
   name: "playliststart",
   help: "Starts the playlist!",
   music: true,
@@ -141,7 +141,7 @@ Commands.e621 = {
   }
 };
 
-Commands.eval = {
+Commands.eval = { // TODO: Allow newlines
   name: "eval",
   help: "Allows the execution of arbitrary Javascript code within the context of the bot.",
   level: 6, // Now 100% sure it can't be used by anyone but the master user.
@@ -159,7 +159,7 @@ Commands.eval = {
   }
 };
 
-Commands.alias = {
+Commands.alias = { // IDEA: Maybe unlock this to all users?
   name: "alias",
   help: "Allows for creating quick custom commands on the fly!",
   level: 5,
@@ -191,7 +191,7 @@ Commands["join-voice"] = {
   }
 };
 
-Commands.stop = {
+Commands.stop = { // TODO: Make unique per server
   name: "stop",
   help: "I'll stop playing music.",
   level: 0,
@@ -201,7 +201,7 @@ Commands.stop = {
   }
 };
 
-Commands["leave-voice"] = {
+Commands["leave-voice"] = { //TODO: Make unique per server
   name: "leave-voice",
   help: "I'll leave the current voice channel.",
   level: 0,
@@ -336,7 +336,7 @@ Commands.info = {
   }
 };
 
-Commands.cleverbot = {
+Commands.cleverbot = { // TODO: Not good enough, conversations are not saved and are reset each time this command is executed, so conversations get off-topic really fast
   name: "cleverbot",
   help: "I'll act as Cleverbot when you execute this command, remember to enter a message as suffix.",
   usage: "<message>",
@@ -394,16 +394,6 @@ Commands.say = {
   }
 };
 
-Commands.online = {
-  name: "online",
-  help: "I'll change my status to online.",
-  level: 5, // If an access level is set to 4 or higher, only the master user can use this
-  fn: function(bot, msg) {
-    bot.setStatusOnline();
-    Logger.log("debug", "My status has been changed to online.");
-  }
-};
-
 Commands.killswitch = {
   name: "killswitch",
   help: "This will instantly terminate all of the running instances of the bot without restarting.",
@@ -456,7 +446,7 @@ Commands.image = {
 
 Commands.pullanddeploy = {
   name: "pullanddeploy",
-  help: "I'll check if my code is up-to-date with the code from <@107904023901777920>, and restart. **Please note that this does NOT work on Windows!**",
+  help: "I'll check if my code is up-to-date with the code from <@107904023901777920>, and restart. **Please note that this does NOT work on Windows!**", // Does it really not work on Windows, or is it tied in with Git?
   level: 5, // If an access level is set to 4 or higher, only the master user can use this
   fn: function(bot, msg, suffix) {
     bot.sendMessage(msg.channel, "Fetching updates...", function(error, sentMsg) {
@@ -508,7 +498,7 @@ Commands.youtube = {
   }
 };
 
-Commands.purge = {
+Commands.purge = { // TODO: Allow for tags to be used to only delete messages from those users
   name: "purge",
   help: "I'll delete a certain ammount of messages.",
   usage: "<number-of-messages-to-delete>",
@@ -557,7 +547,7 @@ Commands.purge = {
   }
 };
 
-Commands.kappa = {
+Commands.kappa = { // IDEA: Unneeded, just use iff instead
   name: "kappa",
   help: "Sends kappa picture",
   level: 0,
@@ -625,7 +615,7 @@ Commands.setlevel = {
       bot.reply(msg, "your first param is not a number!");
       return;
     }
-    if (suffix[0] > 3) {
+    if (suffix[0] > 3) { // TODO: Does not always work
       bot.sendMessage(msg.channel, "Setting a level higher than 3 is not allowed.");
       return;
     }
@@ -638,7 +628,7 @@ Commands.setlevel = {
         bot.sendMessage(msg.channel, "Help! Something went wrong!");
         return;
       }
-      if (suffix[0] > level) {
+      if (suffix[0] > level) { // TODO: Does not always work
         bot.reply(msg, "you can't set a user's permissions higher than your own!");
         return;
       }
@@ -687,11 +677,11 @@ Commands.hello = {
   help: "I'll respond to you with hello along with a GitHub link, handy!",
   level: 0,
   fn: function(bot, msg) {
-    bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me grow by contributing to my GitHub: https://github.com/SteamingMutt/WildBeast");
+    bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me improve my contibuting to my base code: https://github.com/SteamingMutt/WildBeast");
   }
 };
 
-Commands["server-info"] = {
+Commands["server-info"] = { // TODO: List roles
   name: "server-info",
   help: "I'll tell you some information about the server you're currently in.",
   level: 0,
@@ -722,15 +712,21 @@ Commands["server-info"] = {
   }
 };
 
-Commands.birds = {
-  name: "birds",
-  help: "The best stale meme evahr, IDST.",
+Commands.namechanges = {
+  name: "namechanges",
+  help: "I'll return 20 namechanges the mentioned user has done, and that I know of.",
   level: 0,
-  fn: function(bot, msg) {
-    var msgArray = [];
-    msgArray.push("https://www.youtube.com/watch?v=Kh0Y2hVe_bw");
-    msgArray.push(msg.sender + ", we just don't know");
-    bot.sendMessage(msg, msgArray);
+  fn: function(bot, msg, suffix) {
+    msg.mentions.map(function(user) {
+      var UserDB = require('./user_nsa.js');
+      UserDB.returnNamechanges(user, function(err, reply) {
+        if (err) {
+          bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
+        } else if (reply) {
+          bot.sendMessage(msg.channel, reply.join(', '));
+        }
+      });
+    });
   }
 };
 
@@ -768,22 +764,12 @@ Commands["join-server"] = {
   }
 };
 
-Commands['check-voice'] = {
+Commands['check-voice'] = { // TODO: Retire this function later on, since the Discord API allows multiple voice connections.
   name: "check-voice",
   help: "I'll check if I'm available to stream music right now.",
   level: 0,
   fn: function(bot, msg) {
     DJ.checkIfAvailable(bot, msg);
-  }
-};
-
-Commands.idle = {
-  name: "idle",
-  help: "This will change my status to idle.",
-  level: 5, // If an access level is set to 4 or higher, only the master user can use this
-  fn: function(bot, msg) {
-    bot.setStatusIdle();
-    Logger.log("debug", "My status has been changed to idle.");
   }
 };
 
@@ -1409,7 +1395,7 @@ Commands.catfacts = {
   }
 };
 
-Commands.help = {
+Commands.help = { // IDEA: Can this be split up in categories instead of one big message?
   name: "help",
   help: "You're looking at it right now.",
   level: 0,
