@@ -335,12 +335,16 @@ bot.on('serverCreated', function(server) {
 });
 
 bot.on('presence', function(olduser, newuser) {
-  UserDB.checkIfKnown(olduser);
-  // We only handle namechanges, nothing else
-  if (olduser.username === newuser.username) {
-    return;
+  if (ConfigFile.bot_settings.namechange_log === true) {
+    UserDB.checkIfKnown(olduser);
+    // We only handle namechanges, nothing else
+    if (olduser.username === newuser.username) {
+      return;
+    } else {
+      UserDB.handleNamechange(newuser);
+    }
   } else {
-    UserDB.handleNamechange(newuser);
+    return;
   }
 });
 
