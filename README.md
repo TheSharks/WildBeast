@@ -1,9 +1,9 @@
-# WildBeast gamma
+# WildBeast
 ##### (Previously DougleyBot 2.0)
-[![Version](https://img.shields.io/badge/Version-2.0.0--gamma.7-green.svg?style=flat-square)](https://github.com/SteamingMutt/WildBeast/releases)
-[![Status](https://img.shields.io/badge/Status-Pre--release-orange.svg?style=flat-square)]()
-[![Node](https://img.shields.io/badge/Node-5.5.0-blue.svg?style=flat-square)](http://nodejs.org)
-[![NPM](https://img.shields.io/badge/NPM-3.5.3-blue.svg?style=flat-square)](http://nodejs.org)
+[![Version](https://img.shields.io/badge/Version-2.0.0-green.svg?style=flat-square)](https://github.com/SteamingMutt/WildBeast/releases)
+[![Status](https://img.shields.io/badge/Status-Ready-green.svg?style=flat-square)]()
+[![Node](https://img.shields.io/badge/Node-5.8.0-blue.svg?style=flat-square)](http://nodejs.org)
+[![NPM](https://img.shields.io/badge/NPM-3.7.3-blue.svg?style=flat-square)](http://nodejs.org)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg?style=flat-square)]()
 [![Build Status](https://travis-ci.org/SteamingMutt/WildBeast.svg?branch=master)](https://travis-ci.org/SteamingMutt/WildBeast)
 
