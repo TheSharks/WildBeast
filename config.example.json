@@ -2,7 +2,7 @@
     "useful_comments": [
         "Please only enable debug_mode or verbose_logging if requested by one of the devs, as enabling this extends the logging capabilities and could potentially include sensitive info.",
         "Command prefixes are length dynamic, meaning that prefixes can be as long as you want, change the value to `mention` to switch to mention activation.",
-        "help_mode can either be `private` or `channel`",
+        "help_mode can either be `private` or `channel`"
     ],
 
     "discord" : {
