@@ -2,18 +2,15 @@
     "useful_comments": [
         "Please only enable debug_mode or verbose_logging if requested by one of the devs, as enabling this extends the logging capabilities and could potentially include sensitive info.",
         "Command prefixes are length dynamic, meaning that prefixes can be as long as you want, change the value to `mention` to switch to mention activation.",
-        "There can only be 1 master user, 1 global level 1 user, etc.",
-        "If you define a different path to the image or music directory, type it like this:", "C:\\Users\\foobar\\Music",
-        "help_mode can either be `private` or `channel`",
-        "auto_restart tries to reconnect to Discord after an error or disconnection automatically.",
-        "default_server is a server the bot will create at first run, with this you can have a central contol hub for your bot.",
-        "error_printing, periodic_statistics and all of the overrides don't do anything yet.",
-        "If the channel entered in print_to_which_channel doens't exist, the bot will create it."
+        "help_mode can either be `private` or `channel`"
     ],
 
     "discord" : {
         "email" : "foo@bar.net",
-        "password" : "hunter2"
+        "password" : "hunter2",
+        "token_mode" : false,
+        "token": "Valid Discord API token, only needed when token_mode is true",
+        "oauth_url": "Valid OAuth URL, this will be send to users who try to use join-server if token_mode is true"
     },
     "bot_settings" : {
         "cmd_prefix": "++",
@@ -23,18 +20,8 @@
         "disable_music_commands": false,
         "verbose_logging": false,
         "debug_mode": false,
-        "keymetrics": false,
-        "welcome_new_members": false,
-        "image_folder": "./images",
-        "music_folder": "./music"
-    },
-    "default_server" : {
-        "error_printing": true,
-        "periodic_statistics": true,
-        "print_to_which_channel": "logbook",
-        "override_timeouts": false,
-        "override_permissions": false,
-        "override_nsfw": false
+        "upgrade_mode": true,
+        "keymetrics": false
     },
     "join_on_launch" : [
         "https://discord.gg/0cFoiR5QVh4agupi",

@@ -1,3 +1,10 @@
+/*
+TODO: Rewrite this entire file to support multiple voice connections
+TODO: Make bindings unique to server instead of channel
+TODO: Remove timeouts when script supports multiple voice connections
+IDEA: Make playlists save to a file, and make them recall with a code, so users dont need to make YouTube playlists
+*/
+
 var Discord = require("discord.js"),
   bot = new Discord.Client(),
   Logger = require("./logger.js").Logger,
@@ -61,7 +68,7 @@ exports.playlistAdd = function(bot, message, suffix) {
   }
   if (Config.bot_settings.music_timeouts === true) {
     time = setTimeout(function() {
-      if (!bot.voiceConnection.playing || !bot.voiceConnection) {
+      if (!bot.voiceConnection || !bot.voiceConnection.playing) {
         bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
         bot.leaveVoiceChannel();
         playlistid = [];
@@ -207,7 +214,7 @@ function playlistPlay(bot, message) {
       if (playlistid[0] === undefined) {
         bot.sendMessage(message.channel, "The playlist is finished, destroying voice connection.");
         bot.setStatus("online", null);
-        bot.leaveVoiceChannel();
+        bot.voiceConnection.destroy();
         boundChannel = false;
         stream = false;
         playlistid = [];

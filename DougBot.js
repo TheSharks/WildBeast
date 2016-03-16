@@ -14,10 +14,10 @@ var Discord = require("discord.js"),
   Permissions = require("./runtime/permissions.js"),
   VersionChecker = require("./runtime/versionchecker.js"),
   aliases,
-  keymetrics,
-  Defaulting = require("./runtime/serverdefaulting.js"),
-  TimeOut = require("./runtime/timingout.js"),
-  Ignore = require("./runtime/ignoring.js");
+  UserDB = require('./runtime/user_nsa.js'),
+  Upgrade = require('./runtime/upgrading.js'),
+  Customize = require('./runtime/customization.js'),
+  keymetrics;
 
 // Initial logger saying that script is being loaded.
 // Should NOT be placed in init() anymore since that runs after ready
@@ -59,6 +59,8 @@ bot.on('debug', function(debug) {
 
 // Ready announcment
 bot.on("ready", function() {
+  // Upgrade the database if needed
+  Upgrade.databaseSystem(bot);
   Debug.debuglogSomething("Discord", "Ready event fired.", "info");
   if (bot.servers.length === 0) {
     Logger.warn("No servers deteted, creating default server.");
@@ -116,6 +118,7 @@ bot.on("disconnected", function() {
 
 // Command checker
 bot.on("message", function(msg) {
+  UserDB.checkIfKnown(msg.sender);
   if (keymetrics === true) mescount.inc();
   if (ConfigFile.bot_settings.log_chat === true && msg.channel.server) {
     var d = new Date();
@@ -141,7 +144,7 @@ bot.on("message", function(msg) {
     Logger.info("Executing <" + msg.cleanContent + "> from " + msg.author.username);
     var step = msg.content.substr(prefix.length);
     var chunks = step.split(" ");
-    var command = chunks[0];
+    var command = chunks[0].toLowerCase();
     alias = aliases[command];
     var suffix = msg.content.substring(command.length + (prefix.length + 1));
     if (alias) {
@@ -173,40 +176,24 @@ bot.on("message", function(msg) {
         return;
       }
       if (msg.channel.server && !Commands[command].music) {
-        Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
+        Permissions.GetLevel(msg.channel.server, msg.author.id, function(err, level) {
           if (err) {
-            Debug.debuglogSomething("LevelDB", "GetLevel failed, got error: " + err, "error");
+            Debug.debuglogSomething("NeDB", "GetLevel failed, got error: " + err, "error");
             Logger.debug("An error occured!");
             return;
           }
           if (level >= Commands[command].level) {
             Debug.debuglogSomething("DougBot", "Execution of command allowed.", "info");
-            if (Commands[command].timeout) {
-              TimeOut.timeoutCheck(command, msg.channel.server.id, function(reply) {
-                if (reply === "yes") {
-                  Debug.debuglogSomething("DougBot", "Command is on cooldown, execution halted.", "info");
-                  bot.sendMessage(msg.channel, "Sorry, this command is on cooldown.");
-                  return;
-                }
-              });
-            }
             if (!Commands[command].nsfw) {
               Debug.debuglogSomething("DougBot", "Safe for work command executed.", "info");
               Commands[command].fn(bot, msg, suffix);
-              if (Commands[command].timeout) {
-                TimeOut.timeoutSet(command, msg.channel.server.id, Commands[command].timeout, function(reply, err) {
-                  if (err) {
-                    Logger.error("Resetting timeout failed!");
-                  }
-                });
-              }
               return;
             } else {
-              Permissions.GetNSFW(msg.channel, function(err, reply) {
+              Permissions.GetNSFW(msg.channel.server, msg.channel.id, function(err, reply) {
                 Debug.debuglogSomething("DougBot", "Command is NSFW, checking if channel allows that.", "info");
                 if (err) {
                   Logger.debug("Got an error! <" + err + ">");
-                  Debug.debuglogSomething("LevelDB", "NSFW channel check failed, got error: " + err, "error");
+                  Debug.debuglogSomething("NeDB", "NSFW channel check failed, got error: " + err, "error");
                   bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
                   return;
                 }
@@ -216,22 +203,46 @@ bot.on("message", function(msg) {
                   return;
                 } else {
                   Debug.debuglogSomething("DougBot", "NSFW command execution failed because of channel settings.", "info");
-                  bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
+                  Customize.replyCheck('nsfw_disallowed_response', msg.channel.server, function(err, reply) {
+                    if (err) {
+                      Logger.error('Response error! ' + err);
+                    } else if (reply) {
+                      if (reply === 'default') {
+                        bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
+                      } else {
+                        var userstep = reply.replace(/%user/g, msg.author.username);
+                        var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+                        var final = serverstep.replace(/%channel/, msg.channel);
+                        bot.sendMessage(msg.channel, final);
+                      }
+                    }
+                  });
                 }
               });
             }
           } else {
             Debug.debuglogSomething("DougBot", "User has no permission to use that command.", "info");
-            bot.sendMessage(msg.channel, "You don't have permission to use this command!");
-            return;
+            Customize.replyCheck('no_permission_response', msg.channel.server, function(err, reply) {
+              if (err) {
+                Logger.error('Response error! ' + err);
+              } else if (reply) {
+                if (reply === 'default') {
+                  bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+                }
+                var userstep = reply.replace(/%user/g, msg.author.username);
+                var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+                var final = serverstep.replace(/%channel/, msg.channel);
+                bot.sendMessage(msg.channel, final);
+              }
+            });
           }
         });
       } else if (!msg.channel.server) {
-        Permissions.GetLevel(0, msg.author.id, function(err, level) { // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
+        Permissions.GetLevel(null, msg.author.id, function(err, level) { // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
           Debug.debuglogSomething("DougBot", "DM command detected, getting global perms.", "info");
           if (err) {
             Logger.debug("An error occured!");
-            Debug.debuglogSomething("LevelDB", "GetLevel failed, got error: " + err, "error");
+            Debug.debuglogSomething("NeDB", "GetLevel failed, got error: " + err, "error");
             return;
           }
           if (level >= Commands[command].level) {
@@ -266,15 +277,36 @@ function init(token) {
 
 // New user welcomer
 bot.on("serverNewMember", function(server, user) {
-  var welcomeWhitelist = require('./runtime/welcoming-whitelist.json');
-  if (ConfigFile.bot_settings.welcome_new_members === false) return;
-  if (welcomeWhitelist.indexOf(server.id) > -1) {
-    bot.sendMessage(server.defaultChannel, "Welcome " + user.username + " to " + server.name + "!");
-  }
+  UserDB.checkIfKnown(user);
+  Customize.checkWelcoming(server, function(err, message, reply) {
+    if (err) {
+      Logger.error('Welcoming check error! ' + err);
+      return;
+    } else if (reply && !err) {
+      if (reply === true) {
+        if (message === 'default') {
+          bot.sendMessage(server.defaultChannel, 'Welcome ' + user.username + ' to **' + server.name + '**!');
+        } else {
+          var userstep = message.replace(/%user/g, user.username);
+          var final = userstep.replace(/%server/g, server.name);
+          bot.sendMessage(server.defaultChannel, final);
+        }
+      }
+    }
+  });
+});
+
+// Log server leaves, so database won't get cluttered with ghost documents
+bot.on('serverDeleted', function(server) {
+  Customize.removeServer(server);
+  Permissions.removeServer(server);
+  Logger.info('Left a server and removed database documents.');
 });
 
 function err(error) {
   Debug.debuglogSomething("Discord", "Logging into Discord probably failed, got error: " + error, "error");
+  Logger.error('Failed to log into Discord! Make sure the login details are correct.');
+  process.exit(0);
 }
 
 process.on('uncaughtException', function(err) {
@@ -282,11 +314,39 @@ process.on('uncaughtException', function(err) {
     Logger.warn("Got an ECONNRESET error, this is most likely *not* a bug with WildBeast");
     Logger.debug(err.stack);
   } else {
-    Logger.error("UncaughtException! Please report this to the author of the bot!");
-    Logger.debug(err);
-    Logger.debug(err.stack);
+    Logger.error(err.stack);
     process.exit(1);
   }
 });
-// Connection starter
-bot.login(ConfigFile.discord.email, ConfigFile.discord.password).then(init).catch(err);
+
+bot.on('serverCreated', function(server) {
+  // Since join-server doenst work for oauth bots, we need to be creative with the joined announcement
+  var msgArray = [];
+  Permissions.initializeServer(server);
+  Customize.initializeServer(server);
+  msgArray.push("Hey! I'm " + bot.username);
+  if (ConfigFile.discord.token_mode === true) {
+    msgArray.push("Someone with `manage server` permissions invited me to this server via OAuth.");
+  } else {
+    msgArray.push('I followed an instant-invite from someone.'); // TODO: We need something to resolve the invite we just followed and return who invited the bot.
+  }
+  msgArray.push("If I'm intended to be here, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
+  msgArray.push("Else, use `" + ConfigFile.bot_settings.cmd_prefix + "leave` or just kick me.");
+  bot.sendMessage(server.defaultChannel, msgArray);
+});
+
+bot.on('presence', function(olduser, newuser) {
+  // We only handle namechanges, nothing else
+  if (olduser.username === newuser.username) {
+    return;
+  } else {
+    UserDB.handleNamechange(newuser);
+  }
+});
+
+// Support direct API logins with tokens via 'token_mode'
+if (ConfigFile.discord.token_mode === true) {
+  bot.loginWithToken(ConfigFile.discord.token).then(init).catch(err);
+} else if (ConfigFile.discord.token_mode === false) {
+  bot.login(ConfigFile.discord.email, ConfigFile.discord.password).then(init).catch(err);
+}

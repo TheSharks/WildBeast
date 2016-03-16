@@ -22,9 +22,6 @@ exports.getCurrentMinor = function() {
 exports.getCurrentPatch = function() {
   return version[2];
 };
-exports.getCurrentGamma = function() {
-  return version[3];
-};
 
 exports.getLatestVersion = function(callback) {
 
@@ -76,15 +73,6 @@ exports.getLatestPatch = function(callback) {
   });
 };
 
-exports.getLatestGamma = function(callback) {
-  this.getLatest(function(err, latest) {
-    if (err) {
-      return callback(err, null);
-    } // error handle
-    return callback(null, parseInt(latest.split("-")[0]));
-  });
-};
-
 // ========================================================================
 // Version Checking
 // ========================================================================
@@ -108,7 +96,6 @@ exports.getStatus = function(callback) {
     var majorDiff = parseInt(latest[0]) - parseInt(version[0]);
     var minorDiff = parseInt(latest[1]) - parseInt(version[1]);
     var patchDiff = parseInt(latest[2]) - parseInt(version[2]);
-    var gammaDiff = parseInt(latest[3]) - parseInt(version[3]);
 
     // check for major updates
     if (majorDiff < 0) {
@@ -129,12 +116,6 @@ exports.getStatus = function(callback) {
       return callback(null, "Bot is " + Math.abs(patchDiff) + " patch versions ahead! (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
     } else if (patchDiff > 0) {
       return callback(null, "Bot is " + Math.abs(patchDiff) + " patch versions behind. (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
-    }
-
-    if (gammaDiff < 0) {
-      return callback(null, "Bot is " + Math.abs(gammaDiff) + " gamma versions ahead! (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
-    } else if (gammaDiff > 0) {
-      return callback(null, "Bot is " + Math.abs(gammaDiff) + " gamma versions behind. (current: " + version.join(".") + ", latest: " + latest.join(".") + ")");
     }
 
     // up to date :)

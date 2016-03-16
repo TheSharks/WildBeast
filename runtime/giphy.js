@@ -1,3 +1,7 @@
+/*
+TODO: Change runtime to be more random
+*/
+
 var qs = require("querystring");
 var Logger = require("./logger.js").Logger;
 

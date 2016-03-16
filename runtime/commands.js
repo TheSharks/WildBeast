@@ -6,14 +6,13 @@ var ConfigFile = require("../config.json"),
   Cleverbot = require('cleverbot-node'),
   cleverbot = new Cleverbot(),
   yt = require("./youtube_plugin"),
+  Customize = require('./customization.js'),
   youtube_plugin = new yt(),
   version = require("../package.json").version,
   unirest = require('unirest'),
   Debug = require("./debugging.js"),
-  Defaulting = require("./serverdefaulting.js"),
   DJ = require("./djlogic.js"),
-  aliases = require("./alias.json"),
-  ignore = require("./ignoring.js");
+  aliases = require("./alias.json");
 
 var Commands = [];
 
@@ -26,43 +25,49 @@ Commands.ping = {
     bot.reply(msg, "Pong!"); // Easy for moderation
   }
 };
+
 Commands.stream = {
   name: "stream",
   help: "Tells you if a specified streamer is live on Twitch.tv",
   level: 0,
-  fn: function(bot, msg, suffix){
-    if(!suffix){
+  fn: function(bot, msg, suffix) {
+    if (!suffix) {
       bot.sendMessage(msg.channel, "No channel specified!");
       return;
     }
     var request = require("request");
     var url = "https://api.twitch.tv/kraken/streams/" + suffix;
-    request({url: url, headers: {"Accept": "application/vnd.twitchtv.v3+json"}}, function(error, response, body){
-      if (!error && response.statusCode == 200){
-        var resp, error;
-        try{
+    request({
+      url: url,
+      headers: {
+        "Accept": "application/vnd.twitchtv.v3+json"
+      }
+    }, function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var resp;
+        try {
           resp = JSON.parse(body);
-        } catch(error){
-          Logger.error(error);
+        } catch (err) {
+          bot.sendMessage(msg.channel, "The API returned an unconventional response.");
+          Logger.error(err);
           return;
         }
-        if(resp.stream != null){
+        if (resp.stream !== null) {
           bot.sendMessage(msg.channel, suffix + " is currently live at https://www.twitch.tv/" + suffix);
           return;
-        }
-        else if(resp.stream == null){
+        } else if (resp.stream === null) {
           bot.sendMessage(msg.channel, suffix + " is not currently streaming");
           return;
         }
-      }
-      else if (!error && response.statusCode == 404){
+      } else if (!error && response.statusCode == 404) {
         bot.sendMessage(msg.channel, "Channel does not exist!");
         return;
       }
     });
   }
 };
-Commands.nowplaying = {
+
+Commands.nowplaying = { // TODO: Make unique per server
   name: "nowplaying",
   help: "Returns what video is currently playing.",
   music: true,
@@ -72,7 +77,7 @@ Commands.nowplaying = {
   }
 };
 
-Commands.forceskip = {
+Commands.forceskip = { // TODO: Make unique per server
   name: "forceskip",
   help: "Forces a song to skip.",
   level: 2,
@@ -81,7 +86,7 @@ Commands.forceskip = {
   }
 };
 
-Commands.request = {
+Commands.request = { // TODO: Make unique per server
   name: "request",
   help: "Adds a video to the playlist.",
   level: 0,
@@ -91,7 +96,7 @@ Commands.request = {
   }
 };
 
-Commands.playlist = {
+Commands.playlist = { // TODO: Make unique per server
   name: "playlist",
   help: "Returns the playlist.",
   level: 0,
@@ -100,7 +105,7 @@ Commands.playlist = {
   }
 };
 
-Commands.playliststart = {
+Commands.playliststart = { // TODO: Try to retire this function, and instead start the playlist after a certain timeframe
   name: "playliststart",
   help: "Starts the playlist!",
   music: true,
@@ -136,7 +141,7 @@ Commands.e621 = {
   }
 };
 
-Commands.eval = {
+Commands.eval = { // TODO: Allow newlines
   name: "eval",
   help: "Allows the execution of arbitrary Javascript code within the context of the bot.",
   level: 6, // Now 100% sure it can't be used by anyone but the master user.
@@ -144,13 +149,17 @@ Commands.eval = {
     try {
       bot.sendMessage(msg.channel, eval(suffix));
     } catch (err) {
-      bot.sendMessage(msg.channel, "Eval failed :(");
-      bot.sendMessage(msg.channel, "```" + err + "```");
+      var banter = ["That almost killed me!", "You're doing it wrong!", "You're not very good at this, are you.", "Try again, better this time.", "I'm not pleased with your JavaScript skills.", "Whoops...", "We got an error cap'n!", "I'm sorry, but I can't let you do that."];
+      var rand = Math.round((Math.random() * banter.length));
+      var arr = [];
+      arr.push("**" + banter[rand] + "**");
+      arr.push("```" + err + "```");
+      bot.sendMessage(msg.channel, arr);
     }
   }
 };
 
-Commands.alias = {
+Commands.alias = { // IDEA: Maybe unlock this to all users?
   name: "alias",
   help: "Allows for creating quick custom commands on the fly!",
   level: 5,
@@ -182,7 +191,7 @@ Commands["join-voice"] = {
   }
 };
 
-Commands.stop = {
+Commands.stop = { // TODO: Make unique per server
   name: "stop",
   help: "I'll stop playing music.",
   level: 0,
@@ -192,7 +201,7 @@ Commands.stop = {
   }
 };
 
-Commands["leave-voice"] = {
+Commands["leave-voice"] = { //TODO: Make unique per server
   name: "leave-voice",
   help: "I'll leave the current voice channel.",
   level: 0,
@@ -280,6 +289,40 @@ Commands.randomcat = {
   }
 };
 
+Commands.customize = {
+  name: "customize",
+  help: "Change almost everything about my behaviour in this server!",
+  usage: "<method> <change_to>",
+  methods: ["welcoming", "welcome_message", "no_permission_response", "nswf_disallowed_response"],
+  vars: ["%user", "%channel", "%server"],
+  level: 3,
+  fn: function(bot, msg, suffix) {
+    if (msg.channel.isPrivate) {
+      bot.sendMessage(msg.channel, "You can't use this in DM, dummy!");
+      return;
+    }
+    if (this.methods.indexOf(suffix[0] > -1)) {
+      if (suffix[0] === 'welcoming' && suffix[1] != 'on' && suffix[1] != 'off') {
+        bot.sendMessage(msg.channel, "Welcoming can either be `on` or `off`!");
+        return;
+      }
+      Customize.handle(suffix, msg.channel.server, function(err, reply) {
+        if (err) {
+          if (err === 'notSupported') {
+            bot.reply(msg, "I don't support that!");
+          } else {
+            bot.sendMessage(msg, "Something went wrong, try again.");
+          }
+        } else if (reply) {
+          bot.sendMessage(msg, "Sucessfully saved customization settings!");
+        }
+      });
+    } else {
+      bot.reply(msg, "I don't support that!");
+    }
+  }
+};
+
 Commands.info = {
   name: "info",
   help: "I'll print some information about me.",
@@ -293,7 +336,7 @@ Commands.info = {
   }
 };
 
-Commands.cleverbot = {
+Commands.cleverbot = { // TODO: Not good enough, conversations are not saved and are reset each time this command is executed, so conversations get off-topic really fast
   name: "cleverbot",
   help: "I'll act as Cleverbot when you execute this command, remember to enter a message as suffix.",
   usage: "<message>",
@@ -351,16 +394,6 @@ Commands.say = {
   }
 };
 
-Commands.online = {
-  name: "online",
-  help: "I'll change my status to online.",
-  level: 5, // If an access level is set to 4 or higher, only the master user can use this
-  fn: function(bot, msg) {
-    bot.setStatusOnline();
-    Logger.log("debug", "My status has been changed to online.");
-  }
-};
-
 Commands.killswitch = {
   name: "killswitch",
   help: "This will instantly terminate all of the running instances of the bot without restarting.",
@@ -390,8 +423,9 @@ Commands.image = {
       var data, error;
       try {
         data = JSON.parse(body);
-      } catch (error) {
-        Logger.error(error);
+      } catch (e) {
+        Logger.error(e);
+        bot.sendMessage(msg.channel, "The API returned an unconventional response.");
         return;
       }
       if (!data) {
@@ -412,7 +446,7 @@ Commands.image = {
 
 Commands.pullanddeploy = {
   name: "pullanddeploy",
-  help: "I'll check if my code is up-to-date with the code from <@107904023901777920>, and restart. **Please note that this does NOT work on Windows!**",
+  help: "I'll check if my code is up-to-date with the code from <@107904023901777920>, and restart. **Please note that this does NOT work on Windows!**", // Does it really not work on Windows, or is it tied in with Git?
   level: 5, // If an access level is set to 4 or higher, only the master user can use this
   fn: function(bot, msg, suffix) {
     bot.sendMessage(msg.channel, "Fetching updates...", function(error, sentMsg) {
@@ -464,7 +498,7 @@ Commands.youtube = {
   }
 };
 
-Commands.purge = {
+Commands.purge = { // TODO: Allow for tags to be used to only delete messages from those users
   name: "purge",
   help: "I'll delete a certain ammount of messages.",
   usage: "<number-of-messages-to-delete>",
@@ -513,7 +547,7 @@ Commands.purge = {
   }
 };
 
-Commands.kappa = {
+Commands.kappa = { // IDEA: Unneeded, just use iff instead
   name: "kappa",
   help: "Sends kappa picture",
   level: 0,
@@ -546,7 +580,7 @@ Commands.whois = {
       return;
     }
     msg.mentions.map(function(user) {
-      Permissions.GetLevel((msg.channel.server.id + user.id), user.id, function(err, level) {
+      Permissions.GetLevel(msg.channel.server, user.id, function(err, level) {
         if (err) {
           return;
         } else {
@@ -581,7 +615,7 @@ Commands.setlevel = {
       bot.reply(msg, "your first param is not a number!");
       return;
     }
-    if (suffix[0] > 3) {
+    if (suffix[0] > 3) { // TODO: Does not always work
       bot.sendMessage(msg.channel, "Setting a level higher than 3 is not allowed.");
       return;
     }
@@ -589,18 +623,18 @@ Commands.setlevel = {
       bot.reply(msg, "please mention the user(s) you want to set the permission level of.");
       return;
     }
-    Permissions.GetLevel((msg.channel.server.id + msg.author.id), msg.author.id, function(err, level) {
+    Permissions.GetLevel(msg.channel.server, msg.author.id, function(err, level) {
       if (err) {
         bot.sendMessage(msg.channel, "Help! Something went wrong!");
         return;
       }
-      if (suffix[0] > level) {
+      if (suffix[0] > level) { // TODO: Does not always work
         bot.reply(msg, "you can't set a user's permissions higher than your own!");
         return;
       }
     });
     msg.mentions.map(function(user) {
-      Permissions.SetLevel((msg.channel.server.id + user.id), suffix[0], function(err, level) {
+      Permissions.SetLevel(msg.channel.server, user.id, suffix[0], function(err, level) {
         if (err) {
           bot.sendMessage(msg.channel, "Help! Something went wrong!");
           return;
@@ -622,7 +656,7 @@ Commands.setnsfw = {
       return;
     }
     if (suffix === "on" || suffix === "off") {
-      Permissions.SetNSFW(msg.channel, suffix, function(err, allow) {
+      Permissions.SetNSFW(msg.channel.server, msg.channel.id, suffix, function(err, allow) {
         if (err) {
           bot.reply(msg.channel, "I've failed to set NSFW flag!");
         }
@@ -638,38 +672,16 @@ Commands.setnsfw = {
   }
 };
 
-Commands.setowner = {
-  name: "setowner",
-  help: "This will set the owner of the current server to level 4.",
-  level: 0,
-  fn: function(bot, msg) {
-    if (msg.channel.isPrivate) {
-      bot.sendMessage(msg.channel, "You need to execute this command in a server, dummy!");
-      return;
-    } else {
-      Permissions.SetLevel((msg.channel.server.id + msg.channel.server.owner.id), 4, function(err, level) {
-        if (err) {
-          bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
-          return;
-        }
-        if (level === 4) {
-          bot.sendMessage(msg.channel, "Okay! " + msg.channel.server.owner + " is now at level 4!");
-        }
-      });
-    }
-  }
-};
-
 Commands.hello = {
   name: "hello",
   help: "I'll respond to you with hello along with a GitHub link, handy!",
   level: 0,
   fn: function(bot, msg) {
-    bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me grow by contributing to my GitHub: https://github.com/SteamingMutt/WildBeast");
+    bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me improve my contibuting to my base code: https://github.com/SteamingMutt/WildBeast");
   }
 };
 
-Commands["server-info"] = {
+Commands["server-info"] = { // TODO: List roles
   name: "server-info",
   help: "I'll tell you some information about the server you're currently in.",
   level: 0,
@@ -700,15 +712,21 @@ Commands["server-info"] = {
   }
 };
 
-Commands.birds = {
-  name: "birds",
-  help: "The best stale meme evahr, IDST.",
+Commands.namechanges = {
+  name: "namechanges",
+  help: "I'll return 20 namechanges the mentioned user has done, and that I know of.",
   level: 0,
-  fn: function(bot, msg) {
-    var msgArray = [];
-    msgArray.push("https://www.youtube.com/watch?v=Kh0Y2hVe_bw");
-    msgArray.push(msg.sender + ", we just don't know");
-    bot.sendMessage(msg, msgArray);
+  fn: function(bot, msg, suffix) {
+    msg.mentions.map(function(user) {
+      var UserDB = require('./user_nsa.js');
+      UserDB.returnNamechanges(user, function(err, reply) {
+        if (err) {
+          bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
+        } else if (reply) {
+          bot.sendMessage(msg.channel, reply.join(', '));
+        }
+      });
+    });
   }
 };
 
@@ -718,119 +736,40 @@ Commands["join-server"] = {
   usage: "<bot-mention> <instant-invite>",
   level: 0,
   fn: function(bot, msg, suffix) {
-    var invmak;
-    var serverBlacklist = require('./server-blacklist.json');
+    if (ConfigFile.discord.token_mode === true) {
+      bot.sendMessage(msg.channel, "Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: " + ConfigFile.discord.oauth_url);
+      return;
+    }
     if (!msg.channel.isPrivate && msg.isMentioned(bot.user)) {
-      suffix = suffix.split(' ');
-      bot.getInvite(suffix[1], function(err, inv) {
-        if (err) {
-          bot.reply("something went wrong while resolving that invite, make sure your formatting is correct.");
-          return;
-        } else if (inv) {
-          if (serverBlacklist.hasOwnProperty(inv.server.id)) {
-            var array = [];
-            array.push('Sorry, that server is on my internal blacklist.');
-            array.push('Reason: `' + serverBlacklist[inv.server.id] + '`');
-            array.push('Contact <@' + ConfigFile.permissions.masterUser[0] + '> to get it removed.');
-            bot.sendMessage(msg, array);
-            return;
-          } else {
-            Logger.log("debug", bot.joinServer(suffix[1], function(error, server) {
-              Logger.log("debug", "callback: " + arguments);
-              if (error || !server) {
-                Logger.warn("Failed to join a server: " + error);
-                bot.sendMessage(msg.channel, "Something went wrong, try again.");
-              } else {
-                var msgArray = [];
-                msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server");
-                msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
-                msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
-                Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
-                  if (err) {
-                    bot.sendMessage(server.defaultChannel, "An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
-                  }
-                  if (level === 4) {
-                    bot.sendMessage(server.defaultChannel, "I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
-                  }
-                });
-                bot.sendMessage(server.defaultChannel, msgArray);
-                msgArray = [];
-                msgArray.push("Hey " + server.owner.username + ", I've joined " + server.name + " in which you're the founder.");
-                msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
-                msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
-                msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
-                bot.sendMessage(server.owner, msgArray);
-                bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
-              }
-            }));
-          }
+      Logger.log("debug", bot.joinServer(suffix[1], function(error, server) {
+        Logger.log("debug", "callback: " + arguments);
+        if (error || !server) {
+          Logger.warn("Failed to join a server: " + error);
+          bot.sendMessage(msg.channel, "Something went wrong, try again.");
+        } else {
+          bot.sendMessage(msg.channel, "Sucessfully joined **" + server.name + "**!");
         }
-      });
+      }));
     } else if (msg.channel.isPrivate) {
-      bot.getInvite(suffix, function(err, inv) {
-        if (err) {
-          bot.reply('something went wrong while resolving that invite.');
-          return;
-        } else if (inv) {
-          if (serverBlacklist.hasOwnProperty(inv.server.id)) {
-            var array = [];
-            array.push('Sorry, that server is on my internal blacklist.');
-            array.push('Reason: `' + serverBlacklist[inv.server.id] + '`');
-            array.push('Contact <@' + ConfigFile.permissions.masterUser[0] + '> to get it removed.');
-            bot.sendMessage(msg, array);
-            return;
-          } else {
-            Logger.log("debug", bot.joinServer(suffix, function(error, server) {
-              Logger.log("debug", "callback: " + arguments);
-              if (error || !server) {
-                Logger.warn("Failed to join a server: " + error);
-                bot.sendMessage(msg.channel, "Something went wrong, try again.");
-              } else {
-                var msgArray = [];
-                msgArray.push("Yo! I'm **" + bot.user.username + "**, " + msg.author + " invited me to this server");
-                msgArray.push("If I'm intended to be in this server, you may use **" + ConfigFile.bot_settings.cmd_prefix + "help** to see what I can do!");
-                msgArray.push("If you don't want me here, you may use **" + ConfigFile.bot_settings.cmd_prefix + "leave** to ask me to leave.");
-                Permissions.SetLevel((server.id + server.owner.id), 4, function(err, level) {
-                  if (err) {
-                    bot.sendMessage(server.defaultChannel, "An error occured while auto-setting " + server.owner + " to level 4, try running `setowner` a bit later.");
-                  }
-                  if (level === 4) {
-                    bot.sendMessage(server.defaultChannel, "I have detected " + server.owner + " as the server owner and made him/her an admin over me.");
-                  }
-                });
-                bot.sendMessage(server.defaultChannel, msgArray);
-                msgArray = [];
-                msgArray.push("Hey " + server.owner.username + ", I've joined " + server.name + " in which you're the founder.");
-                msgArray.push("I'm " + bot.user.username + " by the way, a Discord bot, meaning that all of the things I do are mostly automated.");
-                msgArray.push("If you are not keen on having me in your server, you may use `" + ConfigFile.bot_settings.cmd_prefix + "leave` in the server I'm not welcome in.");
-                msgArray.push("If you do want me, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
-                bot.sendMessage(server.owner, msgArray);
-                bot.sendMessage(msg.channel, "I've successfully joined **" + server.name + "**");
-              }
-            }));
-          }
+      Logger.log("debug", bot.joinServer(suffix, function(error, server) {
+        Logger.log("debug", "callback: " + arguments);
+        if (error || !server) {
+          Logger.warn("Failed to join a server: " + error);
+          bot.sendMessage(msg.channel, "Something went wrong, try again.");
+        } else {
+          bot.sendMessage(msg.channel, "Sucessfully joined **" + server.name + "**!");
         }
-      });
+      }));
     }
   }
 };
 
-Commands['check-voice'] = {
+Commands['check-voice'] = { // TODO: Retire this function later on, since the Discord API allows multiple voice connections.
   name: "check-voice",
   help: "I'll check if I'm available to stream music right now.",
   level: 0,
   fn: function(bot, msg) {
     DJ.checkIfAvailable(bot, msg);
-  }
-};
-
-Commands.idle = {
-  name: "idle",
-  help: "This will change my status to idle.",
-  level: 5, // If an access level is set to 4 or higher, only the master user can use this
-  fn: function(bot, msg) {
-    bot.setStatusIdle();
-    Logger.log("debug", "My status has been changed to idle.");
   }
 };
 
@@ -899,7 +838,7 @@ Commands.status = {
     var msgArray = [];
     msgArray.push("Hello " + msg.sender + ", I'm " + bot.user + ", nice to meet you!");
     msgArray.push("I'm used in " + bot.servers.length + " servers, in " + bot.channels.length + " channels and by " + bot.users.length + " users.");
-    msgArray.push("My uptime is " + (Math.round(bot.uptime / (1000 * 60 * 60))) + " hours, " + (Math.round(bot.uptime / (1000 * 60)) % 60) + " minutes, and " + (Math.round(bot.uptime / 1000) % 60) + " seconds.");
+    msgArray.push("My uptime is " + (Math.round(bot.uptime / (1000 * 60 * 60 * 24))) + " days, " + (Math.round(bot.uptime / (1000 * 60 * 60))) + " hours, " + (Math.round(bot.uptime / (1000 * 60)) % 60) + " minutes, and " + (Math.round(bot.uptime / 1000) % 60) + " seconds.");
     bot.sendMessage(msg.channel, msgArray);
   }
 };
@@ -1092,6 +1031,12 @@ Commands.stroke = {
     var request = require('request');
     request('http://api.icndb.com/jokes/random?escape=javascript&firstName=' + name[0] + '&lastName=' + name[1], function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var joke = JSON.parse(body);
         bot.sendMessage(msg.channel, joke.value.joke);
       } else {
@@ -1132,6 +1077,12 @@ Commands.advice = {
     var request = require('request');
     request('http://api.adviceslip.com/advice', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var advice = JSON.parse(body);
         bot.sendMessage(msg.reply + advice.slip.advice);
       } else {
@@ -1150,6 +1101,12 @@ Commands.yesno = {
     var request = require('request');
     request('http://yesno.wtf/api/?force=' + suffix, function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var yesNo = JSON.parse(body);
         bot.reply(msg, yesNo.image);
       } else {
@@ -1168,6 +1125,12 @@ Commands.urbandictionary = {
     var request = require('request');
     request('http://api.urbandictionary.com/v0/define?term=' + suffix, function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var uD = JSON.parse(body);
         if (uD.result_type !== "no_results") {
           bot.reply(msg, suffix + ": " + uD.list[0].definition + ' "' + uD.list[0].example + '"');
@@ -1210,6 +1173,12 @@ Commands.xkcd = {
     var request = require('request');
     request('http://xkcd.com/info.0.json', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var xkcdInfo = JSON.parse(body);
         if (suffix) {
           var isnum = /^\d+$/.test(suffix);
@@ -1263,7 +1232,6 @@ Commands.csgoprice = {
     csgomarket.strictNameMode = false;
     csgomarket.getSinglePrice(skinInfo[1], skinInfo[3], skinInfo[5], skinInfo[7], function(err, skinData) {
       if (err) {
-        Logger.log('error', err);
         bot.reply(msg, "that skin is so super secret rare, it doesn't even exist!");
       } else {
         if (skinData.success === true) {
@@ -1295,6 +1263,12 @@ Commands.dice = {
     var request = require('request');
     request('https://rolz.org/api/?' + dice + '.json', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var roll = JSON.parse(body);
         bot.reply(msg, "your " + roll.input + " resulted in " + roll.result + " " + roll.details);
       } else {
@@ -1312,6 +1286,12 @@ Commands.fancyinsult = {
     var request = require('request');
     request('http://quandyfactory.com/insult/json/', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var fancyinsult = JSON.parse(body);
         if (suffix === "") {
           bot.reply(msg, fancyinsult.insult);
@@ -1337,6 +1317,12 @@ Commands.imdb = {
       var request = require('request');
       request('http://api.myapifilms.com/imdb/title?format=json&title=' + suffix + '&token=' + ConfigFile.api_keys.myapifilms_token, function(error, response, body) {
         if (!error && response.statusCode == 200) {
+          try {
+            JSON.parse(body);
+          } catch (e) {
+            bot.sendMessage(msg, 'The API returned an unconventional response.');
+            return;
+          }
           var imdbInfo = JSON.parse(body);
           imdbInfo = imdbInfo.data.movies[0];
           if (imdbInfo) {
@@ -1371,6 +1357,12 @@ Commands["8ball"] = {
     var request = require('request');
     request('https://8ball.delegator.com/magic/JSON/0', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var eightBall = JSON.parse(body);
         bot.sendMessage(msg.channel, eightBall.magic.answer + ", " + msg.sender);
       } else {
@@ -1388,6 +1380,12 @@ Commands.catfacts = {
     var request = require('request');
     request('http://catfacts-api.appspot.com/api/facts', function(error, response, body) {
       if (!error && response.statusCode == 200) {
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          return;
+        }
         var catFact = JSON.parse(body);
         bot.reply(msg, catFact.facts[0]);
       } else {
@@ -1397,7 +1395,7 @@ Commands.catfacts = {
   }
 };
 
-Commands.help = {
+Commands.help = { // IDEA: Can this be split up in categories instead of one big message?
   name: "help",
   help: "You're looking at it right now.",
   level: 0,
@@ -1410,9 +1408,11 @@ Commands.help = {
       }
       msgArray.push("These are the currently available commands, use `" + ConfigFile.bot_settings.cmd_prefix + "help <command_name>` to learn more about a specific command.");
       msgArray.push("");
-      msgArray.push(commandnames.join(", "));
+      msgArray.push(commandnames.sort().join(", ")); // Sort command names alphabetically
       msgArray.push("");
-      msgArray.push("If you have any questions, or if you don't get something, contact <@107904023901777920> or <@110147170740494336>");
+      if (ConfigFile.bot_settings.help_mode === 'private') { // Only push this if help_mode is private, as it causes unneeded pings in channel mode.
+        msgArray.push("If you have any questions, or if you don't get something, contact <@107904023901777920> or <@110147170740494336>");
+      }
       if (ConfigFile.bot_settings.help_mode === "private") {
         bot.sendMessage(msg.author, msgArray);
         Logger.debug("Send help via DM.");
@@ -1447,6 +1447,12 @@ Commands.help = {
         }
         if (commando.hasOwnProperty('level')) {
           msgArray.push("**Needed access level:** " + commando.level); // Push the needed access level to the array
+        }
+        if (commando.hasOwnProperty('methods')) {
+          msgArray.push('Avalible methods to change: ' + commando.methods.join(', '));
+        }
+        if (commando.hasOwnProperty('vars')) {
+          msgArray.push('Special words, they will dynamically change if the method supports it: ' + commando.vars.join(', '));
         }
         if (commando.hasOwnProperty('music')) { // Push music message if command is musical.
           msgArray.push("**This is a music related command, you'll need a role called** `Radio Master` **to use this command.**");
