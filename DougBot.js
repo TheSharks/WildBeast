@@ -207,7 +207,7 @@ bot.on("message", function(msg) {
                   Customize.replyCheck('nsfw_disallowed_response', msg.channel.server, function(err, reply) {
                     if (err) {
                       if (err === 'notFound') {
-                        Customize.initializeServer(server);
+                        Customize.initializeServer(msg.channel.server);
                       }
                       Logger.error('Response error! ' + err);
                     } else if (reply) {
