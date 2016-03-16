@@ -229,11 +229,12 @@ bot.on("message", function(msg) {
               } else if (reply) {
                 if (reply === 'default') {
                   bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+                } else {
+                  var userstep = reply.replace(/%user/g, msg.author.username);
+                  var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+                  var final = serverstep.replace(/%channel/, msg.channel);
+                  bot.sendMessage(msg.channel, final);
                 }
-                var userstep = reply.replace(/%user/g, msg.author.username);
-                var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
-                var final = serverstep.replace(/%channel/, msg.channel);
-                bot.sendMessage(msg.channel, final);
               }
             });
           }
