@@ -173,6 +173,9 @@ bot.on("message", function(msg) {
       if (msg.channel.server && !Commands[command].music) {
         Permissions.GetLevel(msg.channel.server, msg.author.id, function(err, level) {
           if (err) {
+            if (err === 'notFound') {
+              Permissions.initializeServer(msg.channel.server);
+            }
             Debug.debuglogSomething("NeDB", "GetLevel failed, got error: " + err, "error");
             Logger.debug("An error occured!");
             return;
@@ -187,6 +190,9 @@ bot.on("message", function(msg) {
               Permissions.GetNSFW(msg.channel.server, msg.channel.id, function(err, reply) {
                 Debug.debuglogSomething("DougBot", "Command is NSFW, checking if channel allows that.", "info");
                 if (err) {
+                  if (err === 'notFound') {
+                    Permissions.initializeServer(msg.channel.server);
+                  }
                   Logger.debug("Got an error! <" + err + ">");
                   Debug.debuglogSomething("NeDB", "NSFW channel check failed, got error: " + err, "error");
                   bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
