@@ -38,6 +38,9 @@ exports.replyCheck = function(what, server, callback) {
     if (result.length === 0) {
       return callback('notFound', -1);
     } else {
+      if (result[0] === undefined) {
+        initializeServer(server);
+      }
       if (what === 'no_permission_response') {
         return callback(null, result[0].responses.no_permission_response);
       } else if (what === 'nsfw_disallowed_response') {
@@ -160,3 +163,18 @@ exports.initializeServer = function(server) {
   };
   db.insert(doc);
 };
+
+function initializeServer(server) {
+  var doc = {
+    _id: server.id,
+    responses: {
+      welcome_message: 'default',
+      no_permission_response: 'default',
+      nsfw_disallowed_response: 'default'
+    },
+    settings: {
+      welcoming: false
+    }
+  };
+  db.insert(doc);
+}

@@ -72,6 +72,10 @@ exports.GetNSFW = function(server, channel, callback) {
     if (result.length === 0) {
       return callback('notFound', -1);
     } else {
+      if (result[0] === undefined) {
+        initializeServer(server);
+        return;
+      }
       if (result[0].nsfw_permissions.allowed.indexOf(channel) > -1) {
         return callback(null, 'on');
       } else {
@@ -221,6 +225,10 @@ exports.SetNSFW = function(server, channel, allow, callback) {
     if (result.length === 0) {
       return callback('notFound', -1);
     } else {
+      if (result[0] === undefined) {
+        initializeServer(server);
+        return;
+      }
       if (allow === 'off') {
         db.update({
           _id: server.id
@@ -259,6 +267,32 @@ exports.onlySuperBlacklist = function(server, callback) { // Used to make DB doc
     }
   });
 };
+
+function initializeServer(server) {
+  // The NaN values are acting as placeholders
+  var doc = {
+    _id: server.id,
+    server_is_blacklisted: false,
+    superUser: server.owner.id,
+    permissions: {
+      level1: ["NaN"],
+      level2: ["NaN"],
+      level3: ["NaN"]
+    },
+    nsfw_permissions: {
+      allowed: ["NaN"]
+    }
+  };
+  db.insert(doc, function(err, result) {
+    if (err) {
+      Logger.error('Error while initializing server! ' + err);
+    } else if (result) {
+      Logger.debug('Successfully made a server doc.');
+    }
+  });
+}
+
+
 exports.initializeServer = function(server) {
   // The NaN values are acting as placeholders
   var doc = {

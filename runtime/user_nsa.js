@@ -41,7 +41,7 @@ function trackNewUser(user) { // Most of the time, this function does not need t
       Logger.debug('Sucess making an UserDB doc');
     }
   });
-};
+}
 
 exports.handleNamechange = function(user) {
   db.find({
@@ -50,9 +50,13 @@ exports.handleNamechange = function(user) {
     if (err) {
       Logger.error('Error handing namechange! ' + err);
     }
-    if (!result) {
+    if (result.length === 0) {
       trackNewUser(user);
     } else {
+      if (result[0] === undefined) {
+        trackNewUser(user);
+        return;
+      }
       if (result[0].known_names.length > 20) {
         db.update({
           _id: user.id
@@ -80,10 +84,14 @@ exports.returnNamechanges = function(user, callback) {
     if (err) {
       Logger.error('Error checking user knowledge! ' + err);
     }
-    if (!result) {
+    if (result.length === 0) {
       trackNewUser(user);
       return callback('notfound', -1);
     } else {
+      if (result[0] === undefined) {
+        trackNewUser(user);
+        return;
+      }
       return callback(null, result[0].known_names);
     }
   });
@@ -96,7 +104,7 @@ exports.checkIfKnown = function(user) {
     if (err) {
       Logger.error('Error checking user knowledge! ' + err);
     }
-    if (!result) {
+    if (result.length === 0) {
       trackNewUser(user);
     } else {
       return; // User is known, so exit the function
