@@ -210,55 +210,6 @@ exports.setSuperBlacklist = function(what, server, callback) {
   }
 };
 
-exports.setNormalBlacklist = function(what, server, channel, user, callback) {
-  what = what.split(' ');
-  if (what[0] === 'user') {
-    if (what[1] === 'add') {
-      db.update({
-        _id: server.id
-      }, {
-        $push: {
-          'blacklists.users': user.id
-        }
-      }, {}, function() {
-        return callback(null, 1);
-      });
-    } else if (what[1] === 'remove') {
-      db.update({
-        _id: server.id
-      }, {
-        $pull: {
-          'blacklists.users': user.id
-        }
-      }, {}, function() {
-        return callback(null, 1);
-      });
-    }
-  }
-  if (what[0] === 'channel') {
-    if (what[1] === 'add') {
-      db.update({
-        _id: server.id
-      }, {
-        $push: {
-          'blacklists.channels': channel.id
-        }
-      }, {}, function() {
-        return callback(null, 1);
-      });
-    } else if (what[1] === 'remove') {
-      db.update({
-        _id: server.id
-      }, {
-        $pull: {
-          'blacklists.channels': channel.id
-        }
-      }, {}, function() {
-        return callback(null, 1);
-      });
-    }
-  }
-};
 
 exports.SetNSFW = function(server, channel, allow, callback) {
   db.find({
