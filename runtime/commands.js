@@ -580,24 +580,49 @@ Commands.whois = {
       return;
     }
     msg.mentions.map(function(user) {
-      Permissions.GetLevel(msg.channel.server, user.id, function(err, level) {
+      Permissions.GetLevel((msg.channel.server.id + user.id), user.id, function(err, level) {
         if (err) {
           return;
         } else {
           UserLevel = level;
         }
         var msgArray = [];
-        msgArray.push("Information requested by " + msg.sender);
-        msgArray.push("Requested user: `" + user.username + "`");
-        msgArray.push("ID: `" + user.id + "`");
-        msgArray.push("Discriminator: `#" + user.discriminator + "`");
-        msgArray.push("Status: `" + user.status + "`");
-        if (user.avatarURL !== null) {
-          msgArray.push("Avatar: " + user.avatarURL);
-        }
-        msgArray.push("Current access level: " + UserLevel);
-        bot.sendMessage(msg.channel, msgArray);
-      });
+          if (!user.game) {
+            msgArray.push("Information requested by " + msg.sender);
+            msgArray.push("Requested user: `" + user.username + "`");
+            msgArray.push("ID: `" + user.id + "`");
+            msgArray.push("Discriminator: `#" + user.discriminator + "`");
+            msgArray.push("Status: `" + user.status + "`");
+            msgArray.push("Avatar: " + user.avatarURL);
+            msgArray.push("Current access level: " + UserLevel);
+            bot.sendMessage(msg.channel, msgArray);
+          } else if (!user.avatarURL, !user.game) {
+            msgArray.push("Requested user: `" + user.username + "`");
+            msgArray.push("ID: `" + user.id + "`");
+            msgArray.push("Discriminator: `#" + user.discriminator + "`");
+            msgArray.push("Status: `" + user.status + "`");
+            msgArray.push("Current access level: " + UserLevel);
+            bot.sendMessage(msg.channel, msgArray);
+          } else if (!user.avatarURL) {
+            msgArray.push("Requested user: `" + user.username + "`");
+            msgArray.push("ID: `" + user.id + "`");
+            msgArray.push("Discriminator: `#" + user.discriminator + "`");
+            msgArray.push("Status: `" + user.status + "` and playing `" + user.game.name + "`");
+            msgArray.push("Current access level: " + UserLevel);
+            bot.sendMessage(msg.channel, msgArray);
+            return;
+          } else {
+            msgArray.push("Information requested by " + msg.sender);
+            msgArray.push("Requested user: `" + user.username + "`");
+            msgArray.push("ID: `" + user.id + "`");
+            msgArray.push("Discriminator: `#" + user.discriminator + "`");
+            msgArray.push("Status: `" + user.status + "` and playing `" + user.game.name + "`");
+            msgArray.push("Status: `" + user.status + "`");
+            msgArray.push("Avatar: " + user.avatarURL);
+            msgArray.push("Current access level: " + UserLevel);
+            bot.sendMessage(msg.channel, msgArray);
+          }
+        });
     });
   }
 };
