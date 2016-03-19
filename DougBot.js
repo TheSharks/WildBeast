@@ -143,7 +143,6 @@ bot.on("message", function(msg) {
         if (level >= Commands[command].level) {
           if (Commands[command].music) {
             DJ.checkPerms(msg.channel.server, msg.sender).then(function() {
-              console.log('dj');
               Commands[command].fn(bot, msg, suffix);
               return;
             }).catch(function(e) {
@@ -154,8 +153,7 @@ bot.on("message", function(msg) {
                 bot.sendMessage(msg.channel, "Something went wrong, try again.");
               }
             });
-          }
-          if (Commands[command].nsfw) {
+          } else if (Commands[command].nsfw) {
             Permissions.GetNSFW(msg.channel.server, msg.channel.id).then(function() {
               console.log('nsfw');
               Commands[command].fn(bot, msg, suffix);
