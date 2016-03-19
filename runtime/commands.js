@@ -619,13 +619,12 @@ Commands.setlevel = {
       bot.reply(msg, "please mention the user(s) you want to set the permission level of.");
       return;
     }
-    Permissions.GetLevel(msg.channel.server, msg.author.id).then(function() {
+    Permissions.GetLevel(msg.channel.server, msg.author.id).then(function(level) {
       if (suffix[0] > level) { // TODO: Does not always work
         bot.reply(msg, "you can't set a user's permissions higher than your own!");
         return;
       }
     }).catch(function(e) {
-      console.log(e);
       bot.sendMessage(msg.channel, "Help! Something went wrong!");
       return;
     });
@@ -633,9 +632,8 @@ Commands.setlevel = {
       Permissions.SetLevel(msg.channel.server, user.id, suffix[0]).then(function() {
         bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
       }).catch(function(e) {
-          console.log(e);
-          bot.sendMessage(msg.channel, "Help! Something went wrong!");
-          return;
+        bot.sendMessage(msg.channel, "Help! Something went wrong!");
+        return;
       });
     });
   }
