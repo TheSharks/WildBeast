@@ -1,16 +1,27 @@
 {
   "name": "WildBeast",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A Discord bot",
   "readme": "README.md",
   "maintainers": [
-    "Perpetucake (Perpetucake@wildbeast.space)",
-    "Mirrorbreak (Mirrow@wildbeast.space)"
+    "Perpetucake <Perpetucake@wildbeast.space>",
+    "Mirrorbreak <Mirrow@wildbeast.space>"
   ],
-  "author": "Remco Jongschaap (Dougley@wildbeast.space)",
+  "author": {
+    "name": "Remco Jongschaap",
+    "email": "Hello@dougley.ovh",
+    "url": "http://dougley.ovh"
+  },
+  "bugs": {
+    "url": "https://github.com/SteamingMutt/WildBeast/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SteamingMutt/WildBeast.git"
+  },
+  "engines": {
+    "node": "^5.x.x",
+    "npm" : ">=3.x.x"
   },
   "license": "GPL-3.0",
   "dependencies": {
