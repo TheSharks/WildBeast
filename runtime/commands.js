@@ -624,18 +624,18 @@ Commands.setlevel = {
         bot.reply(msg, "you can't set a user's permissions higher than your own!");
         return;
       }
-    }).catch(function() {
+    }).catch(function(e) {
+      console.log(e);
       bot.sendMessage(msg.channel, "Help! Something went wrong!");
       return;
     });
     msg.mentions.map(function(user) {
       Permissions.SetLevel(msg.channel.server, user.id, suffix[0]).then(function() {
         bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
-      }).catch(function() {
-        if (err) {
+      }).catch(function(e) {
+          console.log(e);
           bot.sendMessage(msg.channel, "Help! Something went wrong!");
           return;
-        }
       });
     });
   }
