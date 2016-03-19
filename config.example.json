@@ -17,6 +17,7 @@
         "help_mode": "private",
         "log_chat": false,
         "music_timeouts": false,
+        "namechange_log": true,
         "disable_music_commands": false,
         "verbose_logging": false,
         "debug_mode": false,
