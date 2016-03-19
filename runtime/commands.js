@@ -306,14 +306,14 @@ Commands.customize = {
         bot.sendMessage(msg.channel, "Welcoming can either be `on` or `off`!");
         return;
       }
-      Customize.handle(suffix, msg.channel.server).catch(function(err) {
+      Customize.handle(suffix, msg.channel.server).then(function(reply) {
+        bot.sendMessage(msg, "Sucessfully saved customization settings!");
+      }).catch(function(err) {
         if (err === 'Not supported!') {
           bot.reply(msg, "I don't support that!");
         } else {
           bot.sendMessage(msg, "Something went wrong, try again.");
         }
-      }).then(function(reply) {
-        bot.sendMessage(msg, "Sucessfully saved customization settings!");
       });
     } else {
       bot.reply(msg, "I don't support that!");
