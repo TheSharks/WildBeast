@@ -216,7 +216,7 @@ function playlistPlay(bot, message) {
       if (playlistid[0] === undefined) {
         bot.sendMessage(message.channel, "The playlist is finished, destroying voice connection.");
         bot.setStatus("online", null);
-        bot.voiceConnection.destroy();
+        bot.leaveVoiceChannel();
         boundChannel = false;
         stream = false;
         playlistid = [];
