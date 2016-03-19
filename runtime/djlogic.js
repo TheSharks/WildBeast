@@ -58,12 +58,12 @@ exports.playlistAdd = function(bot, message, suffix) {
     return;
   }
   if (!bot.voiceConnection) {
-    bot.reply(message, "Not in voice right now.");
+    bot.reply(message, "not in voice right now.");
     return;
   }
   if (!message.channel.equals(boundChannel)) return;
   if (playlistid.length === 20) {
-    bot.reply(message, "The playlist is full, sorry.");
+    bot.reply(message, "the playlist is full, sorry.");
     return;
   }
   if (Config.bot_settings.music_timeouts === true) {
