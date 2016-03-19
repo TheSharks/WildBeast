@@ -224,23 +224,21 @@ bot.on("message", function(msg) {
           Logger.error(e);
         }
       });
-    } else {
-      Logger.error(e);
-    }
-  } else if (msg.channel.isPrivate) {
-    if (Commands[command].music) {
-      bot.sendMessage(msg.channel, "You can't use music commands in DM!");
-      return;
-    }
-    Permissions.GetLevel(null, msg.sender).then(function(level) {
-      if (level >= Commands[command].level) {
-        Commands[command].fn(bot, msg, suffix);
-      } else {
-        bot.sendMessage(msg.channel, "You don't have enough global permissions to execute this in DM.");
+    } else if (msg.channel.isPrivate) {
+      if (Commands[command].music) {
+        bot.sendMessage(msg.channel, "You can't use music commands in DM!");
+        return;
       }
-    }).catch(function(e) {
-      Logger.error(e);
-    });
+      Permissions.GetLevel(null, msg.sender).then(function(level) {
+        if (level >= Commands[command].level) {
+          Commands[command].fn(bot, msg, suffix);
+        } else {
+          bot.sendMessage(msg.channel, "You don't have enough global permissions to execute this in DM.");
+        }
+      }).catch(function(e) {
+        Logger.error(e);
+      });
+    }
   }
 });
 

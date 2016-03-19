@@ -591,9 +591,9 @@ Commands.whois = {
         }
         msgArray.push("Current access level: " + UserLevel);
         bot.sendMessage(msg.channel, msgArray);
+      }).catch(function() {
+        bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
       });
-    }).catch(function() {
-      bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
     });
   }
 };
