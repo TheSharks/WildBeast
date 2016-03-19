@@ -262,8 +262,8 @@ function init(token) {
 
 // New user welcomer
 bot.on("serverNewMember", function(server, user) {
-  UserDB.checkIfKnown(msg.sender).catch(function() {
-    UserDB.trackNewUser(msg.sender).catch(function(e) {
+  UserDB.checkIfKnown(user).catch(function() {
+    UserDB.trackNewUser(user).catch(function(e) {
       Logger.error(e);
     });
   });
