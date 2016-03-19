@@ -619,23 +619,23 @@ Commands.setlevel = {
       bot.reply(msg, "please mention the user(s) you want to set the permission level of.");
       return;
     }
-    Permissions.GetLevel(msg.channel.server, msg.author.id).catch(function() {
-      bot.sendMessage(msg.channel, "Help! Something went wrong!");
-      return;
-    }).then(function() {
+    Permissions.GetLevel(msg.channel.server, msg.author.id).then(function() {
       if (suffix[0] > level) { // TODO: Does not always work
         bot.reply(msg, "you can't set a user's permissions higher than your own!");
         return;
       }
+    }).catch(function() {
+      bot.sendMessage(msg.channel, "Help! Something went wrong!");
+      return;
     });
     msg.mentions.map(function(user) {
-      Permissions.SetLevel(msg.channel.server, user.id, suffix[0]).catch(function() {
+      Permissions.SetLevel(msg.channel.server, user.id, suffix[0]).then(function() {
+        bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
+      }).catch(function() {
         if (err) {
           bot.sendMessage(msg.channel, "Help! Something went wrong!");
           return;
         }
-      }).then(function() {
-        bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
       });
     });
   }
@@ -652,9 +652,7 @@ Commands.setnsfw = {
       return;
     }
     if (suffix === "on" || suffix === "off") {
-      Permissions.SetNSFW(msg.channel.server, msg.channel.id, suffix).catch(function() {
-        bot.reply(msg.channel, "I've failed to set NSFW flag!");
-      }).then(function(allow) {
+      Permissions.SetNSFW(msg.channel.server, msg.channel.id, suffix).then(function(allow) {
         if (allow === "on") {
           bot.sendMessage(msg.channel, "NSFW commands are now allowed for " + msg.channel);
         } else if (allow === "off") {
@@ -662,6 +660,8 @@ Commands.setnsfw = {
         } else {
           bot.reply(msg.channel, "I've failed to set NSFW flag!");
         }
+      }).catch(function() {
+        bot.reply(msg.channel, "I've failed to set NSFW flag!");
       });
     } else {
       bot.sendMessage(msg.channel, 'Use either `on` or `off` as suffix!');
