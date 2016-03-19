@@ -267,15 +267,7 @@ bot.on("serverNewMember", function(server, user) {
       Logger.error(e);
     });
   });
-  Customize.checkWelcoming(server).catch(function(e) {
-    if (e === 'Welcoming turned off.') {
-      return;
-    } else if (e === 'Not found!') {
-      Customize.initializeServer(server).catch(function(e) {
-        Logger.error(e);
-      });
-    }
-  }).then(function(r) {
+  Customize.checkWelcoming(server).then(function(r) {
     if (r === 'default') {
       bot.sendMessage(server.defaultChannel, "Welcome " + user.username + " to **" + server.name + "**!");
     } else {
@@ -283,6 +275,14 @@ bot.on("serverNewMember", function(server, user) {
       var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
       var final = serverstep.replace(/%channel/, msg.channel);
       bot.sendMessage(msg.channel, final);
+    }
+  }).catch(function(e) {
+    if (e === 'Welcoming turned off.') {
+      return;
+    } else if (e === 'Not found!') {
+      Customize.initializeServer(server).catch(function(e) {
+        Logger.error(e);
+      });
     }
   });
 });
