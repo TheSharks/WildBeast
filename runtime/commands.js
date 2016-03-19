@@ -716,14 +716,14 @@ Commands.namechanges = {
   fn: function(bot, msg, suffix) {
     msg.mentions.map(function(user) {
       var UserDB = require('./user_nsa.js');
-      UserDB.returnNamechanges(user).catch(function(err) {
+      UserDB.returnNamechanges(user).then(function(reply) {
+        bot.sendMessage(msg.channel, reply.join(', '));
+      }).catch(function(err) {
         if (err === 'No changes!') {
           bot.sendMessage(msg.channel, "I don't have any changes registered.");
           return;
         }
         bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
-      }).then(function(reply) {
-        bot.sendMessage(msg.channel, reply.join(', '));
       });
     });
   }
