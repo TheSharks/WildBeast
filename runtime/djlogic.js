@@ -70,7 +70,9 @@ exports.playlistAdd = function(bot, message, suffix) {
     time = setTimeout(function() {
       if (!bot.voiceConnection || !bot.voiceConnection.playing) {
         bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
-        bot.leaveVoiceChannel();
+        if (bot.voiceConnection) {
+          bot.leaveVoiceChannel();
+        }
         playlistid = [];
         playlistinfo = [];
         playlistuser = [];
@@ -269,16 +271,24 @@ exports.expSkip = function(bot, message) {
 };
 
 exports.checkPerms = function(server, author, callback) {
-  if (Config.permissions.masterUser.indexOf(author.id) > -1) {
-    return callback(null, 1);
-  }
-  var array = server.rolesOfUser(author);
-  for (i = 0; i < array.length; i++) {
-    if (array[i].name === "Radio Master") {
-      return callback(null, 1);
+  return new Promise(function(resolve, reject) {
+    try {
+      if (Config.permissions.masterUser.indexOf(author.id) > -1) {
+        resolve(1);
+        return;
+      }
+      var array = server.rolesOfUser(author);
+      for (i = 0; i < array.length; i++) {
+        if (array[i].name === "Radio Master") {
+          resolve(1);
+          return;
+        }
+      }
+      throw new Error('No permission');
+    } catch (e) {
+      reject(e);
     }
-  }
-  return callback(null, 0);
+  });
 };
 
 exports.stopPlaying = function(bot, message) {

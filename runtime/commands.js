@@ -293,7 +293,7 @@ Commands.customize = {
   name: "customize",
   help: "Change almost everything about my behaviour in this server!",
   usage: "<method> <change_to>",
-  methods: ["welcoming", "welcome_message", "no_permission_response", "nswf_disallowed_response"],
+  methods: ["welcoming", "welcome_message", "no_permission_response", "nsfw_disallowed_response"],
   vars: ["%user", "%channel", "%server"],
   level: 3,
   fn: function(bot, msg, suffix) {
@@ -306,16 +306,14 @@ Commands.customize = {
         bot.sendMessage(msg.channel, "Welcoming can either be `on` or `off`!");
         return;
       }
-      Customize.handle(suffix, msg.channel.server, function(err, reply) {
-        if (err) {
-          if (err === 'notSupported') {
-            bot.reply(msg, "I don't support that!");
-          } else {
-            bot.sendMessage(msg, "Something went wrong, try again.");
-          }
-        } else if (reply) {
-          bot.sendMessage(msg, "Sucessfully saved customization settings!");
+      Customize.handle(suffix, msg.channel.server).catch(function(err) {
+        if (err === 'Not supported!') {
+          bot.reply(msg, "I don't support that!");
+        } else {
+          bot.sendMessage(msg, "Something went wrong, try again.");
         }
+      }).then(function(reply) {
+        bot.sendMessage(msg, "Sucessfully saved customization settings!");
       });
     } else {
       bot.reply(msg, "I don't support that!");
@@ -570,7 +568,7 @@ Commands.whois = {
   help: "I'll get some information about the user you've mentioned.",
   level: 0,
   fn: function(bot, msg) {
-    var UserLevel = 0;
+    var UserLevel;
     if (!msg.channel.server) {
       bot.sendMessage(msg.author, "I can't do that in a DM, sorry.");
       return;
@@ -580,12 +578,8 @@ Commands.whois = {
       return;
     }
     msg.mentions.map(function(user) {
-      Permissions.GetLevel(msg.channel.server, user.id, function(err, level) {
-        if (err) {
-          return;
-        } else {
-          UserLevel = level;
-        }
+      Permissions.GetLevel(msg.channel.server, user.id).then(function(level) {
+        UserLevel = level;
         var msgArray = [];
         msgArray.push("Information requested by " + msg.sender);
         msgArray.push("Requested user: `" + user.username + "`");
@@ -598,6 +592,8 @@ Commands.whois = {
         msgArray.push("Current access level: " + UserLevel);
         bot.sendMessage(msg.channel, msgArray);
       });
+    }).catch(function() {
+      bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
     });
   }
 };
@@ -623,25 +619,25 @@ Commands.setlevel = {
       bot.reply(msg, "please mention the user(s) you want to set the permission level of.");
       return;
     }
-    Permissions.GetLevel(msg.channel.server, msg.author.id, function(err, level) {
-      if (err) {
-        bot.sendMessage(msg.channel, "Help! Something went wrong!");
-        return;
-      }
+    Permissions.GetLevel(msg.channel.server, msg.author.id).catch(function() {
+      bot.sendMessage(msg.channel, "Help! Something went wrong!");
+      return;
+    }).then(function() {
       if (suffix[0] > level) { // TODO: Does not always work
         bot.reply(msg, "you can't set a user's permissions higher than your own!");
         return;
       }
     });
     msg.mentions.map(function(user) {
-      Permissions.SetLevel(msg.channel.server, user.id, suffix[0], function(err, level) {
+      Permissions.SetLevel(msg.channel.server, user.id, suffix[0]).catch(function() {
         if (err) {
           bot.sendMessage(msg.channel, "Help! Something went wrong!");
           return;
         }
+      }).then(function() {
+        bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
       });
     });
-    bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
   }
 };
 
@@ -656,10 +652,9 @@ Commands.setnsfw = {
       return;
     }
     if (suffix === "on" || suffix === "off") {
-      Permissions.SetNSFW(msg.channel.server, msg.channel.id, suffix, function(err, allow) {
-        if (err) {
-          bot.reply(msg.channel, "I've failed to set NSFW flag!");
-        }
+      Permissions.SetNSFW(msg.channel.server, msg.channel.id, suffix).catch(function() {
+        bot.reply(msg.channel, "I've failed to set NSFW flag!");
+      }).then(function(allow) {
         if (allow === "on") {
           bot.sendMessage(msg.channel, "NSFW commands are now allowed for " + msg.channel);
         } else if (allow === "off") {
@@ -668,6 +663,8 @@ Commands.setnsfw = {
           bot.reply(msg.channel, "I've failed to set NSFW flag!");
         }
       });
+    } else {
+      bot.sendMessage(msg.channel, 'Use either `on` or `off` as suffix!');
     }
   }
 };
@@ -719,12 +716,14 @@ Commands.namechanges = {
   fn: function(bot, msg, suffix) {
     msg.mentions.map(function(user) {
       var UserDB = require('./user_nsa.js');
-      UserDB.returnNamechanges(user, function(err, reply) {
-        if (err) {
-          bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
-        } else if (reply) {
-          bot.sendMessage(msg.channel, reply.join(', '));
+      UserDB.returnNamechanges(user).catch(function(err) {
+        if (err === 'No changes!') {
+          bot.sendMessage(msg.channel, "I don't have any changes registered.");
+          return;
         }
+        bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
+      }).then(function(reply) {
+        bot.sendMessage(msg.channel, reply.join(', '));
       });
     });
   }
@@ -818,6 +817,11 @@ Commands.rule34 = {
           return;
         } else {
           xml2js.parseString(result.body, function(err, reply) {
+            if (err) {
+              bot.sendMessage(msg.channel, 'The API returned an unconventional response.');
+              bot.stopTyping(msg.channel);
+              return;
+            }
             var count = Math.floor((Math.random() * reply.posts.post.length));
             var FurryArray = [];
             FurryArray.push(msg.sender + ", you've searched for `" + suffix + "`"); // hehe no privacy if you do the nsfw commands now.

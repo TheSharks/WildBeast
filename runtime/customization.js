@@ -9,130 +9,148 @@ var db = new Datastore({
 
 db.persistence.setAutocompactionInterval(30000);
 
-exports.checkWelcoming = function(server, callback) {
-  db.find({
-    _id: server.id
-  }, function(err, result) {
-    if (err) {
-      return callback(err, null, -1);
-    }
-    if (result.length === 0) {
-      return callback('notFound', null, -1);
-    } else {
-      if (result[0].settings.welcoming === true) {
-        return callback(null, result[0].responses.welcome_message, true);
-      } else {
-        return callback(null, null, false);
-      }
+exports.checkWelcoming = function(server) {
+  return new Promise(function(resolve, reject) {
+    try {
+      db.find({
+        _id: server.id
+      }, function(err, result) {
+        if (err) {
+          throw new Error(err);
+        }
+        if (result.length === 0) {
+          throw new Error('Nothing found!');
+        } else {
+          if (result[0].settings.welcoming === true) {
+            resolve(result[0].responses.welcome_message);
+          } else {
+            throw new Error('Welcoming turned off.');
+          }
+        }
+      });
+    } catch (e) {
+      reject(e);
     }
   });
 };
 
-exports.replyCheck = function(what, server, callback) {
-  db.find({
-    _id: server.id
-  }, function(err, result) {
-    if (err) {
-      return callback(err, -1);
-    }
-    if (result.length === 0) {
-      return callback('notFound', -1);
-    } else {
-      if (result[0] === undefined) {
-        initializeServer(server);
-      }
-      if (what === 'no_permission_response') {
-        return callback(null, result[0].responses.no_permission_response);
-      } else if (what === 'nsfw_disallowed_response') {
-        return callback(null, result[0].responses.nsfw_disallowed_response);
-      } else if (what === 'not_usable_response') {
-        return callback(null, result[0].responses.not_usable_response);
-      }
+exports.replyCheck = function(what, server) {
+  return new Promise(function(resolve, reject) {
+    try {
+      db.find({
+        _id: server.id
+      }, function(err, result) {
+        if (err) {
+          throw new Error(err);
+        }
+        if (result.length === 0) {
+          throw new Error('Nothing found!');
+        } else {
+          if (result[0] === undefined) {
+            throw new Error('Nothing found!');
+          }
+          if (what === 'no_permission_response') {
+            resolve(result[0].responses.no_permission_response);
+          } else if (what === 'nsfw_disallowed_response') {
+            resolve(result[0].responses.nsfw_disallowed_response);
+          } else if (what === 'not_usable_response') {
+            resolve(result[0].responses.not_usable_response);
+          }
+        }
+      });
+    } catch (e) {
+      reject(e);
     }
   });
 };
 
-exports.handle = function(what, server, callback) {
-  db.find({
-    _id: server.id
-  }, function(err, result) {
-    if (err) {
-      return callback(err, -1);
-    }
-    if (result.length === 0) {
-      return callback('notFound', -1);
-    } else {
-      var what1 = what.split(' ');
-      if (what1[0] === 'welcome_message') {
-        var what2 = what1.slice(1, what1.length);
-        db.update({
-          _id: server.id
-        }, {
-          $set: {
-            'responses.welcome_message': what2.join(' ')
-          }
-        }, {}, function() {
-          return callback(null, 1);
-        });
-      } else if (what1[0] === 'no_permission_response') {
-        var what2 = what1.slice(1, what1.length);
-        db.update({
-          _id: server.id
-        }, {
-          $set: {
-            'responses.no_permission_response': what2.join(' ')
-          }
-        }, {}, function() {
-          return callback(null, 1);
-        });
-      } else if (what1[0] === 'nsfw_disallowed_response') {
-        var what2 = what1.slice(1, what1.length);
-        db.update({
-          _id: server.id
-        }, {
-          $set: {
-            'responses.nsfw_disallowed_response': what2.join(' ')
-          }
-        }, {}, function() {
-          return callback(null, 1);
-        });
-      } else if (what1[0] === 'not_usable_response') {
-        var what2 = what1.slice(1, what1.length);
-        db.update({
-          _id: server.id
-        }, {
-          $set: {
-            'responses.not_usable_response': what2.join(' ')
-          }
-        }, {}, function() {
-          return callback(null, 1);
-        });
-      } else if (what1[0] === 'welcoming') {
-        if (what1[1] === 'off') {
-          db.update({
-            _id: server.id
-          }, {
-            $set: {
-              'settings.welcoming': false
-            }
-          }, {}, function() {
-            return callback(null, 1);
-          });
+exports.handle = function(what, server) {
+  return new Promise(function(resolve, reject) {
+    try {
+      db.find({
+        _id: server.id
+      }, function(err, result) {
+        if (err) {
+          throw new Error(err);
         }
-        if (what1[1] === 'on') {
-          db.update({
-            _id: server.id
-          }, {
-            $set: {
-              'settings.welcoming': true
+        if (result.length === 0) {
+          throw new Error('Nothing found!');
+        } else {
+          var what1 = what.split(' ');
+          if (what1[0] === 'welcome_message') {
+            var what2 = what1.slice(1, what1.length);
+            db.update({
+              _id: server.id
+            }, {
+              $set: {
+                'responses.welcome_message': what2.join(' ')
+              }
+            }, {}, function() {
+              resolve('Success.');
+            });
+          } else if (what1[0] === 'no_permission_response') {
+            var what2 = what1.slice(1, what1.length);
+            db.update({
+              _id: server.id
+            }, {
+              $set: {
+                'responses.no_permission_response': what2.join(' ')
+              }
+            }, {}, function() {
+              resolve('Success.');
+            });
+          } else if (what1[0] === 'nsfw_disallowed_response') {
+            var what2 = what1.slice(1, what1.length);
+            db.update({
+              _id: server.id
+            }, {
+              $set: {
+                'responses.nsfw_disallowed_response': what2.join(' ')
+              }
+            }, {}, function() {
+              resolve('Success.');
+            });
+          } else if (what1[0] === 'not_usable_response') {
+            var what2 = what1.slice(1, what1.length);
+            db.update({
+              _id: server.id
+            }, {
+              $set: {
+                'responses.not_usable_response': what2.join(' ')
+              }
+            }, {}, function() {
+              resolve('Success.');
+            });
+          } else if (what1[0] === 'welcoming') {
+            if (what1[1] === 'off') {
+              db.update({
+                _id: server.id
+              }, {
+                $set: {
+                  'settings.welcoming': false
+                }
+              }, {}, function() {
+                resolve('Success.');
+              });
             }
-          }, {}, function() {
-            return callback(null, 1);
-          });
+            if (what1[1] === 'on') {
+              db.update({
+                _id: server.id
+              }, {
+                $set: {
+                  'settings.welcoming': true
+                }
+              }, {}, function() {
+                resolve('Success.');
+              });
+            }
+          } else {
+            throw new Error('Not supported!');
+          }
         }
-      } else {
-        return callback('notSupported', -1);
-      }
+      });
+    } catch (e) {
+      reject(e);
     }
   });
 };
@@ -161,20 +179,9 @@ exports.initializeServer = function(server) {
       welcoming: false
     }
   };
-  db.insert(doc);
+  try {
+    db.insert(doc);
+  } catch (e) {
+    Logger.warn('Server initializing failed! ' + e);
+  }
 };
-
-function initializeServer(server) {
-  var doc = {
-    _id: server.id,
-    responses: {
-      welcome_message: 'default',
-      no_permission_response: 'default',
-      nsfw_disallowed_response: 'default'
-    },
-    settings: {
-      welcoming: false
-    }
-  };
-  db.insert(doc);
-}
