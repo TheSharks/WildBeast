@@ -20,7 +20,6 @@ Commands.ping = {
   name: "ping",
   help: "I'll reply to you with pong!",
   level: 0,
-  timeout: 10,
   fn: function(bot, msg) {
     bot.reply(msg, "Pong!"); // Easy for moderation
   }
@@ -70,7 +69,6 @@ Commands.stream = {
 Commands.nowplaying = { // TODO: Make unique per server
   name: "nowplaying",
   help: "Returns what video is currently playing.",
-  music: true,
   level: 0,
   fn: function(bot, msg) {
     DJ.returnNowPlaying(bot, msg);
@@ -102,16 +100,6 @@ Commands.playlist = { // TODO: Make unique per server
   level: 0,
   fn: function(bot, msg) {
     DJ.playlistFetch(bot, msg);
-  }
-};
-
-Commands.playliststart = { // TODO: Try to retire this function, and instead start the playlist after a certain timeframe
-  name: "playliststart",
-  help: "Starts the playlist!",
-  music: true,
-  level: 0,
-  fn: function(bot, msg) {
-    DJ.startPlaylist(bot, msg);
   }
 };
 

@@ -13,6 +13,7 @@ var Discord = require("discord.js"),
   pretime,
   counter = 0,
   playlistid = [],
+  status = null,
   vidarray = [],
   playlistinfo = [],
   playlistuser = [],
@@ -38,21 +39,27 @@ exports.joinVoice = function(bot, message) {
       }
     }
   }
+  bot.voiceConnection.playFile('./music/waitmusic.mp3'); // Play waitng music because why not
+  status = 'Waitng';
   if (Config.bot_settings.music_timeouts === true) {
-    bot.sendMessage(boundChannel, "If nothing happens in 15 seconds, the voice connection is destroyed.");
-    pretime = setTimeout(function() {
-      bot.sendMessage(boundChannel, "Times up! Destroying voice connection...");
-      bot.leaveVoiceChannel();
-      boundChannel = false;
-      stream = false;
-    }, 15000);
+    time = setTimeout(function() {
+      if (!bot.voiceConnection || !bot.voiceConnection.playing) {
+        bot.sendMessage(message.channel, "The waiting music has ended, but the playlist has not been started, destroying connection.");
+        if (bot.voiceConnection) {
+          bot.leaveVoiceChannel();
+        }
+        playlistid = [];
+        playlistinfo = [];
+        playlistuser = [];
+        boundChannel = false;
+        stream = false;
+        return;
+      }
+    }, 186000);
   }
 };
 
 exports.playlistAdd = function(bot, message, suffix) {
-  if (Config.bot_settings.music_timeouts === true) {
-    clearTimeout(pretime);
-  }
   if (Config.bot_settings.disable_music_commands === true) {
     bot.reply(message, "music commands are disabled.");
     return;
@@ -65,22 +72,6 @@ exports.playlistAdd = function(bot, message, suffix) {
   if (playlistid.length === 20) {
     bot.reply(message, "the playlist is full, sorry.");
     return;
-  }
-  if (Config.bot_settings.music_timeouts === true) {
-    time = setTimeout(function() {
-      if (!bot.voiceConnection || !bot.voiceConnection.playing) {
-        bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
-        if (bot.voiceConnection) {
-          bot.leaveVoiceChannel();
-        }
-        playlistid = [];
-        playlistinfo = [];
-        playlistuser = [];
-        boundChannel = false;
-        stream = false;
-        return;
-      }
-    }, 120000);
   }
   if (!suffix) {
     bot.sendMessage(message.channel, "Please specify a video ID!");
@@ -131,7 +122,14 @@ exports.playlistAdd = function(bot, message, suffix) {
             }
           });
         }
+        if (status === 'Waiting') {
+          playlistPlay(bot, message);
+          status = null;
+        }
         bot.reply(message, "done! Added " + counter + " videos to the queue!");
+        if (Config.bot_settings.music_timeouts === true) {
+          clearTimeout(time);
+        }
         counter = 0;
       }
     });
@@ -152,6 +150,13 @@ exports.playlistAdd = function(bot, message, suffix) {
         playlistinfo.push(info.title);
         playlistuser.push(message.author.username);
         bot.reply(message, "added **" + info.title + "** to play at position " + playlistid.length);
+        if (status === 'Waiting') {
+          playlistPlay(bot, message);
+          status = null;
+        }
+        if (Config.bot_settings.music_timeouts === true) {
+          clearTimeout(time);
+        }
       }
     });
   }
@@ -230,23 +235,6 @@ function playlistPlay(bot, message) {
   });
 }
 
-exports.startPlaylist = function(bot, message) {
-  if (Config.bot_settings.disable_music_commands === true) {
-    bot.reply(message, "music commands are disabled.");
-    return;
-  }
-  if (!bot.voiceConnection) {
-    bot.reply(message, "not in voice right now.");
-  }
-  if (!message.channel.equals(boundChannel)) return;
-  if (bot.voiceConnection.playing) {
-    bot.reply(message, "I'm already playing.");
-    return;
-  }
-  playlistPlay(bot, message);
-  bot.reply(message, "I have started the playlist.");
-};
-
 exports.expSkip = function(bot, message) {
   if (Config.bot_settings.disable_music_commands === true) {
     bot.reply(message, "music commands are disabled.");
@@ -284,7 +272,7 @@ exports.checkPerms = function(server, author, callback) {
           return;
         }
       }
-      throw new Error('No permission');
+      reject('No permission');
     } catch (e) {
       reject(e);
     }
