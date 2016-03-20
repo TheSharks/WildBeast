@@ -5,6 +5,7 @@ npm-debug.log*
 
 # UGC
 config.json
+music
 images
 runtime/databases
 runtime/alias.json
