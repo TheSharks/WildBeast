@@ -1145,7 +1145,11 @@ Commands.fact = {
       if (!error && response.statusCode == 200) {
         //Logger.log("debug", body)
         xml2js.parseString(body, function(err, result) {
-          bot.reply(msg, result.facts.fact[0]);
+          try {
+            bot.reply(msg, result.facts.fact[0]);
+          } catch (e) {
+            bot.sendMessage(msg.channel, "The API returned an unconventional response.");
+          }
         });
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
