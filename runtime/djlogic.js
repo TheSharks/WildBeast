@@ -29,6 +29,7 @@ exports.joinVoice = function(bot, message) {
   }
   if (boundChannel) return;
   var channelToJoin = spliceArguments(message.content)[1];
+  status = 'Waiting';
   for (var channel of message.channel.server.channels) {
     if (channel instanceof Discord.VoiceChannel) {
       if (!channelToJoin || channel.name === channelToJoin) {
@@ -39,8 +40,6 @@ exports.joinVoice = function(bot, message) {
       }
     }
   }
-  bot.voiceConnection.playFile('./music/waitmusic.mp3'); // Play waitng music because why not
-  status = 'Waitng';
   if (Config.bot_settings.music_timeouts === true) {
     time = setTimeout(function() {
       if (!bot.voiceConnection || !bot.voiceConnection.playing) {
@@ -57,6 +56,9 @@ exports.joinVoice = function(bot, message) {
       }
     }, 186000);
   }
+  setTimeout(function() {
+    bot.voiceConnection.playFile('./music/waitmusic.mp3'); // Play waitng music because why not
+  }, 500); // Wait a bit for the voiceConnection object to become avalible
 };
 
 exports.playlistAdd = function(bot, message, suffix) {
@@ -124,7 +126,6 @@ exports.playlistAdd = function(bot, message, suffix) {
         }
         if (status === 'Waiting') {
           playlistPlay(bot, message);
-          status = null;
         }
         bot.reply(message, "done! Added " + counter + " videos to the queue!");
         if (Config.bot_settings.music_timeouts === true) {
@@ -152,7 +153,6 @@ exports.playlistAdd = function(bot, message, suffix) {
         bot.reply(message, "added **" + info.title + "** to play at position " + playlistid.length);
         if (status === 'Waiting') {
           playlistPlay(bot, message);
-          status = null;
         }
         if (Config.bot_settings.music_timeouts === true) {
           clearTimeout(time);
