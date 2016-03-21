@@ -1,7 +1,9 @@
 // DougBot 2.0 beta
 // Define variables first
 var Discord = require("discord.js"),
-  bot = new Discord.Client(),
+  bot = new Discord.Client({
+    forceFetchUsers: true
+  }),
   pmx = require("pmx"),
   probe = pmx.probe(),
   usercount, channelcount, servercount, comcount, mescount, // PMX vars
@@ -130,7 +132,7 @@ bot.on("message", function(msg) {
   } else if (ConfigFile.bot_settings.cmd_prefix === "mention") {
     prefix = bot.user + " ";
   } else {
-    Debug.debuglogSomething("DougBot", "Weird prefix detected.", "warn");
+    Logger.warn("Weird prefix detected.");
   }
   var step = msg.content.substr(prefix.length);
   var chunks = step.split(" ");

@@ -126,6 +126,7 @@ exports.playlistAdd = function(bot, message, suffix) {
         }
         if (status === 'Waiting') {
           playlistPlay(bot, message);
+          status = null;
         }
         bot.reply(message, "done! Added " + counter + " videos to the queue!");
         if (Config.bot_settings.music_timeouts === true) {
@@ -153,6 +154,7 @@ exports.playlistAdd = function(bot, message, suffix) {
         bot.reply(message, "added **" + info.title + "** to play at position " + playlistid.length);
         if (status === 'Waiting') {
           playlistPlay(bot, message);
+          status = null;
         }
         if (Config.bot_settings.music_timeouts === true) {
           clearTimeout(time);
