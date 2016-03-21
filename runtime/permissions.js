@@ -44,10 +44,10 @@ exports.GetLevel = function(server, user) {
         _id: server.id
       }, function(err, result) {
         if (err) {
-          throw new Error(err);
+          return reject(err);
         }
         if (result.length === 0) {
-          throw new Error('Nothing found!');
+          return reject('Nothing found!');
         } else {
           if (result[0].superUser === user) {
             resolve(4);
@@ -75,16 +75,16 @@ exports.GetNSFW = function(server, channel) {
         _id: server.id
       }, function(err, result) {
         if (err) {
-          reject(err);
+          return reject(err);
         }
         if (result.length === 0) {
-          reject('Nothing found!');
+          return reject('Nothing found!');
         } else {
           if (result[0] === undefined) {
-            reject('Nothing found!');
+            return reject('Nothing found!');
           }
           if (result[0].nsfw_permissions.allowed.indexOf(channel) > -1) {
-            resolve('on');
+            return resolve('on');
           } else {
             return reject('No permission');
           }

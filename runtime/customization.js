@@ -16,15 +16,15 @@ exports.checkWelcoming = function(server) {
         _id: server.id
       }, function(err, result) {
         if (err) {
-          throw new Error(err);
+          return reject(err);
         }
         if (result.length === 0) {
-          throw new Error('Nothing found!');
+          return reject('Nothing found!');
         } else {
           if (result[0].settings.welcoming === true) {
             resolve(result[0].responses.welcome_message);
           } else {
-            throw new Error('Welcoming turned off.');
+            return reject('Welcoming turned off.');
           }
         }
       });
@@ -41,13 +41,13 @@ exports.replyCheck = function(what, server) {
         _id: server.id
       }, function(err, result) {
         if (err) {
-          throw new Error(err);
+          return reject(err);
         }
         if (result.length === 0) {
-          throw new Error('Nothing found!');
+          return reject('Nothing found!');
         } else {
           if (result[0] === undefined) {
-            throw new Error('Nothing found!');
+            return reject('Nothing found!');
           }
           if (what === 'no_permission_response') {
             resolve(result[0].responses.no_permission_response);
@@ -71,10 +71,10 @@ exports.handle = function(what, server) {
         _id: server.id
       }, function(err, result) {
         if (err) {
-          throw new Error(err);
+          return reject(err);
         }
         if (result.length === 0) {
-          throw new Error('Nothing found!');
+          return reject('Nothing found!');
         } else {
           var what1 = what.split(' ');
           if (what1[0] === 'welcome_message') {
@@ -145,7 +145,7 @@ exports.handle = function(what, server) {
               });
             }
           } else {
-            throw new Error('Not supported!');
+            return reject('Not supported!');
           }
         }
       });

@@ -20,7 +20,6 @@ Commands.ping = {
   name: "ping",
   help: "I'll reply to you with pong!",
   level: 0,
-  timeout: 10,
   fn: function(bot, msg) {
     bot.reply(msg, "Pong!"); // Easy for moderation
   }
@@ -70,7 +69,6 @@ Commands.stream = {
 Commands.nowplaying = { // TODO: Make unique per server
   name: "nowplaying",
   help: "Returns what video is currently playing.",
-  music: true,
   level: 0,
   fn: function(bot, msg) {
     DJ.returnNowPlaying(bot, msg);
@@ -102,16 +100,6 @@ Commands.playlist = { // TODO: Make unique per server
   level: 0,
   fn: function(bot, msg) {
     DJ.playlistFetch(bot, msg);
-  }
-};
-
-Commands.playliststart = { // TODO: Try to retire this function, and instead start the playlist after a certain timeframe
-  name: "playliststart",
-  help: "Starts the playlist!",
-  music: true,
-  level: 0,
-  fn: function(bot, msg) {
-    DJ.startPlaylist(bot, msg);
   }
 };
 
@@ -619,23 +607,21 @@ Commands.setlevel = {
       bot.reply(msg, "please mention the user(s) you want to set the permission level of.");
       return;
     }
-    Permissions.GetLevel(msg.channel.server, msg.author.id).then(function() {
+    Permissions.GetLevel(msg.channel.server, msg.author.id).then(function(level) {
       if (suffix[0] > level) { // TODO: Does not always work
         bot.reply(msg, "you can't set a user's permissions higher than your own!");
         return;
       }
-    }).catch(function() {
+    }).catch(function(e) {
       bot.sendMessage(msg.channel, "Help! Something went wrong!");
       return;
     });
     msg.mentions.map(function(user) {
       Permissions.SetLevel(msg.channel.server, user.id, suffix[0]).then(function() {
         bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
-      }).catch(function() {
-        if (err) {
-          bot.sendMessage(msg.channel, "Help! Something went wrong!");
-          return;
-        }
+      }).catch(function(e) {
+        bot.sendMessage(msg.channel, "Help! Something went wrong!");
+        return;
       });
     });
   }
@@ -1159,7 +1145,11 @@ Commands.fact = {
       if (!error && response.statusCode == 200) {
         //Logger.log("debug", body)
         xml2js.parseString(body, function(err, result) {
-          bot.reply(msg, result.facts.fact[0]);
+          try {
+            bot.reply(msg, result.facts.fact[0]);
+          } catch (e) {
+            bot.sendMessage(msg.channel, "The API returned an unconventional response.");
+          }
         });
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);

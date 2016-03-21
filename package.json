@@ -2,7 +2,7 @@
   "name": "WildBeast",
   "version": "2.1.0",
   "description": "A Discord bot",
-  "readme": "README.md",
+  "readme": "https://github.com/SteamingMutt/WildBeast/blob/master/README.md",
   "maintainers": [
     "Perpetucake <Perpetucake@wildbeast.space>",
     "Mirrorbreak <Mirrow@wildbeast.space>"

@@ -13,6 +13,7 @@ var Discord = require("discord.js"),
   pretime,
   counter = 0,
   playlistid = [],
+  status = null,
   vidarray = [],
   playlistinfo = [],
   playlistuser = [],
@@ -28,6 +29,7 @@ exports.joinVoice = function(bot, message) {
   }
   if (boundChannel) return;
   var channelToJoin = spliceArguments(message.content)[1];
+  status = 'Waiting';
   for (var channel of message.channel.server.channels) {
     if (channel instanceof Discord.VoiceChannel) {
       if (!channelToJoin || channel.name === channelToJoin) {
@@ -39,37 +41,9 @@ exports.joinVoice = function(bot, message) {
     }
   }
   if (Config.bot_settings.music_timeouts === true) {
-    bot.sendMessage(boundChannel, "If nothing happens in 15 seconds, the voice connection is destroyed.");
-    pretime = setTimeout(function() {
-      bot.sendMessage(boundChannel, "Times up! Destroying voice connection...");
-      bot.leaveVoiceChannel();
-      boundChannel = false;
-      stream = false;
-    }, 15000);
-  }
-};
-
-exports.playlistAdd = function(bot, message, suffix) {
-  if (Config.bot_settings.music_timeouts === true) {
-    clearTimeout(pretime);
-  }
-  if (Config.bot_settings.disable_music_commands === true) {
-    bot.reply(message, "music commands are disabled.");
-    return;
-  }
-  if (!bot.voiceConnection) {
-    bot.reply(message, "Not in voice right now.");
-    return;
-  }
-  if (!message.channel.equals(boundChannel)) return;
-  if (playlistid.length === 20) {
-    bot.reply(message, "The playlist is full, sorry.");
-    return;
-  }
-  if (Config.bot_settings.music_timeouts === true) {
     time = setTimeout(function() {
       if (!bot.voiceConnection || !bot.voiceConnection.playing) {
-        bot.sendMessage(message.channel, "The playlist has not been started for 2 minutes, destroying connection.");
+        bot.sendMessage(message.channel, "The waiting music has ended, but the playlist has not been started, destroying connection.");
         if (bot.voiceConnection) {
           bot.leaveVoiceChannel();
         }
@@ -80,7 +54,26 @@ exports.playlistAdd = function(bot, message, suffix) {
         stream = false;
         return;
       }
-    }, 120000);
+    }, 186000);
+  }
+  setTimeout(function() {
+    bot.voiceConnection.playFile('./music/waitmusic.mp3'); // Play waitng music because why not
+  }, 500); // Wait a bit for the voiceConnection object to become avalible
+};
+
+exports.playlistAdd = function(bot, message, suffix) {
+  if (Config.bot_settings.disable_music_commands === true) {
+    bot.reply(message, "music commands are disabled.");
+    return;
+  }
+  if (!bot.voiceConnection) {
+    bot.reply(message, "not in voice right now.");
+    return;
+  }
+  if (!message.channel.equals(boundChannel)) return;
+  if (playlistid.length === 20) {
+    bot.reply(message, "the playlist is full, sorry.");
+    return;
   }
   if (!suffix) {
     bot.sendMessage(message.channel, "Please specify a video ID!");
@@ -131,7 +124,14 @@ exports.playlistAdd = function(bot, message, suffix) {
             }
           });
         }
+        if (status === 'Waiting') {
+          playlistPlay(bot, message);
+          status = null;
+        }
         bot.reply(message, "done! Added " + counter + " videos to the queue!");
+        if (Config.bot_settings.music_timeouts === true) {
+          clearTimeout(time);
+        }
         counter = 0;
       }
     });
@@ -152,6 +152,13 @@ exports.playlistAdd = function(bot, message, suffix) {
         playlistinfo.push(info.title);
         playlistuser.push(message.author.username);
         bot.reply(message, "added **" + info.title + "** to play at position " + playlistid.length);
+        if (status === 'Waiting') {
+          playlistPlay(bot, message);
+          status = null;
+        }
+        if (Config.bot_settings.music_timeouts === true) {
+          clearTimeout(time);
+        }
       }
     });
   }
@@ -216,7 +223,7 @@ function playlistPlay(bot, message) {
       if (playlistid[0] === undefined) {
         bot.sendMessage(message.channel, "The playlist is finished, destroying voice connection.");
         bot.setStatus("online", null);
-        bot.voiceConnection.destroy();
+        bot.leaveVoiceChannel();
         boundChannel = false;
         stream = false;
         playlistid = [];
@@ -229,23 +236,6 @@ function playlistPlay(bot, message) {
     });
   });
 }
-
-exports.startPlaylist = function(bot, message) {
-  if (Config.bot_settings.disable_music_commands === true) {
-    bot.reply(message, "music commands are disabled.");
-    return;
-  }
-  if (!bot.voiceConnection) {
-    bot.reply(message, "not in voice right now.");
-  }
-  if (!message.channel.equals(boundChannel)) return;
-  if (bot.voiceConnection.playing) {
-    bot.reply(message, "I'm already playing.");
-    return;
-  }
-  playlistPlay(bot, message);
-  bot.reply(message, "I have started the playlist.");
-};
 
 exports.expSkip = function(bot, message) {
   if (Config.bot_settings.disable_music_commands === true) {
@@ -284,7 +274,7 @@ exports.checkPerms = function(server, author, callback) {
           return;
         }
       }
-      throw new Error('No permission');
+      reject('No permission');
     } catch (e) {
       reject(e);
     }

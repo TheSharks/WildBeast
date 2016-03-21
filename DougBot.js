@@ -1,7 +1,9 @@
 // DougBot 2.0 beta
 // Define variables first
 var Discord = require("discord.js"),
-  bot = new Discord.Client(),
+  bot = new Discord.Client({
+    forceFetchUsers: true
+  }),
   pmx = require("pmx"),
   probe = pmx.probe(),
   usercount, channelcount, servercount, comcount, mescount, // PMX vars
@@ -113,6 +115,7 @@ bot.on("disconnected", function() {
 
 // Command checker
 bot.on("message", function(msg) {
+  if (keymetrics === true) mescount.inc();
   UserDB.checkIfKnown(msg.sender).catch(function() {
     UserDB.trackNewUser(msg.sender).catch(function(e) {
       Logger.error(e);
@@ -129,7 +132,7 @@ bot.on("message", function(msg) {
   } else if (ConfigFile.bot_settings.cmd_prefix === "mention") {
     prefix = bot.user + " ";
   } else {
-    Debug.debuglogSomething("DougBot", "Weird prefix detected.", "warn");
+    Logger.warn("Weird prefix detected.");
   }
   var step = msg.content.substr(prefix.length);
   var chunks = step.split(" ");
@@ -137,13 +140,13 @@ bot.on("message", function(msg) {
   alias = aliases[command];
   var suffix = msg.content.substring(command.length + (prefix.length + 1));
   if (msg.content.indexOf(prefix) === 0 && Commands[command]) {
+    if (keymetrics === true) comcount.inc();
     Logger.info('Executing <' + msg.cleanContent + '> from ' + msg.author.username);
     if (msg.channel.server) {
       Permissions.GetLevel(msg.channel.server, msg.sender.id).then(function(level) {
         if (level >= Commands[command].level) {
           if (Commands[command].music) {
             DJ.checkPerms(msg.channel.server, msg.sender).then(function() {
-              console.log('dj');
               Commands[command].fn(bot, msg, suffix);
               return;
             }).catch(function(e) {
@@ -154,10 +157,8 @@ bot.on("message", function(msg) {
                 bot.sendMessage(msg.channel, "Something went wrong, try again.");
               }
             });
-          }
-          if (Commands[command].nsfw) {
+          } else if (Commands[command].nsfw) {
             Permissions.GetNSFW(msg.channel.server, msg.channel.id).then(function() {
-              console.log('nsfw');
               Commands[command].fn(bot, msg, suffix);
             }).catch(function(e) {
               if (e === 'No permission') {

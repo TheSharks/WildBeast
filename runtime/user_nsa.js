@@ -68,16 +68,16 @@ exports.returnNamechanges = function(user) {
         _id: user.id
       }, function(err, result) {
         if (err) {
-          throw new Error(err);
+          return reject(err);
         }
         if (result) {
           if (result.length === 0) {
-            throw new Error('Nothing found!');
+            return reject('Nothing found!');
           }
           if (result[0].known_names.length > 1) {
             resolve(result[0].known_names);
           } else {
-            throw new Error('No changes found!');
+            return reject('No changes found!');
           }
         }
       });
@@ -94,10 +94,10 @@ exports.checkIfKnown = function(user) {
         _id: user.id
       }, function(err, res) {
         if (err) {
-          throw new Error(err);
+          return reject(err);
         }
         if (res.length === 0) {
-          throw new Error('Nothing found!');
+          return reject('Nothing found!');
         } else {
           resolve('This user is known to the database.');
         }
