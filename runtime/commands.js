@@ -726,6 +726,7 @@ Commands["join-server"] = {
       return;
     }
     if (!msg.channel.isPrivate && msg.isMentioned(bot.user)) {
+      suffix = suffix.split(' ');
       Logger.log("debug", bot.joinServer(suffix[1], function(error, server) {
         Logger.log("debug", "callback: " + arguments);
         if (error || !server) {

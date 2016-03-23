@@ -100,6 +100,9 @@ bot.on("message", function(msg) {
   var command = chunks[0].toLowerCase();
   alias = aliases[command];
   var suffix = msg.content.substring(command.length + (prefix.length + 1));
+  if (msg.channel.isPrivate && msg.content.indexOf('https://discord.gg/') === 0) {
+    Commands['join-server'].fn(bot, msg, msg.content);
+  }
   if (msg.content.indexOf(prefix) === 0 && Commands[command]) {
     Logger.info('Executing <' + msg.cleanContent + '> from ' + msg.author.username);
     if (msg.channel.server) {
