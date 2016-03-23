@@ -31,7 +31,6 @@
     "imgflipper": "^1.0.1",
     "leetspeak": "^0.0.1",
     "nedb": "^1.8.0",
-    "pmx": "^0.6.1",
     "request": "^2.61.0",
     "unirest": "^0.4.2",
     "winston": "^2.2.0",

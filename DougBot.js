@@ -4,9 +4,6 @@ var Discord = require("discord.js"),
   bot = new Discord.Client({
     forceFetchUsers: true
   }),
-  pmx = require("pmx"),
-  probe = pmx.probe(),
-  usercount, channelcount, servercount, comcount, mescount, // PMX vars
   ConfigFile = require("./config.json"),
   Logger = require("./runtime/logger.js").Logger,
   Debug = require("./runtime/debugging.js"),
@@ -18,8 +15,7 @@ var Discord = require("discord.js"),
   aliases,
   UserDB = require('./runtime/user_nsa.js'),
   Upgrade = require('./runtime/upgrading.js'),
-  Customize = require('./runtime/customization.js'),
-  keymetrics;
+  Customize = require('./runtime/customization.js');
 
 // Initial logger saying that script is being loaded.
 // Should NOT be placed in init() anymore since that runs after ready
@@ -34,13 +30,6 @@ try {
 } catch (e) {
   //No aliases defined
   aliases = {};
-}
-
-// Declare if Keymetrics analytics is needed
-if (ConfigFile.bot_settings.keymetrics === true) {
-  keymetrics = true;
-} else {
-  keymetrics = false;
 }
 
 // Error logger
@@ -77,33 +66,6 @@ bot.on("ready", function() {
   Logger.info("Ready to start!");
   Logger.info("Logged in as " + bot.user.username + ".");
   Logger.info("Serving " + bot.users.length + " users, in " + bot.servers.length + " servers.");
-  if (keymetrics === false) return;
-  else {
-    usercount = probe.metric({
-      name: 'Users',
-      value: function() {
-        return bot.users.length;
-      }
-    });
-    servercount = probe.metric({
-      name: 'Servers',
-      value: function() {
-        return bot.servers.length;
-      }
-    });
-    channelcount = probe.metric({
-      name: 'Channels',
-      value: function() {
-        return bot.channels.length;
-      }
-    });
-    comcount = probe.counter({
-      name: 'Commands executed'
-    });
-    mescount = probe.counter({
-      name: 'Messages recieved'
-    });
-  }
 });
 
 // Disconnected announcment
@@ -115,7 +77,6 @@ bot.on("disconnected", function() {
 
 // Command checker
 bot.on("message", function(msg) {
-  if (keymetrics === true) mescount.inc();
   UserDB.checkIfKnown(msg.sender).catch(function() {
     UserDB.trackNewUser(msg.sender).catch(function(e) {
       Logger.error(e);
@@ -140,7 +101,6 @@ bot.on("message", function(msg) {
   alias = aliases[command];
   var suffix = msg.content.substring(command.length + (prefix.length + 1));
   if (msg.content.indexOf(prefix) === 0 && Commands[command]) {
-    if (keymetrics === true) comcount.inc();
     Logger.info('Executing <' + msg.cleanContent + '> from ' + msg.author.username);
     if (msg.channel.server) {
       Permissions.GetLevel(msg.channel.server, msg.sender.id).then(function(level) {
