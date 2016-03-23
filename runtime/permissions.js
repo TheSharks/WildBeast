@@ -26,19 +26,16 @@ exports.GetLevel = function(server, user) {
   return new Promise(function(resolve, reject) {
     try {
       if (ConfigFile.permissions.masterUser.indexOf(user) > -1) {
-        resolve(9);
+        return resolve(9);
+      } else if (ConfigFile.permissions.level1.indexOf(user) > -1) {
+        return resolve(1);
+      } else if (ConfigFile.permissions.level2.indexOf(user) > -1) {
+        return resolve(2);
+      } else if (ConfigFile.permissions.level3.indexOf(user) > -1) {
+        return resolve(3);
       }
-      if (ConfigFile.permissions.level1.indexOf(user) > -1) {
-        resolve(1);
-      }
-      if (ConfigFile.permissions.level2.indexOf(user) > -1) {
-        resolve(2);
-      }
-      if (ConfigFile.permissions.level3.indexOf(user) > -1) {
-        resolve(3);
-      }
-      if (server === null) {
-        resolve(0); // No server object means DM, and since the global ones didnt catch, the user has no permission
+      if (!server) {
+        return resolve(0); // Resolve with 0 if no server is present
       }
       db.find({
         _id: server.id
@@ -50,15 +47,15 @@ exports.GetLevel = function(server, user) {
           return reject('Nothing found!');
         } else {
           if (result[0].superUser === user) {
-            resolve(4);
+            return resolve(4);
           } else if (result[0].permissions.level1.indexOf(user) > -1) {
-            resolve(1);
+            return resolve(1);
           } else if (result[0].permissions.level2.indexOf(user) > -1) {
-            resolve(2);
+            return resolve(2);
           } else if (result[0].permissions.level3.indexOf(user) > -1) {
-            resolve(3);
+            return resolve(3);
           } else {
-            resolve(0); // Nothing is found, so the user must have no permissions set
+            return resolve(0); // Nothing is found, so the user must have no permissions set
           }
         }
       });

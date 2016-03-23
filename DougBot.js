@@ -230,7 +230,7 @@ bot.on("message", function(msg) {
         bot.sendMessage(msg.channel, "You can't use music commands in DM!");
         return;
       }
-      Permissions.GetLevel(null, msg.sender).then(function(level) {
+      Permissions.GetLevel(null, msg.sender.id).then(function(level) {
         if (level >= Commands[command].level) {
           Commands[command].fn(bot, msg, suffix);
         } else {
