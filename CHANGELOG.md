@@ -1,4 +1,10 @@
 # Release phase
+## 2.1.0
+Changed callbacks to promises.     
+Removed `playliststart`, playlists start automatically after the first video has been entered.     
+Extended timeout for initial join.     
+Several small tweaks.     
+
 ## 2.0.0
 Revamped database system.
 Added token login support for the upcoming official Discord API.         

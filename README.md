@@ -1,6 +1,6 @@
 # WildBeast
 ##### (Previously DougleyBot 2.0)
-[![Version](https://img.shields.io/badge/Version-2.0.0-green.svg?style=flat-square)](https://github.com/SteamingMutt/WildBeast/releases)
+[![Version](https://img.shields.io/badge/Version-2.1.0-green.svg?style=flat-square)](https://github.com/SteamingMutt/WildBeast/releases)
 [![Status](https://img.shields.io/badge/Status-Ready-green.svg?style=flat-square)]()
 [![Node](https://img.shields.io/badge/Node-5.8.0-blue.svg?style=flat-square)](http://nodejs.org)
 [![NPM](https://img.shields.io/badge/NPM-3.7.3-blue.svg?style=flat-square)](http://nodejs.org)

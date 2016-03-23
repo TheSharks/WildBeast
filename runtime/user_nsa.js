@@ -27,22 +27,6 @@ exports.trackNewUser = function(user) { // Most of the time, this function does 
   });
 };
 
-function trackNewUser(user) { // Most of the time, this function does not need to be called directly, the script will auto-track users
-  var doc = {
-    _id: user.id,
-    known_names: [user.username],
-    user_is_blacklisted: false,
-    user_is_vip: false
-  };
-  db.insert(doc, function(err, result) {
-    if (err) {
-      Logger.warn('Error making user document! ' + err); // Since the script auto-tracks, errors get too verbose sometimes
-    } else if (result) {
-      Logger.debug('Sucess making an UserDB doc');
-    }
-  });
-}
-
 exports.handleNamechange = function(user) {
   db.find({
     _id: user.id
@@ -51,10 +35,10 @@ exports.handleNamechange = function(user) {
       Logger.error('Error handing namechange! ' + err);
     }
     if (result.length === 0) {
-      trackNewUser(user);
+      this.trackNewUser(user);
     } else {
       if (result[0] === undefined) {
-        trackNewUser(user);
+        this.trackNewUser(user);
         return;
       }
       if (result[0].known_names.length > 20) {
@@ -77,37 +61,49 @@ exports.handleNamechange = function(user) {
   }, {});
 };
 
-exports.returnNamechanges = function(user, callback) {
-  db.find({
-    _id: user.id
-  }, function(err, result) {
-    if (err) {
-      Logger.error('Error checking user knowledge! ' + err);
-    }
-    if (result.length === 0) {
-      trackNewUser(user);
-      return callback('notfound', -1);
-    } else {
-      if (result[0] === undefined) {
-        trackNewUser(user);
-        return;
-      }
-      return callback(null, result[0].known_names);
+exports.returnNamechanges = function(user) {
+  return new Promise(function(resolve, reject) {
+    try {
+      db.find({
+        _id: user.id
+      }, function(err, result) {
+        if (err) {
+          return reject(err);
+        }
+        if (result) {
+          if (result.length === 0) {
+            return reject('Nothing found!');
+          }
+          if (result[0].known_names.length > 1) {
+            resolve(result[0].known_names);
+          } else {
+            return reject('No changes found!');
+          }
+        }
+      });
+    } catch (e) {
+      reject(e);
     }
   });
 };
 
 exports.checkIfKnown = function(user) {
-  db.find({
-    _id: user.id
-  }, function(err, result) {
-    if (err) {
-      Logger.error('Error checking user knowledge! ' + err);
-    }
-    if (result.length === 0) {
-      trackNewUser(user);
-    } else {
-      return; // User is known, so exit the function
+  return new Promise(function(resolve, reject) {
+    try {
+      db.find({
+        _id: user.id
+      }, function(err, res) {
+        if (err) {
+          return reject(err);
+        }
+        if (res.length === 0) {
+          return reject('Nothing found!');
+        } else {
+          resolve('This user is known to the database.');
+        }
+      });
+    } catch (e) {
+      reject(e);
     }
   });
 };
