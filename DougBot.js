@@ -1,7 +1,9 @@
 // DougBot 2.0 beta
 // Define variables first
 var Discord = require("discord.js"),
-  bot = new Discord.Client(),
+  bot = new Discord.Client({
+    forceFetchUsers: true
+  }),
   pmx = require("pmx"),
   probe = pmx.probe(),
   usercount, channelcount, servercount, comcount, mescount, // PMX vars
@@ -59,6 +61,7 @@ bot.on('debug', function(debug) {
 
 // Ready announcment
 bot.on("ready", function() {
+  Upgrade.databaseSystem(bot);
   Debug.debuglogSomething("Discord", "Ready event fired.", "info");
   Logger.info("Joining pre-defined servers...");
   for (var index in ConfigFile.join_on_launch) {
@@ -101,7 +104,6 @@ bot.on("ready", function() {
       name: 'Messages recieved'
     });
   }
-  Upgrade.databaseSystem(bot);
 });
 
 // Disconnected announcment
@@ -113,18 +115,16 @@ bot.on("disconnected", function() {
 
 // Command checker
 bot.on("message", function(msg) {
-  UserDB.checkIfKnown(msg.sender);
   if (keymetrics === true) mescount.inc();
+  UserDB.checkIfKnown(msg.sender).catch(function() {
+    UserDB.trackNewUser(msg.sender).catch(function(e) {
+      Logger.error(e);
+    });
+  });
   if (ConfigFile.bot_settings.log_chat === true && msg.channel.server) {
     var d = new Date();
     var n = d.toUTCString();
     ChatLogger.info(n + ": " + msg.channel.server.name + ", " + msg.channel.name + ": " + msg.author.username + " said <" + msg.cleanContent + ">");
-  }
-  if (msg.author.equals(bot.user)) {
-    return;
-  }
-  if (msg.channel.isPrivate && msg.content.indexOf("https://discord.gg") === 0) {
-    Commands['join-server'].fn(bot, msg, msg.content);
   }
   var prefix;
   if (ConfigFile.bot_settings.cmd_prefix != "mention") {
@@ -132,137 +132,113 @@ bot.on("message", function(msg) {
   } else if (ConfigFile.bot_settings.cmd_prefix === "mention") {
     prefix = bot.user + " ";
   } else {
-    Debug.debuglogSomething("DougBot", "Weird prefix detected.", "warn");
+    Logger.warn("Weird prefix detected.");
   }
-  if (msg.content.indexOf(prefix) === 0) {
+  var step = msg.content.substr(prefix.length);
+  var chunks = step.split(" ");
+  var command = chunks[0].toLowerCase();
+  alias = aliases[command];
+  var suffix = msg.content.substring(command.length + (prefix.length + 1));
+  if (msg.content.indexOf(prefix) === 0 && Commands[command]) {
     if (keymetrics === true) comcount.inc();
-    Logger.info("Executing <" + msg.cleanContent + "> from " + msg.author.username);
-    var step = msg.content.substr(prefix.length);
-    var chunks = step.split(" ");
-    var command = chunks[0].toLowerCase();
-    alias = aliases[command];
-    var suffix = msg.content.substring(command.length + (prefix.length + 1));
-    if (alias) {
-      command = alias[0];
-      suffix = alias[1] + " " + suffix;
-    }
-    if (command === "help") {
-      Commands.help.fn(bot, msg, suffix);
-      return;
-    }
-    if (Commands[command]) {
-      Debug.debuglogSomething("DougBot", "Command detected, trying to execute.", "info");
-      if (Commands[command].music && msg.channel.server) {
-        Debug.debuglogSomething("DougBot", "Musical command detected, checking for user role.", "info");
-        DJ.checkPerms(msg.channel.server, msg.author, function(err, reply) {
-          if (reply === 1 && !err) {
-            Commands[command].fn(bot, msg, suffix);
-          } else if (reply === 0 && !err) {
-            bot.reply(msg, "you need a role called `Radio Master` to use music related commands, even if you're the server owner.");
-            return;
-          } else if (err) {
-            bot.sendMessage(msg.channel, "Something went wrong, try again later.");
-            return;
-          }
-        });
-      } else if (Commands[command].music && !msg.channel.server) {
-        Debug.debuglogSomething("DougBot", "Musical command detected, but was excuted in a DM.", "info");
-        bot.sendMessage(msg.channel, "You cannot use music commands in a DM, dummy!");
-        return;
-      }
-      if (msg.channel.server && !Commands[command].music) {
-        Permissions.GetLevel(msg.channel.server, msg.author.id, function(err, level) {
-          if (err) {
-            if (err === 'notFound') {
-              Permissions.initializeServer(msg.channel.server);
-            }
-            Debug.debuglogSomething("NeDB", "GetLevel failed, got error: " + err, "error");
-            Logger.debug("An error occured!");
-            return;
-          }
-          if (level >= Commands[command].level) {
-            Debug.debuglogSomething("DougBot", "Execution of command allowed.", "info");
-            if (!Commands[command].nsfw) {
-              Debug.debuglogSomething("DougBot", "Safe for work command executed.", "info");
+    Logger.info('Executing <' + msg.cleanContent + '> from ' + msg.author.username);
+    if (msg.channel.server) {
+      Permissions.GetLevel(msg.channel.server, msg.sender.id).then(function(level) {
+        if (level >= Commands[command].level) {
+          if (Commands[command].music) {
+            DJ.checkPerms(msg.channel.server, msg.sender).then(function() {
               Commands[command].fn(bot, msg, suffix);
               return;
-            } else {
-              Permissions.GetNSFW(msg.channel.server, msg.channel.id, function(err, reply) {
-                Debug.debuglogSomething("DougBot", "Command is NSFW, checking if channel allows that.", "info");
-                if (err) {
-                  if (err === 'notFound') {
-                    Permissions.initializeServer(msg.channel.server);
-                  }
-                  Logger.debug("Got an error! <" + err + ">");
-                  Debug.debuglogSomething("NeDB", "NSFW channel check failed, got error: " + err, "error");
-                  bot.sendMessage(msg.channel, "Sorry, an error occured, try again later.");
-                  return;
-                }
-                if (reply === "on") {
-                  Debug.debuglogSomething("DougBot", "NSFW command successfully executed.", "info");
-                  Commands[command].fn(bot, msg, suffix);
-                  return;
-                } else {
-                  Debug.debuglogSomething("DougBot", "NSFW command execution failed because of channel settings.", "info");
-                  Customize.replyCheck('nsfw_disallowed_response', msg.channel.server, function(err, reply) {
-                    if (err) {
-                      if (err === 'notFound') {
-                        Customize.initializeServer(msg.channel.server);
-                      }
-                      Logger.error('Response error! ' + err);
-                    } else if (reply) {
-                      if (reply === 'default') {
-                        bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
-                      } else {
-                        var userstep = reply.replace(/%user/g, msg.author.username);
-                        var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
-                        var final = serverstep.replace(/%channel/, msg.channel);
-                        bot.sendMessage(msg.channel, final);
-                      }
-                    }
-                  });
-                }
-              });
-            }
-          } else {
-            Debug.debuglogSomething("DougBot", "User has no permission to use that command.", "info");
-            Customize.replyCheck('no_permission_response', msg.channel.server, function(err, reply) {
-              if (err) {
-                if (err === 'notFound') {
-                  Customize.initializeServer(server);
-                }
-                Logger.error('Response error! ' + err);
-              } else if (reply) {
-                if (reply === 'default') {
-                  bot.sendMessage(msg.channel, "You don't have permission to use this command!");
-                } else {
-                  var userstep = reply.replace(/%user/g, msg.author.username);
-                  var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
-                  var final = serverstep.replace(/%channel/, msg.channel);
-                  bot.sendMessage(msg.channel, final);
-                }
+            }).catch(function(e) {
+              if (e === 'No permission') {
+                bot.sendMessage(msg.channel, "Sorry " + msg.sender + ", you need a role called `Radio Master` to use this command.");
+              } else {
+                Logger.error(e);
+                bot.sendMessage(msg.channel, "Something went wrong, try again.");
               }
             });
-          }
-        });
-      } else if (!msg.channel.server) {
-        Permissions.GetLevel(null, msg.author.id, function(err, level) { // Value of 0 is acting as a placeholder, because in DM's only global permissions apply.
-          Debug.debuglogSomething("DougBot", "DM command detected, getting global perms.", "info");
-          if (err) {
-            Logger.debug("An error occured!");
-            Debug.debuglogSomething("NeDB", "GetLevel failed, got error: " + err, "error");
-            return;
-          }
-          if (level >= Commands[command].level) {
-            Debug.debuglogSomething("DougBot", "User has sufficient global perms.", "info");
-            Commands[command].fn(bot, msg, suffix);
-            return;
+          } else if (Commands[command].nsfw) {
+            Permissions.GetNSFW(msg.channel.server, msg.channel.id).then(function() {
+              Commands[command].fn(bot, msg, suffix);
+            }).catch(function(e) {
+              if (e === 'No permission') {
+                Customize.replyCheck('nsfw_disallowed_response', msg.channel.server).then(function(r) {
+                  if (r === 'default') {
+                    bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
+                    return;
+                  } else {
+                    var userstep = r.replace(/%user/g, msg.author.username);
+                    var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+                    var final = serverstep.replace(/%channel/, msg.channel);
+                    bot.sendMessage(msg.channel, final);
+                    return;
+                  }
+                }).catch(function(e) {
+                  if (e === 'Nothing found!') {
+                    Customize.initializeServer(msg.channel.server).then(function() {
+                      bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+                    }).catch(function(e) {
+                      Logger.error(e);
+                    });
+                  }
+                });
+              } else {
+                Logger.error(e);
+                bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
+                return;
+              }
+            });
           } else {
-            Debug.debuglogSomething("DougBot", "User does not have enough global permissions.", "info");
-            bot.sendMessage(msg.channel, "You do not have sufficient global permissions to execute this command in DM.");
+            Commands[command].fn(bot, msg, suffix);
           }
-        });
+        } else {
+          Customize.replyCheck('no_permission_response', msg.channel.server).then(function(r) {
+            if (r === 'default') {
+              bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+              return;
+            } else {
+              var userstep = r.replace(/%user/g, msg.author.username);
+              var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+              var final = serverstep.replace(/%channel/, msg.channel);
+              bot.sendMessage(msg.channel, final);
+              return;
+            }
+          }).catch(function(e) {
+            if (e === 'Nothing found!') {
+              Customize.initializeServer(msg.channel.server).then(function() {
+                bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+              }).catch(function(e) {
+                Logger.error(e);
+              });
+            }
+          });
+        }
+      }).catch(function(e) {
+        if (e === 'Nothing found!') {
+          Logger.debug('Making a new server document since there was none present.');
+          Permissions.initializeServer(msg.channel.server).then(function() {
+            bot.sendMessage(msg.channel, "Something went wrong, try again."); // The user does not need to know we didnt have a database doc
+          }).catch(function(e) {
+            Logger.error(e);
+          });
+        } else {
+          Logger.error(e);
+        }
+      });
+    } else if (msg.channel.isPrivate) {
+      if (Commands[command].music) {
+        bot.sendMessage(msg.channel, "You can't use music commands in DM!");
+        return;
       }
+      Permissions.GetLevel(null, msg.sender.id).then(function(level) {
+        if (level >= Commands[command].level) {
+          Commands[command].fn(bot, msg, suffix);
+        } else {
+          bot.sendMessage(msg.channel, "You don't have enough global permissions to execute this in DM.");
+        }
+      }).catch(function(e) {
+        Logger.error(e);
+      });
     }
   }
 });
@@ -285,24 +261,27 @@ function init(token) {
 
 // New user welcomer
 bot.on("serverNewMember", function(server, user) {
-  UserDB.checkIfKnown(user);
-  Customize.checkWelcoming(server, function(err, message, reply) {
-    if (err) {
-      if (err === 'notFound') {
-        Customize.initializeServer(server);
-      }
-      Logger.error('Welcoming check error! ' + err);
+  UserDB.checkIfKnown(user).catch(function() {
+    UserDB.trackNewUser(user).catch(function(e) {
+      Logger.error(e);
+    });
+  });
+  Customize.checkWelcoming(server).then(function(r) {
+    if (r === 'default') {
+      bot.sendMessage(server.defaultChannel, "Welcome " + user.username + " to **" + server.name + "**!");
+    } else {
+      var userstep = r.replace(/%user/g, msg.author.username);
+      var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+      var final = serverstep.replace(/%channel/, msg.channel);
+      bot.sendMessage(msg.channel, final);
+    }
+  }).catch(function(e) {
+    if (e === 'Welcoming turned off.') {
       return;
-    } else if (reply && !err) {
-      if (reply === true) {
-        if (message === 'default') {
-          bot.sendMessage(server.defaultChannel, 'Welcome ' + user.username + ' to **' + server.name + '**!');
-        } else {
-          var userstep = message.replace(/%user/g, user.username);
-          var final = userstep.replace(/%server/g, server.name);
-          bot.sendMessage(server.defaultChannel, final);
-        }
-      }
+    } else if (e === 'Not found!') {
+      Customize.initializeServer(server).catch(function(e) {
+        Logger.error(e);
+      });
     }
   });
 });
@@ -348,7 +327,11 @@ bot.on('serverCreated', function(server) {
 
 bot.on('presence', function(olduser, newuser) {
   if (ConfigFile.bot_settings.namechange_log === true) {
-    UserDB.checkIfKnown(olduser);
+    UserDB.checkIfKnown(msg.sender).catch(function() {
+      UserDB.trackNewUser(msg.sender).catch(function(e) {
+        Logger.error(e);
+      });
+    });
     // We only handle namechanges, nothing else
     if (olduser.username === newuser.username) {
       return;
