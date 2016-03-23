@@ -305,6 +305,7 @@ exports.checkIfAvailable = function(bot, message) {
 };
 
 exports.leaveVoice = function(bot, message) {
+  status = null;
   clearTimeout(pretime);
   clearTimeout(time);
   if (!message.channel.equals(boundChannel)) return;
