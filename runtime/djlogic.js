@@ -42,7 +42,7 @@ exports.joinVoice = function(bot, message) {
   }
   if (Config.bot_settings.music_timeouts === true) {
     time = setTimeout(function() {
-      if (!bot.voiceConnection || !bot.voiceConnection.playing) {
+      if (status === 'Waiting') {
         bot.sendMessage(message.channel, "The waiting music has ended, but the playlist has not been started, destroying connection.");
         if (bot.voiceConnection) {
           bot.leaveVoiceChannel();
