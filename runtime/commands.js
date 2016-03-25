@@ -1289,10 +1289,10 @@ Commands.fancyinsult = {
         }
         var fancyinsult = JSON.parse(body);
         if (suffix === "") {
-          bot.reply(msg, fancyinsult.insult);
+          bot.sendMessage(msg, fancyinsult.insult);
           bot.deleteMessage(msg);
         } else {
-          bot.reply(msg, suffix + ", " + fancyinsult.insult);
+          bot.sendMessage(msg, suffix + ", " + fancyinsult.insult);
           bot.deleteMessage(msg);
         }
       } else {
