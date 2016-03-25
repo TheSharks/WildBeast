@@ -1052,7 +1052,13 @@ Commands.yomomma = {
           return;
         }
         var yomomma = JSON.parse(body);
-        bot.reply(msg, yomomma.joke);
+        if (suffix === "") {
+          bot.sendMessage(msg, yomomma.joke);
+          bot.deleteMessage(msg);
+        } else {
+          bot.sendMessage(msg, suffix + ", " + yomomma.joke);
+          bot.deleteMessage(msg);
+        }
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
