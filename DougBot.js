@@ -106,87 +106,97 @@ bot.on("message", function(msg) {
   if (msg.content.indexOf(prefix) === 0 && Commands[command]) {
     Logger.info('Executing <' + msg.cleanContent + '> from ' + msg.author.username);
     if (msg.channel.server) {
-      Permissions.GetLevel(msg.channel.server, msg.sender.id).then(function(level) {
-        if (level >= Commands[command].level) {
-          if (Commands[command].music) {
-            DJ.checkPerms(msg.channel.server, msg.sender).then(function() {
-              Commands[command].fn(bot, msg, suffix);
-              return;
-            }).catch(function(e) {
-              if (e === 'No permission') {
-                bot.sendMessage(msg.channel, "Sorry " + msg.sender + ", you need a role called `Radio Master` to use this command.");
-              } else {
-                Logger.error(e);
-                bot.sendMessage(msg.channel, "Something went wrong, try again.");
-              }
-            });
-          } else if (Commands[command].nsfw) {
-            Permissions.GetNSFW(msg.channel.server, msg.channel.id).then(function() {
-              Commands[command].fn(bot, msg, suffix);
-            }).catch(function(e) {
-              if (e === 'No permission') {
-                Customize.replyCheck('nsfw_disallowed_response', msg.channel.server).then(function(r) {
-                  if (r === 'default') {
+      var Timeout = require('./runtime/timeout.js');
+      Timeout.check(Commands[command], msg.channel.server.id).then(function(r) {
+        if (r !== true) {
+          bot.sendMessage(msg.channel, 'Wait ' + Math.round(r) + ' more seconds before using that again.');
+          return;
+        } else {
+          Permissions.GetLevel(msg.channel.server, msg.sender.id).then(function(level) {
+            if (level >= Commands[command].level) {
+              if (Commands[command].music) {
+                DJ.checkPerms(msg.channel.server, msg.sender).then(function() {
+                  Commands[command].fn(bot, msg, suffix);
+                  return;
+                }).catch(function(e) {
+                  if (e === 'No permission') {
+                    bot.sendMessage(msg.channel, "Sorry " + msg.sender + ", you need a role called `Radio Master` to use this command.");
+                  } else {
+                    Logger.error(e);
+                    bot.sendMessage(msg.channel, "Something went wrong, try again.");
+                  }
+                });
+              } else if (Commands[command].nsfw) {
+                Permissions.GetNSFW(msg.channel.server, msg.channel.id).then(function() {
+                  Commands[command].fn(bot, msg, suffix);
+                }).catch(function(e) {
+                  if (e === 'No permission') {
+                    Customize.replyCheck('nsfw_disallowed_response', msg.channel.server).then(function(r) {
+                      if (r === 'default') {
+                        bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
+                        return;
+                      } else {
+                        var userstep = r.replace(/%user/g, msg.author.username);
+                        var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+                        var final = serverstep.replace(/%channel/, msg.channel);
+                        bot.sendMessage(msg.channel, final);
+                        return;
+                      }
+                    }).catch(function(e) {
+                      if (e === 'Nothing found!') {
+                        Customize.initializeServer(msg.channel.server).then(function() {
+                          bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+                        }).catch(function(e) {
+                          Logger.error(e);
+                        });
+                      }
+                    });
+                  } else {
+                    Logger.error(e);
                     bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
                     return;
-                  } else {
-                    var userstep = r.replace(/%user/g, msg.author.username);
-                    var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
-                    var final = serverstep.replace(/%channel/, msg.channel);
-                    bot.sendMessage(msg.channel, final);
-                    return;
-                  }
-                }).catch(function(e) {
-                  if (e === 'Nothing found!') {
-                    Customize.initializeServer(msg.channel.server).then(function() {
-                      bot.sendMessage(msg.channel, "You don't have permission to use this command!");
-                    }).catch(function(e) {
-                      Logger.error(e);
-                    });
                   }
                 });
               } else {
-                Logger.error(e);
-                bot.sendMessage(msg.channel, "You cannot use NSFW commands in this channel!");
-                return;
+                Commands[command].fn(bot, msg, suffix);
               }
-            });
-          } else {
-            Commands[command].fn(bot, msg, suffix);
-          }
-        } else {
-          Customize.replyCheck('no_permission_response', msg.channel.server).then(function(r) {
-            if (r === 'default') {
-              bot.sendMessage(msg.channel, "You don't have permission to use this command!");
-              return;
             } else {
-              var userstep = r.replace(/%user/g, msg.author.username);
-              var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
-              var final = serverstep.replace(/%channel/, msg.channel);
-              bot.sendMessage(msg.channel, final);
-              return;
+              Customize.replyCheck('no_permission_response', msg.channel.server).then(function(r) {
+                if (r === 'default') {
+                  bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+                  return;
+                } else {
+                  var userstep = r.replace(/%user/g, msg.author.username);
+                  var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
+                  var final = serverstep.replace(/%channel/, msg.channel);
+                  bot.sendMessage(msg.channel, final);
+                  return;
+                }
+              }).catch(function(e) {
+                if (e === 'Nothing found!') {
+                  Customize.initializeServer(msg.channel.server).then(function() {
+                    bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+                  }).catch(function(e) {
+                    Logger.error(e);
+                  });
+                }
+              });
             }
           }).catch(function(e) {
             if (e === 'Nothing found!') {
-              Customize.initializeServer(msg.channel.server).then(function() {
-                bot.sendMessage(msg.channel, "You don't have permission to use this command!");
+              Logger.debug('Making a new server document since there was none present.');
+              Permissions.initializeServer(msg.channel.server).then(function() {
+                bot.sendMessage(msg.channel, "Something went wrong, try again."); // The user does not need to know we didnt have a database doc
               }).catch(function(e) {
                 Logger.error(e);
               });
+            } else {
+              Logger.error(e);
             }
           });
         }
       }).catch(function(e) {
-        if (e === 'Nothing found!') {
-          Logger.debug('Making a new server document since there was none present.');
-          Permissions.initializeServer(msg.channel.server).then(function() {
-            bot.sendMessage(msg.channel, "Something went wrong, try again."); // The user does not need to know we didnt have a database doc
-          }).catch(function(e) {
-            Logger.error(e);
-          });
-        } else {
-          Logger.error(e);
-        }
+        Logger.error(e);
       });
     } else if (msg.channel.isPrivate) {
       if (Commands[command].music) {

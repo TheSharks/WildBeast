@@ -58,7 +58,7 @@ exports.joinVoice = function(bot, message) {
   }
   setTimeout(function() {
     bot.voiceConnection.playFile('./music/waitmusic.mp3'); // Play waitng music because why not
-  }, 500); // Wait a bit for the voiceConnection object to become avalible
+  }, 1000); // Wait a bit for the voiceConnection object to become avalible
 };
 
 exports.playlistAdd = function(bot, message, suffix) {
@@ -81,7 +81,6 @@ exports.playlistAdd = function(bot, message, suffix) {
   }
   if (suffix.length > 12) {
     Logger.debug("Assuming playlist.");
-    bot.sendMessage(message.channel, "Resolving playlist...");
     var yt = require("youtube-api");
     var ammount = 20 - playlistid.length;
     yt.authenticate({
