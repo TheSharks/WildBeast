@@ -1,6 +1,14 @@
 # Release phase
+## 2.1.1
+Added timeouts.    
+Changed `request` to only accept full links from now on.    
+Made preparations for a future update.     
+
 ## 2.1.0
 Changed callbacks to promises.     
+Removed `playliststart`, playlists start automatically after the first video has been entered.     
+Extended timeout for initial join.     
+Several small tweaks.     
 
 ## 2.0.0
 Revamped database system.

@@ -42,7 +42,7 @@ exports.joinVoice = function(bot, message) {
   }
   if (Config.bot_settings.music_timeouts === true) {
     time = setTimeout(function() {
-      if (!bot.voiceConnection || !bot.voiceConnection.playing) {
+      if (status === 'Waiting') {
         bot.sendMessage(message.channel, "The waiting music has ended, but the playlist has not been started, destroying connection.");
         if (bot.voiceConnection) {
           bot.leaveVoiceChannel();
@@ -58,7 +58,7 @@ exports.joinVoice = function(bot, message) {
   }
   setTimeout(function() {
     bot.voiceConnection.playFile('./music/waitmusic.mp3'); // Play waitng music because why not
-  }, 500); // Wait a bit for the voiceConnection object to become avalible
+  }, 1000); // Wait a bit for the voiceConnection object to become avalible
 };
 
 exports.playlistAdd = function(bot, message, suffix) {
@@ -81,7 +81,6 @@ exports.playlistAdd = function(bot, message, suffix) {
   }
   if (suffix.length > 12) {
     Logger.debug("Assuming playlist.");
-    bot.sendMessage(message.channel, "Resolving playlist...");
     var yt = require("youtube-api");
     var ammount = 20 - playlistid.length;
     yt.authenticate({
@@ -305,6 +304,7 @@ exports.checkIfAvailable = function(bot, message) {
 };
 
 exports.leaveVoice = function(bot, message) {
+  status = null;
   clearTimeout(pretime);
   clearTimeout(time);
   if (!message.channel.equals(boundChannel)) return;
