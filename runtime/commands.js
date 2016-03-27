@@ -31,7 +31,7 @@ Commands.stream = {
   level: 0,
   fn: function(bot, msg, suffix) {
     if (!suffix) {
-      bot.sendMessage(msg.channel, "No channel specified!");
+      bot.sendMessage(msg.channel, "⚠ No channel specified!");
       return;
     }
     var request = require("request");
@@ -47,7 +47,7 @@ Commands.stream = {
         try {
           resp = JSON.parse(body);
         } catch (err) {
-          bot.sendMessage(msg.channel, "The API returned an unconventional response.");
+          bot.sendMessage(msg.channel, "⚠ The API returned an unconventional response.");
           Logger.error(err);
           return;
         }
@@ -59,7 +59,7 @@ Commands.stream = {
           return;
         }
       } else if (!error && response.statusCode == 404) {
-        bot.sendMessage(msg.channel, "Channel does not exist!");
+        bot.sendMessage(msg.channel, "⚠ Channel does not exist!");
         return;
       }
     });
@@ -157,13 +157,13 @@ Commands.alias = { // IDEA: Maybe unlock this to all users?
     if (!name) {
       return;
     } else if (Commands[name] || name === "help") {
-      bot.sendMessage(msg.channel, "Overwriting commands with aliases is not allowed!");
+      bot.sendMessage(msg.channel, "⚠ Overwriting commands with aliases is not allowed!");
     } else {
       var command = args.shift();
       aliases[name] = [command, args.join(" ")];
       //now save the new alias
       require("fs").writeFile("./runtime/alias.json", JSON.stringify(aliases, null, 2), null);
-      bot.sendMessage(msg.channel, "Created alias " + name);
+      bot.sendMessage(msg.channel, "✅ Created alias " + name);
     }
   }
 };
@@ -210,21 +210,21 @@ Commands.setstatus = {
       playingstep = step.slice(1, step.length),
       playing = playingstep.join(" ");
     if (!suffix) {
-      bot.sendMessage(msg.channel, "You need a suffix, dummy!");
+      bot.sendMessage(msg.channel, "⚠ You need a suffix, dummy!");
       return;
     }
     if (status === "online" || status === "away") {
       bot.setStatus(status, playing, function(error) {
         if (error) {
-          bot.sendMessage(msg.channel, "Whoops, that doesn't work, try again.");
+          bot.sendMessage(msg.channel, "⚠ Whoops, that doesn't work, try again.");
         } else if (playing) {
-          bot.sendMessage(msg.channel, "Okay, I'm now " + status + " and playing " + playing);
+          bot.sendMessage(msg.channel, "✅ Okay, I'm now " + status + " and playing " + playing);
         } else {
-          bot.sendMessage(msg.channel, "Okay, I'm now " + status + ".");
+          bot.sendMessage(msg.channel, "✅ Okay, I'm now " + status + ".");
         }
       });
     } else {
-      bot.sendMessage(msg.channel, "I can only be `online` or `away`!");
+      bot.sendMessage(msg.channel, "⚠ I can only be `online` or `away`!");
       return;
     }
   }
@@ -256,7 +256,7 @@ Commands.leetspeak = {
       var thing = leetspeak(suffix);
       bot.reply(msg, thing);
     } else {
-      bot.reply(msg, "*You need to type something to encode your message into l337sp3@K!*");
+      bot.reply(msg, "⚠ *You need to type something to encode your message into l337sp3@K!*");
     }
   }
 };
@@ -286,25 +286,25 @@ Commands.customize = {
   level: 3,
   fn: function(bot, msg, suffix) {
     if (msg.channel.isPrivate) {
-      bot.sendMessage(msg.channel, "You can't use this in DM, dummy!");
+      bot.sendMessage(msg.channel, "⚠ You can't use this in DM, dummy!");
       return;
     }
     if (this.methods.indexOf(suffix[0] > -1)) {
       if (suffix[0] === 'welcoming' && suffix[1] != 'on' && suffix[1] != 'off') {
-        bot.sendMessage(msg.channel, "Welcoming can either be `on` or `off`!");
+        bot.sendMessage(msg.channel, "⚠ Welcoming can either be `on` or `off`!");
         return;
       }
       Customize.handle(suffix, msg.channel.server).then(function(reply) {
-        bot.sendMessage(msg, "Sucessfully saved customization settings!");
+        bot.sendMessage(msg, "✅ Sucessfully saved customization settings!");
       }).catch(function(err) {
         if (err === 'Not supported!') {
-          bot.reply(msg, "I don't support that!");
+          bot.reply(msg, "⚠ I don't support that!");
         } else {
-          bot.sendMessage(msg, "Something went wrong, try again.");
+          bot.sendMessage(msg, "⚠ Something went wrong, try again.");
         }
       });
     } else {
-      bot.reply(msg, "I don't support that!");
+      bot.reply(msg, "⚠ I don't support that!");
     }
   }
 };
@@ -346,10 +346,10 @@ Commands.leave = {
     if (msg.channel.server) {
       bot.sendMessage(msg.channel, "Alright, see ya!");
       bot.leaveServer(msg.channel.server);
-      Logger.log("info", "I've left a server on request of " + msg.sender.username + ", I'm only in " + bot.servers.length + " servers now.");
+      Logger.log("info", "⚠ I've left a server on request of " + msg.sender.username + ", I'm only in " + bot.servers.length + " servers now.");
       return;
     } else {
-      bot.sendMessage(msg.channel, "I can't leave a DM, dummy!");
+      bot.sendMessage(msg.channel, "⚠ I can't leave a DM, dummy!");
       return;
     }
   }
@@ -399,7 +399,7 @@ Commands.image = {
   level: 0,
   fn: function(bot, msg, suffix) {
     if (!ConfigFile || !ConfigFile.api_keys.google_key || !ConfigFile.api_keys.cse_key) {
-      bot.sendMessage(msg.channel, "Image search requires **both** a Google API key and a CSE key!");
+      bot.sendMessage(msg.channel, "⚠ Image search requires **both** a Google API key and a CSE key!");
       return;
     }
     //gets us a random result in first 5 pages
@@ -411,16 +411,16 @@ Commands.image = {
         data = JSON.parse(body);
       } catch (e) {
         Logger.error(e);
-        bot.sendMessage(msg.channel, "The API returned an unconventional response.");
+        bot.sendMessage(msg.channel, "⚠ The API returned an unconventional response.");
         return;
       }
       if (!data) {
         Logger.debug(data);
-        bot.sendMessage(msg.channel, "Error:\n" + JSON.stringify(data));
+        bot.sendMessage(msg.channel, "⚠ Error:\n" + JSON.stringify(data));
         return;
       } else if (!data.items || data.items.length === 0) {
         Logger.debug(data);
-        bot.sendMessage(msg.channel, "No result for '" + suffix + "'");
+        bot.sendMessage(msg.channel, "⚠ No result for '" + suffix + "'");
         return;
       }
       var randResult = data.items[Math.floor(Math.random() * data.items.length)];
@@ -491,31 +491,31 @@ Commands.purge = { // TODO: Allow for tags to be used to only delete messages fr
   level: 2,
   fn: function(bot, msg, suffix) {
     if (!msg.channel.server) {
-      bot.sendMessage(msg.channel, "You can't do that in a DM, dummy!");
+      bot.sendMessage(msg.channel, "⚠ You can't do that in a DM, dummy!");
       return;
     }
     if (!suffix || isNaN(suffix)) {
-      bot.sendMessage(msg.channel, "Please define an ammount of messages for me to delete!");
+      bot.sendMessage(msg.channel, "⚠ Please define an ammount of messages for me to delete!");
       return;
     }
     if (!msg.channel.permissionsOf(msg.sender).hasPermission("manageMessages")) {
-      bot.sendMessage(msg.channel, "Sorry, your role in this server does not have enough permissions.");
+      bot.sendMessage(msg.channel, "⚠ Sorry, your role in this server does not have enough permissions.");
       return;
     }
     if (!msg.channel.permissionsOf(bot.user).hasPermission("manageMessages")) {
-      bot.sendMessage(msg.channel, "I don't have permission to do that!");
+      bot.sendMessage(msg.channel, "⚠ I don't have permission to do that!");
       return;
     }
     if (suffix > 100) {
-      bot.sendMessage(msg.channel, "The maximum is 100.");
+      bot.sendMessage(msg.channel, "⚠ The maximum is 100.");
       return;
     }
     bot.getChannelLogs(msg.channel, suffix, function(error, messages) {
       if (error) {
-        bot.sendMessage(msg.channel, "Something went wrong while fetching logs.");
+        bot.sendMessage(msg.channel, "⚠ Something went wrong while fetching logs.");
         return;
       } else {
-        Logger.info("Beginning purge...");
+        Logger.info("✅ Beginning purge...");
         var todo = messages.length,
           delcount = 0;
         for (msg of messages) {
@@ -523,7 +523,7 @@ Commands.purge = { // TODO: Allow for tags to be used to only delete messages fr
           todo--;
           delcount++;
           if (todo === 0) {
-            bot.sendMessage(msg.channel, "Done! Deleted " + delcount + " messages.");
+            bot.sendMessage(msg.channel, "✅ Done! Deleted " + delcount + " messages.");
             Logger.info("Ending purge, deleted " + delcount + " messages.");
             return;
           }
@@ -558,18 +558,18 @@ Commands.whois = {
   fn: function(bot, msg) {
     var UserLevel;
     if (!msg.channel.server) {
-      bot.sendMessage(msg.author, "I can't do that in a DM, sorry.");
+      bot.sendMessage(msg.author, "⚠ I can't do that in a DM, sorry.");
       return;
     }
     if (msg.mentions.length === 0) {
-      bot.sendMessage(msg.channel, "Please mention the user that you want to get information of.");
+      bot.sendMessage(msg.channel, "⚠ Please mention the user that you want to get information of.");
       return;
     }
     msg.mentions.map(function(user) {
       Permissions.GetLevel(msg.channel.server, user.id).then(function(level) {
         UserLevel = level;
         var msgArray = [];
-        msgArray.push("Information requested by " + msg.sender);
+        msgArray.push("✅ Information requested by " + msg.sender);
         msgArray.push("Requested user: `" + user.username + "`");
         msgArray.push("ID: `" + user.id + "`");
         msgArray.push("Discriminator: `#" + user.discriminator + "`");
@@ -580,7 +580,7 @@ Commands.whois = {
         msgArray.push("Current access level: " + UserLevel);
         bot.sendMessage(msg.channel, msgArray);
       }).catch(function() {
-        bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
+        bot.sendMessage(msg.channel, '⚠ Something went wrong, try again later.');
       });
     });
   }
@@ -592,35 +592,35 @@ Commands.setlevel = {
   level: 3,
   fn: function(bot, msg, suffix) {
     if (!msg.channel.server) {
-      bot.sendMessage(msg.channel, "I can't do that in a PM!");
+      bot.sendMessage(msg.channel, "⚠ I can't do that in a PM!");
       return;
     }
     if (isNaN(suffix[0])) {
-      bot.reply(msg, "your first param is not a number!");
+      bot.reply(msg, "⚠ your first param is not a number!");
       return;
     }
     if (suffix[0] > 3) { // TODO: Does not always work
-      bot.sendMessage(msg.channel, "Setting a level higher than 3 is not allowed.");
+      bot.sendMessage(msg.channel, "⚠ Setting a level higher than 3 is not allowed.");
       return;
     }
     if (msg.mentions.length === 0) {
-      bot.reply(msg, "please mention the user(s) you want to set the permission level of.");
+      bot.reply(msg, "⚠ please mention the user(s) you want to set the permission level of.");
       return;
     }
     Permissions.GetLevel(msg.channel.server, msg.author.id).then(function(level) {
       if (suffix[0] > level) { // TODO: Does not always work
-        bot.reply(msg, "you can't set a user's permissions higher than your own!");
+        bot.reply(msg, "⚠ you can't set a user's permissions higher than your own!");
         return;
       }
     }).catch(function(e) {
-      bot.sendMessage(msg.channel, "Help! Something went wrong!");
+      bot.sendMessage(msg.channel, "⚠ Help! Something went wrong!");
       return;
     });
     msg.mentions.map(function(user) {
       Permissions.SetLevel(msg.channel.server, user.id, suffix[0]).then(function() {
-        bot.sendMessage(msg.channel, "Alright! The permission levels have been set successfully!");
+        bot.sendMessage(msg.channel, "✅ Alright! The permission levels have been set successfully!");
       }).catch(function(e) {
-        bot.sendMessage(msg.channel, "Help! Something went wrong!");
+        bot.sendMessage(msg.channel, "⚠ Help! Something went wrong!");
         return;
       });
     });
@@ -640,21 +640,21 @@ Commands.setnsfw = {
     if (suffix === "on" || suffix === "off") {
       Permissions.SetNSFW(msg.channel.server, msg.channel.id, suffix).then(function(allow) {
         if (allow === "on") {
-          bot.sendMessage(msg.channel, "NSFW commands are now allowed for " + msg.channel);
+          bot.sendMessage(msg.channel, "✅ NSFW commands are now allowed for " + msg.channel);
         } else if (allow === "off") {
-          bot.sendMessage(msg.channel, "NSFW commands are now disallowed for " + msg.channel);
+          bot.sendMessage(msg.channel, "✅ NSFW commands are now disallowed for " + msg.channel);
         } else {
-          bot.reply(msg.channel, "I've failed to set NSFW flag!");
+          bot.reply(msg.channel, "⚠ I've failed to set NSFW flag!");
         }
       }).catch(function() {
-        bot.reply(msg.channel, "I've failed to set NSFW flag!");
+        bot.reply(msg.channel, "⚠ I've failed to set NSFW flag!");
       });
     } else {
-      bot.sendMessage(msg.channel, 'Use either `on` or `off` as suffix!');
+      bot.sendMessage(msg.channel, '⚠ Use either `on` or `off` as suffix!');
     }
   }
 };
-
+ 
 Commands.hello = {
   name: "hello",
   help: "I'll respond to you with hello along with a GitHub link, handy!",
@@ -706,10 +706,10 @@ Commands.namechanges = {
         bot.sendMessage(msg.channel, reply.join(', '));
       }).catch(function(err) {
         if (err === 'No changes!') {
-          bot.sendMessage(msg.channel, "I don't have any changes registered.");
+          bot.sendMessage(msg.channel, "⚠ I don't have any changes registered.");
           return;
         }
-        bot.sendMessage(msg.channel, 'Something went wrong, try again later.');
+        bot.sendMessage(msg.channel, '⚠ Something went wrong, try again later.');
       });
     });
   }
@@ -722,7 +722,7 @@ Commands["join-server"] = {
   level: 0,
   fn: function(bot, msg, suffix) {
     if (ConfigFile.discord.token_mode === true) {
-      bot.sendMessage(msg.channel, "Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: " + ConfigFile.discord.oauth_url);
+      bot.sendMessage(msg.channel, "⚠ Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: " + ConfigFile.discord.oauth_url);
       return;
     }
     if (!msg.channel.isPrivate && msg.isMentioned(bot.user)) {
@@ -731,9 +731,9 @@ Commands["join-server"] = {
         Logger.log("debug", "callback: " + arguments);
         if (error || !server) {
           Logger.warn("Failed to join a server: " + error);
-          bot.sendMessage(msg.channel, "Something went wrong, try again.");
+          bot.sendMessage(msg.channel, "⚠ Something went wrong, try again.");
         } else {
-          bot.sendMessage(msg.channel, "Sucessfully joined **" + server.name + "**!");
+          bot.sendMessage(msg.channel, "✅ Sucessfully joined **" + server.name + "**!");
         }
       }));
     } else if (msg.channel.isPrivate) {
@@ -741,9 +741,9 @@ Commands["join-server"] = {
         Logger.log("debug", "callback: " + arguments);
         if (error || !server) {
           Logger.warn("Failed to join a server: " + error);
-          bot.sendMessage(msg.channel, "Something went wrong, try again.");
+          bot.sendMessage(msg.channel, "⚠ Something went wrong, try again.");
         } else {
-          bot.sendMessage(msg.channel, "Sucessfully joined **" + server.name + "**!");
+          bot.sendMessage(msg.channel, "✅ Sucessfully joined **" + server.name + "**!");
         }
       }));
     }
@@ -799,13 +799,13 @@ Commands.rule34 = {
       .end(function(result) {
         var xml2js = require('xml2js');
         if (result.body.length < 75) {
-          bot.reply(msg, "sorry, nothing found."); // Correct me if it's wrong.
+          bot.reply(msg, "⚠ sorry, nothing found."); // Correct me if it's wrong.
           bot.stopTyping(msg.channel);
           return;
         } else {
           xml2js.parseString(result.body, function(err, reply) {
             if (err) {
-              bot.sendMessage(msg.channel, 'The API returned an unconventional response.');
+              bot.sendMessage(msg.channel, '⚠ The API returned an unconventional response.');
               bot.stopTyping(msg.channel);
               return;
             }
@@ -865,7 +865,7 @@ Commands.iff = {
           bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*");
         }
       } else {
-        bot.sendMessage(msg.channel, "*Invalid input!*");
+        bot.sendMessage(msg.channel, "⚠ *Invalid input!*");
       }
     });
   }
@@ -878,23 +878,23 @@ Commands.ban = {
   level: 2,
   fn: function(bot, msg) {
     if (!msg.channel.permissionsOf(msg.sender).hasPermission("banMembers")) {
-      bot.sendMessage(msg.channel, "Sorry, your role in this server does not have enough permissions.");
+      bot.sendMessage(msg.channel, "⚠ Sorry, your role in this server does not have enough permissions.");
       return;
     }
     if (!msg.channel.permissionsOf(bot.user).hasPermission("banMembers")) {
-      bot.sendMessage(msg.channel, "I don't have enough permissions to do this!");
+      bot.sendMessage(msg.channel, "⚠ I don't have enough permissions to do this!");
       return;
     }
     if (msg.mentions.length === 0) {
-      bot.sendMessage(msg.channel, "Please mention the user(s) you want to ban.");
+      bot.sendMessage(msg.channel, "⚠ Please mention the user(s) you want to ban.");
       return;
     }
     msg.mentions.map(function(user) {
       bot.banMember(user.id, msg.channel.server.id, function(error) {
         if (error) {
-          bot.sendMessage(msg.channel, "Failed to ban " + user);
+          bot.sendMessage(msg.channel, "⚠ Failed to ban " + user);
         } else if (!error) {
-          bot.sendMessage(msg.channel, "Banned " + user);
+          bot.sendMessage(msg.channel, "✅ Banned " + user);
         }
       });
     });
@@ -908,27 +908,27 @@ Commands.purgeban = {
   level: 2,
   fn: function(bot, msg, suffix) {
     if (!msg.channel.permissionsOf(msg.sender).hasPermission("banMembers")) {
-      bot.sendMessage(msg.channel, "Sorry, your role in this server does not have enough permissions.");
+      bot.sendMessage(msg.channel, "⚠ Sorry, your role in this server does not have enough permissions.");
       return;
     }
     if (!msg.channel.permissionsOf(bot.user).hasPermission("banMembers")) {
-      bot.sendMessage(msg.channel, "I don't have enough permissions to do this!");
+      bot.sendMessage(msg.channel, "⚠ I don't have enough permissions to do this!");
       return;
     }
     if (msg.mentions.length === 0) {
-      bot.sendMessage(msg.channel, "Please mention the user(s) you want to ban.");
+      bot.sendMessage(msg.channel, "⚠ Please mention the user(s) you want to ban.");
       return;
     }
     if (isNaN(suffix[0])) {
-      bot.sendMessage(msg.channel, "Your first parameter is not a number, use `ban` to ban without deleting messages.");
+      bot.sendMessage(msg.channel, "⚠  Your first parameter is not a number, use `ban` to ban without deleting messages.");
       return;
     }
     msg.mentions.map(function(user) {
       bot.banMember(user.id, msg.channel.server.id, suffix[0], function(error) {
         if (error) {
-          bot.sendMessage(msg.channel, "Failed to ban " + user);
+          bot.sendMessage(msg.channel, "⚠ Failed to ban " + user);
         } else if (!error) {
-          bot.sendMessage(msg.channel, "Banned " + user + " and deleted " + suffix[0] + " days worth of messages.");
+          bot.sendMessage(msg.channel, "✅ Banned " + user + " and deleted " + suffix[0] + " days worth of messages.");
         }
       });
     });
@@ -942,23 +942,23 @@ Commands.kick = {
   level: 1,
   fn: function(bot, msg) {
     if (!msg.channel.permissionsOf(msg.sender).hasPermission("kickMembers")) {
-      bot.sendMessage(msg.channel, "Sorry, your role in this server does not have enough permissions.");
+      bot.sendMessage(msg.channel, "⚠ Sorry, your role in this server does not have enough permissions.");
       return;
     }
     if (!msg.channel.permissionsOf(bot.user).hasPermission("kickMembers")) {
-      bot.sendMessage(msg.channel, "I don't have enough permissions to do this!");
+      bot.sendMessage(msg.channel, "⚠ I don't have enough permissions to do this!");
       return;
     }
     if (msg.mentions.length === 0) {
-      bot.sendMessage(msg.channel, "Please mention the user(s) you want to kick.");
+      bot.sendMessage(msg.channel, "⚠ Please mention the user(s) you want to kick.");
       return;
     }
     msg.mentions.map(function(user) {
       bot.kickMember(user.id, msg.channel.server.id, function(error) {
         if (error) {
-          bot.sendMessage(msg.channel, "Failed to kick " + user);
+          bot.sendMessage(msg.channel, "⚠ Failed to kick " + user);
         } else if (!error) {
-          bot.sendMessage(msg.channel, "Kicked " + user);
+          bot.sendMessage(msg.channel, "✅ Kicked " + user);
         }
       });
     });
@@ -976,7 +976,7 @@ Commands.gif = {
       if (typeof id !== "undefined") {
         bot.reply(msg, "http://media.giphy.com/media/" + id + "/giphy.gif [Tags: " + (tags ? tags : "Random GIF") + "]");
       } else {
-        bot.reply(msg, "sorry! Invalid tags, try something different. For example, something that exists [Tags: " + (tags ? tags : "Random GIF") + "]");
+        bot.reply(msg, "⚠ sorry! Invalid tags, try something different. For example, something that exists [Tags: " + (tags ? tags : "Random GIF") + "]");
       }
     });
   }
@@ -1025,7 +1025,7 @@ Commands.stroke = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var joke = JSON.parse(body);
@@ -1048,7 +1048,7 @@ Commands.yomomma = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var yomomma = JSON.parse(body);
@@ -1077,7 +1077,7 @@ Commands.advice = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var advice = JSON.parse(body);
@@ -1101,7 +1101,7 @@ Commands.yesno = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var yesNo = JSON.parse(body);
@@ -1125,7 +1125,7 @@ Commands.urbandictionary = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var uD = JSON.parse(body);
@@ -1155,7 +1155,7 @@ Commands.fact = {
           try {
             bot.reply(msg, result.facts.fact[0]);
           } catch (e) {
-            bot.sendMessage(msg.channel, "The API returned an unconventional response.");
+            bot.sendMessage(msg.channel, "⚠ The API returned an unconventional response.");
           }
         });
       } else {
@@ -1177,7 +1177,7 @@ Commands.xkcd = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var xkcdInfo = JSON.parse(body);
@@ -1194,7 +1194,7 @@ Commands.xkcd = {
                 }
               });
             } else {
-              bot.reply(msg, "there are only " + xkcdInfo.num + " xkcd comics!");
+              bot.reply(msg, "⚠ there are only " + xkcdInfo.num + " xkcd comics!");
             }
           } else {
             bot.reply(msg, xkcdInfo.img);
@@ -1225,7 +1225,7 @@ Commands.csgoprice = {
   level: 0,
   fn: function(bot, msg, suffix) {
     if (!suffix) {
-      bot.reply(msg, "enter a weapon query!");
+      bot.reply(msg, "⚠ enter a weapon query!");
       return;
     }
     skinInfo = suffix.split('"');
@@ -1233,7 +1233,7 @@ Commands.csgoprice = {
     csgomarket.strictNameMode = false;
     csgomarket.getSinglePrice(skinInfo[1], skinInfo[3], skinInfo[5], skinInfo[7], function(err, skinData) {
       if (err) {
-        bot.reply(msg, "that skin is so super secret rare, it doesn't even exist!");
+        bot.reply(msg, "⚠ that skin is so super secret rare, it doesn't even exist!");
       } else {
         if (skinData.success === true) {
           if (skinData.stattrak) {
@@ -1267,11 +1267,11 @@ Commands.dice = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var roll = JSON.parse(body);
-        bot.reply(msg, "your " + roll.input + " resulted in " + roll.result + " " + roll.details);
+        bot.reply(msg, "✅ your " + roll.input + " resulted in " + roll.result + " " + roll.details);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
@@ -1290,7 +1290,7 @@ Commands.fancyinsult = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var fancyinsult = JSON.parse(body);
@@ -1321,7 +1321,7 @@ Commands.imdb = {
           try {
             JSON.parse(body);
           } catch (e) {
-            bot.sendMessage(msg, 'The API returned an unconventional response.');
+            bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
             return;
           }
           var imdbInfo = JSON.parse(body);
@@ -1337,7 +1337,7 @@ Commands.imdb = {
               bot.sendMessage(msg.channel, sendArray[i]);
             }
           } else {
-            bot.sendMessage(msg.channel, "Search for " + suffix + " failed!");
+            bot.sendMessage(msg.channel, "⚠ Search for " + suffix + " failed!");
           }
         } else {
           Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
@@ -1361,7 +1361,7 @@ Commands["8ball"] = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var eightBall = JSON.parse(body);
@@ -1384,7 +1384,7 @@ Commands.catfacts = {
         try {
           JSON.parse(body);
         } catch (e) {
-          bot.sendMessage(msg, 'The API returned an unconventional response.');
+          bot.sendMessage(msg, '⚠ The API returned an unconventional response.');
           return;
         }
         var catFact = JSON.parse(body);
@@ -1475,10 +1475,10 @@ Commands.help = { // IDEA: Can this be split up in categories instead of one big
           Logger.debug("Send suffix help to channel.");
         } else {
           Logger.error("Config File error! Help mode is incorrectly defined!");
-          bot.sendMessage(msg.channel, "Sorry, my owner didn't configure me correctly!");
+          bot.sendMessage(msg.channel, "⚠ Sorry, my owner didn't configure me correctly!");
         }
       } else {
-        bot.sendMessage(msg.channel, "There is no **" + suffix + "** command!");
+        bot.sendMessage(msg.channel, "⚠ There is no **" + suffix + "** command!");
       }
     }
   }
