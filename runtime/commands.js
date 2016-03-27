@@ -1219,8 +1219,6 @@ Commands.urbandictionary = {
           msgArray.push('\n```');
           msgArray.push(uD.list[0].example);
           msgArray.push('```');
-          msgArray.push(':+1: : **' + uD.list[0].thumbs_up + '**');
-          msgArray.push(':-1: : **' + uD.list[0].thumbs_down + '**');
           bot.sendMessage(msg.channel, msgArray);
         } else {
           bot.reply(msg, suffix + ": This is so screwed up, even Urban Dictionary doesn't have it in it's database");
