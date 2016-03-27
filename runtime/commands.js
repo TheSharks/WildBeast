@@ -19,6 +19,8 @@ var Commands = [];
 Commands.ping = {
   name: "ping",
   help: "I'll reply to you with pong!",
+  module: "default",
+  timeout: 10,
   level: 0,
   fn: function(bot, msg) {
     bot.reply(msg, "Pong!"); // Easy for moderation
@@ -28,6 +30,7 @@ Commands.ping = {
 Commands.stream = {
   name: "stream",
   help: "Tells you if a specified streamer is live on Twitch.tv",
+  module: "default",
   level: 0,
   fn: function(bot, msg, suffix) {
     if (!suffix) {
@@ -69,6 +72,8 @@ Commands.stream = {
 Commands.nowplaying = { // TODO: Make unique per server
   name: "nowplaying",
   help: "Returns what video is currently playing.",
+  module: "music",
+  timeout: 20,
   level: 0,
   fn: function(bot, msg) {
     DJ.returnNowPlaying(bot, msg);
@@ -78,6 +83,7 @@ Commands.nowplaying = { // TODO: Make unique per server
 Commands.forceskip = { // TODO: Make unique per server
   name: "forceskip",
   help: "Forces a song to skip.",
+  module: "music",
   level: 2,
   fn: function(bot, msg) {
     DJ.expSkip(bot, msg);
@@ -87,16 +93,38 @@ Commands.forceskip = { // TODO: Make unique per server
 Commands.request = { // TODO: Make unique per server
   name: "request",
   help: "Adds a video to the playlist.",
+  module: "music",
   level: 0,
   music: true,
   fn: function(bot, msg, suffix) {
-    DJ.playlistAdd(bot, msg, suffix);
+    if (!bot.voiceConnection) {
+      msg.reply('not in voice right now.');
+      return;
+    }
+    if (!suffix) {
+      bot.sendMessage(msg.channel, 'Enter a YouTube link!');
+      return;
+    }
+    var reg = suffix.match(/(?:https?:\/\/)?(?:www\.)?youtu(?:.be\/|be\.com)(?:\/watch\?v=)(.{11})(?:\&list=)?(.{8,})?/);
+    if (reg === null) {
+      bot.sendMessage(msg.channel, 'That does not seem to be a valid YouTube link.');
+      return;
+    } else {
+      if (reg.length === 3 && reg[2] !== undefined) {
+        bot.sendMessage(msg.channel, "Assuming you've ment the playlist instead of the video.");
+        DJ.playlistAdd(bot, msg, reg[2]);
+      } else {
+        DJ.playlistAdd(bot, msg, reg[1]);
+      }
+    }
   }
 };
 
 Commands.playlist = { // TODO: Make unique per server
   name: "playlist",
   help: "Returns the playlist.",
+  module: "music",
+  timeout: 20,
   level: 0,
   fn: function(bot, msg) {
     DJ.playlistFetch(bot, msg);
@@ -106,6 +134,7 @@ Commands.playlist = { // TODO: Make unique per server
 Commands.e621 = {
   name: "e621",
   help: "e621, the definition of *Stop taking the Internet so seriously.*",
+  module: "nsfw",
   usage: "<tags> multiword tags need to be typed like: wildbeast_is_a_discord_bot",
   level: 0,
   nsfw: true,
@@ -132,6 +161,7 @@ Commands.e621 = {
 Commands.eval = { // TODO: Allow newlines
   name: "eval",
   help: "Allows the execution of arbitrary Javascript code within the context of the bot.",
+  module: "default",
   level: 6, // Now 100% sure it can't be used by anyone but the master user.
   fn: function(bot, msg, suffix) {
     try {
@@ -150,6 +180,7 @@ Commands.eval = { // TODO: Allow newlines
 Commands.alias = { // IDEA: Maybe unlock this to all users?
   name: "alias",
   help: "Allows for creating quick custom commands on the fly!",
+  module: "default",
   level: 5,
   fn: function(bot, msg, suffix) {
     var args = suffix.split(" ");
@@ -171,8 +202,10 @@ Commands.alias = { // IDEA: Maybe unlock this to all users?
 Commands["join-voice"] = {
   name: "join-voice",
   help: "I'll join a voice channel!",
+  module: "music",
   usage: "[voice-channel-name]",
   level: 0,
+  timeout: 300,
   music: true,
   fn: function(bot, msg) {
     DJ.joinVoice(bot, msg);
@@ -182,6 +215,7 @@ Commands["join-voice"] = {
 Commands.stop = { // TODO: Make unique per server
   name: "stop",
   help: "I'll stop playing music.",
+  module: "music",
   level: 0,
   music: true,
   fn: function(bot, msg) {
@@ -192,6 +226,7 @@ Commands.stop = { // TODO: Make unique per server
 Commands["leave-voice"] = { //TODO: Make unique per server
   name: "leave-voice",
   help: "I'll leave the current voice channel.",
+  module: "music",
   level: 0,
   music: true,
   fn: function(bot, msg) {
@@ -202,6 +237,7 @@ Commands["leave-voice"] = { //TODO: Make unique per server
 Commands.setstatus = {
   name: "setstatus",
   help: "This will change my current status to something else.",
+  module: "default",
   usage: "<online / away> [playing status]",
   level: 5,
   fn: function(bot, msg, suffix) {
@@ -233,6 +269,8 @@ Commands.setstatus = {
 Commands.fortunecow = {
   name: "fortunecow",
   help: "I'll get a random fortunecow!",
+  module: "fun",
+  timeout: 20,
   level: 0,
   fn: function(bot, msg) {
     bot.startTyping(msg.channel);
@@ -249,6 +287,7 @@ Commands.fortunecow = {
 Commands.leetspeak = {
   name: "leetspeak",
   help: "1'Ll 3nc0D3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
+  module: "fun",
   level: 0,
   fn: function(bot, msg, suffix) {
     if (suffix.length > 0) {
@@ -264,6 +303,8 @@ Commands.leetspeak = {
 Commands.randomcat = {
   name: "randomcat",
   help: "I'll get a random cat image for you!",
+  module: "fun",
+  timeout: 10,
   level: 0,
   fn: function(bot, msg, suffix) {
     bot.startTyping(msg.channel);
@@ -280,6 +321,7 @@ Commands.randomcat = {
 Commands.customize = {
   name: "customize",
   help: "Change almost everything about my behaviour in this server!",
+  module: "default",
   usage: "<method> <change_to>",
   methods: ["welcoming", "welcome_message", "no_permission_response", "nsfw_disallowed_response"],
   vars: ["%user", "%channel", "%server"],
@@ -312,6 +354,8 @@ Commands.customize = {
 Commands.info = {
   name: "info",
   help: "I'll print some information about me.",
+  module: "default",
+  timeout: 5,
   level: 0,
   fn: function(bot, msg) {
     var msgArray = [];
@@ -325,6 +369,7 @@ Commands.info = {
 Commands.cleverbot = { // TODO: Not good enough, conversations are not saved and are reset each time this command is executed, so conversations get off-topic really fast
   name: "cleverbot",
   help: "I'll act as Cleverbot when you execute this command, remember to enter a message as suffix.",
+  module: "fun",
   usage: "<message>",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -341,6 +386,7 @@ Commands.cleverbot = { // TODO: Not good enough, conversations are not saved and
 Commands.leave = {
   name: "leave",
   help: "I'll leave the server in which the command is executed.",
+  module: "default",
   level: 3,
   fn: function(bot, msg, suffix) {
     if (msg.channel.server) {
@@ -358,20 +404,13 @@ Commands.leave = {
 Commands.say = {
   name: "say",
   help: "I'll echo the suffix of the command to the channel and, if I have sufficient permissions, I will delete the command.",
+  module: "fun",
   usage: "<text>",
+  timeout: 10,
   level: 0,
   fn: function(bot, msg, suffix) {
     if (suffix.indexOf(ConfigFile.bot_settings.cmd_prefix + "say") === -1) {
-      bot.sendMessage(msg.channel, msg.sender + ", " + suffix);
-      if (msg.channel.server) {
-        var bot_permissions = msg.channel.permissionsOf(bot.user);
-        if (bot_permissions.hasPermission("manageMessages")) {
-          bot.deleteMessage(msg);
-          return;
-        } else {
-          bot.sendMessage(msg.channel, "*This works best when I have the permission to delete messages!*"); // Note that this can be spammy if server owner doesn't care.
-        }
-      }
+      bot.sendMessage(msg.channel, "\u200B" + suffix);
     } else {
       bot.sendMessage(msg.channel, "HEY " + msg.sender + " STOP THAT!", {
         tts: "true"
@@ -383,6 +422,7 @@ Commands.say = {
 Commands.killswitch = {
   name: "killswitch",
   help: "This will instantly terminate all of the running instances of the bot without restarting.",
+  module: "default",
   level: 5, // If an access level is set to 4 or higher, only the master user can use this
   fn: function(bot, msg) {
       bot.sendMessage(msg.channel, "An admin has requested to kill all instances of WildBeast, exiting...");
@@ -395,6 +435,8 @@ Commands.killswitch = {
 Commands.image = {
   name: "image",
   help: "I'll search teh interwebz for a picture matching your tags.",
+  module: "fun",
+  timeout: 20,
   usage: "<image tags>",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -433,6 +475,7 @@ Commands.image = {
 Commands.pullanddeploy = {
   name: "pullanddeploy",
   help: "I'll check if my code is up-to-date with the code from <@107904023901777920>, and restart. **Please note that this does NOT work on Windows!**", // Does it really not work on Windows, or is it tied in with Git?
+  module: "admin",
   level: 5, // If an access level is set to 4 or higher, only the master user can use this
   fn: function(bot, msg, suffix) {
     bot.sendMessage(msg.channel, "Fetching updates...", function(error, sentMsg) {
@@ -477,6 +520,7 @@ Commands.pullanddeploy = {
 Commands.youtube = {
   name: "youtube",
   help: "I'll search YouTube for a video matching your given tags.",
+  module: "fun",
   usage: "<video tags>",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -487,6 +531,7 @@ Commands.youtube = {
 Commands.purge = { // TODO: Allow for tags to be used to only delete messages from those users
   name: "purge",
   help: "I'll delete a certain ammount of messages.",
+  module: "admin",
   usage: "<number-of-messages-to-delete>",
   level: 2,
   fn: function(bot, msg, suffix) {
@@ -536,6 +581,8 @@ Commands.purge = { // TODO: Allow for tags to be used to only delete messages fr
 Commands.kappa = { // IDEA: Unneeded, just use iff instead
   name: "kappa",
   help: "Sends kappa picture",
+  timeout: 20,
+  module: "fun",
   level: 0,
   fn: function(bot, msg, suffix) {
     bot.sendFile(msg.channel, "./images/kappa.png");
@@ -554,6 +601,7 @@ Commands.kappa = { // IDEA: Unneeded, just use iff instead
 Commands.whois = {
   name: "whois",
   help: "I'll get some information about the user you've mentioned.",
+  module: "admin",
   level: 0,
   fn: function(bot, msg) {
     var UserLevel;
@@ -589,6 +637,7 @@ Commands.whois = {
 Commands.setlevel = {
   name: "setlevel",
   help: "This changes the permission level of an user.",
+  module: "default",
   level: 3,
   fn: function(bot, msg, suffix) {
     if (!msg.channel.server) {
@@ -630,6 +679,7 @@ Commands.setlevel = {
 Commands.setnsfw = {
   name: "setnsfw",
   help: "This changes if the channel allows NSFW commands.",
+  module: "nsfw",
   usage: "<on | off>",
   level: 3,
   fn: function(bot, msg, suffix) {
@@ -658,6 +708,8 @@ Commands.setnsfw = {
 Commands.hello = {
   name: "hello",
   help: "I'll respond to you with hello along with a GitHub link, handy!",
+  module: "default",
+  timeout: 20,
   level: 0,
   fn: function(bot, msg) {
     bot.sendMessage(msg.channel, "Hello " + msg.sender + "! I'm " + bot.user.username + ", help me improve my contibuting to my base code: https://github.com/SteamingMutt/WildBeast");
@@ -667,6 +719,8 @@ Commands.hello = {
 Commands["server-info"] = { // TODO: List roles
   name: "server-info",
   help: "I'll tell you some information about the server you're currently in.",
+  module: "default",
+  timeout: 20,
   level: 0,
   fn: function(bot, msg, suffix) {
     // if we're not in a PM, return some info about the channel
@@ -698,6 +752,8 @@ Commands["server-info"] = { // TODO: List roles
 Commands.namechanges = {
   name: "namechanges",
   help: "I'll return 20 namechanges the mentioned user has done, and that I know of.",
+  module: "admin",
+  timeout: 10,
   level: 0,
   fn: function(bot, msg, suffix) {
     msg.mentions.map(function(user) {
@@ -718,6 +774,7 @@ Commands.namechanges = {
 Commands["join-server"] = {
   name: "join-server",
   help: "I'll join the server you've requested me to join, as long as the invite is valid and I'm not banned of already in the requested server.",
+  module: "default",
   usage: "<bot-mention> <instant-invite>",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -753,6 +810,8 @@ Commands["join-server"] = {
 Commands['check-voice'] = { // TODO: Retire this function later on, since the Discord API allows multiple voice connections.
   name: "check-voice",
   help: "I'll check if I'm available to stream music right now.",
+  module: "music",
+  timeout: 30,
   level: 0,
   fn: function(bot, msg) {
     DJ.checkIfAvailable(bot, msg);
@@ -762,6 +821,8 @@ Commands['check-voice'] = { // TODO: Retire this function later on, since the Di
 Commands.meme = {
   name: "meme",
   help: "I'll create a meme with your suffixes!",
+  module: "fun",
+  timeout: 10,
   usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -791,6 +852,7 @@ Commands.meme = {
 Commands.rule34 = {
   name: "rule34",
   help: "Rule#34 : If it exists there is porn of it. If not, start uploading.",
+  module: "nsfw",
   level: 0,
   nsfw: true,
   fn: function(bot, msg, suffix) {
@@ -824,6 +886,8 @@ Commands.rule34 = {
 Commands.status = {
   name: "status",
   help: "I'll get some info about me, like uptime and currently connected servers.",
+  module: "default",
+  timeout: 20,
   level: 0,
   fn: function(bot, msg) {
     var msgArray = [];
@@ -837,7 +901,9 @@ Commands.status = {
 Commands.iff = {
   name: "iff",
   help: "''**I**mage **F**rom **F**ile'', I'll get a image from the image folder for you and upload it to the channel.",
+  module: "fun",
   usage: "<image>",
+  timeout: 10,
   level: 0,
   fn: function(bot, msg, suffix) {
     var fs = require("fs");
@@ -874,6 +940,7 @@ Commands.iff = {
 Commands.ban = {
   name: "ban",
   help: "Swing the banhammer on someone!",
+  module: "admin",
   usage: "<user-mention>",
   level: 2,
   fn: function(bot, msg) {
@@ -904,6 +971,7 @@ Commands.ban = {
 Commands.purgeban = {
   name: "purgeban",
   help: "Swing the banhammer and delete messages at the same time!",
+  module: "admin",
   usage: "<days-to-delete> <user-mention>",
   level: 2,
   fn: function(bot, msg, suffix) {
@@ -938,6 +1006,7 @@ Commands.purgeban = {
 Commands.kick = {
   name: "kick",
   help: "Kick an user out of the server!",
+  module: "admin",
   usage: "<user-mention>",
   level: 1,
   fn: function(bot, msg) {
@@ -968,6 +1037,8 @@ Commands.kick = {
 Commands.gif = {
   name: "gif",
   help: "I will search Giphy for a gif matching your tags.",
+  module: "fun",
+  timeout: 20,
   usage: "<image tags>",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -985,6 +1056,8 @@ Commands.gif = {
 Commands.imglist = {
   name: "imglist",
   help: "Prints the contents of the images directory to the channel.",
+  module: "fun",
+  timeout: 20,
   level: 0,
   fn: function(bot, msg) {
     var fs = require("fs");
@@ -1007,6 +1080,8 @@ Commands.imglist = {
 Commands.stroke = {
   name: "stroke",
   help: "I'll stroke someones ego, how nice of me.",
+  module: "fun",
+  timeout: 5,
   usage: "[First name][, [Last name]]",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1040,6 +1115,8 @@ Commands.stroke = {
 Commands.yomomma = {
   name: "yomomma",
   help: "I'll get a random yo momma joke for you.",
+  module: "fun",
+  timeout: 5,
   level: 0,
   fn: function(bot, msg, suffix) {
     var request = require('request');
@@ -1069,6 +1146,8 @@ Commands.yomomma = {
 Commands.advice = {
   name: "advice",
   help: "I'll give you some great advice, I'm just too kind.",
+  module: "fun",
+  timeout: 5,
   level: 0,
   fn: function(bot, msg, suffix) {
     var request = require('request');
@@ -1092,6 +1171,8 @@ Commands.advice = {
 Commands.yesno = {
   name: "yesno",
   help: "Ever wanted a gif displaying your (dis)agreement? Then look no further!",
+  module: "fun",
+  timeout: 5,
   usage: "optional: [force yes/no/maybe]",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1116,6 +1197,8 @@ Commands.yesno = {
 Commands.urbandictionary = {
   name: "urbandictionary",
   help: "Ever wanted to know what idiots on the internet thinks something means? Here ya go!",
+  module: "fun",
+  timeout: 10,
   usage: "[string]",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1130,7 +1213,13 @@ Commands.urbandictionary = {
         }
         var uD = JSON.parse(body);
         if (uD.result_type !== "no_results") {
-          bot.reply(msg, suffix + ": " + uD.list[0].definition + ' "' + uD.list[0].example + '"');
+          var msgArray = [];
+          msgArray.push("**" + uD.list[0].word + "**");
+          msgArray.push(uD.list[0].definition);
+          msgArray.push('\n```');
+          msgArray.push(uD.list[0].example);
+          msgArray.push('```');
+          bot.sendMessage(msg.channel, msgArray);
         } else {
           bot.reply(msg, suffix + ": This is so screwed up, even Urban Dictionary doesn't have it in it's database");
         }
@@ -1144,6 +1233,8 @@ Commands.urbandictionary = {
 Commands.fact = {
   name: "fact",
   help: "I'll give you some interesting facts!",
+  module: "fun",
+  timeout: 30,
   level: 0,
   fn: function(bot, msg, suffix) {
     var request = require('request');
@@ -1168,6 +1259,8 @@ Commands.fact = {
 Commands.xkcd = {
   name: "xkcd",
   help: "I'll get a XKCD comic for you, you can define a comic number and I'll fetch that one.",
+  module: "fun",
+  timeout: 5,
   usage: "[current, or comic number]",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1210,7 +1303,6 @@ Commands.xkcd = {
             }
           });
         }
-
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
@@ -1221,6 +1313,7 @@ Commands.xkcd = {
 Commands.csgoprice = {
   name: "csgoprice",
   help: "I'll give you the price of a CS:GO skin.",
+  module: "fun",
   usage: '[weapon "AK-47"] [skin "Vulcan"] [[wear "Factory New"] [stattrak "(boolean)"]] Quotes are important!',
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1252,6 +1345,7 @@ Commands.csgoprice = {
 Commands.dice = {
   name: "dice",
   help: "I'll roll some dice for you, handy!",
+  module: "fun",
   usage: "[numberofdice]d[sidesofdice]",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1282,6 +1376,8 @@ Commands.dice = {
 Commands.fancyinsult = {
   name: "fancyinsult",
   help: "I'll insult your friends, in style.",
+  module: "fun",
+  timeout: 5,
   level: 0,
   fn: function(bot, msg, suffix) {
     var request = require('request');
@@ -1311,6 +1407,8 @@ Commands.fancyinsult = {
 Commands.imdb = {
   name: "imdb",
   help: "I'll search through IMDb for a movie matching your given tags, and post my finds in the channel.",
+  module: "fun",
+  timeout: 10,
   usage: "[title]",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1352,6 +1450,7 @@ Commands.imdb = {
 Commands["8ball"] = {
   name: "8ball",
   help: "I'll function as an magic 8 ball for a bit and answer all of your questions! (So long as you enter the questions as suffixes.)",
+  module: "fun",
   usage: "<question>",
   level: 0,
   fn: function(bot, msg, suffix) {
@@ -1376,6 +1475,7 @@ Commands["8ball"] = {
 Commands.catfacts = {
   name: "catfacts",
   help: "I'll give you some interesting facts about cats!",
+  module: "fun",
   level: 0,
   fn: function(bot, msg, suffix) {
     var request = require('request');
@@ -1399,12 +1499,13 @@ Commands.catfacts = {
 Commands.help = { // IDEA: Can this be split up in categories instead of one big message?
   name: "help",
   help: "You're looking at it right now.",
+  module: "default",
   level: 0,
   fn: function(bot, msg, suffix) {
     var msgArray = [];
     var commandnames = []; // Build a array of names from commands.
     if (!suffix) {
-      for (index in Commands) {
+      for (var index in Commands) {
         commandnames.push(Commands[index].name);
       }
       msgArray.push("These are the currently available commands, use `" + ConfigFile.bot_settings.cmd_prefix + "help <command_name>` to learn more about a specific command.");
@@ -1445,6 +1546,9 @@ Commands.help = { // IDEA: Can this be split up in categories instead of one big
         }
         if (commando.hasOwnProperty("timeout")) { // Push special message if command has a cooldown
           msgArray.push("**This command has a cooldown of " + commando.timeout + " seconds.**");
+        }
+        if (commando.hasOwnProperty('module')) {
+          msgArray.push('**This command is part of the** `' + commando.module + '` **module**');
         }
         if (commando.hasOwnProperty('level')) {
           msgArray.push("**Needed access level:** " + commando.level); // Push the needed access level to the array
