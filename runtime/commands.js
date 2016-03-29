@@ -1160,7 +1160,7 @@ Commands.advice = {
           return;
         }
         var advice = JSON.parse(body);
-        bot.sendMessage(msg.reply + advice.slip.advice);
+        bot.reply(msg, advice.slip.advice);
       } else {
         Logger.log("warn", "Got an error: ", error, ", status code: ", response.statusCode);
       }
