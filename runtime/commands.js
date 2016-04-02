@@ -205,7 +205,7 @@ Commands["join-voice"] = {
   module: "music",
   usage: "[voice-channel-name]",
   level: 0,
-  timeout: 300,
+  timeout: 189, // Waiting music length
   music: true,
   fn: function(bot, msg) {
     DJ.joinVoice(bot, msg);
