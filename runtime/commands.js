@@ -337,7 +337,7 @@ Commands.customize = {
         return;
       }
       Customize.handle(suffix, msg.channel.server).then(function(reply) {
-        bot.sendMessage(msg, "Sucessfully saved customization settings!");
+        bot.sendMessage(msg, "Successfully saved customization settings!");
       }).catch(function(err) {
         if (err === 'Not supported!') {
           bot.reply(msg, "I don't support that!");
@@ -1334,7 +1334,7 @@ Commands.csgoprice = {
           } else {
             skinData.stattrak = "";
           }
-          var msgArray = ["Weapon: " + skinData.wep + " " + skinData.skin + " " + skinData.wear + " " + skinData.stattrak, "Lowest Price: " + skinData.lowest_price, "Number Available: " + skinData.volume, "Median Price: " + skinData.median_price, ];
+          var msgArray = ["Weapon: " + skinData.wep + " " + skinData.skin + " " + skinData.wear + " " + skinData.stattrak, "Lowest Price: " + skinData.lowest_price, "Number Available: " + skinData.volume, "Median Price: " + skinData.median_price];
           bot.reply(msg, msgArray);
         }
       }

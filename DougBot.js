@@ -243,10 +243,10 @@ bot.on("serverNewMember", function(server, user) {
     if (r === 'default') {
       bot.sendMessage(server.defaultChannel, "Welcome " + user.username + " to **" + server.name + "**!");
     } else {
-      var userstep = r.replace(/%user/g, msg.author.username);
-      var serverstep = userstep.replace(/%server/g, msg.channel.server.name);
-      var final = serverstep.replace(/%channel/, msg.channel);
-      bot.sendMessage(msg.channel, final);
+      var userstep = r.replace(/%user/g, user.username);
+      var serverstep = userstep.replace(/%server/g, server.name);
+      var final = serverstep.replace(/%channel/, server.defaultChannel);
+      bot.sendMessage(server.defaultChannel, final);
     }
   }).catch(function(e) {
     if (e === 'Welcoming turned off.') {

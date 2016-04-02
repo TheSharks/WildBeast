@@ -10,8 +10,7 @@ exports.check = function(cmd, server) {
           var lastExecutedTime = new Date(cmdLastExecutedTime[server][cmd.name]);
           lastExecutedTime.setSeconds(lastExecutedTime.getSeconds() + cmd.timeout);
           if (currentDateTime < lastExecutedTime) {
-            var diff = (lastExecutedTime - currentDateTime) / 1000;
-            isAllowResult = diff;
+            isAllowResult = (lastExecutedTime - currentDateTime) / 1000;
           } else {
             cmdLastExecutedTime[server][cmd.name] = new Date();
           }
