@@ -282,6 +282,7 @@ process.on('uncaughtException', function(err) {
   }
 });
 
+/* Due to Gateway V4, we need to wait for discord.js to update, or we need to handle raw websocket data.
 bot.on('serverCreated', function(server) {
   // Since join-server doenst work for oauth bots, we need to be creative with the joined announcement
   var msgArray = [];
@@ -297,6 +298,7 @@ bot.on('serverCreated', function(server) {
   msgArray.push("Else, use `" + ConfigFile.bot_settings.cmd_prefix + "leave` or just kick me.");
   bot.sendMessage(server.defaultChannel, msgArray);
 });
+*/
 
 bot.on('presence', function(olduser, newuser) {
   if (ConfigFile.bot_settings.namechange_log === true) {

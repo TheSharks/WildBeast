@@ -21,7 +21,6 @@ exports.removeServer = function(server) {
   });
 };
 
-
 exports.GetLevel = function(server, user) {
   return new Promise(function(resolve, reject) {
     try {

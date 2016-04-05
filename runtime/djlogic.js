@@ -57,9 +57,9 @@ exports.joinVoice = function(bot, message) {
     }, 186000);
   }
   setTimeout(function() {
-      if (bot.voiceConnection != null) {
-            bot.voiceConnection.playFile('./music/waitmusic.mp3', {}); // Play waitng music because why not
-      }
+    if (bot.voiceConnection !== null) {
+      bot.voiceConnection.playFile('./music/waitmusic.mp3', {}); // Play waitng music because why not
+    }
   }, 1000); // Wait a bit for the voiceConnection object to become avalible
 };
 
