@@ -261,6 +261,18 @@ exports.expSkip = function(bot, message) {
   bot.voiceConnection.stopPlaying();
 };
 
+exports.setVolume = function(bot, message, suffix) {
+  if (boundChannel) {
+    if (isNaN(suffix) || suffix > 1) {
+      bot.sendMessage(message.channel, "The volume must be a number between 0 and 1. ex: 0.5");
+    } else {
+      vol = suffix;
+      bot.sendMessage(message.channel, "Volume has been set to " + suffix);
+      bot.voiceConnection.setVolume(vol);
+    }
+  }
+};
+
 exports.checkPerms = function(server, author, callback) {
   return new Promise(function(resolve, reject) {
     try {

@@ -223,6 +223,18 @@ Commands.stop = { // TODO: Make unique per server
   }
 };
 
+Commands.volume = {
+  name: "volume",
+  help: "Set the volume of the music!",
+  module: "music",
+  usage: "[number between 0 and 1]",
+  level: 0,
+  music: true,
+  fn: function(bot, msg, suffix) {
+    DJ.setVolume(bot, msg, suffix);
+  }
+};
+
 Commands["leave-voice"] = { //TODO: Make unique per server
   name: "leave-voice",
   help: "I'll leave the current voice channel.",
