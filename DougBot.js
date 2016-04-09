@@ -285,12 +285,12 @@ process.on('uncaughtException', function(err) {
   }
 });
 
-/* Due to Gateway V4, we need to wait for discord.js to update, or we need to handle raw websocket data.
 bot.on('serverCreated', function(server) {
   // Since join-server doenst work for oauth bots, we need to be creative with the joined announcement
   var msgArray = [];
   Permissions.initializeServer(server);
   Customize.initializeServer(server);
+  /*
   msgArray.push("Hey! I'm " + bot.user.username);
   if (ConfigFile.discord.token_mode === true) {
     msgArray.push("Someone with `manage server` permissions invited me to this server via OAuth.");
@@ -300,8 +300,8 @@ bot.on('serverCreated', function(server) {
   msgArray.push("If I'm intended to be here, use `" + ConfigFile.bot_settings.cmd_prefix + "help` to see what I can do.");
   msgArray.push("Else, use `" + ConfigFile.bot_settings.cmd_prefix + "leave` or just kick me.");
   bot.sendMessage(server.defaultChannel, msgArray);
+  */
 });
-*/
 
 bot.on('presence', function(olduser, newuser) {
   if (ConfigFile.bot_settings.namechange_log === true) {
