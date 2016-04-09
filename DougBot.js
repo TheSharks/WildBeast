@@ -87,6 +87,9 @@ bot.on("message", function(msg) {
     var n = d.toUTCString();
     ChatLogger.info(n + ": " + msg.channel.server.name + ", " + msg.channel.name + ": " + msg.author.username + " said <" + msg.cleanContent + ">");
   }
+  if (msg.author.equals(bot.user)) {
+    return;
+  }
   var prefix;
   if (ConfigFile.bot_settings.cmd_prefix != "mention") {
     prefix = ConfigFile.bot_settings.cmd_prefix;
