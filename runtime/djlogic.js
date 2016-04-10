@@ -313,7 +313,7 @@ exports.checkIfAvailable = function(bot, message) {
     bot.reply(message, "music commands are disabled.");
     return;
   }
-  if (bot.voiceConnection) bot.sendMessage(message.channel, "I'm not available to play music right now, sorry.");
+  if (bot.voiceConnection) bot.sendMessage(message.channel, "I'm currently streaming music on another server or voice channel.");
   if (!bot.voiceConnection) bot.sendMessage(message.channel, "I'm available to play music right now, use `join-voice <channel-name>` to initiate me!");
 };
 
