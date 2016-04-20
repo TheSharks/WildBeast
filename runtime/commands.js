@@ -111,7 +111,7 @@ Commands.request = { // TODO: Make unique per server
       return;
     } else {
       if (reg.length === 3 && reg[2] !== undefined) {
-        bot.sendMessage(msg.channel, "Assuming you've ment the playlist instead of the video.");
+        bot.sendMessage(msg.channel, "Assuming you've meant the playlist instead of the video.");
         DJ.playlistAdd(bot, msg, reg[2]);
       } else {
         DJ.playlistAdd(bot, msg, reg[1]);
