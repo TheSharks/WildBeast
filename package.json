@@ -21,13 +21,13 @@
   },
   "engines": {
     "node": "^5.x.x",
-    "npm" : ">=3.x.x"
+    "npm": ">=3.x.x"
   },
   "license": "GPL-3.0",
   "dependencies": {
     "cleverbot-node": "0.2.x",
     "csgo-market": "^1.5.2",
-    "discord.js": "^6.0.0",
+    "discord.js": "^7.0.1",
     "imgflipper": "^1.0.1",
     "leetspeak": "^0.0.1",
     "nedb": "^1.8.0",
