@@ -263,11 +263,11 @@ exports.expSkip = function(bot, message) {
 
 exports.setVolume = function(bot, message, suffix) {
   if (boundChannel) {
-    if (isNaN(suffix) || suffix > 1) {
-      bot.sendMessage(message.channel, "The volume must be a number between 0 and 1. ex: 0.5");
+    if (isNaN(suffix) || suffix > 100) {
+      bot.sendMessage(message.channel, "The volume must be a number between 0 and 100. ex: 50");
     } else {
-      vol = suffix;
-      bot.sendMessage(message.channel, "Volume has been set to " + suffix);
+      vol = suffix/100;
+      bot.sendMessage(message.channel, "Volume has been set to " + suffix + "%");
       bot.voiceConnection.setVolume(vol);
     }
   }
