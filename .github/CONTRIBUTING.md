@@ -1,29 +1,20 @@
-First off, thanks for taking the time to contribute!  
-The following are a set of guidelines to improve the quality of your contributions, please follow them accordingly.  
+Thank you for taking the time to contribute!   
+Please, follow these rules when making contributions.
 
-# Pull requests   
-1. All pull requests are welcome, but you are required to version bump `package.json` and `README.md`.     
-2. You are required to confirm that you've tested your code.  
-3. Guideline 2 does not apply on, but is not limited to; spelling/grammar improvements, small tweaks and image additions.  
-4. Please do not change `CHANGELOG.md`, this is reserved for contributors with write access.
+# Unwanted contributions
+1. Spelling/Grammar changes
+2. Style violations fixes
+3. ESLint rules changes
+4. Custom command issues (except internal problems)
+5. Alias additions, only applies if no new default commands are provided
+6. Issues that come forth from using user accounts instead of bot accounts
 
-# Issues  
-1. If submitting a bug report, include any log files (excluding chatlogs) with your issue.  
-2. If submitting a improvement suggestion, explain why you want this feature included, you don't have to go into details.  
-3. Please do not open issues if you're not sure about the cause of the problem.
+# Wanted contributions rules
+Everything that doesn't fit in the Unwanted category are considered wanted.
+## Commands
+1. Make sure commands you're adding are suitable to be default ones, if you think that some command are better suited as custom ones, edit the [wiki page](wiki wow) to include those commands instead of including them as defaults.
 
-# Code guidelines
-1. All commands go in `commands.js`, no exceptions.
-2. Additional files needed by commands go in the `runtime` folder, with the exception for images and music.
-3. Usage of ES6 code is allowed.
-4. You are free to require additional node modules, but include them in `package.json` if you do.
-5. When adding something users would like to disable/enable, include a `config.json` value that will trigger/disable the function.
-6. When calling the bots name, use `bot.user` or `bot.user.username`, and not WildBeast or DougleyBot.
-7. Try to modulate as much of your code as possible, for example; if your code needs a rss feed, try to modulate the calling for the feed.
-
-# Logging
-1. When logging something that users need to see, log them using the `Logger.log("level", "message")` function, or it's shortcut `Logger.level("message")`, **Not** via `console.log`.  
-2. When *debug* logging something, log them using the `Debug.debuglogSomething("invocation", "message", "loglev")`.  
-3. When *verbose* logging something, log them using the `Debug.verboselogSomething("invocation", "message", "loglev")`
-4. `Logger.log` takes `verbose, info, debug, warn, error` as loglevels, `Debug.debuglogSomething` and `Debug.verboselogSomething` takes loglev's present in the `loglevs.json` file located in the runtime folder.   
-5. Debug loggers won't check for a correct loglev, but refrain from using levels that aren't defined in `loglevs.json`.  
+## Code style
+1. We follow the [JavaScript Standard Style](https://github.com/feross/standard), please format your code accordingly.
+2. [ESLint](http://eslint.org/) is used to identify other style violations, so please lint your code before committing.
+3. Make sure you've run `npm test` to confirm you don't break any style rules.

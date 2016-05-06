@@ -2,41 +2,37 @@
 TODO: Change runtime to be more random
 */
 
-var qs = require("querystring");
-var Logger = require("./logger.js").Logger;
+var qs = require('querystring')
 
-exports.get_gif = function(tags, func) {
-  //limit=1 will only return 1 gif
+exports.get_gif = function (tags, func) {
+  // limit=1 will only return 1 gif
   var params = {
-    "api_key": "dc6zaTOxFJmzC",
-    "rating": "r",
-    "format": "json",
-    "limit": 1
-  };
-  var query = qs.stringify(params);
+    'api_key': 'dc6zaTOxFJmzC',
+    'rating': 'r',
+    'format': 'json',
+    'limit': 1
+  }
+  var query = qs.stringify(params)
 
   if (tags !== null) {
-    query += "&q=" + tags.join('+');
+    query += '&q=' + tags.join('+')
   }
 
-  //wouldnt see request lib if defined at the top for some reason:\
-  var request = require("request");
-  //Logger.log("debug", query)
+  // wouldnt see request lib if defined at the top for some reason:\
+  var request = require('request')
+  // Logger.log('debug', query)
 
-  request("http://api.giphy.com/v1/gifs/search" + "?" + query, function(error, response, body) {
-    //Logger.log("debug", arguments)
+  request('http://api.giphy.com/v1/gifs/search' + '?' + query, function (error, response, body) {
+    // Logger.log('debug', arguments)
     if (error || response.statusCode !== 200) {
-      Logger.log("error", "giphy: Got error: " + body);
-      Logger.log("error", error);
-      //Logger.log("debug", response)
+      // Logger.log('debug', response)
     } else {
-      var responseObj = JSON.parse(body);
-      Logger.log("debug", responseObj.data[0]);
+      var responseObj = JSON.parse(body)
       if (responseObj.data.length) {
-        func(responseObj.data[0].id);
+        func(responseObj.data[0].id)
       } else {
-        func(undefined);
+        func(undefined)
       }
     }
-  }.bind(this));
-};
+  })
+}

@@ -1,0 +1,13 @@
+*.json
+*.md
+*.txt
+*.log
+*.mp3
+*.exe
+customize
+perms
+users
+ffmpeg
+ffprobe
+ffplay
+ffserver

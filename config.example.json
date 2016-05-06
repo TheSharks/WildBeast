@@ -1,47 +1,24 @@
 {
-    "useful_comments": [
-        "Please only enable debug_mode or verbose_logging if requested by one of the devs, as enabling this extends the logging capabilities and could potentially include sensitive info.",
-        "Command prefixes are length dynamic, meaning that prefixes can be as long as you want, change the value to `mention` to switch to mention activation.",
-        "help_mode can either be `private` or `channel`"
-    ],
-
-    "discord" : {
-        "email" : "foo@bar.net",
-        "password" : "hunter2",
-        "token_mode" : false,
-        "token": "Valid Discord API token, only needed when token_mode is true",
-        "oauth_url": "Valid OAuth URL, this will be send to users who try to use join-server if token_mode is true"
+  "bot": {
+    "isbot": true,
+    "token": "Bot token",
+    "email": "If you need this, optional",
+    "password": "Again if you need this, optional",
+    "oauth": "URL"
+  },
+  "settings": {
+    "prefix": "anything can be entered as the global prefix along side mentions"
+  },
+  "permissions": {
+    "master": ["you need to enter the ID from the user you want as master here", "you can extend this array like this if you need more"]
+  },
+  "api_keys": {
+    "imgflip": {
+      "username": "Imgflip username",
+      "password": "imgflip password"
     },
-    "bot_settings" : {
-        "cmd_prefix": "++",
-        "help_mode": "private",
-        "log_chat": false,
-        "music_timeouts": false,
-        "namechange_log": true,
-        "disable_music_commands": false,
-        "verbose_logging": false,
-        "debug_mode": false,
-        "upgrade_mode": true,
-        "keymetrics": false
-    },
-    "join_on_launch" : [
-        "https://discord.gg/0cFoiR5QVh4agupi",
-        "https://discord.gg/0cFoiR5QVh57Spqg"
-    ],
-    "api_keys" : {
-        "google_key": "Create one here: https://console.developers.google.com",
-        "cse_key": "https://github.com/SteamingMutt/DougleyBot/wiki/CSE",
-        "mashape_key": "https://market.mashape.com/dashboard",
-        "myapifilms_token": "token"
-    },
-    "imgflip" : {
-        "username": "foobar",
-        "password": "hunter2"
-    },
-    "permissions": {
-        "masterUser": ["Master", "Users", "Discord", "ID"],
-        "level1": ["Global", "level 1", "users", "Discord", "ID"],
-        "level2": ["Global", "level 2", "users", "Discord", "ID"],
-        "level3": ["Global", "level 3", "users", "Discord", "ID"]
-    }
+    "google": "A google key",
+    "mashape": "A mashape key",
+    "cse": "Custom Search Engine token, the wiki describes this"
+  }
 }
