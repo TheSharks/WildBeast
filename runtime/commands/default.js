@@ -33,9 +33,9 @@ Commands.say = {
 Commands.eval = {
   name: 'eval',
   help: 'Allows for the execution of arbitrary Javascript.',
-  timeout: 10,
   level: 9,
   fn: function (msg, suffix, bot) {
+    if (msg.author.id === bot.User.id) return // To statisfy our styleguide :P
     var evalfin = []
     try {
       evalfin.push('```xl')

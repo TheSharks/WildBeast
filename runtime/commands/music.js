@@ -63,9 +63,9 @@ Commands.voice = {
   help: "I'll join a voice channel!",
   timeout: 10,
   level: 0,
-  fn: function (msg, suffix) {
+  fn: function (msg, suffix, bot) {
     var v = require('../internal/voice.js')
-    v.join(msg, suffix)
+    v.join(msg, suffix, bot)
   }
 }
 
