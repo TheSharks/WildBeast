@@ -21,9 +21,11 @@ node --version
 ```
 This should return something like:
 ```bash
-v5.9.1
+v5.10.1
 ```
-*Note that anything lower than 5.x.x is not officially supported by WildBeast, and anything lower than 4.x.x won't work at all!*
+
+### Use [Node.js 5.10.1](https://nodejs.org/download/release/v5.10.1/) for the best experience! Anything higher will not work properly!
+
 <br></br>
 If you haven't cloned/downloaded the files already, do that now.   
 Then, open a command window in the folder you've copied the files to, (Windows users can do shift+right-click in any directory to quickly open a cmd window in that folder) and type:
