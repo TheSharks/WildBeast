@@ -7,6 +7,7 @@ var runtime = require('./runtime/runtime.js')
 var Logger = runtime.internal.logger.Logger
 var timeout = runtime.internal.timeouts
 var commands = runtime.commandcontrol.Commands
+var aliases = runtime.commandcontrol.Aliases
 var datacontrol = runtime.datacontrol
 var argv = require('minimist')(process.argv.slice(2))
 var Config
@@ -47,7 +48,7 @@ if (!argv.forceupgrade) {
 
 bot.Dispatcher.on(Event.GATEWAY_READY, function () {
   Logger.info('Ready to start!')
-  Logger.info(`Logged in as ${bot.User.username} (ID: ${bot.User.id}) and serving ${bot.Users.length} users in ${bot.Guilds.length} servers.`)
+  Logger.info(`Logged in as ${bot.User.username}#${bot.User.discriminator} (ID: ${bot.User.id}) and serving ${bot.Users.length} users in ${bot.Guilds.length} servers.`)
 })
 
 bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
@@ -56,19 +57,15 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
   var prefix
   datacontrol.customize.prefix(c.message).then(function (r) {
     if (!r) {
-      prefix = [Config.settings.prefix, null]
+      prefix = Config.settings.prefix
     } else {
-      prefix = [Config.settings.prefix, r]
+      prefix = r
     }
     var cmd
     var suffix
-    if (c.message.content.indexOf(prefix[0]) === 0) {
-      cmd = c.message.content.substr(prefix[0].length).split(' ')[0]
-      suffix = c.message.content.substr(prefix[0].length).split(' ')
-      suffix = suffix.slice(1, suffix.length).join(' ')
-    } else if (c.message.content.indexOf(prefix[1]) === 0) {
-      cmd = c.message.content.substr(prefix[1].length).split(' ')[0]
-      suffix = c.message.content.substr(prefix[1].length).split(' ')
+    if (c.message.content.indexOf(prefix) === 0) {
+      cmd = c.message.content.substr(prefix.length).split(' ')[0]
+      suffix = c.message.content.substr(prefix.length).split(' ')
       suffix = suffix.slice(1, suffix.length).join(' ')
     } else if (c.message.content.indexOf(bot.User.mention) === 0) {
       cmd = c.message.content.substr(bot.User.mention.length + 1).split(' ')[0]
@@ -84,6 +81,9 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
     }
     if (cmd === 'help') {
       runtime.commandcontrol.helpHandle(c.message, suffix)
+    }
+    if (aliases[cmd]) {
+      cmd = aliases[cmd].name
     }
     if (commands[cmd]) {
       if (typeof commands[cmd] !== 'object') {
@@ -149,6 +149,10 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
           }
         })
       } else {
+        if (commands[cmd].noDM) {
+          c.message.channel.sendMessage('This command cannot be used in DM.')
+          return
+        }
         datacontrol.permissions.checkLevel(c.message, c.message.author.id).then(function (r) {
           if (r >= commands[cmd].level) {
             try {

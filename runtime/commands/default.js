@@ -17,6 +17,7 @@ Commands.ping = {
 Commands.say = {
   name: 'say',
   help: 'Repeat after me.',
+  aliases: ['echo', 'repeat'],
   module: 'default',
   timeout: 10,
   level: 0,
@@ -102,6 +103,7 @@ Commands.twitch = {
 Commands.customize = {
   name: 'customize',
   help: 'Adjust my behaviour in this server!',
+  noDM: true,
   level: 0,
   fn: function (msg, suffix) {
     var c = require('../databases/controllers/customize.js')
@@ -132,6 +134,7 @@ Commands.info = {
 Commands.leave = {
   name: 'leave',
   help: "I'll leave this server if I am not welcome here.",
+  noDM: true,
   level: 3,
   fn: function (msg) {
     if (msg.isPrivate) {
@@ -157,6 +160,7 @@ Commands.killswitch = {
 Commands.namechanges = {
   name: 'namechanges',
   help: 'I will tell you the name changes for the user you mention.',
+  noDM: true,
   level: 0,
   fn: function (msg) {
     const n = require('../databases/controllers/users.js')
@@ -175,6 +179,7 @@ Commands.namechanges = {
 Commands.setlevel = {
   name: 'setlevel',
   help: 'This changes the permission level of a user.',
+  noDM: true,
   module: 'default',
   level: 3,
   fn: function (msg, suffix) {
@@ -208,6 +213,7 @@ Commands.setlevel = {
 Commands.setnsfw = {
   name: 'setnsfw',
   help: 'This changes if the channel allows NSFW commands.',
+  noDM: true,
   module: 'default',
   usage: '<on | off>',
   level: 3,
@@ -286,6 +292,8 @@ Commands.setstatus = {
 Commands['server-info'] = {
   name: 'server-info',
   help: "I'll tell you some information about the server you're currently in.",
+  aliases: ['serverinfo'],
+  noDM: true,
   module: 'default',
   timeout: 20,
   level: 0,
@@ -325,6 +333,7 @@ Commands['server-info'] = {
 Commands.userinfo = {
   name: 'userinfo',
   help: "I'll get some information about the user you've mentioned.",
+  noDM: true,
   module: 'default',
   level: 0,
   fn: function (msg) {
@@ -332,7 +341,6 @@ Commands.userinfo = {
     if (msg.isPrivate) {
       msg.channel.sendMessage("Sorry you can't use this in DMs")
     }
-
     if (msg.mentions.length === 0) {
       Permissions.checkLevel(msg, msg.author.id).then((level) => {
         var msgArray = []
@@ -358,7 +366,6 @@ Commands.userinfo = {
       })
       return
     }
-
     msg.mentions.map(function (user) {
       Permissions.checkLevel(msg, user.id).then(function (level) {
         var msgArray = []
@@ -392,6 +399,7 @@ Commands.userinfo = {
 Commands['join-server'] = {
   name: 'join-server',
   help: "I'll join the server you've requested me to join, as long as the invite is valid and I'm not banned of already in the requested server.",
+  aliases: ['join', 'joinserver', 'invite'],
   module: 'default',
   usage: '<bot-mention> <instant-invite>',
   level: 0,
@@ -445,6 +453,7 @@ Commands['join-server'] = {
 Commands.kick = {
   name: 'kick',
   help: 'Kick the user(s) out of the server!',
+  noDM: true,
   module: 'default',
   usage: '<user-mention>',
   level: 0,
@@ -478,6 +487,7 @@ Commands.kick = {
 Commands.ban = {
   name: 'ban',
   help: 'Swing the banhammer on someone!',
+  noDM: true,
   module: 'default',
   usage: '<user-mention> [days]',
   level: 0,

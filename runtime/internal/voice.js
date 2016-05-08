@@ -7,7 +7,7 @@ var Config = require('../../config.json')
 
 exports.join = function (msg, suffix, bot) {
   if (bot.VoiceConnections.length > 10) {
-    msg.channel.sendMessage('Sorry all streaming slots are taken, try again later. :cry:')
+    msg.channel.sendMessage('Sorry, all streaming slots are taken, try again later. :cry:')
   } else {
     var voiceCheck = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
     if (!voiceCheck && !suffix) {
@@ -104,7 +104,7 @@ function next (msg, suffix, bot) {
 }
 
 exports.volume = function (msg, suffix, bot) {
-  if (!isNaN(suffix) && suffix <= 100) {
+  if (!isNaN(suffix) && suffix <= 100 && suffix > 0) {
     bot.VoiceConnections
       .map((connection) => {
         if (connection.voiceConnection.guild.id === msg.guild.id) {

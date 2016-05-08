@@ -12,6 +12,7 @@ Cb.prepare(function () {
 Commands.gif = {
   name: 'gif',
   help: "I'll search Giphy for a gif matching your tags.",
+  aliases: ['giphy'],
   timeout: 10,
   level: 0,
   fn: function (msg, suffix) {
@@ -61,6 +62,7 @@ Commands.randomcat = {
 Commands.leetspeak = {
   name: 'leetspeak',
   help: "1'Ll 3nc0d3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
+  aliases: ['leetspeek', 'leetspeach'],
   level: 0,
   fn: function (msg, suffix) {
     if (suffix.length > 0) {
@@ -132,6 +134,7 @@ Commands.yomomma = {
 Commands.advice = {
   name: 'advice',
   help: "I'll give you some fantastic advice!",
+  noDM: true, // Ratelimits Ratelimits Ratelimits Ratelimits
   timeout: 5,
   level: 0,
   fn: function (msg) {
@@ -176,6 +179,7 @@ Commands.yesno = {
 Commands.urbandictionary = {
   name: 'urbandictionary',
   help: "I'll fetch what idiots on the internet think something means",
+  aliases: ['ud', 'urban'],
   timeout: 10,
   level: 0,
   fn: function (msg, suffix) {
@@ -264,6 +268,7 @@ Commands.dice = {
 Commands.fancyinsult = {
   name: 'fancyinsult',
   help: "I'll insult your friends!",
+  aliases: ['insult'],
   timeout: 5,
   level: 0,
   fn: function (msg, suffix) {
@@ -290,6 +295,7 @@ Commands.fancyinsult = {
 Commands.cleverbot = {
   name: 'cleverbot',
   help: 'Talk to cleverbot!',
+  aliases: ['chat', 'cb', 'talk'],
   level: 0,
   fn: function (msg, suffix) {
     msg.channel.sendTyping()

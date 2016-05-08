@@ -5,7 +5,8 @@ var Commands = []
 Commands.pauseplay = {
   name: 'pauseplay',
   help: "I'll pause/play the music!",
-  timeout: 10,
+  aliases: ['playpause'],
+  noDM: true,
   level: 0,
   fn: function (msg, suffix, bot) {
     v.pausePlay(msg, suffix, bot)
@@ -15,7 +16,8 @@ Commands.pauseplay = {
 Commands.volume = {
   name: 'volume',
   help: "I'll change my volume!",
-  timeout: 10,
+  aliases: ['vol'],
+  noDM: true,
   level: 0,
   fn: function (msg, suffix, bot) {
     v.volume(msg, suffix, bot)
@@ -25,7 +27,7 @@ Commands.volume = {
 Commands.skip = {
   name: 'skip',
   help: "I'll skip this song if you don't like it.",
-  timeout: 10,
+  noDM: true,
   level: 0,
   fn: function (msg, suffix, bot) {
     v.skip(msg, suffix, bot)
@@ -35,6 +37,8 @@ Commands.skip = {
 Commands.playlist = {
   name: 'playlist',
   help: "I'll fetch you the playlsit I'm currently playing!",
+  aliases: ['list'],
+  noDM: true,
   timeout: 10,
   level: 0,
   fn: function (msg) {
@@ -58,6 +62,8 @@ Commands.playlist = {
 Commands.voice = {
   name: 'voice',
   help: "I'll join a voice channel!",
+  aliases: ['join-voice'],
+  noDM: true,
   timeout: 10,
   level: 0,
   fn: function (msg, suffix, bot) {
@@ -68,7 +74,9 @@ Commands.voice = {
 Commands.request = {
   name: 'request',
   help: 'Use this to request songs!',
-  usage: 'Youtube-link',
+  aliases: ['queue'],
+  noDM: true,
+  usage: 'link',
   timeout: 10,
   level: 0,
   fn: function (msg, suffix, bot) {

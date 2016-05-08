@@ -10,7 +10,10 @@
     "prefix": "anything can be entered as the global prefix along side mentions"
   },
   "permissions": {
-    "master": ["you need to enter the ID from the user you want as master here", "you can extend this array like this if you need more"]
+    "master": ["you need to enter the ID from the user you want as master here", "you can extend this array like this if you need more"],
+    "level1": [],
+    "level2": [],
+    "level3": []
   },
   "api_keys": {
     "imgflip": {

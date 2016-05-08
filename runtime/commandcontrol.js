@@ -8,20 +8,32 @@ var Logger = require('./internal/logger.js').Logger
 var commands = []
 var alias = []
 
-for (var i in com) {
-  for (var c in com[i].Commands) {
-    commands[c] = com[i].Commands[c]
-    alias[c] = com[i].Commands[c].aliases
+for (var d in com) {
+  for (var o in com[d].Commands) {
+    commands[o] = com[d].Commands[o]
+    if (com[d].Commands[o].aliases !== undefined) {
+      for (var u in com[d].Commands[o].aliases) {
+        alias[com[d].Commands[o].aliases[u]] = com[d].Commands[o]
+      }
+    }
   }
 }
+
 if (cus !== null) {
-  for (var j in cus) {
-    for (var f in cus[j].Commands) {
-      if (commands[f]) {
+  for (var g in cus) {
+    for (var l in cus[g].Commands) {
+      if (commands[l]) {
         throw new Error('Custom commands cannot have the same name as default commands!')
       }
-      commands[f] = cus[j].Commands[f]
-      alias[j] = cus[j].Commands[f].aliases
+      commands[l] = cus[g].Commands[l]
+      if (cus[g].Commands[l].aliases !== undefined) {
+        for (var e in cus[g].Commands[l].aliases) {
+          if (alias[cus[g].Commands[l].aliases[e]]) {
+            throw new Error('Custom commands cannot share aliases with other commands!')
+          }
+          alias[cus[g].Commands[l].aliases[e]] = cus[g].Commands[l]
+        }
+      }
     }
   }
 }
@@ -39,8 +51,8 @@ exports.helpHandle = function (msg, suffix) {
     if (!msg.isPrivate) {
       msg.channel.sendMessage('Help is underway ' + msg.author.mention + '!')
     }
-    msg.author.openDM().then((c) => {
-      c.sendMessage(msgArray.join('\n'))
+    msg.author.openDM().then((y) => {
+      y.sendMessage(msgArray.join('\n'))
     }).catch((e) => {
       Logger.error(e)
       msg.channel.sendMessage('Whoops, try again.')
