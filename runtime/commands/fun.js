@@ -42,6 +42,22 @@ Commands.fortunecow = {
   }
 };
 
+Commands.randomcat = {
+  name: "randomcat",
+  help: "I'll get a random cat image for you!",
+  module: "fun",
+  timeout: 10,
+  level: 0,
+  fn: function(msg) {
+    unirest.get("https://nijikokun-random-cats.p.mashape.com/random")
+      .header("X-Mashape-Key", config.api_keys.mashape)
+      .header("Accept", "application/json")
+      .end(function(result) {
+        msg.reply(result.body.source);
+      });
+  }
+};
+
 Commands.leetspeak = {
   name: 'leetspeak',
   help: "1'Ll 3nc0d3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
