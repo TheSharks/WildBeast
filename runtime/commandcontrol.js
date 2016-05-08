@@ -43,7 +43,11 @@ exports.helpHandle = function (msg, suffix) {
   var commandnames = []
   if (!suffix) {
     for (var index in commands) {
-      commandnames.push(commands[index].name)
+      if (commands[index].hidden) {
+        continue
+      } else {
+        commandnames.push(commands[index].name)
+      }
     }
     msgArray.push('**Available commands:** \n')
     msgArray.push(commandnames.sort().join(', ') + '\n')
@@ -58,7 +62,47 @@ exports.helpHandle = function (msg, suffix) {
       msg.channel.sendMessage('Whoops, try again.')
     })
   } else if (suffix) {
-    msgArray = []
+    if (commands[suffix] || alias[suffix]) {
+      var comad
+      if (alias[suffix]) {
+        comad = alias[suffix]
+      } else {
+        comad = commands[suffix]
+      }
+      msgArray = []
+      msgArray.push('Command name `' + comad.name + '`')
+      msgArray.push('What this does: `' + comad.help + '`\n')
+      msgArray.push('Example:')
+      if (comad.hasOwnProperty('usage')) {
+        msgArray.push('```' + `${require('../config.json').settings.prefix}${comad.name} ${comad.usage}` + '```')
+      } else {
+        msgArray.push('```' + `${require('../config.json').settings.prefix}${comad.name}` + '```')
+      }
+      msgArray.push(`**Required access level**: ${comad.level}`)
+      if (comad.hasOwnProperty('aliases')) {
+        msgArray.push(`**Aliases for this command**: ${comad.aliases.join(', ')}.`)
+      }
+      if (comad.hasOwnProperty('hidden')) {
+        msgArray.push('*Shh, this is a secret command.*')
+      }
+      if (comad.hasOwnProperty('timeout')) {
+        msgArray.push(`*This command has a timeout of ${comad.timeout} seconds.*`)
+      }
+      if (comad.hasOwnProperty('nsfw')) {
+        msgArray.push('*This command is NSFW.*')
+      }
+      if (comad.hasOwnProperty('noDM')) {
+        msgArray.push('*This command cannot be used in DM.*')
+      }
+      msg.author.openDM().then((y) => {
+        y.sendMessage(msgArray.join('\n'))
+      }).catch((e) => {
+        Logger.error(e)
+        msg.channel.sendMessage('Whoops, try again.')
+      })
+    } else {
+      msg.channel.sendMessage(`There is no **${suffix}** command!`)
+    }
   }
 }
 

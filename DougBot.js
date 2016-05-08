@@ -91,7 +91,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
       }
       Logger.info(`Executing <${c.message.resolveContent()}> from ${c.message.author.username}`)
       if (!c.message.isPrivate) {
-        timeout.check(commands[cmd], c.message.guild.id).then((r) => {
+        timeout.check(commands[cmd], c.message.guild.id, c.message.author.id).then((r) => {
           if (r !== true) {
             datacontrol.customize.reply(c.message, 'timeout').then((x) => {
               if (x === 'default') {

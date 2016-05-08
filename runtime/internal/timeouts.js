@@ -1,8 +1,12 @@
 var cmdLastExecutedTime = {}
+const Config = require('../../config.json')
 
-exports.check = function (cmd, server) {
+exports.check = function (cmd, server, user) {
   return new Promise(function (resolve) {
     var isAllowResult = true
+    if (Config.permissions.master.indexOf(user) > -1) {
+      return resolve(true)
+    }
     if (cmd.hasOwnProperty('timeout')) {
       if (cmdLastExecutedTime.hasOwnProperty(server)) {
         if (cmdLastExecutedTime[server].hasOwnProperty(cmd.name)) {
