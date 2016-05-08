@@ -27,33 +27,33 @@ Commands.gif = {
 }
 
 Commands.fortunecow = {
-  name: "fortunecow",
+  name: 'fortunecow',
   help: "I'll get a random fortunecow!",
-  module: "fun",
+  module: 'fun',
   timeout: 20,
   level: 0,
-  fn: function(msg) {
-    unirest.get("https://thibaultcha-fortunecow-v1.p.mashape.com/random")
-      .header("X-Mashape-Key", config.api_keys.mashape)
-      .header("Accept", "text/plain")
-      .end(function(result) {
-        msg.reply("```" + result.body + "```");
+  fn: function (msg) {
+    unirest.get('https://thibaultcha-fortunecow-v1.p.mashape.com/random')
+      .header('X-Mashape-Key', config.api_keys.mashape)
+      .header('Accept', 'text/plain')
+      .end(function (result) {
+        msg.reply('```' + result.body + '```')
       });
   }
 };
 
 Commands.randomcat = {
-  name: "randomcat",
+  name: 'randomcat',
   help: "I'll get a random cat image for you!",
-  module: "fun",
+  module: 'fun',
   timeout: 10,
   level: 0,
-  fn: function(msg) {
+  fn: function (msg) {
     unirest.get("https://nijikokun-random-cats.p.mashape.com/random")
       .header("X-Mashape-Key", config.api_keys.mashape)
       .header("Accept", "application/json")
-      .end(function(result) {
-        msg.reply(result.body.source);
+      .end(function (result) {
+        msg.reply(result.body.source)
       });
   }
 };
