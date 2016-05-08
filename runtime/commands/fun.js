@@ -2,6 +2,8 @@ var Commands = []
 var Logger = require('../internal/logger.js').Logger
 var Giphy = require('../giphy.js')
 var Cb = require('cleverbot-node')
+var config = require('../../config.json')
+var unirest = require('unirest')
 var cleverbot = new Cb()
 Cb.prepare(function () {
   Logger.debug('Launched cleverbot')
@@ -21,6 +23,38 @@ Commands.gif = {
         msg.reply('Sorry! Invalid tags, try something else. For example something that exists [Tags: ' + tags + ']')
       }
     })
+  }
+}
+
+Commands.fortunecow = {
+  name: 'fortunecow',
+  help: "I'll get a random fortunecow!",
+  module: 'fun',
+  timeout: 20,
+  level: 0,
+  fn: function (msg) {
+    unirest.get('https://thibaultcha-fortunecow-v1.p.mashape.com/random')
+      .header('X-Mashape-Key', config.api_keys.mashape)
+      .header('Accept', 'text/plain')
+      .end(function (result) {
+        msg.reply('```' + result.body + '```')
+      })
+  }
+}
+
+Commands.randomcat = {
+  name: 'randomcat',
+  help: "I'll get a random cat image for you!",
+  module: 'fun',
+  timeout: 10,
+  level: 0,
+  fn: function (msg) {
+    unirest.get('https://nijikokun-random-cats.p.mashape.com/random')
+      .header('X-Mashape-Key', config.api_keys.mashape)
+      .header('Accept', 'application/json')
+      .end(function (result) {
+        msg.reply(result.body.source)
+      })
   }
 }
 
@@ -298,7 +332,6 @@ Commands.e621 = {
   level: 0,
   nsfw: true,
   fn: function (msg, suffix) {
-    var unirest = require('unirest')
     msg.channel.sendTyping()
     unirest.post('https://e621.net/post/index.json?limit=30&tags=' + suffix) // Fetching 30 posts from E621 with the given tags
       .end((result) => {
@@ -321,7 +354,6 @@ Commands.rule34 = {
   level: 0,
   nsfw: true,
   fn: function (msg, suffix) {
-    var unirest = require('unirest')
     msg.channel.sendTyping()
     unirest.post('http://rule34.xxx/index.php?page=dapi&s=post&q=index&tags=' + suffix) // Fetching 100 rule34 pics
       .end(function (result) {
@@ -360,7 +392,6 @@ Commands.meme = {
     var memetype = tags[0].split(' ')[0]
     var meme = require('./memes.json')
     var Imgflipper = require('imgflipper')
-    var config = require('../../config.json')
     var imgflipper = new Imgflipper(config.api_keys.imgflip.username, config.api_keys.imgflip.password)
     imgflipper.generateMeme(meme[memetype], tags[1] ? tags[1] : '', tags[3] ? tags[3] : '', (err, image) => {
       if (err) {
