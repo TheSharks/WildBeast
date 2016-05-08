@@ -38,9 +38,9 @@ Commands.fortunecow = {
       .header('Accept', 'text/plain')
       .end(function (result) {
         msg.reply('```' + result.body + '```')
-      });
+      })
   }
-};
+}
 
 Commands.randomcat = {
   name: 'randomcat',
@@ -49,14 +49,14 @@ Commands.randomcat = {
   timeout: 10,
   level: 0,
   fn: function (msg) {
-    unirest.get("https://nijikokun-random-cats.p.mashape.com/random")
-      .header("X-Mashape-Key", config.api_keys.mashape)
-      .header("Accept", "application/json")
+    unirest.get('https://nijikokun-random-cats.p.mashape.com/random')
+      .header('X-Mashape-Key', config.api_keys.mashape)
+      .header('Accept', 'application/json')
       .end(function (result) {
         msg.reply(result.body.source)
-      });
+      })
   }
-};
+}
 
 Commands.leetspeak = {
   name: 'leetspeak',
