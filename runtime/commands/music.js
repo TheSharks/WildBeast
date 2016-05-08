@@ -1,4 +1,5 @@
 'use strict'
+var v = require('../internal/voice.js')
 var Commands = []
 
 Commands.pauseplay = {
@@ -7,7 +8,6 @@ Commands.pauseplay = {
   timeout: 10,
   level: 0,
   fn: function (msg, suffix, bot) {
-    var v = require('../internal/voice.js')
     v.pausePlay(msg, suffix, bot)
   }
 }
@@ -18,7 +18,6 @@ Commands.volume = {
   timeout: 10,
   level: 0,
   fn: function (msg, suffix, bot) {
-    var v = require('../internal/voice.js')
     v.volume(msg, suffix, bot)
   }
 }
@@ -29,7 +28,6 @@ Commands.skip = {
   timeout: 10,
   level: 0,
   fn: function (msg, suffix, bot) {
-    var v = require('../internal/voice.js')
     v.skip(msg, suffix, bot)
   }
 }
@@ -40,7 +38,6 @@ Commands.playlist = {
   timeout: 10,
   level: 0,
   fn: function (msg) {
-    var v = require('../internal/voice.js')
     v.fetchList(msg).then((r) => {
       var arr = []
       arr.push('Now playing: **' + r.info[0] + '** \n')
@@ -64,7 +61,6 @@ Commands.voice = {
   timeout: 10,
   level: 0,
   fn: function (msg, suffix, bot) {
-    var v = require('../internal/voice.js')
     v.join(msg, suffix, bot)
   }
 }
@@ -76,7 +72,6 @@ Commands.request = {
   timeout: 10,
   level: 0,
   fn: function (msg, suffix, bot) {
-    var v = require('../internal/voice.js')
     v.request(msg, suffix, bot)
   }
 }
