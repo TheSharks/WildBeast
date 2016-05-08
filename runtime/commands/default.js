@@ -1,4 +1,6 @@
 var Commands = []
+var request = require('request')
+var config = require('../../config.json')
 var Logger = require('../internal/logger.js').Logger
 
 Commands.ping = {
@@ -68,7 +70,6 @@ Commands.twitch = {
       msg.channel.sendMessage('No channel specified!')
       return
     }
-    var request = require('request')
     var url = 'https://api.twitch.tv/kraken/streams/' + suffix
     request({
       url: url,
@@ -395,9 +396,8 @@ Commands['join-server'] = {
   usage: '<bot-mention> <instant-invite>',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var Config = require('../../config.json')
     if (bot.User.bot) {
-      msg.channel.sendMessage("Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: " + Config.bot.oauth)
+      msg.channel.sendMessage("Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: " + config.bot.oauth)
       return
     }
     var re = /(discord(\.gg|app\.com\/invite)\/([\w]{16}|([\w]+-?){3}))/
