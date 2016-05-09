@@ -21,7 +21,7 @@
   },
   "engines": {
     "node": "^5.x.x",
-    "npm" : ">=3.x.x"
+    "npm": ">=3.x.x"
   },
   "license": "GPL-3.0",
   "dependencies": {
@@ -32,7 +32,7 @@
     "leetspeak": "^0.0.1",
     "nedb": "^1.8.0",
     "request": "^2.61.0",
-    "unirest": "^0.4.2",
+    "unirest": "^0.5.0",
     "winston": "^2.2.0",
     "winston-daily-rotate-file": "^1.0.1",
     "xml2js": "^0.4.16",
