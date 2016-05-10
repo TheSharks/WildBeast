@@ -8,6 +8,11 @@
     {
       "name": "Pascal Meijer",
       "email": "m1rr0rbr34k+github@gmail.com"
+    },
+    {
+      "name": "Curtis Hofstingburg",
+      "email": "chofstingburg@gmail.com",
+      "url": "http://curitzjt.cf/"
     }
   ],
   "scripts": {
@@ -18,7 +23,7 @@
   "author": {
     "name": "Remco Jongschaap",
     "email": "Hello@dougley.ovh",
-    "url": "http://dougley.ovh"
+    "url": "https://dougley.ovh"
   },
   "bugs": {
     "url": "https://github.com/SteamingMutt/WildBeast/issues"

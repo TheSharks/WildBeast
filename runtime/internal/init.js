@@ -91,6 +91,15 @@ exports.initial = function () {
               'level1': [],
               'level2': [],
               'level3': []
+            },
+            'api_keys': {
+              'imgflip': {
+                'username': 'Imgflip username',
+                'password': 'imgflip password'
+              },
+              'google': 'A google key',
+              'mashape': 'A mashape key',
+              'cse': 'Custom Search Engine token, the wiki describes this'
             }
           }
           try {

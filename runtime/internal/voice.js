@@ -180,7 +180,9 @@ exports.request = function (msg, suffix, bot) {
       playlistId: query.list
     }, function (err, data) {
       if (err) {
-        Logger.debug('Playlist failiure, ' + err)
+        msg.channel.sendMessage('Something went wrong while requesting information about this playlist.')
+        Logger.error('Playlist failiure, ' + err)
+        clearInterval(type)
         return
       } else if (data) {
         c = data.items.length
