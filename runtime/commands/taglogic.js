@@ -65,6 +65,45 @@ Commands.tag = {
           }
         }
       })
+    } else if (index[0].toLowerCase() === 'edit') {
+      db.find({
+        _id: index[1].toLowerCase()
+      }, function (err, res) {
+        if (err) {
+          msg.channel.sendMessage('Something went wrong.')
+        } else if (res) {
+          if (res.length === 0) {
+            msg.channel.sendMessage('That tag does not exist.')
+            return
+          }
+          if (res[0].owner !== msg.author.id && Config.permissions.master.indexOf(msg.author.id) === -1) {
+            msg.channel.sendMessage('That tag is not yours to edit.')
+          } else {
+            if (Config.permissions.master.indexOf(msg.author.id) === -1) {
+              var re = /(discord(\.gg|app\.com\/invite)\/([\w]{16}|([\w]+-?){3}))/
+              if (msg.mentions.length >= 5) {
+                msg.reply('No more than five mentions at a time please.')
+                return
+              } else if (re.test(msg.content)) {
+                msg.reply('Lol no thanks, not saving that.')
+                return
+              }
+            }
+            var content = index.slice(2, index.length).join(' ')
+            db.update({
+              _id: index[1].toLowerCase()
+            }, {
+              content: content
+            }, function (err, res) {
+              if (err) {
+                msg.channel.sendMessage('Something went wrong.')
+              } else if (res) {
+                msg.channel.sendMessage('Tag edited.')
+              }
+            })
+          }
+        }
+      })
     } else if (index[0].toLowerCase() === 'delete') {
       db.find({
         _id: index[1].toLowerCase()
