@@ -15,7 +15,7 @@ Commands.tag = {
   noDM: true,
   fn: function (msg, suffix, bot) {
     var index = suffix.split(' ')
-    if (index[0] === 'create') {
+    if (index[0].toLowerCase() === 'create') {
       if (Config.permissions.master.indexOf(msg.author.id) === -1) {
         var re = /(discord(\.gg|app\.com\/invite)\/([\w]{16}|([\w]+-?){3}))/
         if (msg.mentions.length >= 5) {
@@ -28,7 +28,7 @@ Commands.tag = {
       }
       var content = index.slice(2, index.length).join(' ')
       db.find({
-        _id: index[1]
+        _id: index[1].toLowerCase()
       }, function (err, res) {
         if (err) {
           msg.channel.sendMessage('Something went wrong.')
@@ -40,7 +40,7 @@ Commands.tag = {
         }
       })
       db.insert({
-        _id: index[1],
+        _id: index[1].toLowerCase(),
         content: content,
         owner: msg.author.id
       }, function (err, res) {
@@ -52,7 +52,7 @@ Commands.tag = {
       })
     } else if (index[0] === 'owner') {
       db.find({
-        _id: index[1]
+        _id: index[1].toLowerCase()
       }, function (err, res) {
         if (err) {
           msg.channel.sendMessage('Something went wrong.')
@@ -65,9 +65,9 @@ Commands.tag = {
           }
         }
       })
-    } else if (index[0] === 'delete') {
+    } else if (index[0].toLowerCase() === 'delete') {
       db.find({
-        _id: index[1]
+        _id: index[1].toLowerCase()
       }, function (err, res) {
         if (err) {
           msg.channel.sendMessage('Something went wrong.')
@@ -80,7 +80,7 @@ Commands.tag = {
             msg.channel.sendMessage('That tag is not yours to delete.')
           } else {
             db.remove({
-              _id: index[1]
+              _id: index[1].toLowerCase()
             }, function (err, res) {
               if (err) {
                 msg.channel.sendMessage('Something went wrong.')
@@ -93,7 +93,7 @@ Commands.tag = {
       })
     } else {
       db.find({
-        _id: index[0]
+        _id: index[0].toLowerCase()
       }, function (err, res) {
         if (err) {
           msg.channel.sendMessage('Something went wrong.')
