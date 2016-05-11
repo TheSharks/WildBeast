@@ -374,9 +374,8 @@ Commands.userinfo = {
         var roles = member.roles.map((r) => r.name)
         roles = roles.splice(0, roles.length).join(', ')
         msgArray.push('Information requested by ' + msg.author.username)
-        msgArray.push('```', 'Requested user: ' + user.username)
+        msgArray.push('```', 'Requested user: ' + user.username + '#' + msg.author.discriminator)
         msgArray.push('ID: ' + user.id)
-        msgArray.push('Discriminator: #' + user.discriminator)
         msgArray.push('Status: ' + user.status)
         if (user.gameName) {
           msgArray.push('Playing: ' + user.gameName)

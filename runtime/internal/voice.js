@@ -108,7 +108,7 @@ exports.volume = function (msg, suffix, bot) {
     bot.VoiceConnections
       .map((connection) => {
         if (connection.voiceConnection.guild.id === msg.guild.id) {
-          list[msg.guild.id].volume = suffix
+          list[msg.guild.id].volume = parseInt(suffix)
           connection.voiceConnection.getEncoder().setVolume(suffix)
         }
       })

@@ -15,11 +15,6 @@ var restarted = false
 
 Logger.info('Initializing...')
 
-if (argv.debugmode) {
-  Logger.warn('Debug mode enabled.')
-  runtime.internal.debug.initial()
-}
-
 if (argv.forceupgrade) {
   Logger.warn('Force-starting database upgrade.')
   runtime.internal.upgrade.init().then((r) => {
@@ -41,6 +36,7 @@ if (!argv.forceupgrade) {
       })
     } else {
       Logger.debug('Skipped init via argv')
+      require('fs').writeFileSync('./runtime/initial.txt', 'Initial setup skipped.')
       start()
     }
   }
