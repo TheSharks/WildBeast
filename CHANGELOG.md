@@ -1,6 +1,10 @@
 # 3.0.0
+## Beta phase
+### 3.0.0-beta.1
+Introduced tags.   
+
 ## Alpha phase
-### 3.0.0.alpha.2
+### 3.0.0-alpha.2
 Enabled command alias system.   
 Changed giphy endpoint for more randomness.   
 Added a `noDM` key.   
