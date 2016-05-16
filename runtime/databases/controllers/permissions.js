@@ -29,6 +29,9 @@ exports.checkLevel = function (msg, user) {
           initialize(msg.guild)
           return reject('No database!')
         } else {
+          if (doc[0].superUser === user) {
+            return resolve(4)
+          }
           if (doc[0].perms.level1.indexOf(user) > -1) {
             return resolve(1)
           } else if (doc[0].perms.level2.indexOf(user) > -1) {
