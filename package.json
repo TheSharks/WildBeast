@@ -62,7 +62,7 @@
     "youtube-dl": "^1.11.1"
   },
   "devDependencies": {
-    "eslint": "^2.7.0",
+    "eslint": "^2.10.2",
     "standard": "^6.0.8"
   }
 }
