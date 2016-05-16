@@ -1,0 +1,1 @@
+You can put your own command.js file into this directory, this will ignored by git.
