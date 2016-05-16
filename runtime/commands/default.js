@@ -497,9 +497,9 @@ Commands.ban = {
     var guildPerms = user.permissionsFor(guild)
     var botPerms = botuser.permissionsFor(guild)
     if (!guildPerms.General.BAN_MEMBERS) {
-      msg.reply('Sorry, do not have enough Ban Members permissions.')
+      msg.reply('You do not have Ban Members permission here.')
     } else if (!botPerms.General.BAN_MEMBERS) {
-      msg.channel.sendMessage("I don't have enough permissions to do this!")
+      msg.channel.sendMessage("I do not have Ban Members permission, sorry!")
     } else if (msg.mentions.length === 0) {
       msg.channel.sendMessage('Please mention the user(s) you want to ban.')
     } else {
