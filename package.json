@@ -42,7 +42,7 @@
   },
   "license": "GPL-3.0",
   "dependencies": {
-    "cleverbot-node": "^0.2.1",
+    "cleverbot-node": "^0.2.2",
     "csgo-market": "^1.5.2",
     "discordie": "^0.6.2",
     "imgflipper": "^1.0.1",
