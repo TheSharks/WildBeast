@@ -24,6 +24,16 @@ Commands.volume = {
   }
 }
 
+Commands['leave-voice'] = {
+  name: 'leave-voice',
+  help: "I'll leave the current voice channel.",
+  noDM: true,
+  level: 0,
+  fn: function (msg, suffix, bot) {
+    v.leave(msg, suffix, bot)
+  }
+}
+
 Commands.skip = {
   name: 'skip',
   help: "I'll skip this song if you don't like it.",

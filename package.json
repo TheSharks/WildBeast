@@ -44,7 +44,7 @@
   "dependencies": {
     "cleverbot-node": "^0.2.1",
     "csgo-market": "^1.5.2",
-    "discordie": "qeled/discordie#master",
+    "discordie": "^0.6.2",
     "imgflipper": "^1.0.1",
     "inquirer": "^0.12.0",
     "leetspeak": "0.0.1",

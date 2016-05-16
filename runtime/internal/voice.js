@@ -65,6 +65,10 @@ function leave (bot, msg) {
   }
 }
 
+exports.leave = function (msg, suffix, bot) {
+  leave(bot, msg)
+}
+
 function waiting (vc) {
   var waitMusic = vc.voiceConnection.createExternalEncoder({
     type: 'ffmpeg',
@@ -83,6 +87,7 @@ function next (msg, suffix, bot) {
           format: 'pcm',
           source: list[msg.guild.id].link[0]
         })
+        encoder.play()
         var vol = (list[msg.guild.id].volume !== undefined) ? list[msg.guild.id].volume : 100
         connection.voiceConnection.getEncoder().setVolume(vol)
         encoder.once('end', () => {
@@ -98,7 +103,6 @@ function next (msg, suffix, bot) {
             connection.voiceConnection.disconnect()
           }
         })
-        encoder.play()
       }
     })
 }
