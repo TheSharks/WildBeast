@@ -33,6 +33,38 @@ Commands.say = {
   }
 }
 
+Commands.purge = {
+  name: 'purge',
+  help: 'Use this command to delete any amount of message up to 100.',
+  usage: '<number>',
+  aliases: ['prune'],
+  noDM: true,
+  timeout: 30,
+  level: 0,
+  fn: function (msg, suffix, bot) {
+    var guild = msg.guild
+    var user = msg.author
+    var userPerms = user.permissionsFor(guild)
+    var botPerms = bot.User.permissionsFor(guild)
+    if (!userPerms.Text.MANAGE_MESSAGES) {
+      msg.reply('You do not have the permission to manage messages!')
+    } else if (!botPerms.Text.MANAGE_MESSAGES) {
+      msg.reply('I do not have `Manage Messages` permission!')
+    } else {
+      if (!suffix || isNaN(suffix) || suffix > 100 || suffix < 0) {
+        msg.reply('Please try again with a number between **0** to **100**.')
+      } else {
+        msg.channel.fetchMessages(suffix).then(result => {
+          bot.Messages.deleteMessages(result.messages)
+        }).catch(error => {
+          msg.channel.sendMessage('I could not fetch messages to delete, try again later.')
+          Logger.error(error)
+        })
+      }
+    }
+  }
+}
+
 Commands.eval = {
   name: 'eval',
   help: 'Allows for the execution of arbitrary Javascript.',
@@ -273,7 +305,9 @@ Commands.setstatus = {
     var status = step[0]
     var playingstep = step.slice(1, step.length)
     var game = playingstep.join(' ')
-    var playing = { name: game }
+    var playing = {
+      name: game
+    }
     if (!suffix) {
       msg.reply('You need a suffix, dummy!')
     } else if (status === 'online' || status === 'idle') {
@@ -499,7 +533,7 @@ Commands.ban = {
     if (!guildPerms.General.BAN_MEMBERS) {
       msg.reply('You do not have Ban Members permission here.')
     } else if (!botPerms.General.BAN_MEMBERS) {
-      msg.channel.sendMessage("I do not have Ban Members permission, sorry!")
+      msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
     } else if (msg.mentions.length === 0) {
       msg.channel.sendMessage('Please mention the user(s) you want to ban.')
     } else {
