@@ -169,7 +169,7 @@ exports.request = function (msg, suffix, bot) {
   var type = setInterval(function () {
     msg.channel.sendTyping()
   }, 5000)
-  if (query.list && link.host.indexOf('youtu') > -1) {
+  if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
     var c = 0
     var g = 0
     var api = require('youtube-api')
