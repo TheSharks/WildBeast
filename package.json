@@ -50,7 +50,7 @@
     "leetspeak": "0.0.1",
     "minimist": "^1.2.0",
     "nedb": "^1.8.0",
-    "ora": "^0.2.1",
+    "ora": "^0.2.3",
     "request": "^2.72.0",
     "require-directory": "^2.1.1",
     "semver": "^5.1.0",
