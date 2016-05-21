@@ -16,7 +16,7 @@ var restarted = false
 Logger.info('Initializing...')
 runtime.internal.versioncheck.versionCheck(function (err, res) {
   if (err) {
-    Logger.error(`Version check failed, ` + err)
+    Logger.error('Version check failed, ' + err)
   } else if (res) {
     Logger.info(res)
   }

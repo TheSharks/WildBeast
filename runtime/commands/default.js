@@ -54,9 +54,9 @@ Commands.purge = {
       if (!suffix || isNaN(suffix) || suffix > 100 || suffix < 0) {
         msg.reply('Please try again with a number between **0** to **100**.')
       } else {
-        msg.channel.fetchMessages(suffix).then(result => {
+        msg.channel.fetchMessages(suffix).then((result) => {
           bot.Messages.deleteMessages(result.messages)
-        }).catch(error => {
+        }).catch((error) => {
           msg.channel.sendMessage('I could not fetch messages to delete, try again later.')
           Logger.error(error)
         })
@@ -298,27 +298,20 @@ Commands.setstatus = {
   name: 'setstatus',
   help: 'This will change my current status to something else.',
   module: 'default',
-  usage: '<online / away> [playing status]',
+  usage: '<online / idle / twitch url> [playing status]',
   level: 5,
   fn: function (msg, suffix, bot) {
-    var step = suffix.split(' ')
-    var status = step[0]
-    var playingstep = step.slice(1, step.length)
-    var game = playingstep.join(' ')
-    var playing = {
-      name: game
-    }
-    if (!suffix) {
-      msg.reply('You need a suffix, dummy!')
-    } else if (status === 'online' || status === 'idle') {
-      bot.User.setStatus(status, playing)
-      if (game) {
-        msg.channel.sendMessage("Okay, I'm now " + status + ' and playing ' + game)
-      } else {
-        msg.channel.sendMessage("Okay, I'm now " + status + '.')
-      }
+    var first = suffix.split(' ')
+    if (/^http/.test(first[0])) {
+      bot.User.setStatus(null, {type: 1, name: suffix.substring(first[0].length + 1), url: first[0]})
+      msg.channel.sendMessage(`Set status to streaming with message ${suffix.substring(first[0].length + 1)}`)
     } else {
-      msg.reply('I can only be `online` or `idle`!')
+      if (['online', 'idle'].indexOf(first[0]) > -1) {
+        bot.User.setStatus(first[0], {name: suffix.substring(first[0].length + 1)})
+        msg.channel.sendMessage(`Set status to ${first[0]} with message ${suffix.substring(first[0].length + 1)}`)
+      } else {
+        msg.reply('Can only be `online` or `idle`')
+      }
     }
   }
 }
