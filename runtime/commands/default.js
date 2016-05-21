@@ -283,8 +283,15 @@ Commands.setstatus = {
       } else {
         msg.channel.sendMessage("Okay, I'm now " + status + '.')
       }
+    } else if (status === 'streaming') {
+       if (game) {
+         bot.User.setGame({type: 1, name: game, url: 'http://twitch.tv/' + game});
+         msg.channel.sendMessage("Okay, I'm now streaming " + game)
+       } else { 
+         msg.channel.sendMessage ('Enter a twitch channel!'); 
+       }
     } else {
-      msg.reply('I can only be `online` or `idle`!')
+      msg.reply('I can only be `online` , `idle` , or `streaming!`');
     }
   }
 }
