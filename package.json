@@ -63,6 +63,6 @@
   },
   "devDependencies": {
     "eslint": "^2.7.0",
-    "standard": "^6.0.8"
+    "standard": "^7.1.0"
   }
 }
