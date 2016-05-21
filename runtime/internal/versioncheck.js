@@ -53,6 +53,6 @@ exports.getLatestPatch = function (callback) {
 exports.versionCheck = function (callback) {
   exports.getLatestVersion((error, latest) => {
     if (error) return callback(error, null)
-    return callback(null, `${version} (current), ${latest} (latest)`)
+    return callback(null, `You are running on version ${version}, the latest version is ${latest}`)
   })
 }

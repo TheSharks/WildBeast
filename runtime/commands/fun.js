@@ -54,7 +54,12 @@ Commands.randomcat = {
       .header('X-Mashape-Key', config.api_keys.mashape)
       .header('Accept', 'application/json')
       .end(function (result) {
-        msg.reply(result.body.source)
+        try {
+          msg.reply(result.body.source)
+        } catch (e) {
+          Logger.error(e)
+          msg.reply('Something went wrong, try again later.')
+        }
       })
   }
 }

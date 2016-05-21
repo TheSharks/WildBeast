@@ -21,10 +21,10 @@ exports.prefix = function (msg) {
           return reject()
         }
         try {
-          resolve(doc[0].settings.prefix)
+          return resolve(doc[0].settings.prefix)
         } catch (e) {
           initialize(msg.guild)
-          return reject()
+          return reject('Try/catch block reject!')
         }
       }
     })

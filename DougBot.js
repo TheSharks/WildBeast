@@ -14,6 +14,13 @@ var Config
 var restarted = false
 
 Logger.info('Initializing...')
+runtime.internal.versioncheck.versionCheck(function (err, res) {
+  if (err) {
+    Logger.error(`Version check failed, ` + err)
+  } else if (res) {
+    Logger.info(res)
+  }
+})
 
 if (argv.forceupgrade) {
   Logger.warn('Force-starting database upgrade.')
@@ -60,15 +67,15 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
     var cmd
     var suffix
     if (c.message.content.indexOf(prefix) === 0) {
-      cmd = c.message.content.substr(prefix.length).split(' ')[0]
+      cmd = c.message.content.substr(prefix.length).split(' ')[0].toLowerCase()
       suffix = c.message.content.substr(prefix.length).split(' ')
       suffix = suffix.slice(1, suffix.length).join(' ')
     } else if (c.message.content.indexOf(bot.User.mention) === 0) {
-      cmd = c.message.content.substr(bot.User.mention.length + 1).split(' ')[0]
+      cmd = c.message.content.substr(bot.User.mention.length + 1).split(' ')[0].toLowerCase()
       suffix = c.message.content.substr(bot.User.mention.length).split(' ')
       suffix = suffix.slice(2, suffix.length).join(' ')
     } else if (c.message.content.indexOf(bot.User.nickMention) === 0) {
-      cmd = c.message.content.substr(bot.User.nickMention.length + 1).split(' ')[0]
+      cmd = c.message.content.substr(bot.User.nickMention.length + 1).split(' ')[0].toLowerCase()
       suffix = c.message.content.substr(bot.User.nickMention.length).split(' ')
       suffix = suffix.slice(2, suffix.length).join(' ')
     }

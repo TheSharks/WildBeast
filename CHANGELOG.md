@@ -1,5 +1,11 @@
 # 3.0.0
 ## Beta phase
+### 3.0.0-beta.2
+Fixed initial setup misbehaving if user was sure about using a normal Discord account.    
+Enabled versionchecker.   
+Fixed `voice` not working properly if user was not connected to any voice channel.    
+Fixed some internal quirks.    
+
 ### 3.0.0-beta.1
 Introduced tags.   
 

@@ -11,19 +11,36 @@ exports.join = function (msg, suffix, bot) {
   } else {
     var voiceCheck = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
     if (!voiceCheck && !suffix) {
-      msg.member.getVoiceChannel().join().then((vc) => {
-        msg.channel.sendMessage('I joined channel **' + vc.voiceConnection.channel.name + '** which I believe you are currently in. \nYou have until the end of the wait music to request something.')
-        status[msg.guild.id] = true
-        time[msg.guild.id] = setTimeout(function () {
-          leave(bot, msg)
-          status[msg.guild.id] = false
-        }, 199000)
-        waiting(vc)
-      }).catch((err) => {
-        if (err.message === 'Missing permission') {
-          msg.reply("I could not join the channel you're in because I don't have `Connect` permissions :cry:")
-        }
-      })
+      var VC = msg.member.getVoiceChannel()
+      if (VC) {
+        VC.join().then((vc) => {
+          msg.channel.sendMessage('I joined channel **' + vc.voiceConnection.channel.name + '** which I believe you are currently in. \nYou have until the end of the wait music to request something.')
+          status[msg.guild.id] = true
+          time[msg.guild.id] = setTimeout(function () {
+            leave(bot, msg)
+            status[msg.guild.id] = false
+          }, 199000)
+          waiting(vc)
+        }).catch((err) => {
+          if (err.message === 'Missing permission') {
+            msg.reply("I could not join the channel you're in because I don't have `Connect` permissions :cry:")
+          }
+        })
+      } else if (!VC) {
+        msg.guild.voiceChannels[0].join().then((vc) => {
+          msg.channel.sendMessage('I joined channel **' + vc.voiceConnection.channel.name + '** because you did not specify a channel for me to join. \nYou have until the end of the wait music to request something.')
+          status[msg.guild.id] = true
+          time[msg.guild.id] = setTimeout(function () {
+            leave(bot, msg)
+            status[msg.guild.id] = false
+          }, 199000)
+          waiting(vc)
+        }).catch((err) => {
+          if (err.message === 'Missing permission') {
+            msg.reply("I could not the first voice channel in my list because I don't have `Connect` permissions :cry:")
+          }
+        })
+      }
     } else if (!voiceCheck) {
       msg.channel.guild.voiceChannels
         .forEach((channel) => {
@@ -72,7 +89,7 @@ exports.leave = function (msg, suffix, bot) {
 function waiting (vc) {
   var waitMusic = vc.voiceConnection.createExternalEncoder({
     type: 'ffmpeg',
-    source: 'fanta.mp3',
+    source: 'Fanta.mp3', // Caps sensitive why
     format: 'pcm'
   })
   waitMusic.play()

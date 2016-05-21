@@ -44,33 +44,33 @@ exports.initial = function () {
         name: 'email',
         message: 'Please enter the email adress of the account you want to use.',
         when: function (a) {
-          return !a.token && !a.olduser && !a.usersure
+          return !a.token && !a.olduser && a.usersure
         }
       }, {
         type: 'input',
         name: 'password',
         message: 'Please enter the password of the account you want to use.',
         when: function (a) {
-          return !a.token && !a.olduser && !a.usersure
+          return !a.token && !a.olduser && a.usersure
         }
       }, {
         type: 'input',
         name: 'master',
         message: 'Please enter 1 Discord ID that I need to treat as my master, you can add more later.',
         when: function (a) {
-          return !a.olduser && !a.usersure
+          return !a.olduser && a.usersure
         }
       }, {
         type: 'input',
         name: 'prefix',
         message: 'Please enter the prefix you want to use. (example: ++)',
         when: function (a) {
-          return !a.olduser && !a.usersure
+          return !a.olduser && a.usersure
         }
       }],
       function (a) {
         Logger.debug(JSON.stringify(a))
-        if (a.usersure) {
+        if (!a.usersure) {
           Logger.info('Okay, please restart WildBeast to rerun the initial setup.')
           process.exit(0)
         }
