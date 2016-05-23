@@ -1,5 +1,6 @@
 'use strict'
 var Db = require('nedb')
+var Logger = require('../../internal/logger.js').Logger
 var database = new Db({
   filename: './runtime/databases/customize',
   autoload: true
@@ -31,6 +32,20 @@ exports.prefix = function (msg) {
   })
 }
 
+exports.check = function (guild) {
+  return new Promise(function (resolve, reject) {
+    database.find({
+      _id: guild.id
+    }, function (err, doc) {
+      if (err) {
+        reject(err)
+      } else if (doc) {
+        resolve(doc[0].settings.welcoming)
+      }
+    })
+  })
+}
+
 exports.reply = function (msg, what) {
   return new Promise(function (resolve, reject) {
     database.find({
@@ -49,6 +64,26 @@ exports.reply = function (msg, what) {
   })
 }
 
+exports.helpHandle = function (msg) {
+  // You will just have to deal with the fact that this is static
+  var arr = []
+  arr.push('`customize` enables you to adjust various settings about my behaviour in your server.')
+  arr.push('Currently, I support the following.')
+  arr.push('\n')
+  arr.push('`nsfw`: Changes my reply when someones uses a NSFW command while I disallow that.')
+  arr.push('`permissions`: Changes my reply when someone tries tp use a command they do not have access to')
+  arr.push('`welcome`: Changes my welcoming message.')
+  arr.push('`welcoming`: Changes wether I should welcome new people.')
+  arr.push('`timeout`: Changes my reply when someones uses a command that is still in cooldown')
+  arr.push('`prefix`: Changes the prefix I listen to on this server, mentions will still count as a global prefix')
+  msg.author.openDM().then((y) => {
+    y.sendMessage(arr.join('\n'))
+  }).catch((e) => {
+    Logger.error(e)
+    msg.channel.sendMessage('Whoops, try again.')
+  })
+}
+
 exports.adjust = function (msg, what, how) {
   /*eslint indent: 0*/
   return new Promise(function (resolve, reject) {
@@ -59,6 +94,24 @@ exports.adjust = function (msg, what, how) {
         reject(err)
       } else if (doc) {
         switch (what) {
+          case 'welcoming':
+            if (how !== 'on' && how !== 'off') {
+              return reject('`Welcoming can either be on or off`')
+            }
+            database.update({
+              _id: msg.guild.id
+            }, {
+              $set: {
+                'settings.welcoming': how
+              }
+            }, {}, function (err, doc) {
+              if (err) {
+                reject(err)
+              } else if (doc) {
+                resolve(how)
+              }
+            })
+            break
           case 'nsfw':
             database.update({
               _id: msg.guild.id

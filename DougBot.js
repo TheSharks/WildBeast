@@ -14,13 +14,6 @@ var Config
 var restarted = false
 
 Logger.info('Initializing...')
-runtime.internal.versioncheck.versionCheck(function (err, res) {
-  if (err) {
-    Logger.error('Version check failed, ' + err)
-  } else if (res) {
-    Logger.info(res)
-  }
-})
 
 if (argv.forceupgrade) {
   Logger.warn('Force-starting database upgrade.')
@@ -176,17 +169,28 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
   })
 })
 
-bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s, g, m) {
-  datacontrol.permissions.isKnown(g)
-  datacontrol.customize.isKnown(g)
-  datacontrol.users.isKnown(m)
+bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s) {
+  datacontrol.permissions.isKnown(s.guild)
+  datacontrol.customize.isKnown(s.guild)
+  datacontrol.customize.check(s.guild).then((r) => {
+    if (r === 'on') {
+      datacontrol.customize.reply(s, 'welcome').then((x) => {
+        s.guild.generalChannel.sendMessage(x.replace(/%user/g, s.member.username).replace(/%server/g, s.guild.name))
+      }).catch((e) => {
+        Logger.error(e)
+      })
+    }
+  }).catch((e) => {
+    Logger.error(e)
+  })
+  datacontrol.users.isKnown(s.member)
 })
 
-bot.Dispatcher.on(Event.GUILD_CREATE, function (s, g, a) {
+bot.Dispatcher.on(Event.GUILD_CREATE, function (s) {
   if (!bot.connected) return
-  if (!a) {
-    datacontrol.permissions.isKnown(g)
-    datacontrol.customize.isKnown(g)
+  if (!s.becameAvailable) {
+    datacontrol.permissions.isKnown(s.guild)
+    datacontrol.customize.isKnown(s.guild)
   }
 })
 
@@ -219,6 +223,13 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
 })
 
 function start () {
+  runtime.internal.versioncheck.versionCheck(function (err, res) {
+    if (err) {
+      Logger.error('Version check failed, ' + err)
+    } else if (res) {
+      Logger.info(res)
+    }
+  })
   try {
     Config = require('./config.json')
   } catch (e) {

@@ -74,20 +74,12 @@ Commands.eval = {
     var evalfin = []
     try {
       evalfin.push('```xl')
-      evalfin.push('- - - - - - - - - - - - - - - - This - - - - - - - - - - - - - - - - ')
-      evalfin.push(suffix)
-      evalfin.push('- - - - - - - - - - - - - - evaluates-to- - - - - - - - - - - - - - -')
       evalfin.push(eval(suffix))
-      evalfin.push('- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -')
       evalfin.push('```')
     } catch (e) {
       evalfin = []
       evalfin.push('```xl')
-      evalfin.push('- - - - - - - - - - - - - - - - -This - - - - - - - - - - - - - - - -')
-      evalfin.push(suffix)
-      evalfin.push('- - - - - - - - - - - - - - - - Failed- - - - - - - - - - - - - - - -')
       evalfin.push(e)
-      evalfin.push('- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -')
       evalfin.push('```')
     }
     msg.channel.sendMessage(evalfin.join('\n'))
@@ -141,11 +133,15 @@ Commands.customize = {
     var c = require('../databases/controllers/customize.js')
     suffix = suffix.split(' ')
     var x = suffix.slice(1, suffix.length).join(' ')
-    c.adjust(msg, suffix[0], x).then((r) => {
-      msg.channel.sendMessage(':ok_hand: Adjusted ' + suffix[0] + ' to `' + r + '`')
-    }).catch((e) => {
-      msg.channel.sendMessage('Whoops, ' + e)
-    })
+    if (suffix[0] === 'help') {
+      c.helpHandle(msg)
+    } else {
+      c.adjust(msg, suffix[0], x).then((r) => {
+        msg.channel.sendMessage(':ok_hand: Adjusted ' + suffix[0] + ' to `' + r + '`')
+      }).catch((e) => {
+        msg.channel.sendMessage('Whoops, ' + e)
+      })
+    }
   }
 }
 
@@ -303,11 +299,17 @@ Commands.setstatus = {
   fn: function (msg, suffix, bot) {
     var first = suffix.split(' ')
     if (/^http/.test(first[0])) {
-      bot.User.setStatus(null, {type: 1, name: suffix.substring(first[0].length + 1), url: first[0]})
+      bot.User.setStatus(null, {
+        type: 1,
+        name: suffix.substring(first[0].length + 1),
+        url: first[0]
+      })
       msg.channel.sendMessage(`Set status to streaming with message ${suffix.substring(first[0].length + 1)}`)
     } else {
       if (['online', 'idle'].indexOf(first[0]) > -1) {
-        bot.User.setStatus(first[0], {name: suffix.substring(first[0].length + 1)})
+        bot.User.setStatus(first[0], {
+          name: suffix.substring(first[0].length + 1)
+        })
         msg.channel.sendMessage(`Set status to ${first[0]} with message ${suffix.substring(first[0].length + 1)}`)
       } else {
         msg.reply('Can only be `online` or `idle`')
