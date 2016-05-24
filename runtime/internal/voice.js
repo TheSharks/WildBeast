@@ -1,6 +1,9 @@
 var list = {}
 var time = {}
 var status = {}
+var temp
+var type
+var count
 var YT = require('youtube-dl')
 var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
@@ -99,6 +102,11 @@ function next (msg, suffix, bot) {
   bot.VoiceConnections
     .map((connection) => {
       if (connection.voiceConnection.guild.id === msg.guild.id) {
+        if (list[msg.guild.id].link.length === 0) {
+          msg.channel.sendMessage('Playlist has ended, leaving voice.')
+          connection.voiceConnection.disconnect()
+          return
+        }
         var encoder = connection.voiceConnection.createExternalEncoder({
           type: 'ffmpeg',
           format: 'pcm',
@@ -183,12 +191,11 @@ exports.request = function (msg, suffix, bot) {
   var link = require('url').parse(suffix)
   var query = require('querystring').parse(link.query)
   msg.channel.sendTyping()
-  var type = setInterval(function () {
+  type = setInterval(function () {
     msg.channel.sendTyping()
   }, 5000)
   if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
-    var c = 0
-    var g = 0
+    msg.channel.sendMessage('Playlist fetching might take a while...')
     var api = require('youtube-api')
     api.authenticate({
       type: 'key',
@@ -197,7 +204,7 @@ exports.request = function (msg, suffix, bot) {
     api.playlistItems.list({
       part: 'snippet',
       pageToken: [],
-      maxResults: 30,
+      maxResults: 50,
       playlistId: query.list
     }, function (err, data) {
       if (err) {
@@ -206,49 +213,35 @@ exports.request = function (msg, suffix, bot) {
         clearInterval(type)
         return
       } else if (data) {
-        c = data.items.length
-        for (var x in data.items) {
-          var vid = YT('https://youtube.com/watch?v=' + data.items[x].snippet.resourceId.videoId)
-          vid.on('error', (e) => {
-            Logger.debug('Playlist debug, ' + e)
-          })
-          vid.on('info', (i) => {
-            g++
-            if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {
-              list[msg.guild.id] = {
-                link: [i.url],
-                info: [i.title],
-                volume: 100,
-                requester: [msg.author.username]
-              }
-              if (g >= c) {
-                msg.channel.sendMessage(`Added ${c} videos to the queue.`)
-                clearInterval(type)
-                next(msg, suffix, bot)
-              }
-            } else {
-              list[msg.guild.id].link.push(i.url)
-              list[msg.guild.id].info.push(i.title)
-              list[msg.guild.id].requester.push(msg.author.username)
-              if (g >= c) {
-                msg.channel.sendMessage(`Added ${c} videos to the queue.`)
-                clearInterval(type)
-                next(msg, suffix, bot)
-              }
-            }
-          })
-        }
+        temp = data.items
+        count = data.items.length
+        safeLoop(msg, suffix, bot)
       }
     })
   } else {
-    var video = YT(suffix)
-    video.on('error', (e) => {
-      Logger.debug('Request error: ' + e)
-      msg.channel.sendMessage('Stuff happened, I failed to fetch a valid AV file, try again with something different!')
+    fetch(suffix, msg).then((r) => {
+      msg.channel.sendMessage(`Added **${r.title}** to the playlist.`)
+      if (r.autoplay === true) {
+        next(msg, suffix, bot)
+      }
       clearInterval(type)
-      return
+    }).catch(() => {
+      msg.channel.sendMessage("I couldn't add that to the playlist.")
+      clearInterval(type)
     })
+  }
+}
+
+function fetch (v, msg, stats) {
+  return new Promise(function (resolve, reject) {
+    var video = YT(v)
+    var x
+    var y = 1
+    if (stats) {
+      x = stats
+    }
     video.on('info', (i) => {
+      y++
       if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {
         list[msg.guild.id] = {
           link: [i.url],
@@ -256,16 +249,73 @@ exports.request = function (msg, suffix, bot) {
           volume: 100,
           requester: [msg.author.username]
         }
-        msg.channel.sendMessage(`Added **${i.title}** to the queue`)
-        clearInterval(type)
-        next(msg, suffix, bot)
+        if (y > x) {
+          return resolve({
+            title: i.title,
+            autoplay: true,
+            done: true
+          })
+        } else {
+          return resolve({
+            title: i.title,
+            autoplay: true
+          })
+        }
       } else {
         list[msg.guild.id].link.push(i.url)
         list[msg.guild.id].info.push(i.title)
         list[msg.guild.id].requester.push(msg.author.username)
-        clearInterval(type)
-        msg.channel.sendMessage(`Added **${i.title}** to the queue`)
+        if (y > x) {
+          return resolve({
+            title: i.title,
+            autoplay: false,
+            done: true
+          })
+        } else {
+          return resolve({
+            title: i.title,
+            autoplay: false
+          })
+        }
       }
     })
-  }
+    video.on('error', (e) => {
+      y++
+      if (y > x) {
+        return reject({
+          error: e,
+          done: true
+        })
+      } else {
+        return reject({
+          error: e
+        })
+      }
+    })
+  })
+}
+
+function safeLoop (msg, suffix, bot) {
+  fetch('https://youtube.com/watch?v=' + temp[0].snippet.resourceId.videoId, msg, temp.length).then((r) => {
+    if (r.autoplay) {
+      msg.channel.sendMessage('Autoplaying **' + r.title + '**')
+      next(msg, suffix, bot)
+    }
+    if (r.done) {
+      msg.channel.sendMessage(`Added ${count} videos to the queue.`)
+      clearInterval(type)
+    } else {
+      temp.shift()
+      safeLoop(msg)
+    }
+  }).catch((e) => {
+    Logger.error('Playlist debug, ' + e.error)
+    if (e.done) {
+      msg.channel.sendMessage(`Added ${count} videos to the queue.`)
+      clearInterval(type)
+    } else {
+      temp.shift()
+      safeLoop(msg)
+    }
+  })
 }
