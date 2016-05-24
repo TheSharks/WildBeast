@@ -152,7 +152,7 @@ Commands.info = {
   level: 0,
   fn: function (msg) {
     var msgArray = []
-    msgArray.push(`**WildBeast version ${require('../../package.json').version} ${require('minimist')(process.argv.slice(2)).sharmode ? 'shard ' + require('minimist')(process.argv.slice(2)).shardid + '**' : '**'}`)
+    msgArray.push(`**WildBeast version ${require('../../package.json').version} ${require('minimist')(process.argv.slice(2)).shardmode ? 'shard ' + require('minimist')(process.argv.slice(2)).shardid + '**' : '**'}`)
     msgArray.push('Using 0.5.x **Discordie** version by *qeled*.')
     msgArray.push('Made primarily by Dougley and Mirrow.')
     msg.channel.sendMessage(msgArray.join('\n'))
