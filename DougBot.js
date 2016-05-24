@@ -2,7 +2,7 @@
 process.title = 'WildBeast'
 var Discordie = require('discordie')
 var Event = Discordie.Events
-var bot = new Discordie()
+var bot
 var runtime = require('./runtime/runtime.js')
 var Logger = runtime.internal.logger.Logger
 var timeout = runtime.internal.timeouts
@@ -15,14 +15,29 @@ var restarted = false
 
 Logger.info('Initializing...')
 
-if (argv.forceupgrade) {
-  Logger.warn('Force-starting database upgrade.')
-  runtime.internal.upgrade.init().then((r) => {
-    Logger.info(r)
-    start()
-  }).catch((e) => {
-    Logger.error(e)
+if (argv.shardmode && !isNaN(argv.shardid) && !isNaN(argv.shardcount)) {
+  Logger.info('Starting in ShardMode, this is shard ' + argv.shardid)
+  bot = new Discordie({
+    shardId: argv.shardid,
+    shardCount: argv.shardcount
   })
+} else {
+  bot = new Discordie()
+}
+
+if (argv.forceupgrade) {
+  if (argv.shardmode) {
+    Logger.warn("Can't upgrade databases in ShardMode, restart normally to upgrade databases.")
+    start()
+  } else {
+    Logger.warn('Force-starting database upgrade.')
+    runtime.internal.upgrade.init().then((r) => {
+      Logger.info(r)
+      start()
+    }).catch((e) => {
+      Logger.error(e)
+    })
+  }
 }
 
 if (!argv.forceupgrade) {
