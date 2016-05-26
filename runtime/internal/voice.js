@@ -341,7 +341,7 @@ function fetch (v, msg, stats) {
 
 function safeLoop (msg, suffix, bot) {
   for (var video in temp) {
-    DLFetch(temp[video], temp[video].snippet.position, msg, suffix, bot)
+    DLFetch(temp[video], temp[video].snippet.position + list[msg.guild.id].link.length, msg, suffix, bot)
   }
 }
 
