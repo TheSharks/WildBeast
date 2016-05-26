@@ -84,6 +84,43 @@ exports.helpHandle = function (msg) {
   })
 }
 
+exports.restore = function (guild) {
+  return new Promise(function (resolve, reject) {
+    database.find({
+      _id: guild.id
+    }, function (err, docs) {
+      if (err) {
+        reject(err)
+      } else if (docs) {
+        if (docs.length > 0) {
+          database.remove({
+            _id: guild.id
+          }, function (err) {
+            if (err) {
+              return reject(err)
+            }
+          })
+        }
+      }
+      initialize(guild).then(() => {
+        return resolve('Done!')
+      }).catch((e) => {
+        return reject(e)
+      })
+    })
+  })
+}
+
+exports.databaseEval = function (v) {
+  return new Promise(function (resolve, reject) {
+    try {
+      resolve(eval(v))
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
 exports.adjust = function (msg, what, how) {
   /*eslint indent: 0*/
   return new Promise(function (resolve, reject) {

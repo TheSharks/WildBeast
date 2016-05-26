@@ -36,6 +36,16 @@ exports.namechange = function (user) {
   })
 }
 
+exports.databaseEval = function (v) {
+  return new Promise(function (resolve, reject) {
+    try {
+      resolve(eval(v))
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
 exports.names = function (user) {
   return new Promise(function (resolve, reject) {
     database.find({

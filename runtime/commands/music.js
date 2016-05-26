@@ -62,7 +62,11 @@ Commands.playlist = {
           break
         }
       }
-      msg.channel.sendMessage(arr.join('\n'))
+      msg.channel.sendMessage(arr.join('\n')).then((m) => {
+        setTimeout(() => {
+          m.delete()
+        }, 15000)
+      })
     }).catch(() => {
       msg.channel.sendMessage("It seems that I don't have a playlist for this server.")
     })
