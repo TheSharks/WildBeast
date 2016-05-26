@@ -1,5 +1,5 @@
-<h1 align="center">
-<img src="http://i.imgur.com/IH4Qq6N.png"></h1>
+<p style="text-align:center;">
+<img src="http://i.imgur.com/IH4Qq6N.png"></p>
 
 <p align="center">
 <a href="https://snap-ci.com/SteamingMutt/WildBeast/branch/master"><img src="https://snap-ci.com/SteamingMutt/WildBeast/branch/master/build_image" alt="Build Status"></a>
