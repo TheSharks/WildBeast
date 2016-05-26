@@ -283,7 +283,7 @@ function fetch (v, msg, stats) {
     if (stats) {
       x = stats
     }
-    YT.getInfo(v, function (err, i) {
+    YT.getInfo(v, ['--skip-download'], function (err, i) {
       if (!err && i) {
         y++
         if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {
