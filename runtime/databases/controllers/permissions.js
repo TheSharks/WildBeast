@@ -26,6 +26,9 @@ exports.checkLevel = function (msg, user) {
       if (err) {
         return reject(err)
       } else if (doc) {
+        if (doc.length > 0 && !doc[0].perms.hasOwnProperty('negative')) {
+          insertNewStuff(msg.guild).catch((e) => Logger.error(e))
+        }
         if (doc.length <= 0) {
           initialize(msg.guild)
           return reject('No database!')
@@ -39,7 +42,7 @@ exports.checkLevel = function (msg, user) {
             return resolve(2)
           } else if (doc[0].perms.level3.indexOf(user) > -1) {
             return resolve(3)
-          } else if (doc[0].perms.negative.indexOf(user) > -1) {
+          } else if (doc[0].perms.hasOwnProperty('negative') && doc[0].perms.negative.indexOf(user) > -1) {
             return resolve(-1)
           } else {
             return resolve(0)
