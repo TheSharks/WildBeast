@@ -2,7 +2,6 @@ var list = {}
 var time = {}
 var status = {}
 var temp
-var type
 var x = 0
 var errors = 0
 var first = false
@@ -223,10 +222,6 @@ exports.request = function (msg, suffix, bot) {
   }
   var link = require('url').parse(suffix)
   var query = require('querystring').parse(link.query)
-  msg.channel.sendTyping()
-  type = setInterval(function () {
-    msg.channel.sendTyping()
-  }, 5000)
   if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
     msg.channel.sendMessage('Playlist fetching might take a while...')
     var api = require('youtube-api')
@@ -247,7 +242,6 @@ exports.request = function (msg, suffix, bot) {
           }, 3000)
         })
         Logger.error('Playlist failiure, ' + err)
-        clearInterval(type)
         return
       } else if (data) {
         temp = data.items
@@ -264,14 +258,12 @@ exports.request = function (msg, suffix, bot) {
       if (r.autoplay === true) {
         next(msg, suffix, bot)
       }
-      clearInterval(type)
     }).catch(() => {
       msg.channel.sendMessage("I couldn't add that to the playlist.").then((m) => {
         setTimeout(() => {
           m.delete()
         }, 3000)
       })
-      clearInterval(type)
     })
   }
 }
@@ -374,7 +366,6 @@ function DLFetch (video, position, msg, suffix, bot) {
     if (x === temp.length) {
       msg.channel.sendMessage(`Done, added ${x - errors} videos to the playlist. ${errors > 0 ? errors + ' videos failed to fetch' : ''}`)
       x = 0
-      clearInterval(type)
       if (first === true) {
         first = false
         next(msg, suffix, bot)
