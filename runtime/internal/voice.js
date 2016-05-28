@@ -270,13 +270,12 @@ exports.request = function (msg, suffix, bot) {
 
 function fetch (v, msg, stats) {
   return new Promise(function (resolve, reject) {
-    msg.channel.sendMessage('Resolving video, please wait...')
     var x = 0
     var y = 1
     if (stats) {
       x = stats
     }
-    YT.getInfo(v, ['--skip-download', `${v.indexOf('youtu') > -1 ? '--add-header Authorization:' + Config.api_keys.google : ''}`], function (err, i) {
+    YT.getInfo(v, ['--skip-download'], function (err, i) {
       if (!err && i) {
         y++
         if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {
