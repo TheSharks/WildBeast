@@ -94,6 +94,14 @@ exports.helpHandle = function (msg, suffix) {
       if (comad.hasOwnProperty('noDM')) {
         msgArray.push('*This command cannot be used in DM.*')
       }
+      if (comad.name === 'meme') {
+        var str = '**Currently available memes:\n**'
+        var meme = require('./commands/memes.json')
+        for (var m in meme) {
+          str += m + ', '
+        }
+        msgArray.push(str)
+      }
       msg.author.openDM().then((y) => {
         y.sendMessage(msgArray.join('\n'))
       }).catch((e) => {
