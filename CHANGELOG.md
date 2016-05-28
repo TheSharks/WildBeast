@@ -1,5 +1,9 @@
 # 3.0.0
 ## Beta phase
+### 3.0.0-beta.3
+Improved performance from YouTube playlist fetching.     
+Added `shardmode`    
+
 ### 3.0.0-beta.2
 Fixed initial setup misbehaving if user was sure about using a normal Discord account.    
 Enabled versionchecker.   
