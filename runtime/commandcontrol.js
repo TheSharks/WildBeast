@@ -100,7 +100,7 @@ exports.helpHandle = function (msg, suffix) {
         for (var m in meme) {
           str += m + ', '
         }
-        msgArray.push(str)
+        msgArray.push(str.substring(0, str.length - 2))
       }
       msg.author.openDM().then((y) => {
         y.sendMessage(msgArray.join('\n'))
