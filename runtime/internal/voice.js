@@ -277,7 +277,7 @@ function fetch (v, msg, stats) {
     }
     var options
     if (v.indexOf('youtu') > -1) {
-      options = ['--skip-download', '--add-header Authorization:' + Config.api_keys.google]
+      options = ['--skip-download', '--add-header', 'Authorization:'+Config.api_keys.google]
     } else {
       options = ['--skip-download']
     }
