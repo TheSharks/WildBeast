@@ -66,5 +66,5 @@ node DougBot.js --forceupgrade
 
 <p align="center">
   <a href="https://github.com/feross/standard"><img src="https://cdn.rawgit.com/feross/standard/master/badge.svg" alt="JavaScript Standard Code Style"></a>
-  <a href="https://discord.gg/0cFoiR5QVh5gF8Un"><img src="https://discordapp.com/api/servers/110462143152803840/widget.png?style=banner2" alt="Discord server"></a>
+  <a href="https://discord.gg/0cFoiR5QVh5LZlQO"><img src="https://discordapp.com/api/servers/110462143152803840/widget.png?style=banner2" alt="Discord server"></a>
 </p>
