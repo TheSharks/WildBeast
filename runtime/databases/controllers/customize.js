@@ -71,7 +71,7 @@ exports.helpHandle = function (msg) {
   arr.push('Currently, I support the following.')
   arr.push('\n')
   arr.push('`nsfw`: Changes my reply when someones uses a NSFW command while I disallow that.')
-  arr.push('`permissions`: Changes my reply when someone tries tp use a command they do not have access to')
+  arr.push('`permissions`: Changes my reply when someone tries to use a command they do not have access to')
   arr.push('`welcome`: Changes my welcoming message.')
   arr.push('`welcoming`: Changes wether I should welcome new people.')
   arr.push('`timeout`: Changes my reply when someones uses a command that is still in cooldown')
