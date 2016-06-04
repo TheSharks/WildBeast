@@ -217,18 +217,18 @@ Commands.setlevel = {
       msg.reply('Your first parameter is not a number!')
     } else if (suffix[0] > 3) {
       msg.channel.sendMessage('Setting a level higher than 3 is not allowed.')
-    } else if (msg.mentions.length === 0) {
-      msg.reply('Please mention the user(s) you want to set the permission level of.')
+    } else if (msg.mentions.length === 0 && msg.mention_roles.length === 0) {
+      msg.reply('Please mention the user(s)/role(s) you want to set the permission level of.')
     } else {
-      Permissions.checkLevel(msg.guild, msg.author.id).then(function (level) {
+      Permissions.checkLevel(msg.guild, msg.author.id, msg.member.roles).then(function (level) {
         if (suffix[0] > level) {
-          msg.reply("Can't set a user's permissions higher than your own!")
+          msg.reply("Can't set a user's permissions higher than your own!") // Not that you can anyhow via conventional methods
         }
       }).catch(function (error) {
         msg.channel.sendMessage('Help! Something went wrong!')
         Logger.error(error)
       })
-      Permissions.adjustLevel(msg, msg.mentions, parseFloat(suffix[0])).then(function () {
+      Permissions.adjustLevel(msg, msg.mentions, parseFloat(suffix[0]), msg.mention_roles).then(function () {
         msg.channel.sendMessage('Alright! The permission levels have been set successfully!')
       }).catch(function (err) {
         msg.channel.sendMessage('Help! Something went wrong!')
@@ -371,7 +371,7 @@ Commands.userinfo = {
       msg.channel.sendMessage("Sorry you can't use this in DMs")
     }
     if (msg.mentions.length === 0) {
-      Permissions.checkLevel(msg, msg.author.id).then((level) => {
+      Permissions.checkLevel(msg, msg.author.id, msg.member.roles).then((level) => {
         var msgArray = []
         var roles = msg.member.roles.map((r) => r.name)
         roles = roles.splice(0, roles.length).join(', ')
@@ -396,7 +396,7 @@ Commands.userinfo = {
       return
     }
     msg.mentions.map(function (user) {
-      Permissions.checkLevel(msg, user.id).then(function (level) {
+      Permissions.checkLevel(msg, user.id, user.memberOf(msg.guild).roles).then(function (level) {
         var msgArray = []
         var guild = msg.guild
         var member = guild.members.find((m) => m.id === user.id)

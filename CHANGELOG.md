@@ -1,5 +1,8 @@
 # 3.0.0
 ## Beta phase
+### 3.0.0-beta.4
+Added the ability to set roles to access levels.
+
 ### 3.0.0-beta.3
 Improved performance from YouTube playlist fetching.     
 Added `shardmode`    

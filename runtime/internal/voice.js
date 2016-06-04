@@ -51,7 +51,7 @@ exports.join = function (msg, suffix, bot) {
         .forEach((channel) => {
           if (channel.name.toLowerCase().indexOf(suffix.toLowerCase()) >= 0) {
             channel.join().then((vc) => {
-              msg.channel.sendMessage('I joined **' + vc.voiceConnection.channel.name + '** \nYou have until the end of the wait music to request something.!')
+              msg.channel.sendMessage('I joined **' + vc.voiceConnection.channel.name + '** \nYou have until the end of the wait music to request something.')
               status[msg.guild.id] = true
               time[msg.guild.id] = setTimeout(function () {
                 leave(bot, msg)
@@ -92,6 +92,7 @@ function leave (bot, msg) {
 }
 
 exports.leave = function (msg, suffix, bot) {
+  clearTimeout(time[msg.guild.id])
   var voice = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
   if (voice) {
     voice.voiceConnection.getEncoder().kill()
@@ -265,6 +266,18 @@ exports.request = function (msg, suffix, bot) {
         }, 3000)
       })
     })
+  }
+}
+
+exports.leaveRequired = function (bot, guild) {
+  var connect = bot.VoiceConnections
+    .find(function (connection) {
+      connection.voiceConnection.guild.id === guild
+    })
+  if (connect) {
+    if (connect.voiceConnection.channel.members.length <= 1) {
+      connect.voiceConnection.disconnect()
+    }
   }
 }
 
