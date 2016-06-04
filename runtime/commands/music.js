@@ -7,7 +7,7 @@ Commands.pauseplay = {
   help: "I'll pause/play the music!",
   aliases: ['playpause'],
   noDM: true,
-  level: 0,
+  level: 1,
   fn: function (msg, suffix, bot) {
     v.pausePlay(msg, suffix, bot)
   }
@@ -18,7 +18,7 @@ Commands.volume = {
   help: "I'll change my volume!",
   aliases: ['vol'],
   noDM: true,
-  level: 0,
+  level: 1,
   fn: function (msg, suffix, bot) {
     v.volume(msg, suffix, bot)
   }
@@ -28,7 +28,7 @@ Commands['leave-voice'] = {
   name: 'leave-voice',
   help: "I'll leave the current voice channel.",
   noDM: true,
-  level: 0,
+  level: 1,
   fn: function (msg, suffix, bot) {
     v.leave(msg, suffix, bot)
   }
@@ -38,7 +38,7 @@ Commands.skip = {
   name: 'skip',
   help: "I'll skip this song if you don't like it.",
   noDM: true,
-  level: 0,
+  level: 1,
   fn: function (msg, suffix, bot) {
     v.skip(msg, suffix, bot)
   }
@@ -79,7 +79,7 @@ Commands.voice = {
   aliases: ['join-voice'],
   noDM: true,
   timeout: 10,
-  level: 0,
+  level: 1,
   fn: function (msg, suffix, bot) {
     v.join(msg, suffix, bot)
   }
@@ -92,7 +92,7 @@ Commands.request = {
   noDM: true,
   usage: 'link',
   timeout: 10,
-  level: 0,
+  level: 1,
   fn: function (msg, suffix, bot) {
     v.request(msg, suffix, bot)
   }

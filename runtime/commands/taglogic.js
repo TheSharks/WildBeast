@@ -12,7 +12,6 @@ Commands.tag = {
   level: 0,
   usage: '<create/delete> <tagname> [content] OR <tagname>',
   aliases: ['t'],
-  noDM: true,
   fn: function (msg, suffix, bot) {
     var index = suffix.split(' ')
     if (index[0].toLowerCase() === 'create') {
