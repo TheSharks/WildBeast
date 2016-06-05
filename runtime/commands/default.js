@@ -128,7 +128,7 @@ Commands.customize = {
   name: 'customize',
   help: 'Adjust my behaviour in this server!',
   noDM: true,
-  level: 0,
+  level: 3,
   fn: function (msg, suffix) {
     var c = require('../databases/controllers/customize.js')
     suffix = suffix.split(' ')
