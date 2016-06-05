@@ -27,6 +27,38 @@ Commands.gif = {
   }
 }
 
+Commands.rip = {
+  name: 'rip',
+  help: 'Posts a ripme.xyz link',
+  aliases: ['ripme'],
+  level: 0,
+  timeout: 10,
+  fn: function (msg, suffix, bot) {
+    var qs = require('querystring')
+    var resolve = []
+    var skipped = false
+    if (msg.mentions.length > 0) {
+      for (var m of msg.mentions) {
+        if (m.id !== bot.User.id) {
+          if (resolve[0] === undefined) {
+            resolve[0] = m.username
+          } else {
+            resolve[0] += ' and ' + m.username
+          }
+        } else {
+          skipped = true
+        }
+      }
+    } else if (suffix) {
+      resolve[0] = suffix
+    }
+    if (skipped === true && msg.mentions.length === 1 && suffix) {
+      resolve[0] = suffix
+    }
+    msg.channel.sendMessage('http://ripme.xyz/' + qs.stringify(resolve).substr(2))
+  }
+}
+
 Commands.fortunecow = {
   name: 'fortunecow',
   help: "I'll get a random fortunecow!",
@@ -345,26 +377,26 @@ Commands.e621 = {
   fn: function (msg, suffix) {
     msg.channel.sendTyping()
     unirest.post(`https://e621.net/post/index.json?limit=30&tags=${suffix}`)
-        .headers({
-          'Accept': 'application/json',
-          'User-Agent': 'Unirest Node.js'
-        })
-        // Fetching 30 posts from E621 with the given tags
-        .end(function (result) {
-          if (result.body.length < 1) {
-            msg.reply('Sorry, nothing found.') // Correct me if it's wrong.
+      .headers({
+        'Accept': 'application/json',
+        'User-Agent': 'Unirest Node.js'
+      })
+      // Fetching 30 posts from E621 with the given tags
+      .end(function (result) {
+        if (result.body.length < 1) {
+          msg.reply('Sorry, nothing found.') // Correct me if it's wrong.
+        } else {
+          var count = Math.floor((Math.random() * result.body.length))
+          var FurryArray = []
+          if (suffix) {
+            FurryArray.push(`${msg.author.mention}, you've searched for ` + '`' + suffix + '`')
           } else {
-            var count = Math.floor((Math.random() * result.body.length))
-            var FurryArray = []
-            if (suffix) {
-              FurryArray.push(`${msg.author.mention}, you've searched for \`${suffix}\``)
-            } else {
-              FurryArray.push(`${msg.author.mention}, you've searched for \`random\``)
-            } // hehe no privacy if you do the nsfw commands now.
-            FurryArray.push(result.body[count].file_url)
-            msg.channel.sendMessage(FurryArray.join('\n'))
-          }
-        })
+            FurryArray.push(`${msg.author.mention}, you've searched for ` + '`random`')
+          } // hehe no privacy if you do the nsfw commands now.
+          FurryArray.push(result.body[count].file_url)
+          msg.channel.sendMessage(FurryArray.join('\n'))
+        }
+      })
   }
 }
 

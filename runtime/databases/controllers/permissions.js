@@ -30,9 +30,9 @@ exports.checkLevel = function (msg, user, roles) {
           initialize(msg.guild)
           return reject('No database!')
         }
-        if (doc.length > 0 && !doc[0].perms.hasOwnProperty('negative') || doc[0].version !== 3.0) {
+        if (doc.length > 0 && !doc[0].perms.hasOwnProperty('negative') || doc[0].version !== 3) {
           var version
-          doc[0].version !== undefined ? version = doc[0].version : version = 1.0
+          doc[0].version !== undefined ? version = doc[0].version : version = 1
           insertNewStuff(msg.guild, version).catch((e) => Logger.error(e))
         } else {
           if (doc[0].superUser === user) {
@@ -78,9 +78,9 @@ exports.adjustLevel = function (msg, users, level, roles) {
           initialize(msg.guild)
           return reject('No database!')
         }
-        if (docs.length > 0 && !docs[0].perms.hasOwnProperty('negative') || docs[0].version !== 3.0) {
+        if (docs.length > 0 && !docs[0].perms.hasOwnProperty('negative') || docs[0].version !== 3) {
           var version
-          docs[0].version !== undefined ? version = docs[0].version : version = 1.0
+          docs[0].version !== undefined ? version = docs[0].version : version = 1
           insertNewStuff(msg.guild, version).catch((e) => Logger.error(e))
         } else {
           users.map((u) => {
@@ -251,9 +251,9 @@ exports.checkNSFW = function (msg) {
           initialize(msg.guild)
           return reject('No database!')
         }
-        if (docs.length > 0 && !docs[0].perms.hasOwnProperty('negative') || docs[0].version !== 3.0) {
+        if (docs.length > 0 && !docs[0].perms.hasOwnProperty('negative') || docs[0].version !== 3) {
           var version
-          docs[0].version !== undefined ? version = docs[0].version : version = 1.0
+          docs[0].version !== undefined ? version = docs[0].version : version = 1
           insertNewStuff(msg.guild, version).catch((e) => Logger.error(e))
         } else {
           if (docs[0].perms.nsfw.indexOf(msg.channel.id) > -1) {
@@ -279,9 +279,9 @@ exports.adjustNSFW = function (msg, what) {
           initialize(msg.guild)
           return reject('No database!')
         }
-        if (docs.length > 0 && !docs[0].perms.hasOwnProperty('negative') || docs[0].version !== 3.0) {
+        if (docs.length > 0 && !docs[0].perms.hasOwnProperty('negative') || docs[0].version !== 3) {
           var version
-          docs[0].version !== undefined ? version = docs[0].version : version = 1.0
+          docs[0].version !== undefined ? version = docs[0].version : version = 1
           insertNewStuff(msg.guild, version).catch((e) => Logger.error(e))
         } else {
           if (what === 'on') {
@@ -347,13 +347,13 @@ function insertNewStuff (guild, version) {
   /*eslint indent: 0*/
   return new Promise(function (resolve, reject) {
     switch (version) {
-      case 1.0:
+      case 1:
         database.update({
           _id: guild.id
         }, {
           $set: {
             'perms.negative': ['NaN'],
-            version: 2.0
+            version: 2
           }
         }, function (err, res) {
           if (err) {
@@ -363,7 +363,7 @@ function insertNewStuff (guild, version) {
           }
         })
         break
-      case 2.0:
+      case 2:
         database.update({
           _id: guild.id
         }, {
@@ -372,7 +372,7 @@ function insertNewStuff (guild, version) {
             'perms.roles.level2': ['NaN'],
             'perms.roles.level3': ['NaN'],
             'perms.roles.negative': ['NaN'],
-            version: 3.0
+            version: 3
           }
         }, function (err, res) {
           if (err) {
@@ -429,7 +429,7 @@ function initialize (guild) {
   return new Promise(function (resolve, reject) {
     var doc = {
       _id: guild.id,
-      version: 3.0,
+      version: 3,
       superUser: guild.owner.id,
       blacklisted: false,
       perms: {
