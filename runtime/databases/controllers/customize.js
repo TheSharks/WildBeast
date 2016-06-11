@@ -111,16 +111,6 @@ exports.restore = function (guild) {
   })
 }
 
-exports.databaseEval = function (v) {
-  return new Promise(function (resolve, reject) {
-    try {
-      resolve(eval(v))
-    } catch (e) {
-      reject(e)
-    }
-  })
-}
-
 exports.adjust = function (msg, what, how) {
   /*eslint indent: 0*/
   return new Promise(function (resolve, reject) {
@@ -281,3 +271,5 @@ exports.isKnown = function (guild) {
     })
   })
 }
+
+exports.Database = database

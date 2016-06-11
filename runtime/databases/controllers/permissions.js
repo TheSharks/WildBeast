@@ -39,15 +39,17 @@ exports.checkLevel = function (msg, user, roles) {
             return resolve(4)
           }
           var level = 0
-          for (var r of roles) {
-            if (doc[0].perms.roles.level1.indexOf(r.id) > -1) {
-              level = 1
-            } else if (doc[0].perms.roles.level2.indexOf(r.id) > -1) {
-              level = 2
-            } else if (doc[0].perms.roles.level3.indexOf(r.id) > -1) {
-              level = 3
-            } else if (doc[0].perms.roles.negative.indexOf(r.id) > -1) {
-              level = -1
+          if (roles) {
+            for (var r of roles) {
+              if (doc[0].perms.roles.level1.indexOf(r.id) > -1) {
+                level = (level > 1) ? level : 1
+              } else if (doc[0].perms.roles.level2.indexOf(r.id) > -1) {
+                level = (level > 2) ? level : 2
+              } else if (doc[0].perms.roles.level3.indexOf(r.id) > -1) {
+                level = (level > 3) ? level : 3
+              } else if (doc[0].perms.roles.negative.indexOf(r.id) > -1) {
+                level = -1
+              }
             }
           }
           if (doc[0].perms.level1.indexOf(user) > -1) {
@@ -96,66 +98,30 @@ exports.adjustLevel = function (msg, users, level, roles) {
                 }
               })
             }
-            if (level === 0) {
-              return resolve(0)
-            } else if (level === 1) {
+            if (level > -2) {
+              var db
+              if (level > 0) {
+                db = 'perms.level' + level
+              } else if (level < 0) {
+                db = 'perms.negative'
+              } else {
+                return resolve(0)
+              }
               database.update({
                 _id: msg.guild.id
               }, {
                 $push: {
-                  'perms.level1': u.id
+                  [db]: u.id
                 }
               }, {}, function (err) {
                 if (err) {
                   return reject(err)
                 } else {
-                  return resolve(1)
-                }
-              })
-            } else if (level === 2) {
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $push: {
-                  'perms.level2': u.id
-                }
-              }, {}, function (err) {
-                if (err) {
-                  return reject(err)
-                } else {
-                  return resolve(2)
-                }
-              })
-            } else if (level === 3) {
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $push: {
-                  'perms.level3': u.id
-                }
-              }, {}, function (err) {
-                if (err) {
-                  return reject(err)
-                } else {
-                  return resolve(3)
-                }
-              })
-            } else if (level < 0) {
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $push: {
-                  'perms.negative': u.id
-                }
-              }, {}, function (err) {
-                if (err) {
-                  return reject(err)
-                } else {
-                  return resolve(-1)
+                  return resolve(level)
                 }
               })
             } else {
-              return reject('Not supported!')
+              return reject('Unsupported.')
             }
           })
           roles.map((r) => {
@@ -171,66 +137,30 @@ exports.adjustLevel = function (msg, users, level, roles) {
                 }
               })
             }
-            if (level === 0) {
-              return resolve(0)
-            } else if (level === 1) {
+            if (level > -2) {
+              var db
+              if (level > 0) {
+                db = 'perms.roles.level' + level
+              } else if (level < 0) {
+                db = 'perms.roles.negative'
+              } else {
+                return resolve(0)
+              }
               database.update({
                 _id: msg.guild.id
               }, {
                 $push: {
-                  'perms.roles.level1': r.id
+                  [db]: r.id
                 }
               }, {}, function (err) {
                 if (err) {
                   return reject(err)
                 } else {
-                  return resolve(1)
-                }
-              })
-            } else if (level === 2) {
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $push: {
-                  'perms.roles.level2': r.id
-                }
-              }, {}, function (err) {
-                if (err) {
-                  return reject(err)
-                } else {
-                  return resolve(2)
-                }
-              })
-            } else if (level === 3) {
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $push: {
-                  'perms.roles.level3': r.id
-                }
-              }, {}, function (err) {
-                if (err) {
-                  return reject(err)
-                } else {
-                  return resolve(3)
-                }
-              })
-            } else if (level < 0) {
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $push: {
-                  'perms.roles.negative': r.id
-                }
-              }, {}, function (err) {
-                if (err) {
-                  return reject(err)
-                } else {
-                  return resolve(-1)
+                  return resolve(level)
                 }
               })
             } else {
-              return reject('Not supported!')
+              return reject('Unsupported.')
             }
           })
         }
@@ -388,16 +318,6 @@ function insertNewStuff (guild, version) {
   })
 }
 
-exports.databaseEval = function (v) {
-  return new Promise(function (resolve, reject) {
-    try {
-      resolve(eval(v))
-    } catch (e) {
-      reject(e)
-    }
-  })
-}
-
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
     database.find({
@@ -455,3 +375,5 @@ function initialize (guild) {
     })
   })
 }
+
+exports.Database = database

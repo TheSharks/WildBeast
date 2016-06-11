@@ -118,7 +118,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                   try {
                     commands[cmd].fn(c.message, suffix, bot)
                   } catch (e) {
-                    c.message.channel.sendMessage('**Aww shit!**\n```' + e + '```')
+                    c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
                   }
                 } else {
                   datacontrol.permissions.checkNSFW(c.message).then(function (q) {
@@ -126,12 +126,12 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                       try {
                         commands[cmd].fn(c.message, suffix, bot)
                       } catch (e) {
-                        c.message.channel.sendMessage('**Aww shit!**\n```' + e + '```')
+                        c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
                       }
                     } else {
                       datacontrol.customize.reply(c.message, 'nsfw').then((d) => {
                         if (d === 'default') {
-                          c.message.channel.sendMessage('This channel does not allow NSFW commands!')
+                          c.message.channel.sendMessage('This channel does not allow NSFW commands, enable them first with `setnsfw`')
                         } else {
                           c.message.channel.sendMessage(d.replace(/%user/g, c.message.author.username).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name))
                         }
@@ -146,7 +146,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
               } else {
                 datacontrol.customize.reply(c.message, 'permissions').then((u) => {
                   if (u === 'default') {
-                    c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r)
+                    c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\nAsk the server owner to modify your level with `setlevel`')
                   } else {
                     c.message.channel.sendMessage(u.replace(/%user/g, c.message.author.username).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%nlevel/, commands[cmd].level).replace(/%ulevel/, r))
                   }
@@ -161,7 +161,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
         })
       } else {
         if (commands[cmd].noDM) {
-          c.message.channel.sendMessage('This command cannot be used in DM.')
+          c.message.channel.sendMessage('This command cannot be used in DM, invite the bot to a server and try this command again.')
           return
         }
         datacontrol.permissions.checkLevel(c.message, c.message.author.id, []).then(function (r) {
@@ -169,10 +169,10 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
             try {
               commands[cmd].fn(c.message, suffix, bot)
             } catch (e) {
-              c.message.channel.sendMessage('**Aww shit!**\n```' + e + '```')
+              c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
             }
           } else {
-            c.message.channel.sendMessage('You have no permission to run this command in DM!')
+            c.message.channel.sendMessage('You have no permission to run this command in DM, you probably tried to use restricted commands that are either for master users only or only for server owners.')
           }
         }).catch(function (e) {
           Logger.error('Permission error: ' + e)

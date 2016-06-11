@@ -68,6 +68,44 @@ Commands.purge = {
 Commands.eval = {
   name: 'eval',
   help: 'Allows for the execution of arbitrary Javascript.',
+  hidden: true,
+  level: 9,
+  fn: function (msg, suffix, bot) {
+    if (msg.author.id === bot.User.id) return // To statisfy our styleguide :P
+    var util = require('util')
+    try {
+      var returned = eval(suffix)
+      var str = util.inspect(returned, {
+        depth: 1
+      })
+      if (str.length > 1900) {
+        str = str.substr(0, 1897)
+        str = str + '...'
+      }
+      str = str.replace(new RegExp(bot.token, 'gi'), '¯\\\_(ツ)_/¯')
+      msg.channel.sendMessage('```xl\n' + str + '\n```')
+      if (returned !== undefined && returned !== null && typeof returned.then === 'function') {
+        returned.then(() => {
+          var str = util.inspect(returned, {
+            depth: 1
+          })
+          if (str.length > 1900) {
+            str = str.substr(0, 1897)
+            str = str + '...'
+          }
+          msg.channel.sendMessage('```xl\n' + str + '\n```')
+        })
+      }
+    } catch (e) {
+      msg.channel.sendMessage('```xl\n' + e + '\n```')
+    }
+  }
+}
+
+Commands.plaineval = {
+  name: 'plaineval',
+  help: 'Allows for the execution of arbitrary Javascript.',
+  hidden: true,
   level: 9,
   fn: function (msg, suffix, bot) {
     if (msg.author.id === bot.User.id) return // To statisfy our styleguide :P
