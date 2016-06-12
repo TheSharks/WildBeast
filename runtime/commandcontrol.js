@@ -40,23 +40,31 @@ if (cus !== null) {
 
 exports.helpHandle = function (msg, suffix) {
   var msgArray = []
-  var commandnames = []
+  var msgArraytwo = []
+  var cmdone = []
   if (!suffix) {
     for (var index in commands) {
       if (commands[index].hidden) {
         continue
       } else {
-        commandnames.push(commands[index].name)
+        cmdone.push(commands[index].name + ' - ' + commands[index].help)
       }
     }
+  var cmdtwo = cmdone.splice(0, cmdone.length / 2)
     msgArray.push('**Available commands:** \n')
-    msgArray.push(commandnames.sort().join(', ') + '\n')
-    msgArray.push('For questions: https://discord.gg/0cFoiR5QVh5LZlQO')
+    msgArray.push('```xl')
+    msgArray.push(commandnames.sort().join('\n') + '\n')
+    msgArray.push('```')
+    msgArraytwo.push('```xl')
+    msgArraytwo.push(cmdtwo.sort().join('\n') + '\n')
+    msgArraytwo.push('For questions: https://discord.gg/0cFoiR5QVh5LZlQO')
+    msgArraytwo.push('```')
     if (!msg.isPrivate) {
       msg.channel.sendMessage('Help is underway ' + msg.author.mention + '!')
     }
     msg.author.openDM().then((y) => {
       y.sendMessage(msgArray.join('\n'))
+      y.sendMessage(msgArraytwo.join('\n'))
     }).catch((e) => {
       Logger.error(e)
       msg.channel.sendMessage('Whoops, try again.')
