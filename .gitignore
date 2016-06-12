@@ -4,6 +4,7 @@ npm-debug.log*
 
 # VSCode stuff
 .vscode
+jsconfig.json
 
 # UGC
 config.json
