@@ -53,7 +53,7 @@ exports.helpHandle = function (msg, suffix) {
   var cmdtwo = cmdone.splice(0, cmdone.length / 2)
     msgArray.push('**Available commands:** \n')
     msgArray.push('```xl')
-    msgArray.push(commandnames.sort().join('\n') + '\n')
+    msgArray.push(cmdone.sort().join('\n') + '\n')
     msgArray.push('```')
     msgArraytwo.push('```xl')
     msgArraytwo.push(cmdtwo.sort().join('\n') + '\n')
