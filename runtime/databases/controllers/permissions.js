@@ -17,7 +17,7 @@ exports.checkLevel = function (msg, user, roles) {
       return resolve(2)
     } else if (Config.permissions.level3.indexOf(user) > -1) {
       return resolve(3)
-    } else if (msg.isPrivate) {
+    } else if (msg.isPrivate || !msg.guild) {
       return resolve(0)
     }
     database.find({

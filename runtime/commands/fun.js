@@ -148,7 +148,7 @@ Commands.yomomma = {
   help: "I'll get a random yomomma joke for you!",
   timeout: 5,
   level: 0,
-  fn: function (msg, suffix) {
+  fn: function (msg) {
     var request = require('request')
     request('http://api.yomomma.info/', function (error, response, body) {
       if (!error && response.statusCode === 200) {
@@ -159,10 +159,7 @@ Commands.yomomma = {
           return
         }
         var yomomma = JSON.parse(body)
-        if (suffix === '') {
-          msg.channel.sendMessage(yomomma.joke)
-          msg.channel.sendMessage()
-        }
+        msg.channel.sendMessage(yomomma.joke)
       }
     })
   }
@@ -239,7 +236,7 @@ Commands.urbandictionary = {
           msgArray.push('```')
           msg.channel.sendMessage(msgArray.join('\n'))
         } else {
-          msg.reply(suffix + ":This word is so screwed up, even Urban Dictionary doesn't have it in its database")
+          msg.reply(suffix + ": This word is so screwed up, even Urban Dictionary doesn't have it in its database")
         }
       }
     })
@@ -457,7 +454,6 @@ Commands.meme = {
           msg.reply(image)
         } else {
           msg.reply(image)
-          msg.channel.sendMessage('*This works best when I have the permission to delete messages!*')
         }
       }
     })

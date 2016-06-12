@@ -119,6 +119,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                     commands[cmd].fn(c.message, suffix, bot)
                   } catch (e) {
                     c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
+                    Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`)
                   }
                 } else {
                   datacontrol.permissions.checkNSFW(c.message).then(function (q) {
@@ -127,6 +128,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                         commands[cmd].fn(c.message, suffix, bot)
                       } catch (e) {
                         c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
+                        Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`)
                       }
                     } else {
                       datacontrol.customize.reply(c.message, 'nsfw').then((d) => {
@@ -146,7 +148,8 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
               } else {
                 datacontrol.customize.reply(c.message, 'permissions').then((u) => {
                   if (u === 'default') {
-                    c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\nAsk the server owner to modify your level with `setlevel`')
+                    var reason = (r > 4) ? '**This is a master user only command**, ask the bot owner to add you as a master user if you really think you should be able to use this command.' : 'Ask the server owner to modify your level with `setlevel`.'
+                    c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\n' + reason)
                   } else {
                     c.message.channel.sendMessage(u.replace(/%user/g, c.message.author.username).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%nlevel/, commands[cmd].level).replace(/%ulevel/, r))
                   }
@@ -170,6 +173,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
               commands[cmd].fn(c.message, suffix, bot)
             } catch (e) {
               c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
+              Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`)
             }
           } else {
             c.message.channel.sendMessage('You have no permission to run this command in DM, you probably tried to use restricted commands that are either for master users only or only for server owners.')

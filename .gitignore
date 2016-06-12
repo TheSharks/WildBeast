@@ -2,6 +2,9 @@
 *.log
 npm-debug.log*
 
+# VSCode stuff
+.vscode
+
 # UGC
 config.json
 

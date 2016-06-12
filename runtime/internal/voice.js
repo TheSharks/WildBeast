@@ -68,7 +68,7 @@ exports.join = function (msg, suffix, bot) {
     } else {
       msg.reply('I am already streaming on this server in channel **' + voiceCheck.voiceConnection.channel.name + '**').then((m) => {
         setTimeout(() => {
-          m.delete()
+          m.delete().catch((e) => Logger.error(e))
         }, 3000)
       })
     }
@@ -140,7 +140,7 @@ function next (msg, suffix, bot) {
         encoder.once('end', () => {
           msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
             setTimeout(() => {
-              m.delete()
+              m.delete().catch((e) => Logger.error(e))
             }, 3000)
           })
           list[msg.guild.id].link.shift()
@@ -149,14 +149,14 @@ function next (msg, suffix, bot) {
           if (list[msg.guild.id].link.length > 0) {
             msg.channel.sendMessage('Next up is **' + list[msg.guild.id].info[0] + '** requested by _' + list[msg.guild.id].requester[0] + '_').then((m) => {
               setTimeout(() => {
-                m.delete()
+                m.delete().catch((e) => Logger.error(e))
               }, 6000)
             })
             next(msg, suffix, bot)
           } else {
             msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
               setTimeout(() => {
-                m.delete()
+                m.delete().catch((e) => Logger.error(e))
               }, 3000)
             })
             connection.voiceConnection.disconnect()
@@ -239,7 +239,7 @@ exports.request = function (msg, suffix, bot) {
       if (err) {
         msg.channel.sendMessage('Something went wrong while requesting information about this playlist.').then((m) => {
           setTimeout(() => {
-            m.delete()
+            m.delete().catch((e) => Logger.error(e))
           }, 3000)
         })
         Logger.error('Playlist failiure, ' + err)
@@ -253,16 +253,17 @@ exports.request = function (msg, suffix, bot) {
     fetch(suffix, msg).then((r) => {
       msg.channel.sendMessage(`Added **${r.title}** to the playlist.`).then((m) => {
         setTimeout(() => {
-          m.delete()
+          m.delete().catch((e) => Logger.error(e))
         }, 3000)
       })
       if (r.autoplay === true) {
         next(msg, suffix, bot)
       }
-    }).catch(() => {
+    }).catch((e) => {
+      Logger.error(e)
       msg.channel.sendMessage("I couldn't add that to the playlist.").then((m) => {
         setTimeout(() => {
-          m.delete()
+          m.delete().catch((e) => Logger.error(e))
         }, 3000)
       })
     })
@@ -352,7 +353,8 @@ function fetch (v, msg, stats) {
 
 function safeLoop (msg, suffix, bot) {
   for (var video in temp) {
-    DLFetch(temp[video], temp[video].snippet.position + list[msg.guild.id].link.length, msg, suffix, bot)
+    var le = (list[msg.guild.id].link !== undefined) ? list[msg.guild.id].link.length : 0
+    DLFetch(temp[video], temp[video].snippet.position + le, msg, suffix, bot)
   }
 }
 

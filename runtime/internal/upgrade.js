@@ -195,4 +195,8 @@ function user () {
   })
 }
 
-exports.incomInit = function () {}
+exports.incomInit = function () {
+  return new Promise(function (resolve) {
+    return resolve('lol no upgrade for you <3') // Seeing that this file is amde to upgrade databases, and incompatible versions dont have correct databases, just quit the function
+  })
+}
