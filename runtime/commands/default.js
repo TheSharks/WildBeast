@@ -83,19 +83,29 @@ Commands.eval = {
         str = str + '...'
       }
       str = str.replace(new RegExp(bot.token, 'gi'), '¯\\\_(ツ)_/¯')
-      msg.channel.sendMessage('```xl\n' + str + '\n```')
-      if (returned !== undefined && returned !== null && typeof returned.then === 'function') {
-        returned.then(() => {
-          var str = util.inspect(returned, {
-            depth: 1
+      msg.channel.sendMessage('```xl\n' + str + '\n```').then((ms) => {
+        if (returned !== undefined && returned !== null && typeof returned.then === 'function') {
+          returned.then(() => {
+            var str = util.inspect(returned, {
+              depth: 1
+            })
+            if (str.length > 1900) {
+              str = str.substr(0, 1897)
+              str = str + '...'
+            }
+            ms.edit('```xl\n' + str + '\n```')
+          }, (e) => {
+            var str = util.inspect(e, {
+              depth: 1
+            })
+            if (str.length > 1900) {
+              str = str.substr(0, 1897)
+              str = str + '...'
+            }
+            ms.edit('```xl\n' + str + '\n```')
           })
-          if (str.length > 1900) {
-            str = str.substr(0, 1897)
-            str = str + '...'
-          }
-          msg.channel.sendMessage('```xl\n' + str + '\n```')
-        })
-      }
+        }
+      })
     } catch (e) {
       msg.channel.sendMessage('```xl\n' + e + '\n```')
     }
@@ -256,7 +266,7 @@ Commands.setlevel = {
     } else if (suffix[0] > 3) {
       msg.channel.sendMessage('Setting a level higher than 3 is not allowed.')
     } else if (msg.mentions.length === 0 && msg.mention_roles.length === 0) {
-      msg.reply('Please mention the user(s)/role(s) you want to set the permission level of.')
+      msg.reply('Please @mention the user(s)/role(s) you want to set the permission level of.')
     } else {
       Permissions.checkLevel(msg.guild, msg.author.id, msg.member.roles).then(function (level) {
         if (suffix[0] > level) {

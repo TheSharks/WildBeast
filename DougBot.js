@@ -58,6 +58,13 @@ if (!argv.forceupgrade) {
 }
 
 bot.Dispatcher.on(Event.GATEWAY_READY, function () {
+  runtime.internal.versioncheck.versionCheck(function (err, res) {
+    if (err) {
+      Logger.error('Version check failed, ' + err)
+    } else if (res) {
+      Logger.info(`Version check: ${res}`)
+    }
+  })
   Logger.info('Ready to start!')
   Logger.info(`Logged in as ${bot.User.username}#${bot.User.discriminator} (ID: ${bot.User.id}) and serving ${bot.Users.length} users in ${bot.Guilds.length} servers.`)
 })
@@ -148,8 +155,10 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
               } else {
                 datacontrol.customize.reply(c.message, 'permissions').then((u) => {
                   if (u === 'default') {
-                    var reason = (r > 4) ? '**This is a master user only command**, ask the bot owner to add you as a master user if you really think you should be able to use this command.' : 'Ask the server owner to modify your level with `setlevel`.'
-                    c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\n' + reason)
+                    if (r > 0) {
+                      var reason = (r > 4) ? '**This is a master user only command**, ask the bot owner to add you as a master user if you really think you should be able to use this command.' : 'Ask the server owner to modify your level with `setlevel`.'
+                      c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\n' + reason)
+                    }
                   } else {
                     c.message.channel.sendMessage(u.replace(/%user/g, c.message.author.username).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%nlevel/, commands[cmd].level).replace(/%ulevel/, r))
                   }
@@ -246,13 +255,6 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
 })
 
 function start () {
-  runtime.internal.versioncheck.versionCheck(function (err, res) {
-    if (err) {
-      Logger.error('Version check failed, ' + err)
-    } else if (res) {
-      Logger.info(res)
-    }
-  })
   try {
     Config = require('./config.json')
   } catch (e) {

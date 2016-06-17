@@ -13,6 +13,9 @@ for (var d in com) {
     commands[o] = com[d].Commands[o]
     if (com[d].Commands[o].aliases !== undefined) {
       for (var u in com[d].Commands[o].aliases) {
+        if (alias[com[d].Commands[o].aliases[u]] && typeof alias[com[d].Commands[o].aliases[u]] !== 'function') {
+          throw new Error('Aliases cannot be shared between commands!')
+        }
         alias[com[d].Commands[o].aliases[u]] = com[d].Commands[o]
       }
     }
@@ -22,14 +25,14 @@ for (var d in com) {
 if (cus !== null) {
   for (var g in cus) {
     for (var l in cus[g].Commands) {
-      if (commands[l]) {
-        throw new Error('Custom commands cannot have the same name as default commands!')
+      if (commands[l] && !cus[g].Commands[l].overwrite && typeof commands[l] !== 'function') {
+        throw new Error('Custom commands cannot replace default commands without overwrite enabled!')
       }
       commands[l] = cus[g].Commands[l]
       if (cus[g].Commands[l].aliases !== undefined) {
         for (var e in cus[g].Commands[l].aliases) {
-          if (alias[cus[g].Commands[l].aliases[e]]) {
-            throw new Error('Custom commands cannot share aliases with other commands!')
+          if (alias[cus[g].Commands[l].aliases[e]] && typeof alias[cus[g].Commands[l].aliases[e]] !== 'function') {
+            throw new Error('Aliases cannot be shared between commands!')
           }
           alias[cus[g].Commands[l].aliases[e]] = cus[g].Commands[l]
         }
@@ -50,7 +53,7 @@ exports.helpHandle = function (msg, suffix) {
         cmdone.push(commands[index].name + ' - ' + commands[index].help)
       }
     }
-  var cmdtwo = cmdone.splice(0, cmdone.length / 2)
+    var cmdtwo = cmdone.splice(0, cmdone.length / 2)
     msgArray.push('**Available commands:** \n')
     msgArray.push('```xl')
     msgArray.push(cmdone.sort().join('\n') + '\n')
