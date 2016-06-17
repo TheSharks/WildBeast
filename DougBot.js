@@ -155,7 +155,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
               } else {
                 datacontrol.customize.reply(c.message, 'permissions').then((u) => {
                   if (u === 'default') {
-                    if (r > 0) {
+                    if (r > -1 && !commands[cmd].hidden) {
                       var reason = (r > 4) ? '**This is a master user only command**, ask the bot owner to add you as a master user if you really think you should be able to use this command.' : 'Ask the server owner to modify your level with `setlevel`.'
                       c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\n' + reason)
                     }
