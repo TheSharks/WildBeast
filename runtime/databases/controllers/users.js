@@ -5,6 +5,8 @@ var database = new Db({
   autoload: true
 })
 
+database.persistence.setAutocompactionInterval(900000)
+
 exports.namechange = function (user) {
   return new Promise(function (resolve, reject) {
     database.find({

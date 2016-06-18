@@ -1,5 +1,8 @@
 # 3.0.0
 ## Beta phase
+### 3.0.0-beta.5
+Several improvements.    
+
 ### 3.0.0-beta.4
 Added the ability to set roles to access levels.
 

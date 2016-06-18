@@ -94,7 +94,12 @@ Commands.request = {
   timeout: 10,
   level: 1,
   fn: function (msg, suffix, bot) {
-    v.request(msg, suffix, bot)
+    var u = require('url').parse(suffix)
+    if (u.host === null) {
+      msg.channel.sendMessage("That's not how you do it, you need to enter a link to a file for me to play.")
+    } else {
+      v.request(msg, suffix, bot)
+    }
   }
 }
 

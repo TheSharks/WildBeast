@@ -7,6 +7,8 @@ var database = new Db({
   autoload: true
 })
 
+database.persistence.setAutocompactionInterval(900000)
+
 exports.checkLevel = function (msg, user, roles) {
   return new Promise(function (resolve, reject) {
     if (Config.permissions.master.indexOf(user) > -1) {
@@ -42,22 +44,22 @@ exports.checkLevel = function (msg, user, roles) {
           if (roles) {
             for (var r of roles) {
               if (doc[0].perms.roles.level1.indexOf(r.id) > -1) {
-                level = (level > 1) ? level : 1
+                level = (level > 1) ? level : (level !== -1) ? 1 : -1
               } else if (doc[0].perms.roles.level2.indexOf(r.id) > -1) {
-                level = (level > 2) ? level : 2
+                level = (level > 1) ? level : (level !== -1) ? 2 : -1
               } else if (doc[0].perms.roles.level3.indexOf(r.id) > -1) {
-                level = (level > 3) ? level : 3
+                level = (level > 1) ? level : (level !== -1) ? 3 : -1
               } else if (doc[0].perms.roles.negative.indexOf(r.id) > -1) {
                 level = -1
               }
             }
           }
           if (doc[0].perms.level1.indexOf(user) > -1) {
-            level = (level > 1) ? level : 1
+            level = (level > 1) ? level : (level !== -1) ? 1 : -1
           } else if (doc[0].perms.level2.indexOf(user) > -1) {
-            level = (level > 2) ? level : 2
+            level = (level > 1) ? level : (level !== -1) ? 2 : -1
           } else if (doc[0].perms.level3.indexOf(user) > -1) {
-            level = (level > 3) ? level : 3
+            level = (level > 1) ? level : (level !== -1) ? 3 : -1
           } else if (doc[0].perms.hasOwnProperty('negative') && doc[0].perms.negative.indexOf(user) > -1) {
             level = -1
           }
