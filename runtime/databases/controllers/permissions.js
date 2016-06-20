@@ -7,8 +7,6 @@ var database = new Db({
   autoload: true
 })
 
-database.persistence.setAutocompactionInterval(900000)
-
 exports.checkLevel = function (msg, user, roles) {
   return new Promise(function (resolve, reject) {
     if (Config.permissions.master.indexOf(user) > -1) {
