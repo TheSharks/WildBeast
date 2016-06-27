@@ -19,7 +19,7 @@ exports.join = function (msg, suffix, bot) {
       var VC = msg.member.getVoiceChannel()
       if (VC) {
         VC.join().then((vc) => {
-          msg.channel.sendMessage('I joined channel **' + vc.voiceConnection.channel.name + '** which I believe you are currently in. \nYou have until the end of the wait music to request something.')
+          msg.channel.sendMessage('I\'ve joined voice channel **' + vc.voiceConnection.channel.name + '** which you\'re currently connected to. \nYou have until the end of the wait music to request something.\n\n__**Voice Commands**__\n**++request** - *Request a song via a youtube or soundcloud link, or any kind of music file link.*\n**++music pause** - *Pauses the current song.*\n**++music play** - *Resumes the current song.*\n**++skip** - *Skips the current song.*\n\n**++leave-voice** - *Leaves the voice channel.*')
           status[msg.guild.id] = true
           time[msg.guild.id] = setTimeout(function () {
             leave(bot, msg)
