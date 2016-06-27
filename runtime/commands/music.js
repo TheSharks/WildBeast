@@ -2,14 +2,13 @@
 var v = require('../internal/voice.js')
 var Commands = []
 
-Commands.pauseplay = {
-  name: 'pauseplay',
-  help: "I'll pause/play the music!",
-  aliases: ['playpause'],
+Commands.music = {
+  name: 'music',
+  help: "I'll pause or play the music, just tell me what after the command!",
   noDM: true,
   level: 1,
   fn: function (msg, suffix, bot) {
-    v.pausePlay(msg, suffix, bot)
+    v.music(msg, suffix, bot)
   }
 }
 
@@ -46,7 +45,7 @@ Commands.skip = {
 
 Commands.playlist = {
   name: 'playlist',
-  help: "I'll fetch you the playlsit I'm currently playing!",
+  help: "I'll fetch you the playlist I'm currently playing!",
   aliases: ['list'],
   noDM: true,
   timeout: 10,
