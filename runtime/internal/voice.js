@@ -223,6 +223,7 @@ exports.request = function (msg, suffix, bot) {
   }
   var link = require('url').parse(suffix)
   var query = require('querystring').parse(link.query)
+  msg.channel.sendTyping()
   if (suffix.includes('list=') !== suffix.includes('playlist?')) { // Checks to see whether the link the user posted includes url identifiers for playlists, but doesn't include the main playlist only identifier "playlist". The ? at the end is just to further make sure that the bot makes sure that it's only direct playlist IDs that are let through. Yes, this works with shortened youtu.be links too.
     msg.channel.sendMessage('Do you want the video or the playlist? Emend your link to only include the link to the video or the playlist.\n(Pay attention to the URL, you posted two youtube IDs, one for the video, and one for the playlist)\n\nExample: www.youtube.com/watch?v=__**u9dg-g7t2l4**__&list=__**PLhd1HyMTk3f5yqcPXjlo8qroWJiMMFBSk**__') // Tell the user what to look for in hopes that the user won't make the same mistake again.
   } else if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
