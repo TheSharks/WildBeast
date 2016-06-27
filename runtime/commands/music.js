@@ -5,6 +5,7 @@ var Commands = []
 Commands.music = {
   name: 'music',
   help: "I'll pause or play the music, just tell me what after the command!",
+  aliases: ['pauseplay', 'playpause'],
   noDM: true,
   level: 1,
   fn: function (msg, suffix, bot) {
