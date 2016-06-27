@@ -187,7 +187,7 @@ exports.skip = function (msg, suffix, bot) {
   next(msg, suffix, bot)
 }
 
-exports.pausePlay = function (msg, suffix, bot) {
+exports.music = function (msg, suffix, bot) {
   bot.VoiceConnections
     .map((connection) => {
       if (connection.voiceConnection.guild.id === msg.guild.id) {
@@ -196,7 +196,7 @@ exports.pausePlay = function (msg, suffix, bot) {
         } else if (suffix.toLowerCase() === 'play') {
           connection.voiceConnection.getEncoderStream().uncork()
         } else {
-          msg.channel.sendMessage('**WHAT**')
+          msg.channel.sendMessage('Use either pause or play after the command.')
         }
       }
     })
