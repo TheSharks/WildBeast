@@ -24,6 +24,27 @@ Commands.volume = {
   }
 }
 
+Commands.voteskip = {
+  name: 'voteskip',
+  help: "Vote to skip the current playing song.",
+  noDM: true,
+  level: 1,
+  fn: function (msg, suffix, bot) {
+    v.voteSkip(msg, bot)
+  }
+}
+
+Commands.shuffle = {
+  name: 'shuffle',
+  help: "Shuffle the current playlist.",
+  noDM: true,
+  level: 2,
+  fn: function (msg) {
+    v.shuffle(msg)
+    msg.reply('Playlist shuffled')
+  }
+}
+
 Commands['leave-voice'] = {
   name: 'leave-voice',
   help: "I'll leave the current voice channel.",
@@ -38,7 +59,7 @@ Commands.skip = {
   name: 'skip',
   help: "I'll skip this song if you don't like it.",
   noDM: true,
-  level: 1,
+  level: 2,
   fn: function (msg, suffix, bot) {
     v.skip(msg, suffix, bot)
   }
