@@ -16,7 +16,7 @@ exports.join = function (msg, suffix, bot) {
       var VC = msg.member.getVoiceChannel()
       if (VC) {
         VC.join().then((vc) => {
-          msg.channel.sendMessage("I've joined voice channel **" + vc.voiceConnection.channel.name + "** which you're currently connected to. \nYou have until the end of the wait music to request something.\n\n__**Voice Commands**__\n**++request** - *Request a song via a youtube or soundcloud link, or any kind of music file link.*\n**++music pause** - *Pauses the current song.*\n**++music play** - *Resumes the current song.*\n**++skip** - *Skips the current song.*\n\n**++leave-voice** - *Leaves the voice channel.*")
+          msg.channel.sendMessage('I\'ve joined voice channel **' + vc.voiceConnection.channel.name + '** which you\'re currently connected to. \nYou have until the end of the wait music to request something.\n\n__**Voice Commands**__\n**++request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*\n**++music pause** - *Pauses the current song.*\n**++music play** - *Resumes the current song.*\n**++volume** - *Change the volume of the current song.*\n\n**++playlist** - *List upcoming requested songs.*\n**++shuffle** - *Shuffle the music playlist.*\n\n**++voteskip** - *Vote to skip the current song.*\n**++skip** - *Force skip the current song.*\n\n**++leave-voice** - *Leaves the voice channel.*')
           status[msg.guild.id] = true
           time[msg.guild.id] = setTimeout(function () {
             leave(bot, msg)
