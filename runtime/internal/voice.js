@@ -194,9 +194,9 @@ exports.voteSkip = function (msg, bot) {
     if (list[msg.guild.id].skips.users.indexOf(msg.author.id) > -1) {
       msg.reply('You already voted to skip this song!')
     } else {
+      list[msg.guild.id].skips.users.push(msg.author.id)
+      list[msg.guild.id].skips.count++
       if (list[msg.guild.id].skips.count >= count) {
-        list[msg.guild.id].skips.users.push(msg.author.id)
-        list[msg.guild.id].skips.count++
         msg.channel.sendMessage('Voteskip passed, next song coming up!')
         exports.skip(msg, null, bot)
       } else {
