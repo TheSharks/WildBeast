@@ -1,6 +1,8 @@
 var list = {}
 var time = {}
 var status = {}
+var requestLink = {}
+var splitLink = {}
 var temp
 var DL = require('ytdl-core')
 var YT = require('youtube-dl')
@@ -16,7 +18,7 @@ exports.join = function (msg, suffix, bot) {
       var VC = msg.member.getVoiceChannel()
       if (VC) {
         VC.join().then((vc) => {
-          msg.channel.sendMessage("I've joined voice channel **" + vc.voiceConnection.channel.name + "** which you're currently connected to. \nYou have until the end of the wait music to request something.\n\n__**Voice Commands**__\n**++request** - *Request a song via a youtube or soundcloud link, or any kind of music file link.*\n**++music pause** - *Pauses the current song.*\n**++music play** - *Resumes the current song.*\n**++skip** - *Skips the current song.*\n\n**++leave-voice** - *Leaves the voice channel.*")
+          msg.channel.sendMessage('I\'ve joined voice channel **' + vc.voiceConnection.channel.name + '** which you\'re currently connected to. \nYou have until the end of the wait music to request something.\n\n__**Voice Commands**__\n**++request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*\n**++music pause** - *Pauses the current song.*\n**++music play** - *Resumes the current song.*\n**++volume** - *Change the volume of the current song.*\n\n**++playlist** - *List upcoming requested songs.*\n**++shuffle** - *Shuffle the music playlist.*\n\n**++voteskip** - *Vote to skip the current song.*\n**++skip** - *Force skip the current song.*\n\n**++leave-voice** - *Leaves the voice channel.*')
           status[msg.guild.id] = true
           time[msg.guild.id] = setTimeout(function () {
             leave(bot, msg)
@@ -264,8 +266,15 @@ exports.request = function (msg, suffix, bot) {
   var link = require('url').parse(suffix)
   var query = require('querystring').parse(link.query)
   msg.channel.sendTyping()
-  if (suffix.includes('list=') !== suffix.includes('playlist?')) { // Checks to see whether the link the user posted includes url identifiers for playlists, but doesn't include the main playlist only identifier "playlist". The ? at the end is just to further make sure that the bot makes sure that it's only direct playlist IDs that are let through. Yes, this works with shortened youtu.be links too.
-    msg.channel.sendMessage('Do you want the video or the playlist? Emend your link to only include the link to the video or the playlist.\n(Pay attention to the URL, you posted two youtube IDs, one for the video, and one for the playlist)\n\nExample: www.youtube.com/watch?v=__**u9dg-g7t2l4**__&list=__**PLhd1HyMTk3f5yqcPXjlo8qroWJiMMFBSk**__') // Tell the user what to look for in hopes that the user won't make the same mistake again.
+  if (suffix.includes('list=') !== suffix.includes('playlist?')) {
+    requestLink[msg.guild.id] = suffix
+    if (suffix.includes('youtu.be')) { // If the link is shortened with youtu.be
+      splitLink[msg.guild.id] = requestLink[msg.guild.id].split('?list=') // Check for this instead of &list
+      msg.channel.sendMessage(`Try ++request again with either a link to the video or the playlist.\n**Video:** <${splitLink[msg.guild.id][0]}>\n**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
+    } else {
+      splitLink[msg.guild.id] = requestLink[msg.guild.id].split('&list=')
+      msg.channel.sendMessage(`Try ++request again with either a link to the video or the playlist.\n**Video:** <${splitLink[msg.guild.id][0]}>\n**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
+    }
   } else if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
     msg.channel.sendMessage('Playlist fetching might take a while...')
     var api = require('youtube-api')
