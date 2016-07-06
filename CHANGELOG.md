@@ -1,5 +1,10 @@
 # 3.0.0
 ## Beta phase
+### 3.0.0-beta.6
+Introduced `shuffle` and `voteskip` as music commands.    
+Introduced `master` as a new access level.    
+Several small tweaks and improvements.    
+ 
 ### 3.0.0-beta.5
 Several improvements.    
 
