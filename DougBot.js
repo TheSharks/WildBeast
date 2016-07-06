@@ -108,7 +108,18 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
         return // ignore JS build-in array functions
       }
       Logger.info(`Executing <${c.message.resolveContent()}> from ${c.message.author.username}`)
-      if (!c.message.isPrivate) {
+      if (commands[cmd].level === 'master') {
+        if (Config.permissions.master.indexOf(c.message.author.id) > -1) {
+          try {
+            commands[cmd].fn(c.message, suffix, bot)
+          } catch (e) {
+            c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
+            Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`)
+          }
+        } else {
+          c.message.channel.sendMessage('This command is only for the bot owner.')
+        }
+      } else if (!c.message.isPrivate) {
         timeout.check(commands[cmd], c.message.guild.id, c.message.author.id).then((y) => {
           if (y !== true) {
             datacontrol.customize.reply(c.message, 'timeout').then((x) => {

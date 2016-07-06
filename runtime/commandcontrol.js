@@ -47,7 +47,7 @@ exports.helpHandle = function (msg, suffix) {
   var cmdone = []
   if (!suffix) {
     for (var index in commands) {
-      if (commands[index].hidden) {
+      if (commands[index].hidden || commands[index].level === 'master') {
         continue
       } else {
         cmdone.push(commands[index].name + ' - ' + commands[index].help)
@@ -80,45 +80,49 @@ exports.helpHandle = function (msg, suffix) {
       } else {
         comad = commands[suffix]
       }
-      msgArray = []
-      msgArray.push('Command name `' + comad.name + '`')
-      msgArray.push('What this does: `' + comad.help + '`\n')
-      msgArray.push('Example:')
-      if (comad.hasOwnProperty('usage')) {
-        msgArray.push('```' + `${require('../config.json').settings.prefix}${comad.name} ${comad.usage}` + '```')
+      if (comad.level === 'master' && require('../config.json').permissions.master.indexOf(msg.author.id) === -1) {
+        msg.reply('this command is not for you to use, therefor I will not tell you how to use it.')
       } else {
-        msgArray.push('```' + `${require('../config.json').settings.prefix}${comad.name}` + '```')
-      }
-      msgArray.push(`**Required access level**: ${comad.level}`)
-      if (comad.hasOwnProperty('aliases')) {
-        msgArray.push(`**Aliases for this command**: ${comad.aliases.join(', ')}.`)
-      }
-      if (comad.hasOwnProperty('hidden')) {
-        msgArray.push('*Shh, this is a secret command.*')
-      }
-      if (comad.hasOwnProperty('timeout')) {
-        msgArray.push(`*This command has a timeout of ${comad.timeout} seconds.*`)
-      }
-      if (comad.hasOwnProperty('nsfw')) {
-        msgArray.push('*This command is NSFW.*')
-      }
-      if (comad.hasOwnProperty('noDM')) {
-        msgArray.push('*This command cannot be used in DM.*')
-      }
-      if (comad.name === 'meme') {
-        var str = '**Currently available memes:\n**'
-        var meme = require('./commands/memes.json')
-        for (var m in meme) {
-          str += m + ', '
+        msgArray = []
+        msgArray.push('Command name `' + comad.name + '`')
+        msgArray.push('What this does: `' + comad.help + '`\n')
+        msgArray.push('Example:')
+        if (comad.hasOwnProperty('usage')) {
+          msgArray.push('```' + `${require('../config.json').settings.prefix}${comad.name} ${comad.usage}` + '```')
+        } else {
+          msgArray.push('```' + `${require('../config.json').settings.prefix}${comad.name}` + '```')
         }
-        msgArray.push(str.substring(0, str.length - 2))
+        msgArray.push(`**Required access level**: ${comad.level}`)
+        if (comad.hasOwnProperty('aliases')) {
+          msgArray.push(`**Aliases for this command**: ${comad.aliases.join(', ')}.`)
+        }
+        if (comad.hasOwnProperty('hidden')) {
+          msgArray.push('*Shh, this is a secret command.*')
+        }
+        if (comad.hasOwnProperty('timeout')) {
+          msgArray.push(`*This command has a timeout of ${comad.timeout} seconds.*`)
+        }
+        if (comad.hasOwnProperty('nsfw')) {
+          msgArray.push('*This command is NSFW.*')
+        }
+        if (comad.hasOwnProperty('noDM')) {
+          msgArray.push('*This command cannot be used in DM.*')
+        }
+        if (comad.name === 'meme') {
+          var str = '**Currently available memes:\n**'
+          var meme = require('./commands/memes.json')
+          for (var m in meme) {
+            str += m + ', '
+          }
+          msgArray.push(str.substring(0, str.length - 2))
+        }
+        msg.author.openDM().then((y) => {
+          y.sendMessage(msgArray.join('\n'))
+        }).catch((e) => {
+          Logger.error(e)
+          msg.channel.sendMessage('Whoops, try again.')
+        })
       }
-      msg.author.openDM().then((y) => {
-        y.sendMessage(msgArray.join('\n'))
-      }).catch((e) => {
-        Logger.error(e)
-        msg.channel.sendMessage('Whoops, try again.')
-      })
     } else {
       msg.channel.sendMessage(`There is no **${suffix}** command!`)
     }

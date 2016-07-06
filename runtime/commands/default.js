@@ -68,8 +68,7 @@ Commands.purge = {
 Commands.eval = {
   name: 'eval',
   help: 'Allows for the execution of arbitrary Javascript.',
-  hidden: true,
-  level: 9,
+  level: 'master',
   fn: function (msg, suffix, bot) {
     if (msg.author.id === bot.User.id) return // To statisfy our styleguide :P
     var util = require('util')
@@ -115,8 +114,7 @@ Commands.eval = {
 Commands.plaineval = {
   name: 'plaineval',
   help: 'Allows for the execution of arbitrary Javascript.',
-  hidden: true,
-  level: 9,
+  level: 'master',
   fn: function (msg, suffix, bot) {
     if (msg.author.id === bot.User.id) return // To statisfy our styleguide :P
     var evalfin = []
@@ -225,7 +223,7 @@ Commands.leave = {
 Commands.killswitch = {
   name: 'killswitch',
   help: 'This will instantly terminate all running bot processes',
-  level: 5,
+  level: 'master',
   fn: function (msg, suffix, bot) {
     bot.disconnect()
     Logger.warn('Disconnected via killswitch!')
@@ -343,7 +341,7 @@ Commands.setstatus = {
   help: 'This will change my current status to something else.',
   module: 'default',
   usage: '<online / idle / twitch url> [playing status]',
-  level: 5,
+  level: 'master',
   fn: function (msg, suffix, bot) {
     var first = suffix.split(' ')
     if (/^http/.test(first[0])) {
