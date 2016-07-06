@@ -45,7 +45,7 @@
     "cleverbot-node": "^0.2.2",
     "discordie": "^0.7.0",
     "imgflipper": "^1.0.1",
-    "inquirer": "^0.12.0",
+    "inquirer": "^1.1.1",
     "leetspeak": "0.0.1",
     "minimist": "^1.2.0",
     "nedb": "^1.8.0",
