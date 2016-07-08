@@ -3,7 +3,7 @@ var counter = 0
 var count = 0
 var ora = require('ora')
 var Db = require('nedb')
-var ask = require('inquirer')
+var prompt = require('prompt')
 var Logger = require('./logger.js').Logger
 var newPerms = new Db({
   filename: './runtime/databases/perms'
@@ -26,12 +26,16 @@ var oldUser = new Db({
 
 exports.init = function () {
   return new Promise(function (resolve, reject) {
-    ask.prompt([{
-      type: 'confirm',
-      name: 'continue',
-      message: 'Please put your old database files into the `incoming` folder located in `runtime/databases/incoming`, respond with yes to continue'
-    }], function (a) {
-      if (a.continue) {
+    prompt.start()
+    var property = {
+      name: 'yesno',
+      message: '\nPut your old databases in the incoming folder located in runtime.\nAre you done?',
+      validator: /y[es]*|n[o]?/,
+      warning: 'Must respond yes or no',
+      default: 'yes'
+    }
+    prompt.get(property, function (err, result) {
+      if (result.yesno === 'yes') {
         perms().then(() => {
           cust().then(() => {
             user().then(() => {
@@ -47,6 +51,7 @@ exports.init = function () {
         })
       } else {
         reject('Okbye')
+        process.exit(1)
       }
     })
   })

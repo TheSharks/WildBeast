@@ -1,5 +1,13 @@
 'use strict'
 process.title = 'WildBeast'
+
+try {
+  require('./config.json')
+} catch (e) {
+  console.log('Config file not found, make one using the example and restart WildBeast.')
+  process.exit()
+}
+
 var Discordie = require('discordie')
 var Event = Discordie.Events
 var bot
@@ -38,23 +46,8 @@ if (argv.forceupgrade) {
       Logger.error(e)
     })
   }
-}
-
-if (!argv.forceupgrade) {
-  try {
-    require('fs').readFileSync('./runtime/initial.txt')
-    start()
-  } catch (e) {
-    if (!argv.noinitial) {
-      runtime.internal.init.initial().then(function () {
-        start()
-      })
-    } else {
-      Logger.debug('Skipped init via argv')
-      require('fs').writeFileSync('./runtime/initial.txt', 'Initial setup skipped.')
-      start()
-    }
-  }
+} else {
+  start()
 }
 
 bot.Dispatcher.on(Event.GATEWAY_READY, function () {

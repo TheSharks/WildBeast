@@ -41,24 +41,12 @@ WildBeast@3.0.0
 `-- nedb@1.8.0
 ```
 <br></br>
-Now, you have 2 choices, either make your own config file (This allows for greater customization, but won't directly allow for upgrading.), or let the script make you one (This lets you get started quicker, but takes a while to complete.)    
-<br></br>
-If you choose to make your own, take the `config.example.json` file as a base and edit it to your needs.   
-Then, run:
-```bash
-node DougBot.js --noinitial
-```
-This tells the script to skip the initial configuration and go straight to logging in.
-<br></br>
-<br></br>
-If you want the script to configure the basics for you, or you want to upgrade from a previous install, just run
+Now, you should make a config file, use `config.example.json` as a base and edit it to your needs.
+Once you're done, start WildBeast:
 ```bash
 node DougBot.js
 ```
-The script will then ask you some questions to get you started.
-<br></br>
-<br></br>
-If you made your own config file, and you want to upgrade your databases from a previous WildBeast install (that has a version higer than 2.1.0), run:
+If you need to uprade databases from a former 2.x.x install, start WildBeast differently:
 ```bash
 node DougBot.js --forceupgrade
 ```
