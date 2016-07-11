@@ -207,7 +207,11 @@ bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s) {
   datacontrol.customize.check(s.guild).then((r) => {
     if (r === 'on') {
       datacontrol.customize.reply(s, 'welcome').then((x) => {
-        s.guild.generalChannel.sendMessage(x.replace(/%user/g, s.member.username).replace(/%server/g, s.guild.name))
+        if (x === 'default') {
+          s.guild.generalChannel.sendMessage(`Welcome ${s.member.username} to ${s.guild.name}!`)
+        } else {
+          s.guild.generalChannel.sendMessage(x.replace(/%user/g, s.member.username).replace(/%server/g, s.guild.name))
+        }
       }).catch((e) => {
         Logger.error(e)
       })
