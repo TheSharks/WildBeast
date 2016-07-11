@@ -60,8 +60,7 @@ Commands.tag = {
             msg.channel.sendMessage('That tag does not exist.')
             return
           } else {
-            var o = bot.Users.get(res[0].owner).username
-            msg.channel.sendMessage(`The owner of that tag is ${o !== null ? o : '`Unknown`'}`)
+            msg.channel.sendMessage(`The owner of that tag is ${bot.Users.get(res[0].owner) !== null ? bot.Users.get(res[0].owner).username : '`Unknown`'}`)
           }
         }
       })
