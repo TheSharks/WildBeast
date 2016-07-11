@@ -2,6 +2,7 @@ var Commands = []
 var request = require('request')
 var config = require('../../config.json')
 var Logger = require('../internal/logger.js').Logger
+var argv = require('minimist')(process.argv.slice(2))
 
 Commands.ping = {
   name: 'ping',
@@ -196,12 +197,25 @@ Commands.info = {
   help: "I'll print some information about me.",
   timeout: 10,
   level: 0,
-  fn: function (msg) {
-    var msgArray = []
-    msgArray.push(`**WildBeast version ${require('../../package.json').version} ${require('minimist')(process.argv.slice(2)).shardmode ? 'shard ' + require('minimist')(process.argv.slice(2)).shardid + '**' : '**'}`)
-    msgArray.push('Using 0.5.x **Discordie** version by *qeled*.')
-    msgArray.push('Made primarily by Dougley and Mirrow.')
-    msg.channel.sendMessage(msgArray.join('\n'))
+  fn: function (msg, suffix, bot) {
+    var owner
+    try {
+      owner = ` is ${bot.Users.get(config.permissions.master[0]).username}#${bot.Users.get(config.permissions.master[0]).discriminator}`
+    } catch (e) {
+      owner = `'s ID is ${config.permissions.master[0]}`
+    }
+    msg.channel.sendMessage('```xl\n' + `I am ${bot.User.username}#${bot.User.discriminator}, and my ID is ${bot.User.id}
+I am running on WildBeast version ${require('../../package.json').version}
+My owner${owner}
+My developer is Dougley#6248
+-------------------------------------------------------
+Servers connected:  ${bot.Guilds.length}
+Channels connected: ${bot.Channels.length}
+Private channels:   ${bot.DirectMessageChannels.length}
+Messages recieved:  ${bot.Messages.length}
+Users known:        ${bot.Users.length}
+Bot is sharded?     ${(argv.shardmode ? 'Yes, this is shard ' + argv.shardid + ', and ' + argv.shardcount + ' shards are propagated.' : 'No')}
+` + '```')
   }
 }
 
