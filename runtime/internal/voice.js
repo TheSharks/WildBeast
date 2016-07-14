@@ -19,18 +19,18 @@ exports.join = function (msg, suffix, bot) {
       if (VC) {
         VC.join().then((vc) => {
           var joinmsg = []
-          joinmsg.push(`I\'ve joined voice channel **` + vc.voiceConnection.channel.name + `** which you\'re currently connected to.`)
+          joinmsg.push(`I\'ve joined voice channel **${vc.voiceConnection.channel.name}** which you\'re currently connected to.`)
           joinmsg.push(`You have until the end of the wait music to request something.\n`)
           joinmsg.push(`__**Voice Commands**__`)
-          joinmsg.push(`**` + Config.settings.prefix + `request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `music pause** - *Pauses the current song.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `music play** - *Resumes the current song.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `volume** - *Change the volume of the current song.*\n`)
-          joinmsg.push(`**` + Config.settings.prefix + `playlist** - *List upcoming requested songs.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `shuffle** - *Shuffle the music playlist.*\n`)
-          joinmsg.push(`**` + Config.settings.prefix + `voteskip** - *Vote to skip the current song.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `skip** - *Force skip the current song.*\n`)
-          joinmsg.push(`**` + Config.settings.prefix + `leave-voice** - *Leaves the voice channel.*`)
+          joinmsg.push(`**${Config.settings.prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+          joinmsg.push(`**${Config.settings.prefix}music pause** - *Pauses the current song.*`)
+          joinmsg.push(`**${Config.settings.prefix}music play** - *Resumes the current song.*`)
+          joinmsg.push(`**${Config.settings.prefix}volume** - *Change the volume of the current song.*\n`)
+          joinmsg.push(`**${Config.settings.prefix}playlist** - *List upcoming requested songs.*`)
+          joinmsg.push(`**${Config.settings.prefix}shuffle** - *Shuffle the music playlist.*\n`)
+          joinmsg.push(`**${Config.settings.prefix}voteskip** - *Vote to skip the current song.*`)
+          joinmsg.push(`**${Config.settings.prefix}skip** - *Force skip the current song.*\n`)
+          joinmsg.push(`**${Config.settings.prefix}leave-voice** - *Leaves the voice channel.*`)
           msg.channel.sendMessage(joinmsg.join('\n'))
           status[msg.guild.id] = true
           time[msg.guild.id] = setTimeout(function () {
@@ -46,18 +46,18 @@ exports.join = function (msg, suffix, bot) {
       } else if (!VC) {
         msg.guild.voiceChannels[0].join().then((vc) => {
           var joinmsg = []
-          joinmsg.push(`I\'ve joined voice channel **` + vc.voiceConnection.channel.name + `** because you didn't specify a voice channel for me to join.`)
+          joinmsg.push(`I\'ve joined voice channel **${vc.voiceConnection.channel.name}** because you didn't specify a voice channel for me to join.`)
           joinmsg.push(`You have until the end of the wait music to request something.\n`)
           joinmsg.push(`__**Voice Commands**__`)
-          joinmsg.push(`**` + Config.settings.prefix + `request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `music pause** - *Pauses the current song.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `music play** - *Resumes the current song.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `volume** - *Change the volume of the current song.*\n`)
-          joinmsg.push(`**` + Config.settings.prefix + `playlist** - *List upcoming requested songs.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `shuffle** - *Shuffle the music playlist.*\n`)
-          joinmsg.push(`**` + Config.settings.prefix + `voteskip** - *Vote to skip the current song.*`)
-          joinmsg.push(`**` + Config.settings.prefix + `skip** - *Force skip the current song.*\n`)
-          joinmsg.push(`**` + Config.settings.prefix + `leave-voice** - *Leaves the voice channel.*`)
+          joinmsg.push(`**${Config.settings.prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+          joinmsg.push(`**${Config.settings.prefix}music pause** - *Pauses the current song.*`)
+          joinmsg.push(`**${Config.settings.prefix}music play** - *Resumes the current song.*`)
+          joinmsg.push(`**${Config.settings.prefix}volume** - *Change the volume of the current song.*\n`)
+          joinmsg.push(`**${Config.settings.prefix}playlist** - *List upcoming requested songs.*`)
+          joinmsg.push(`**${Config.settings.prefix}shuffle** - *Shuffle the music playlist.*\n`)
+          joinmsg.push(`**${Config.settings.prefix}voteskip** - *Vote to skip the current song.*`)
+          joinmsg.push(`**${Config.settings.prefix}skip** - *Force skip the current song.*\n`)
+          joinmsg.push(`**${Config.settings.prefix}leave-voice** - *Leaves the voice channel.*`)
           msg.channel.sendMessage(joinmsg.join('\n'))
           status[msg.guild.id] = true
           time[msg.guild.id] = setTimeout(function () {
@@ -77,18 +77,18 @@ exports.join = function (msg, suffix, bot) {
           if (channel.name.toLowerCase().indexOf(suffix.toLowerCase()) >= 0) {
             channel.join().then((vc) => {
               var joinmsg = []
-              joinmsg.push(`I\'ve joined voice channel **` + vc.voiceConnection.channel.name + `**.`)
+              joinmsg.push(`I\'ve joined voice channel **${vc.voiceConnection.channel.name}**.`)
               joinmsg.push(`You have until the end of the wait music to request something.\n`)
               joinmsg.push(`__**Voice Commands**__`)
-              joinmsg.push(`**` + Config.settings.prefix + `request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
-              joinmsg.push(`**` + Config.settings.prefix + `music pause** - *Pauses the current song.*`)
-              joinmsg.push(`**` + Config.settings.prefix + `music play** - *Resumes the current song.*`)
-              joinmsg.push(`**` + Config.settings.prefix + `volume** - *Change the volume of the current song.*\n`)
-              joinmsg.push(`**` + Config.settings.prefix + `playlist** - *List upcoming requested songs.*`)
-              joinmsg.push(`**` + Config.settings.prefix + `shuffle** - *Shuffle the music playlist.*\n`)
-              joinmsg.push(`**` + Config.settings.prefix + `voteskip** - *Vote to skip the current song.*`)
-              joinmsg.push(`**` + Config.settings.prefix + `skip** - *Force skip the current song.*\n`)
-              joinmsg.push(`**` + Config.settings.prefix + `leave-voice** - *Leaves the voice channel.*`)
+              joinmsg.push(`**${Config.settings.prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+              joinmsg.push(`**${Config.settings.prefix}music pause** - *Pauses the current song.*`)
+              joinmsg.push(`**${Config.settings.prefix}music play** - *Resumes the current song.*`)
+              joinmsg.push(`**${Config.settings.prefix}volume** - *Change the volume of the current song.*\n`)
+              joinmsg.push(`**${Config.settings.prefix}playlist** - *List upcoming requested songs.*`)
+              joinmsg.push(`**${Config.settings.prefix}shuffle** - *Shuffle the music playlist.*\n`)
+              joinmsg.push(`**${Config.settings.prefix}voteskip** - *Vote to skip the current song.*`)
+              joinmsg.push(`**${Config.settings.prefix}skip** - *Force skip the current song.*\n`)
+              joinmsg.push(`**${Config.settings.prefix}leave-voice** - *Leaves the voice channel.*`)
               msg.channel.sendMessage(joinmsg.join('\n'))
               status[msg.guild.id] = true
               time[msg.guild.id] = setTimeout(function () {
@@ -313,10 +313,10 @@ exports.request = function (msg, suffix, bot) {
     requestLink[msg.guild.id] = suffix
     if (suffix.includes('youtu.be')) { // If the link is shortened with youtu.be
       splitLink[msg.guild.id] = requestLink[msg.guild.id].split('?list=') // Check for this instead of &list
-      msg.channel.sendMessage(`Try ` + Config.settings.prefix + `request again with either a link to the video or the playlist.\n**Video:** <${splitLink[msg.guild.id][0]}>\n**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
+      msg.channel.sendMessage(`Try ${Config.settings.prefix}request again with either a link to the video or the playlist.\n**Video:** <${splitLink[msg.guild.id][0]}>\n**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
     } else {
       splitLink[msg.guild.id] = requestLink[msg.guild.id].split('&list=')
-      msg.channel.sendMessage(`Try ` + Config.settings.prefix + `request again with either a link to the video or the playlist.\n**Video:** <${splitLink[msg.guild.id][0]}>\n**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
+      msg.channel.sendMessage(`Try ${Config.settings.prefix}request again with either a link to the video or the playlist.\n**Video:** <${splitLink[msg.guild.id][0]}>\n**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
     }
   } else if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
     msg.channel.sendMessage('Playlist fetching might take a while...')
