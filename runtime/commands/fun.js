@@ -75,9 +75,10 @@ Commands.fortunecow = {
   }
 }
 
-Commands.cat = {
-  name: 'cat',
+Commands.randomcat = {
+  name: 'randomcat',
   help: "I'll get a random cat image for you!",
+  aliases: ['cat'],
   module: 'fun',
   timeout: 10,
   level: 0,
