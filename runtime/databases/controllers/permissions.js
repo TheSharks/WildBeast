@@ -10,7 +10,7 @@ var database = new Db({
 exports.checkLevel = function (msg, user, roles) {
   return new Promise(function (resolve, reject) {
     if (Config.permissions.master.indexOf(user) > -1) {
-      return resolve(9)
+      return resolve(Infinity) // lol
     } else if (Config.permissions.level1.indexOf(user) > -1) {
       return resolve(1)
     } else if (Config.permissions.level2.indexOf(user) > -1) {
