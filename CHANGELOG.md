@@ -1,4 +1,9 @@
 # 3.0.0
+## Release phase
+### 3.0.0
+Masters are now at `Infinity` instead of 9.   
+Voice channel join messages now use a customized prefix if available.    
+
 ## Beta phase
 ### 3.0.0-beta.6
 Introduced `shuffle` and `voteskip` as music commands.    
