@@ -2,7 +2,7 @@
   "LANGUAGE_CONSTANT": "French",
   "ERRORS": {
     "INVALID_API_REPLY_RECIEVED": "L'API a retourné une reponse non conventionnelle, essayez plus tard.",
-    "USERS_PERMISSION_IS_NOT_SUFFICIENT": "	Vous n'avez pas la permission pour exécuter cette commande.\nVous avez besoin du niveau {{userlevel}}, mais vous ètes niveau {{needlevel}}\n Demandez au propriétaire du serveur de modifier votre niveau avec `setlevel`",
+    "USERS_PERMISSION_IS_NOT_SUFFICIENT": "Vous n'avez pas la permission pour exécuter cette commande.\nVous avez besoin du niveau {{userlevel}}, mais vous ètes niveau {{needlevel}}\n Demandez au propriétaire du serveur de modifier votre niveau avec `setlevel`",
     "CHANNEL_DOES_NOT_ALLOW_NSFW": "Ce salon n'accepte pas les commandes NSFW, utilisez `setnsfw on` d'abord.",
     "MASTER_ACCESS_NEEDED": "Vous devez être un master user pour utiliser cette commande.",
     "INTERNAL_UNKNOWN_ERROR": "Quelque chose c'est mal déroulé lors de l'utilisation de cette commande, essayez plus tard."
