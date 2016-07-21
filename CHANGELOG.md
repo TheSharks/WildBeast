@@ -1,5 +1,11 @@
 # 3.0.0
 ## Release phase
+### 3.1.1
+Fixed welcome message not sending properly when set to private.   
+
+### 3.1.0
+Welcome messages can now be send via private messages.   
+
 ### 3.0.0
 Masters are now at `Infinity` instead of 9.   
 Voice channel join messages now use a customized prefix if available.    
