@@ -218,9 +218,9 @@ bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s) {
     } else if (r === 'private') {
       datacontrol.customize.reply(s, 'welcome').then((x) => {
         if (x === 'default') {
-          s.member.openDM.then((g) => g.sendMessage(`Welcome to ${s.guild.name}! Please enjoy your stay!`))
+          s.member.openDM().then((g) => g.sendMessage(`Welcome to ${s.guild.name}! Please enjoy your stay!`))
         } else {
-          s.member.openDM.then((g) => g.sendMessage(x.replace(/%user/g, s.member.username).replace(/%server/g, s.guild.name)))
+          s.member.openDM().then((g) => g.sendMessage(x.replace(/%user/g, s.member.username).replace(/%server/g, s.guild.name)))
         }
       }).catch((e) => {
         Logger.error(e)
