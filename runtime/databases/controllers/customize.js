@@ -122,8 +122,8 @@ exports.adjust = function (msg, what, how) {
       } else if (doc) {
         switch (what) {
           case 'welcoming':
-            if (how !== 'on' && how !== 'off') {
-              return reject('`Welcoming can either be on or off`')
+            if (how !== 'off' && how !== 'private' && how !== 'channel') {
+              return reject('Welcoming can only be `off`, `private` or `channel`')
             }
             database.update({
               _id: msg.guild.id

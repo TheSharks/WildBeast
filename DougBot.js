@@ -205,12 +205,22 @@ bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s) {
   datacontrol.permissions.isKnown(s.guild)
   datacontrol.customize.isKnown(s.guild)
   datacontrol.customize.check(s.guild).then((r) => {
-    if (r === 'on') {
+    if (r === 'on' || r === 'channel') {
       datacontrol.customize.reply(s, 'welcome').then((x) => {
         if (x === 'default') {
           s.guild.generalChannel.sendMessage(`Welcome ${s.member.username} to ${s.guild.name}!`)
         } else {
           s.guild.generalChannel.sendMessage(x.replace(/%user/g, s.member.username).replace(/%server/g, s.guild.name))
+        }
+      }).catch((e) => {
+        Logger.error(e)
+      })
+    } else if (r === 'private') {
+      datacontrol.customize.reply(s, 'welcome').then((x) => {
+        if (x === 'default') {
+          s.member.openDM.then((g) => g.sendMessage(`Welcome to ${s.guild.name}! Please enjoy your stay!`))
+        } else {
+          s.member.openDM.then((g) => g.sendMessage(x.replace(/%user/g, s.member.username).replace(/%server/g, s.guild.name)))
         }
       }).catch((e) => {
         Logger.error(e)
