@@ -464,7 +464,7 @@ Commands.meme = {
 Commands.magic8ball = {
   name: 'magic8ball',
   help: "I'll make a prediction using a Magic 8 Ball",
-  aliases: ['8ball', '8'],
+  aliases: ['8ball'],
   module: 'fun',
   timeout: 5,
   level: 0,
@@ -499,6 +499,5 @@ Commands.magic8ball = {
     msg.channel.sendMessage('The Magic 8 Ball says:\n```' + answer + '```')
   }
 }
-
 
 exports.Commands = Commands
