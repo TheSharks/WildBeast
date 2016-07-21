@@ -70,7 +70,7 @@ Removed `welcoming-whitellist.json`, this is now handled by `customize`.
 Removed `birds`, `ìdle` and `online`, `idle` and `online` are replaced with `setstatus`.     
 Temporary removed server blacklisting system, this will be reintroduced later.      
 
-# Gamma phase
+## Gamma phase
 (Gamma is a real thing in software development by the way, it's a synonym for RC (Release Candidate))
 ### 2.0.0-gamma.7
 Changed welcoming system to adhere to a whitelist instead of being global.    
@@ -106,7 +106,7 @@ Added a timeout feature.
 Changed `versionchecker.js` ability to check for beta versions to gamma version checking.    
 Moved to LevelDB instead of Redis for handling permission storage and handling timeouts.      
 
-# Beta phase
+## Beta phase
 ### 2.0.0-beta.5
 Fixes several problems caused by 2.0.0-beta.4   
 Added an *incomplete* server defaulting system.   
