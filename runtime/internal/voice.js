@@ -84,7 +84,7 @@ exports.join = function (msg, suffix, bot) {
         .forEach((channel) => {
           if (channel.name.toLowerCase().indexOf(suffix.toLowerCase()) >= 0) {
             channel.join().then((vc) => {
-              var prefix = prefix
+              var prefix = Config.settings.prefix
               require('../datacontrol.js').customize.prefix(msg).then((r) => {
                 if (r !== false) prefix = r
               })

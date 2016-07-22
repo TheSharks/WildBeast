@@ -29,7 +29,7 @@ Commands.say = {
     } else if (re.test(msg.content)) {
       msg.reply('Lol no thanks, not sending that.')
     } else {
-      msg.channel.sendMessage('\u200B' + suffix)
+      msg.channel.sendMessage('\u200B' + suffix.replace(/@everyone/, '@\u200Beveryone').replace(/@here/, '@\u200Bhere'))
     }
   }
 }
