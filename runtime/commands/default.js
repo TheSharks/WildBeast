@@ -344,7 +344,7 @@ Commands.status = {
   level: 0,
   fn: function (msg, suffix, bot) {
     var msgArray = []
-    msgArray.push('Hi ' + msg.author.username + ' , my name is ' + bot.User.username + ', nice to meet you!')
+    msgArray.push('Hi ' + msg.author.username + ', my name is ' + bot.User.username + ', nice to meet you!')
     msgArray.push("I'm used in " + bot.Guilds.length + ' servers, in ' + bot.Channels.length + ' channels, and by ' + bot.Users.length + ' users!')
     msg.channel.sendMessage(msgArray.join('\n'))
   }
