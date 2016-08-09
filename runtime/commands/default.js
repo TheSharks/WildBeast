@@ -219,8 +219,8 @@ Bot is sharded?     ${(argv.shardmode ? 'Yes, this is shard ' + argv.shardid + '
   }
 }
 
-Commands.leave = {
-  name: 'leave',
+Commands['leave-server'] = {
+  name: 'leave-server',
   help: "I'll leave this server if I am not welcome here.",
   noDM: true,
   level: 3,

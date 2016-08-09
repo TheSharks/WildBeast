@@ -51,6 +51,7 @@ if (argv.forceupgrade) {
 }
 
 bot.Dispatcher.on(Event.GATEWAY_READY, function () {
+  bot.Users.fetchMembers()
   runtime.internal.versioncheck.versionCheck(function (err, res) {
     if (err) {
       Logger.error('Version check failed, ' + err)
