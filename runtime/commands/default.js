@@ -270,7 +270,7 @@ Commands.setlevel = {
   noDM: true,
   module: 'default',
   level: 3,
-  fn: function (msg, suffix) {
+  fn: function (msg, suffix, bot) {
     var Permissions = require('../databases/controllers/permissions.js')
     suffix = suffix.split(' ')
     if (isNaN(suffix[0])) {
@@ -279,15 +279,9 @@ Commands.setlevel = {
       msg.channel.sendMessage('Setting a level higher than 3 is not allowed.')
     } else if (msg.mentions.length === 0 && msg.mention_roles.length === 0) {
       msg.reply('Please @mention the user(s)/role(s) you want to set the permission level of.')
+    } else if (msg.mentions.length === 1 && msg.mentions[0].id === bot.User.id) {
+      msg.reply("I don't need any level set, I can do anything regardless of access levels.")
     } else {
-      Permissions.checkLevel(msg.guild, msg.author.id, msg.member.roles).then(function (level) {
-        if (suffix[0] > level) {
-          msg.reply("Can't set a user's permissions higher than your own!") // Not that you can anyhow via conventional methods
-        }
-      }).catch(function (error) {
-        msg.channel.sendMessage('Help! Something went wrong!')
-        Logger.error(error)
-      })
       Permissions.adjustLevel(msg, msg.mentions, parseFloat(suffix[0]), msg.mention_roles).then(function () {
         msg.channel.sendMessage('Alright! The permission levels have been set successfully!')
       }).catch(function (err) {
@@ -334,19 +328,6 @@ Commands.hello = {
   level: 0,
   fn: function (msg, suffix, bot) {
     msg.channel.sendMessage('Hi ' + msg.author.username + ", I'm " + bot.User.username + '! Help me improve by contributing to my source code on https://github.com/SteamingMutt/WildBeast')
-  }
-}
-
-Commands.status = {
-  name: 'status',
-  help: "I'll get some info about me, like my uptime and my server count!",
-  timeout: 20,
-  level: 0,
-  fn: function (msg, suffix, bot) {
-    var msgArray = []
-    msgArray.push('Hi ' + msg.author.username + ' , my name is ' + bot.User.username + ', nice to meet you!')
-    msgArray.push("I'm used in " + bot.Guilds.length + ' servers, in ' + bot.Channels.length + ' channels, and by ' + bot.Users.length + ' users!')
-    msg.channel.sendMessage(msgArray.join('\n'))
   }
 }
 
