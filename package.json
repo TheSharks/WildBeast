@@ -43,7 +43,7 @@
   "license": "GPL-3.0",
   "dependencies": {
     "cleverbot-node": "^0.2.2",
-    "discordie": "^0.7.0",
+    "discordie": "^0.8.0",
     "imgflipper": "^1.0.1",
     "leetspeak": "0.0.1",
     "minimist": "^1.2.0",
