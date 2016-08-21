@@ -40,7 +40,7 @@ exports.join = function (msg, suffix, bot) {
           time[msg.guild.id] = setTimeout(function () {
             leave(bot, msg)
             status[msg.guild.id] = false
-          }, 199000)
+          }, 660000)
           waiting(vc)
         }).catch((err) => {
           if (err.message === 'Missing permission') {
@@ -71,7 +71,7 @@ exports.join = function (msg, suffix, bot) {
           time[msg.guild.id] = setTimeout(function () {
             leave(bot, msg)
             status[msg.guild.id] = false
-          }, 199000)
+          }, 660000)
           waiting(vc)
         }).catch((err) => {
           if (err.message === 'Missing permission') {
@@ -106,7 +106,7 @@ exports.join = function (msg, suffix, bot) {
               time[msg.guild.id] = setTimeout(function () {
                 leave(bot, msg)
                 status[msg.guild.id] = false
-              }, 199000)
+              }, 660000)
               waiting(vc)
             }).catch((err) => {
               if (err.message === 'Missing permission') {
@@ -150,7 +150,7 @@ exports.leave = function (msg, suffix, bot) {
 function waiting (vc) {
   var waitMusic = vc.voiceConnection.createExternalEncoder({
     type: 'ffmpeg',
-    source: 'Fanta.mp3', // Caps sensitive why
+    source: 'Treehouse.mp3', // Caps sensitive why
     format: 'pcm'
   })
   waitMusic.play()
