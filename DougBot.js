@@ -120,7 +120,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
               if (x === 'default') {
                 c.message.channel.sendMessage(`Wait ${Math.round(y)} more seconds before using that again.`)
               } else {
-                c.message.channel.sendMessage(x.replace(/%user/g, c.message.author.username).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%timeout/, Math.round(y)))
+                c.message.channel.sendMessage(x.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%timeout/, Math.round(y)))
               }
             })
           } else {
@@ -147,7 +147,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                         if (d === 'default') {
                           c.message.channel.sendMessage('This channel does not allow NSFW commands, enable them first with `setnsfw`')
                         } else {
-                          c.message.channel.sendMessage(d.replace(/%user/g, c.message.author.username).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name))
+                          c.message.channel.sendMessage(d.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name))
                         }
                       }).catch((e) => {
                         Logger.error('Reply check error, ' + e)
@@ -165,7 +165,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                       c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\n' + reason)
                     }
                   } else {
-                    c.message.channel.sendMessage(u.replace(/%user/g, c.message.author.username).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%nlevel/, commands[cmd].level).replace(/%ulevel/, r))
+                    c.message.channel.sendMessage(u.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%nlevel/, commands[cmd].level).replace(/%ulevel/, r))
                   }
                 }).catch((e) => {
                   Logger.error('Reply check error, ' + e)
@@ -211,7 +211,7 @@ bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s) {
         if (x === 'default') {
           s.guild.generalChannel.sendMessage(`Welcome ${s.member.username} to ${s.guild.name}!`)
         } else {
-          s.guild.generalChannel.sendMessage(x.replace(/%user/g, s.member.username).replace(/%server/g, s.guild.name))
+          s.guild.generalChannel.sendMessage(x.replace(/%user/g, s.member.mention).replace(/%server/g, s.guild.name))
         }
       }).catch((e) => {
         Logger.error(e)
@@ -221,7 +221,7 @@ bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s) {
         if (x === 'default') {
           s.member.openDM().then((g) => g.sendMessage(`Welcome to ${s.guild.name}! Please enjoy your stay!`))
         } else {
-          s.member.openDM().then((g) => g.sendMessage(x.replace(/%user/g, s.member.username).replace(/%server/g, s.guild.name)))
+          s.member.openDM().then((g) => g.sendMessage(x.replace(/%user/g, s.member.mention).replace(/%server/g, s.guild.name)))
         }
       }).catch((e) => {
         Logger.error(e)
