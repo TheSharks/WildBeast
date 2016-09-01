@@ -82,7 +82,7 @@ Commands.eval = {
         str = str.substr(0, 1897)
         str = str + '...'
       }
-      str = str.replace(new RegExp(bot.token, 'gi'), '¯\\\_(ツ)_/¯')
+      str = str.replace(new RegExp(bot.token, 'gi'), '( ͡° ͜ʖ ͡°)') // Because some frog broke this string with a shruglenny
       msg.channel.sendMessage('```xl\n' + str + '\n```').then((ms) => {
         if (returned !== undefined && returned !== null && typeof returned.then === 'function') {
           returned.then(() => {
@@ -588,6 +588,27 @@ Commands.ban = {
         msg.reply('Your last argument must be a number or nothing for the default of 0, can only be 0, 1 or 7!')
       }
     }
+  }
+}
+
+Commands.prefix = {
+  name: 'prefix',
+  help: "If you, despite reading this have no clue what my prefix is, I'll tell you!",
+  module: 'default',
+  timeout: 5,
+  level: 0,
+  fn: function (msg) {
+    var datacontrol = require('../datacontrol')
+    datacontrol.customize.prefix(msg).then((prefix) => {
+      if (prefix) {
+        msg.channel.sendMessage(`My prefix is ${prefix}`)
+      } else {
+        msg.channel.sendMessage('My prefix is ' + config.settings.prefix) // Default prefix, if none is set in customize
+      }
+    }).catch((error) => {
+      Logger.error(error)
+      msg.channel.sendMessage('Whoops, something went wrong.')
+    })
   }
 }
 
