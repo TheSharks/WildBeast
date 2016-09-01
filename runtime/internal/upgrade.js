@@ -35,6 +35,9 @@ exports.init = function () {
       default: 'yes'
     }
     prompt.get(property, function (err, result) {
+      if (err) {
+        return reject(err)
+      }
       if (result.yesno === 'yes') {
         perms().then(() => {
           cust().then(() => {
