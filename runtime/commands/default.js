@@ -376,7 +376,8 @@ Commands['server-info'] = {
       var msgArray = []
       msgArray.push('Information requested by ' + msg.author.mention)
       msgArray.push('Server name: **' + msg.guild.name + '** (id: `' + msg.guild.id + '`)')
-      msgArray.push('Owned by **' + msg.guild.owner.username + '** (id: `' + msg.guild.owner_id + '`)')
+      msgArray.push('Server acronym: **' + msg.guild.acronym + '**')
+      msgArray.push('Owned by **' + msg.guild.owner.username + '#' + msg.guild.owner.discriminator + '** (id: `' + msg.guild.owner_id + '`)')
       msgArray.push('Current region: **' + msg.guild.region + '**.')
       msgArray.push('This server has **' + msg.guild.members.length + '** members')
       msgArray.push('This server has **' + msg.guild.textChannels.length + '** text channels.')
@@ -420,6 +421,7 @@ Commands.userinfo = {
         msgArray.push('Requested user: ' + msg.author.username + '#' + msg.author.discriminator)
         msgArray.push('ID: ' + msg.author.id)
         msgArray.push('Status: ' + msg.author.status)
+        msgArray.push('Account created at: ' + msg.author.createdAt)
         if (msg.author.gameName) {
           msgArray.push('Playing: ' + msg.author.gameName)
         }
@@ -447,6 +449,7 @@ Commands.userinfo = {
         msgArray.push('```', 'Requested user: ' + user.username + '#' + user.discriminator)
         msgArray.push('ID: ' + user.id)
         msgArray.push('Status: ' + user.status)
+        msgArray.push('RegisteredAt: ' + user.registeredAt)
         if (user.gameName) {
           msgArray.push('Playing: ' + user.gameName)
         }
