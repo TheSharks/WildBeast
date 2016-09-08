@@ -89,7 +89,7 @@ Commands.playlist = {
         }, 15000)
       })
     }).catch(() => {
-      msg.channel.sendMessage("It seems that I don't have a playlist for this server.")
+      msg.channel.sendMessage("It appears that there aren't any songs in the current queue.")
     })
   }
 }
