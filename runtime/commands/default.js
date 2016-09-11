@@ -606,7 +606,7 @@ Commands.prefix = {
       if (prefix) {
         msg.channel.sendMessage(`My prefix is ${prefix}`)
       } else {
-        msg.channel.sendMessage('My prefix is ' + config.settings.prefix) // Default prefix, if none is set in customize
+        msg.channel.sendMessage(`My prefix is ${config.settings.prefix}`) // Default prefix, if none is set in customize
       }
     }).catch((error) => {
       Logger.error(error)
