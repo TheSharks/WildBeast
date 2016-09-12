@@ -10,7 +10,7 @@
 </p>
 
 ---
-WildBeast is a multifunction Discord bot intended to be able to perform various tasks, ranging from easy server moderation (Kick, ban) to having fun (8Ball etc.) in your Discord server. Written in JavaScript Node.JS, using the discordie library.
+WildBeast is a multifunction Discord bot intended to be able to perform various tasks, ranging from easy server moderation (Kick, ban) to having fun (8Ball etc.) in your Discord server. Written in JavaScript [Node.JS](https://nodejs.org), using the [Discordie](https://qeled.github.io/discordie) library.
 
 ##Main features
 These features are :
@@ -23,7 +23,7 @@ These features are :
 - NSFW images via e621 and rule34
 - Server utilities (Welcome messages, server and user info etc.)
 - High level of customization (Changing messages on a per-server basis, permission level system)
-And much more!
+- And much more!
 
 Be sure to check out the [wiki](https://github.com/SteamingMutt/WildBeast/wiki) for more info!
 
