@@ -10,49 +10,32 @@
 </p>
 
 ---
+WildBeast is a multifunction Discord bot intended to be able to perform various tasks, ranging from easy server moderation (Kick, ban) to having fun (8Ball etc.) in your Discord server. Written in JavaScript Node.JS, using the discordie library.
 
-WildBeast is made to function as a multi-function Discord bot framework, check out the [wiki](https://github.com/SteamingMutt/WildBeast/wiki) for more info!
+##Main features
+These features are :
 
-# Installing
-First off, make sure you have Node.js installed, you can check by running this in your terminal:
-```bash
-node --version
-```
-This should return something like:
-```bash
-v5.10.1
-```
+- Music streaming from YouTube, SoundCloud etc.
+- Classy insults
+- Dank meme generation system with your own parameters
+- Useful advice
+- Moderation commands
+- NSFW images via e621 and rule34
+- Server utilities (Welcome messages, server and user info etc.)
+- High level of customization (Changing messages on a per-server basis, permission level system)
+And much more!
 
-### Use [Node.js 5.10.1](https://nodejs.org/download/release/v5.10.1/) for the best experience! Anything higher will not work properly!
+Be sure to check out the [wiki](https://github.com/SteamingMutt/WildBeast/wiki) for more info!
 
-<br></br>
-If you haven't cloned/downloaded the files already, do that now.   
-Then, open a command window in the folder you've copied the files to, (Windows users can do shift+right-click in any directory to quickly open a cmd window in that folder) and type:
-```bash
-npm install
-```
-This will install all the required modules for WildBeast, if you get any errors, you can safely ignore them, as long as you end with a view similar to:
-```bash
-WildBeast@3.0.0
-+-- discordie@0.5.6  (git://github.com/qeled/discordie.git#6fce7e8e552bd64663541ffaf374e07cc5b8fd2d)
-| `-- ws@0.8.1
-|   `-- bufferutil@1.2.1
-|     `-- nan@2.3.0
-`-- nedb@1.8.0
-```
-<br></br>
-Now, you should make a config file, use `config.example.json` as a base and edit it to your needs.
-Once you're done, start WildBeast:
-```bash
-node DougBot.js
-```
-If you need to uprade databases from a former 2.x.x install, start WildBeast differently:
-```bash
-node DougBot.js --forceupgrade
-```
+##Installing
+WildBeast has selfhosting support and extensive guides written on installing it. Check out the [Windows guide](https://github.com/SteamingMutt/WildBeast/wiki/Installation-Guide-For-Windows) and the [Linux guide](https://github.com/SteamingMutt/WildBeast/wiki/Installation-Guide-For-Linux) for tutorials on how to do it!
+
 ---
 
 <p align="center">
   <a href="https://github.com/feross/standard"><img src="https://cdn.rawgit.com/feross/standard/master/badge.svg" alt="JavaScript Standard Code Style"></a>
   <a href="https://discord.gg/0cFoiR5QVh5LZlQO"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png?style=banner2" alt="Discord server"></a>
+</p>
+<p align="center">
+Check out our Discord server and styleguide from the links above!
 </p>
