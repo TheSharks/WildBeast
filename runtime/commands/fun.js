@@ -495,7 +495,7 @@ Commands.magic8ball = {
       'Possibly.',
       'There is a small chance.'
     ]
-    var answer = answers[Math.floor(Math.random()*answers.length)]
+    var answer = answers[Math.floor(Math.random() * answers.length)]
     msg.channel.sendMessage('The Magic 8 Ball says:\n```' + answer + '```')
   }
 }
