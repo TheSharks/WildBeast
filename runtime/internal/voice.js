@@ -214,10 +214,9 @@ function next (msg, suffix, bot) {
 }
 
 exports.shuffle = function (msg) {
-  var currentIndex = list[msg.guild.id].link.length
-  var temporaryValue
-  var randomIndex
-  while (currentIndex !== 0) {
+  var currentIndex = list[msg.guild.id].link.length,
+    temporaryValue, randomIndex
+  while (0 !== currentIndex) {
     randomIndex = Math.floor(Math.random() * currentIndex)
     currentIndex -= 1
     if (currentIndex !== 0 && randomIndex !== 0) {
