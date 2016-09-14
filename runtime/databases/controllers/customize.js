@@ -126,7 +126,7 @@ exports.restore = function (guild) {
 }
 
 exports.adjust = function (msg, what, how) {
-  /*eslint indent: 0*/
+  /* eslint indent: 0 */
   return new Promise(function (resolve, reject) {
     database.find({
       _id: msg.guild.id
