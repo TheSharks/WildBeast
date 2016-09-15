@@ -517,9 +517,6 @@ function DLFetch (video, msg) {
         list[msg.guild.id].requester.push(msg.author.username)
         return resolve(first)
       } else {
-        list[msg.guild.id].link.push('INVALID')
-        list[msg.guild.id].info.push('INVALID')
-        list[msg.guild.id].requester.push('INVALID')
         Logger.debug('Playlist debug, ' + err)
         return reject(first)
       }
