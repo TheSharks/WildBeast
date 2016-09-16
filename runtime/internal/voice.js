@@ -214,9 +214,10 @@ function next (msg, suffix, bot) {
 }
 
 exports.shuffle = function (msg) {
-  var currentIndex = list[msg.guild.id].link.length,
-    temporaryValue, randomIndex
-  while (0 !== currentIndex) {
+  var currentIndex = list[msg.guild.id].link.length
+  var temporaryValue
+  var randomIndex
+  while (currentIndex !== 0) {
     randomIndex = Math.floor(Math.random() * currentIndex)
     currentIndex -= 1
     if (currentIndex !== 0 && randomIndex !== 0) {
@@ -240,6 +241,12 @@ exports.voteSkip = function (msg, bot) {
     })
   if (connect.length < 1) {
     msg.reply('No connection.')
+  } else if (list[msg.guild.id] === undefined) {
+    msg.reply('Try requesting a song first before voting to skip.')
+    return
+  } else if (msg.member.getVoiceChannel().id !== connect[0].voiceConnection.channel.id) {
+    msg.reply('You\'re not allowed to vote because you\'re not in the voice channel.')
+    return
   } else {
     var count = Math.round((connect[0].voiceConnection.channel.members.length - 2) / 2)
     if (list[msg.guild.id].skips.users.indexOf(msg.author.id) > -1) {
@@ -510,9 +517,6 @@ function DLFetch (video, msg) {
         list[msg.guild.id].requester.push(msg.author.username)
         return resolve(first)
       } else {
-        list[msg.guild.id].link.push('INVALID')
-        list[msg.guild.id].info.push('INVALID')
-        list[msg.guild.id].requester.push('INVALID')
         Logger.debug('Playlist debug, ' + err)
         return reject(first)
       }

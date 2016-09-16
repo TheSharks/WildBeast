@@ -76,6 +76,20 @@ exports.helpHandle = function (msg) {
   arr.push('`welcoming`: Changes wether I should welcome new people.')
   arr.push('`timeout`: Changes my reply when someones uses a command that is still in cooldown')
   arr.push('`prefix`: Changes the prefix I listen to on this server, mentions will still count as a global prefix')
+  arr.push('\n')
+  arr.push('Some customize methods support special words, here is what they are and how to use them.')
+  arr.push('**Note the following:**')
+  arr.push('```')
+  arr.push('You cannot use special words with welcoming or prefix.')
+  arr.push('All special words start with %.')
+  arr.push('You can use multiple special words within one message.')
+  arr.push('```')
+  arr.push('`%user`: Refers to the username of the user who triggered this response.')
+  arr.push('`%channel`: Refers to the channel wherein this response is triggered, does not work with welcome.')
+  arr.push('`%server`: Refers to the server name')
+  arr.push('`%timeout`: Refers to the amount of seconds the used command cools down for, __can only be used with timeout__.')
+  arr.push('`%nlevel`: Short for NeedLevel. Refers to the access level an user needs to execute this command, __can only be used with permissions__.')
+  arr.push('`%ulevel`: Short for UserLevel. Refers to the access level an user has right now, __can only be used with permissions__.')
   msg.author.openDM().then((y) => {
     y.sendMessage(arr.join('\n'))
   }).catch((e) => {
@@ -112,7 +126,7 @@ exports.restore = function (guild) {
 }
 
 exports.adjust = function (msg, what, how) {
-  /*eslint indent: 0*/
+  /* eslint indent: 0 */
   return new Promise(function (resolve, reject) {
     database.find({
       _id: msg.guild.id

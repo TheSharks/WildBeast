@@ -26,7 +26,7 @@ Commands.volume = {
 
 Commands.voteskip = {
   name: 'voteskip',
-  help: "Vote to skip the current playing song.",
+  help: 'Vote to skip the current playing song.',
   noDM: true,
   level: 1,
   fn: function (msg, suffix, bot) {
@@ -36,7 +36,7 @@ Commands.voteskip = {
 
 Commands.shuffle = {
   name: 'shuffle',
-  help: "Shuffle the current playlist.",
+  help: 'Shuffle the current playlist.',
   noDM: true,
   level: 2,
   fn: function (msg) {
@@ -89,7 +89,7 @@ Commands.playlist = {
         }, 15000)
       })
     }).catch(() => {
-      msg.channel.sendMessage("It seems that I don't have a playlist for this server.")
+      msg.channel.sendMessage("It appears that there aren't any songs in the current queue.")
     })
   }
 }

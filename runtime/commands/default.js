@@ -82,7 +82,7 @@ Commands.eval = {
         str = str.substr(0, 1897)
         str = str + '...'
       }
-      str = str.replace(new RegExp(bot.token, 'gi'), '¯\\\_(ツ)_/¯')
+      str = str.replace(new RegExp(bot.token, 'gi'), '( ͡° ͜ʖ ͡°)') // Because some frog broke this string with a shruglenny
       msg.channel.sendMessage('```xl\n' + str + '\n```').then((ms) => {
         if (returned !== undefined && returned !== null && typeof returned.then === 'function') {
           returned.then(() => {
@@ -376,7 +376,8 @@ Commands['server-info'] = {
       var msgArray = []
       msgArray.push('Information requested by ' + msg.author.mention)
       msgArray.push('Server name: **' + msg.guild.name + '** (id: `' + msg.guild.id + '`)')
-      msgArray.push('Owned by **' + msg.guild.owner.username + '** (id: `' + msg.guild.owner_id + '`)')
+      msgArray.push('Server acronym: **' + msg.guild.acronym + '**')
+      msgArray.push('Owned by **' + msg.guild.owner.username + '#' + msg.guild.owner.discriminator + '** (id: `' + msg.guild.owner_id + '`)')
       msgArray.push('Current region: **' + msg.guild.region + '**.')
       msgArray.push('This server has **' + msg.guild.members.length + '** members')
       msgArray.push('This server has **' + msg.guild.textChannels.length + '** text channels.')
@@ -420,6 +421,7 @@ Commands.userinfo = {
         msgArray.push('Requested user: ' + msg.author.username + '#' + msg.author.discriminator)
         msgArray.push('ID: ' + msg.author.id)
         msgArray.push('Status: ' + msg.author.status)
+        msgArray.push('Account created at: ' + msg.author.createdAt)
         if (msg.author.gameName) {
           msgArray.push('Playing: ' + msg.author.gameName)
         }
@@ -447,6 +449,7 @@ Commands.userinfo = {
         msgArray.push('```', 'Requested user: ' + user.username + '#' + user.discriminator)
         msgArray.push('ID: ' + user.id)
         msgArray.push('Status: ' + user.status)
+        msgArray.push('RegisteredAt: ' + user.registeredAt)
         if (user.gameName) {
           msgArray.push('Playing: ' + user.gameName)
         }
@@ -588,6 +591,27 @@ Commands.ban = {
         msg.reply('Your last argument must be a number or nothing for the default of 0, can only be 0, 1 or 7!')
       }
     }
+  }
+}
+
+Commands.prefix = {
+  name: 'prefix',
+  help: "If you, despite reading this have no clue what my prefix is, I'll tell you!",
+  module: 'default',
+  timeout: 5,
+  level: 0,
+  fn: function (msg) {
+    var datacontrol = require('../datacontrol')
+    datacontrol.customize.prefix(msg).then((prefix) => {
+      if (prefix) {
+        msg.channel.sendMessage(`My prefix is ${prefix}`)
+      } else {
+        msg.channel.sendMessage(`My prefix is ${config.settings.prefix}`) // Default prefix, if none is set in customize
+      }
+    }).catch((error) => {
+      Logger.error(error)
+      msg.channel.sendMessage('Whoops, something went wrong.')
+    })
   }
 }
 

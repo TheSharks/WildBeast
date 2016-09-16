@@ -274,7 +274,7 @@ exports.isKnown = function (guild) {
 }
 
 function insertNewStuff (guild, version) {
-  /*eslint indent: 0*/
+  /* eslint indent: 0 */
   return new Promise(function (resolve, reject) {
     switch (version) {
       case 1:
