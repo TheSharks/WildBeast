@@ -4,7 +4,7 @@ process.title = 'WildBeast'
 try {
   require('./config.json')
 } catch (e) {
-  console.log('Config file not found, make one using the example and restart WildBeast.')
+  console.log("\nWildBeast encountered an error while trying to load the config file, please resonve this issue and restart WildBeast\n\n" + e.message)
   process.exit()
 }
 
