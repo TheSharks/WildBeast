@@ -1,54 +1,30 @@
 'use strict'
-var Db = require('nedb')
-var database = new Db({
-  filename: './runtime/databases/users',
-  autoload: true
-})
+var Dash = require('rethinkdbdash')
+var r = new Dash()
 
 exports.namechange = function (user) {
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: user.id
-    }, function (err, docs) {
-      if (err) {
-        reject(err)
-      } else if (docs) {
-        if (docs.length <= 0) {
-          initialize(user)
-          return reject('No database!')
-        } else {
-          database.update({
-            _id: user.id
-          }, {
-            $push: {
-              names: user.username
-            }
-          }, {}, function (err) {
-            if (err) {
-              return reject(err)
-            } else {
-              return resolve(true)
-            }
-          })
-        }
-      }
+    getDatabaseDocument(user.id).then(() => {
+      r.db('Discord').table('Users').get(user.id)('names').append(user.username).run().then(() => {
+        resolve()
+      }).catch(() => {
+        reject()
+      })
+    }).catch(() => {
+      initialize(user)
+      reject()
     })
   })
 }
 
 exports.names = function (user) {
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: user.id
-    }, function (err, docs) {
-      if (err) {
-        reject(err)
-      } else if (docs) {
-        try {
-          return resolve(docs[0].names)
-        } catch (e) {
-          return reject(e)
-        }
+    getDatabaseDocument(user.id).then((i) => {
+      try {
+        resolve(i.names)
+      } catch (e) {
+        initialize(user)
+        reject(e)
       }
     })
   })
@@ -56,22 +32,14 @@ exports.names = function (user) {
 
 exports.isKnown = function (user) {
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: user.id
-    }, function (err, docs) {
-      if (err) {
-        reject(err)
-      } else if (docs) {
-        if (docs.length <= 0) {
-          initialize(user).then((r) => {
-            resolve(r)
-          }).catch((e) => {
-            reject(e)
-          })
-        } else {
-          resolve()
-        }
-      }
+    getDatabaseDocument(user.id).then(() => {
+      resolve()
+    }).catch(() => {
+      initialize(user).then(() => {
+        resolve()
+      }).catch(() => {
+        reject()
+      })
     })
   })
 }
@@ -79,18 +47,27 @@ exports.isKnown = function (user) {
 function initialize (user) {
   return new Promise(function (resolve, reject) {
     var doc = {
-      _id: user.id,
-      names: [user.username],
-      blacklisted: false
+      id: user.id,
+      names: [user.username]
     }
-    database.insert(doc, function (err, doc) {
-      if (err) {
-        reject(err)
-      } else if (doc) {
-        resolve(doc)
-      }
+    r.db('Discord').table('Users').insert(doc).run().then(() => {
+      resolve()
+    }).catch((e) => {
+      reject(e)
     })
   })
 }
 
-exports.Database = database
+function getDatabaseDocument (user) {
+  return new Promise(function (resolve, reject) {
+    r.db('Discord').table('Users').get(user).then((i) => {
+      if (i !== null) {
+        resolve(i)
+      } else {
+        reject(null)
+      }
+    }).catch((e) => {
+      reject(e)
+    })
+  })
+}

@@ -1,11 +1,8 @@
 'use strict'
 var Config = require('../../../config.json')
-var Db = require('nedb')
 var Logger = require('../../internal/logger.js').Logger
-var database = new Db({
-  filename: './runtime/databases/perms',
-  autoload: true
-})
+var Dash = require('rethinkdbdash')
+var r = new Dash()
 
 exports.checkLevel = function (msg, user, roles) {
   return new Promise(function (resolve, reject) {
@@ -20,360 +17,122 @@ exports.checkLevel = function (msg, user, roles) {
     } else if (msg.isPrivate || !msg.guild) {
       return resolve(0)
     }
-    database.find({
-      _id: msg.guild.id
-    }, function (err, doc) {
-      if (err) {
-        return reject(err)
-      } else if (doc) {
-        if (doc.length <= 0) {
-          initialize(msg.guild)
-          return reject('No database!')
-        }
-        if (doc.length > 0 && !doc[0].perms.hasOwnProperty('negative') || doc[0].version !== 3) {
-          var version
-          doc[0].version !== undefined ? version = doc[0].version : version = 1
-          insertNewStuff(msg.guild, version).catch((e) => Logger.error(e))
-        } else {
-          if (doc[0].superUser === user) {
-            return resolve(4)
-          }
-          var level = 0
-          if (roles) {
-            for (var r of roles) {
-              if (doc[0].perms.roles.level1.indexOf(r.id) > -1) {
-                level = (level > 1) ? level : (level !== -1) ? 1 : -1
-              } else if (doc[0].perms.roles.level2.indexOf(r.id) > -1) {
-                level = (level > 1) ? level : (level !== -1) ? 2 : -1
-              } else if (doc[0].perms.roles.level3.indexOf(r.id) > -1) {
-                level = (level > 1) ? level : (level !== -1) ? 3 : -1
-              } else if (doc[0].perms.roles.negative.indexOf(r.id) > -1) {
-                level = -1
-              }
-            }
-          }
-          if (doc[0].perms.level1.indexOf(user) > -1) {
-            level = (level > 1) ? level : (level !== -1) ? 1 : -1
-          } else if (doc[0].perms.level2.indexOf(user) > -1) {
-            level = (level > 1) ? level : (level !== -1) ? 2 : -1
-          } else if (doc[0].perms.level3.indexOf(user) > -1) {
-            level = (level > 1) ? level : (level !== -1) ? 3 : -1
-          } else if (doc[0].perms.hasOwnProperty('negative') && doc[0].perms.negative.indexOf(user) > -1) {
-            level = -1
-          }
-          return resolve(level)
-        }
-      }
-    })
   })
 }
 
 exports.adjustLevel = function (msg, users, level, roles) {
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: msg.guild.id
-    }, function (err, docs) {
-      if (err) {
-        reject(err)
-      } else if (docs) {
-        if (docs.length <= 0) {
-          initialize(msg.guild)
-          return reject('No database!')
-        }
-        if (docs.length > 0 && !docs[0].perms.hasOwnProperty('negative') || docs[0].version !== 3) {
-          var version
-          docs[0].version !== undefined ? version = docs[0].version : version = 1
-          insertNewStuff(msg.guild, version).catch((e) => Logger.error(e))
-        } else {
-          users.map((u) => {
-            if (docs[0].perms.level1.indexOf(u.id) > -1 || docs[0].perms.level2.indexOf(u.id) > -1 || docs[0].perms.level3.indexOf(u.id) > -1 || docs[0].perms.negative.indexOf(u.id) > -1) {
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $pull: {
-                  'perms.level1': u.id,
-                  'perms.level2': u.id,
-                  'perms.level3': u.id,
-                  'perms.negative': u.id
-                }
-              })
-            }
-            if (level > -2) {
-              var db
-              if (level > 0) {
-                db = 'perms.level' + level
-              } else if (level < 0) {
-                db = 'perms.negative'
-              } else {
-                return resolve(0)
-              }
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $push: {
-                  [db]: u.id
-                }
-              }, {}, function (err) {
-                if (err) {
-                  return reject(err)
-                } else {
-                  return resolve(level)
-                }
-              })
-            } else {
-              return reject('Unsupported.')
-            }
-          })
-          roles.map((r) => {
-            if (docs[0].perms.roles.level1.indexOf(r.id) > -1 || docs[0].perms.roles.level2.indexOf(r.id) > -1 || docs[0].perms.roles.level3.indexOf(r.id) > -1 || docs[0].perms.roles.negative.indexOf(r.id) > -1) {
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $pull: {
-                  'perms.roles.level1': r.id,
-                  'perms.roles.level2': r.id,
-                  'perms.roles.level3': r.id,
-                  'perms.roles.negative': r.id
-                }
-              })
-            }
-            if (level > -2) {
-              var db
-              if (level > 0) {
-                db = 'perms.roles.level' + level
-              } else if (level < 0) {
-                db = 'perms.roles.negative'
-              } else {
-                return resolve(0)
-              }
-              database.update({
-                _id: msg.guild.id
-              }, {
-                $push: {
-                  [db]: r.id
-                }
-              }, {}, function (err) {
-                if (err) {
-                  return reject(err)
-                } else {
-                  return resolve(level)
-                }
-              })
-            } else {
-              return reject('Unsupported.')
-            }
-          })
-        }
-      }
+    getDatabaseDocument(msg.guild.id).then(() => {
+    }).catch(() => {
+      initialize(msg.guild)
     })
-  })
-}
-
-exports.checkNSFW = function (msg) {
-  return new Promise(function (resolve, reject) {
-    database.find({
-      _id: msg.guild.id
-    }, function (err, docs) {
-      if (err) {
-        return reject(err)
-      } else if (docs) {
-        if (docs.length <= 0) {
-          initialize(msg.guild)
-          return reject('No database!')
-        }
-        if (docs.length > 0 && !docs[0].perms.hasOwnProperty('negative') || docs[0].version !== 3) {
-          var version
-          docs[0].version !== undefined ? version = docs[0].version : version = 1
-          insertNewStuff(msg.guild, version).catch((e) => Logger.error(e))
-        } else {
-          if (docs[0].perms.nsfw.indexOf(msg.channel.id) > -1) {
-            return resolve(true)
-          } else {
-            return resolve(false)
-          }
-        }
-      }
-    })
-  })
-}
-
-exports.adjustNSFW = function (msg, what) {
-  return new Promise(function (resolve, reject) {
-    database.find({
-      _id: msg.guild.id
-    }, function (err, docs) {
-      if (err) {
-        reject(err)
-      } else if (docs) {
-        if (docs.length <= 0) {
-          initialize(msg.guild)
-          return reject('No database!')
-        }
-        if (docs.length > 0 && !docs[0].perms.hasOwnProperty('negative') || docs[0].version !== 3) {
-          var version
-          docs[0].version !== undefined ? version = docs[0].version : version = 1
-          insertNewStuff(msg.guild, version).catch((e) => Logger.error(e))
-        } else {
-          if (what === 'on') {
-            database.update({
-              _id: msg.guild.id
-            }, {
-              $push: {
-                'perms.nsfw': msg.channel.id
-              }
-            }, {}, function (err) {
-              if (err) {
-                return reject(err)
-              } else {
-                return resolve(1)
-              }
-            })
-          } else if (what === 'off') {
-            database.update({
-              _id: msg.guild.id
-            }, {
-              $pull: {
-                'perms.nsfw': msg.channel.id
-              }
-            }, {}, function (err) {
-              if (err) {
-                return reject(err)
-              } else {
-                return resolve(0)
-              }
-            })
-          } else {
-            return reject('Not supported!')
-          }
-        }
-      }
-    })
-  })
-}
-
-exports.isKnown = function (guild) {
-  return new Promise(function (resolve, reject) {
-    database.find({
-      _id: guild.id
-    }, function (err, docs) {
-      if (err) {
-        reject(err)
-      } else if (docs) {
-        if (docs.length <= 0) {
-          initialize(guild).then((r) => {
-            resolve(r)
-          }).catch((e) => {
-            reject(e)
-          })
-        } else {
-          resolve()
-        }
-      }
-    })
-  })
-}
-
-function insertNewStuff (guild, version) {
-  /* eslint indent: 0 */
-  return new Promise(function (resolve, reject) {
-    switch (version) {
-      case 1:
-        database.update({
-          _id: guild.id
-        }, {
-          $set: {
-            'perms.negative': ['NaN'],
-            version: 2
-          }
-        }, function (err, res) {
-          if (err) {
-            return reject(err)
-          } else if (res) {
-            return resolve(res)
-          }
-        })
-        break
-      case 2:
-        database.update({
-          _id: guild.id
-        }, {
-          $set: {
-            'perms.roles.level1': ['NaN'],
-            'perms.roles.level2': ['NaN'],
-            'perms.roles.level3': ['NaN'],
-            'perms.roles.negative': ['NaN'],
-            version: 3
-          }
-        }, function (err, res) {
-          if (err) {
-            return reject(err)
-          } else if (res) {
-            return resolve(res)
-          }
-        })
-        break
-      default:
-        return reject('Unknown database version.')
-    }
   })
 }
 
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: guild.id
-    }, function (err, docs) {
-      if (err) {
-        reject(err)
-      } else if (docs) {
-        if (docs.length > 0) {
-          database.remove({
-            _id: guild.id
-          }, function (err) {
-            if (err) {
-              return reject(err)
-            }
-          })
-        }
-      }
+    r.db('Discord').get(guild.id).delete().run().then(() => {
       initialize(guild).then(() => {
-        return resolve('Done!')
+        resolve('Done!')
       }).catch((e) => {
-        return reject(e)
+        reject(e)
       })
+    }).catch((e) => {
+      reject(e)
     })
+  })
+}
+
+exports.checkNSFW = function (msg) {
+  return new Promise(function (resolve, reject) {})
+}
+
+exports.adjustNSFW = function (msg, what) {
+  return new Promise(function (resolve, reject) {
+    /* eslint indent: 0 */
+    switch (what) {
+      case 'on':
+        r.db('Discord').table('Guilds').get(msg.guild.id)('perms')('nsfw').append(msg.channel.id).run().then(() => resolve(1))
+        break
+      case 'off':
+        r.db('Discord').table('Guilds').get(msg.guild.id).then((i) => {
+          var doc = i
+          if (doc.perms.nsfw.indexOf(msg.channel.id) > -1) {
+            doc.perms.nsfw.splice(doc.perms.nsfw.indexOf(msg.channel.id), 1)
+            r.db('Discord').table('Guilds').get(msg.guild.id).update(doc).run()
+            resolve(0)
+          } else {
+            resolve(0)
+          }
+        })
+        break
+      default:
+        reject('Unknown option')
+        break
+    }
   })
 }
 
 function initialize (guild) {
   return new Promise(function (resolve, reject) {
     var doc = {
-      _id: guild.id,
-      version: 3,
-      superUser: guild.owner.id,
-      blacklisted: false,
+      customize: {
+        nsfw: null,
+        perms: null,
+        prefix: null,
+        timeout: null,
+        welcome: false,
+        welcomeMessage: null
+      },
+      id: guild.id,
+      lang: 'en',
       perms: {
-        level1: ['NaN'],
-        level2: ['NaN'],
-        level3: ['NaN'],
-        negative: ['NaN'],
-        nsfw: ['NaN'],
         roles: {
-          level1: ['NaN'],
-          level2: ['NaN'],
-          level3: ['NaN'],
-          negative: ['NaN']
-        }
-      }
+          level1: [],
+          level2: [],
+          level3: [],
+          negative: []
+        },
+        standard: {
+          everyone: 0,
+          level1: [],
+          level2: [],
+          level3: [],
+          negative: []
+        },
+        nsfw: []
+      },
+      superUser: guild.owner_id
     }
-    database.insert(doc, function (err, doc) {
-      if (err) {
-        reject(err)
-      } else if (doc) {
-        resolve(doc)
+    r.db('Discord').table('Guilds').insert(doc).run().then(() => {
+      resolve('ok')
+    }).catch((e) => {
+      Logger.error(e)
+      reject(e)
+    })
+  })
+}
+
+exports.isKnown = function (guild) {
+  return new Promise(function (resolve, reject) {
+    getDatabaseDocument(guild.id).then((r) => {
+      if (r !== null) {
+        return resolve()
+      } else {
+        return reject()
       }
     })
   })
 }
 
-exports.Database = database
+function getDatabaseDocument (guild) {
+  return new Promise(function (resolve, reject) {
+    r.db('Discord').table('Guilds').get(guild).then((t) => {
+      if (t !== null) {
+        resolve(t)
+      } else {
+        reject(null)
+      }
+    })
+  })
+}
