@@ -4,7 +4,7 @@ var Request = require('request')
 var SemVer = require('semver')
 
 var version = require('../../package.json').version
-var githubURL = 'https://raw.githubusercontent.com/SteamingMutt/WildBeast/master/package.json'
+var githubURL = 'https://raw.githubusercontent.com/TheSharks/WildBeast/master/package.json'
 
 exports.getCurrentVersion = function () {
   return SemVer.valid(version)
