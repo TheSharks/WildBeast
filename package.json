@@ -30,11 +30,11 @@
     "url": "https://dougley.com"
   },
   "bugs": {
-    "url": "https://github.com/SteamingMutt/WildBeast/issues"
+    "url": "https://github.com/TheSharks/WildBeast/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SteamingMutt/WildBeast.git"
+    "url": "git+https://github.com/TheSharks/WildBeast.git"
   },
   "engines": {
     "node": "4.x.x - 5.10.1",
