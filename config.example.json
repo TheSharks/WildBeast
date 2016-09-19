@@ -4,10 +4,10 @@
     "token": "Bot token",
     "email": "If you need this, optional",
     "password": "Again if you need this, optional",
-    "oauth": "URL"
+    "oauth": "Bot OAuth URL, see wiki"
   },
   "settings": {
-    "prefix": "anything can be entered as the global prefix along side mentions"
+    "prefix": "anything can be entered as the global prefix, refer to installation guide"
   },
   "permissions": {
     "master": ["you need to enter the ID from the user you want as master here", "you can extend this array like this if you need more"],
@@ -22,6 +22,6 @@
     },
     "google": "A google key",
     "mashape": "A mashape key",
-    "cse": "Custom Search Engine token, the wiki describes this"
+    "cse": "Not required anymore, ignore this field"
   }
 }

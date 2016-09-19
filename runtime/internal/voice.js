@@ -243,10 +243,8 @@ exports.voteSkip = function (msg, bot) {
     msg.reply('No connection.')
   } else if (list[msg.guild.id] === undefined) {
     msg.reply('Try requesting a song first before voting to skip.')
-    return
   } else if (msg.member.getVoiceChannel().id !== connect[0].voiceConnection.channel.id) {
     msg.reply('You\'re not allowed to vote because you\'re not in the voice channel.')
-    return
   } else {
     var count = Math.round((connect[0].voiceConnection.channel.members.length - 2) / 2)
     if (list[msg.guild.id].skips.users.indexOf(msg.author.id) > -1) {
