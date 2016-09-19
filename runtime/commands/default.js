@@ -327,7 +327,7 @@ Commands.hello = {
   timeout: 20,
   level: 0,
   fn: function (msg, suffix, bot) {
-    msg.channel.sendMessage('Hi ' + msg.author.username + ", I'm " + bot.User.username + '! Help me improve by contributing to my source code on https://github.com/SteamingMutt/WildBeast')
+    msg.channel.sendMessage('Hi ' + msg.author.username + ", I'm " + bot.User.username + ' and I was developed by the team over at TheSharks! Improve me by contributing to my source code on GitHub: https://github.com/TheSharks/WildBeast')
   }
 }
 
