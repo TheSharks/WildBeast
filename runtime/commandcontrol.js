@@ -50,27 +50,27 @@ exports.helpHandle = function (msg, suffix) {
       if (commands[index].hidden || commands[index].level === 'master') {
         continue
       } else {
-        cmdone.push(commands[index].name + ' - ' + commands[index].help)
+        cmdone.push(commands[index].name + ' = "' + commands[index].help + '"')
       }
     }
     var cmdtwo = cmdone.splice(0, cmdone.length / 2)
     msgArray.push('**Available commands:** \n')
-    msgArray.push('```xl')
+    msgArray.push('```ini')
     msgArray.push(cmdone.sort().join('\n') + '\n')
     msgArray.push('```')
-    msgArraytwo.push('```xl')
+    msgArraytwo.push('```ini')
     msgArraytwo.push(cmdtwo.sort().join('\n') + '\n')
     msgArraytwo.push('For questions: https://discord.gg/0cFoiR5QVh5LZlQO')
     msgArraytwo.push('```')
-    if (!msg.isPrivate) {
-      msg.channel.sendMessage('Help is underway ' + msg.author.mention + '!')
-    }
     msg.author.openDM().then((y) => {
+      if (!msg.isPrivate) {
+        msg.channel.sendMessage('Help is underway ' + msg.author.mention + '!')
+      }
       y.sendMessage(msgArray.join('\n'))
       y.sendMessage(msgArraytwo.join('\n'))
     }).catch((e) => {
       Logger.error(e)
-      msg.channel.sendMessage('Whoops, try again.')
+      msg.channel.sendMessage('Well, this is akward, something went wrong while trying to PM you, do you have them enabled on this server?')
     })
   } else if (suffix) {
     if (commands[suffix] || alias[suffix]) {
