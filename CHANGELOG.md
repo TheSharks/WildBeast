@@ -1,5 +1,13 @@
 # 3.0.0
 ## Release phase
+### 3.2.0
+Internal tweaks.   
+Retired XL formatting in help for INI formatting.   
+WildBeast now alerts the user with a more descriptive error message if the config file is invalid or missing.   
+The special word `%user` now resolves to a mention instead of the username.   
+`INVALID` doesn't get dumped to the playlist anymore if YouTube videos from a YT playlist fail to fetch, they'll get silently dropped instead.   
+`leave` is renamed to `leave-server` to avoid confusion.    
+
 ### 3.1.1
 Fixed welcome message not sending properly when set to private.   
 
