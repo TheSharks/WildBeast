@@ -146,7 +146,8 @@ Commands.twitch = {
     request({
       url: url,
       headers: {
-        'Accept': 'application/vnd.twitchtv.v3+json'
+        'Accept': 'application/vnd.twitchtv.v3+json',
+        'Client-ID': config.api_keys.twitchId
       }
     }, function (error, response, body) {
       if (!error && response.statusCode === 200) {
