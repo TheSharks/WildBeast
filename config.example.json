@@ -22,6 +22,7 @@
     },
     "google": "A google key",
     "mashape": "A mashape key",
-    "cse": "Not required anymore, ignore this field"
+    "cse": "Not required anymore, ignore this field",
+    "twitchId": "A twitch Client-ID"
   }
 }
