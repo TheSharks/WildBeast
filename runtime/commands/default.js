@@ -419,7 +419,11 @@ Commands.userinfo = {
     if (msg.mentions.length === 0) {
       Permissions.checkLevel(msg, msg.author.id, msg.member.roles).then((level) => {
         var msgArray = []
-        var roles = msg.member.roles.map((r) => r.name)
+        var tempRoles = msg.member.roles.sort(function (a,b) {return a.position - b.position}).reverse()
+        var roles = []
+        for (var i in tempRoles) {
+          roles.push(tempRoles[i].name)
+        }
         roles = roles.splice(0, roles.length).join(', ')
         msgArray.push('```')
         msgArray.push('Requested user: ' + msg.author.username + '#' + msg.author.discriminator)
@@ -447,7 +451,11 @@ Commands.userinfo = {
         var msgArray = []
         var guild = msg.guild
         var member = guild.members.find((m) => m.id === user.id)
-        var roles = member.roles.map((r) => r.name)
+        var tempRoles = member.roles.sort(function (a,b) {return a.position - b.position}).reverse()
+        var roles = []
+        for (var i in tempRoles) {
+          roles.push(tempRoles[i].name)
+        }
         roles = roles.splice(0, roles.length).join(', ')
         msgArray.push('Information requested by ' + msg.author.username)
         msgArray.push('```', 'Requested user: ' + user.username + '#' + user.discriminator)
