@@ -11,7 +11,10 @@ Commands.ping = {
   timeout: 10,
   level: 0,
   fn: function (msg) {
-    msg.reply('Pong!')
+    var initTime = Date.now()
+    msg.reply('Pong!').then((m) => {
+      m.edit('<@' + msg.author.id + '>, Pong! Time taken ' + Math.floor(Date.now() - initTime) + ' ms.')
+    })
   }
 }
 
