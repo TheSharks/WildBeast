@@ -6,7 +6,7 @@ var splitLink = {}
 var temp
 var DL = require('ytdl-core')
 var YT = require('youtube-dl')
-var fs = require('fs');
+var fs = require('fs')
 var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
 
@@ -149,8 +149,8 @@ exports.leave = function (msg, suffix, bot) {
 }
 
 function waiting (vc) {
-  var music = fs.readdirSync('music/');
-  var randMusic = music[Math.floor(Math.random() * music.length)];
+  var music = fs.readdirSync('music/')
+  var randMusic = music[Math.floor(Math.random() * music.length)]
   var waitMusic = vc.voiceConnection.createExternalEncoder({
     type: 'ffmpeg',
     source: randMusic,
