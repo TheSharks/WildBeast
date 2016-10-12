@@ -11,7 +11,11 @@
     "port": 28015
   },
   "settings": {
-    "prefix": "anything can be entered as the global prefix, refer to installation guide"
+    "prefix": "anything can be entered as the global prefix, refer to installation guide",
+    "autodeletemsg": true,
+    "deleteTimeout": 3000,
+    "deleteTimeoutLong": 6000,
+    "maxvcslots": 10
   },
   "permissions": {
     "master": ["you need to enter the ID from the user you want as master here", "you can extend this array like this if you need more"],
