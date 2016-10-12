@@ -30,6 +30,9 @@ Be sure to check out the [wiki](https://github.com/TheSharks/WildBeast/wiki) for
 ##Installing
 WildBeast has selfhosting support and extensive guides written on installing it. Check out the [Windows guide](https://github.com/TheSharks/WildBeast/wiki/Installation-Guide-For-Windows) and the [Linux guide](https://github.com/TheSharks/WildBeast/wiki/Installation-Guide-For-Linux) for tutorials on how to do it!
 
+##Music Credits
+
+- [Whispers Invoke Paranoia](http://freemusicarchive.org/music/Nihilore/The_Hermeneutic_Circle/Nihilore_-_The_Hermeneutic_Circle_-_02_Whispers_Invoke_Paranoia) - [Nihilore](http://freemusicarchive.org/music/Nihilore/) 
 ---
 
 <p align="center">
