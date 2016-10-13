@@ -11,7 +11,7 @@ var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
 
 exports.join = function (msg, suffix, bot) {
-  if (bot.VoiceConnections.length > config.settings.maxvcslots) {
+  if (bot.VoiceConnections.length > Config.settings.maxvcslots) {
     msg.channel.sendMessage('Sorry, all streaming slots are taken, try again later. :cry:')
   } else {
     var voiceCheck = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
@@ -118,10 +118,10 @@ exports.join = function (msg, suffix, bot) {
         })
     } else {
       msg.reply('I am already streaming on this server in channel **' + voiceCheck.voiceConnection.channel.name + '**').then((m) => {
-        if (config.autodeletemsg) {
+        if (Config.settings.autodeletemsg) {
           setTimeout(() => {
             m.delete().catch((e) => Logger.error(e))
-          }, config.deleteTimeout)
+          }, Config.settings.deleteTimeout)
         }
       })
     }
@@ -189,10 +189,10 @@ function next (msg, suffix, bot) {
         connection.voiceConnection.getEncoder().setVolume(vol)
         encoder.once('end', () => {
           msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
-            if (config.autodeletemsg) {
+            if (Config.settings.autodeletemsg) {
               setTimeout(() => {
                 m.delete().catch((e) => Logger.error(e))
-              }, config.deleteTimeout)
+              }, Config.settings.deleteTimeout)
             }
           })
           list[msg.guild.id].link.shift()
@@ -202,19 +202,19 @@ function next (msg, suffix, bot) {
           list[msg.guild.id].skips.users = []
           if (list[msg.guild.id].link.length > 0) {
             msg.channel.sendMessage('Next up is **' + list[msg.guild.id].info[0] + '** requested by _' + list[msg.guild.id].requester[0] + '_').then((m) => {
-              if (config.autodeletemsg) {
+              if (Config.settings.autodeletemsg) {
                 setTimeout(() => {
                   m.delete().catch((e) => Logger.error(e))
-                }, config.deleteTimeoutLong)
+                }, Config.settings.deleteTimeoutLong)
               }
             })
             next(msg, suffix, bot)
           } else {
             msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
-              if (config.autodeletemsg) {
+              if (Config.settings.autodeletemsg) {
                 setTimeout(() => {
                   m.delete().catch((e) => Logger.error(e))
-                }, config.deleteTimeout)
+                }, Config..settingsdeleteTimeout)
               }
             })
             connection.voiceConnection.disconnect()
@@ -365,10 +365,10 @@ exports.request = function (msg, suffix, bot) {
     }, function (err, data) {
       if (err) {
         msg.channel.sendMessage('Something went wrong while requesting information about this playlist.').then((m) => {
-          if (config.autodeletemsg) {
+          if (Config.settings.autodeletemsg) {
             setTimeout(() => {
               m.delete().catch((e) => Logger.error(e))
-            }, config.deleteTimeout)
+            }, Config.settings.deleteTimeout)
           }
         })
         Logger.error('Playlist failiure, ' + err)
@@ -381,10 +381,10 @@ exports.request = function (msg, suffix, bot) {
   } else {
     fetch(suffix, msg).then((r) => {
       msg.channel.sendMessage(`Added **${r.title}** to the playlist.`).then((m) => {
-        if (config.autodeletemsg) {
+        if (Config.settings.autodeletemsg) {
           setTimeout(() => {
             m.delete().catch((e) => Logger.error(e))
-          }, config.deleteTimeout)
+          }, Config.settings.deleteTimeout)
         }
       })
       if (r.autoplay === true) {
@@ -393,10 +393,10 @@ exports.request = function (msg, suffix, bot) {
     }).catch((e) => {
       Logger.error(e)
       msg.channel.sendMessage("I couldn't add that to the playlist.").then((m) => {
-        if (config.autodeletemsg) {
+        if (Config.settings.autodeletemsg) {
           setTimeout(() => {
             m.delete().catch((e) => Logger.error(e))
-          }, config.deleteTimeout)
+          }, Config.settings.deleteTimeout)
         }
       })
     })
