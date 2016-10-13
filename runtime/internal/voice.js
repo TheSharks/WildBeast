@@ -214,7 +214,7 @@ function next (msg, suffix, bot) {
               if (Config.settings.autodeletemsg) {
                 setTimeout(() => {
                   m.delete().catch((e) => Logger.error(e))
-                }, Config..settingsdeleteTimeout)
+                }, Config.settingsdeleteTimeout)
               }
             })
             connection.voiceConnection.disconnect()
