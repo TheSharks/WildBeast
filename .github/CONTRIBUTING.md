@@ -11,7 +11,7 @@ Please follow these rules when making contributions to this repository.
 6. Issues stemming from usage of normal user accounts instead of OAuth bot accounts
 
 ## Wanted contributions
-Everything that doesn't fit in the unwanted category is wanted :smile:
+Everything that doesn't fit in the unwanted category is wanted :eyes: :thumbsup: 
 
 # Notes
 ## Commands
