@@ -6,11 +6,12 @@ var splitLink = {}
 var temp
 var DL = require('ytdl-core')
 var YT = require('youtube-dl')
+var fs = require('fs')
 var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
 
 exports.join = function (msg, suffix, bot) {
-  if (bot.VoiceConnections.length > 10) {
+  if (bot.VoiceConnections.length > Config.settings.maxvcslots) {
     msg.channel.sendMessage('Sorry, all streaming slots are taken, try again later. :cry:')
   } else {
     var voiceCheck = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
@@ -117,9 +118,11 @@ exports.join = function (msg, suffix, bot) {
         })
     } else {
       msg.reply('I am already streaming on this server in channel **' + voiceCheck.voiceConnection.channel.name + '**').then((m) => {
-        setTimeout(() => {
-          m.delete().catch((e) => Logger.error(e))
-        }, 3000)
+        if (Config.settings.autodeletemsg) {
+          setTimeout(() => {
+            m.delete().catch((e) => Logger.error(e))
+          }, Config.settings.deleteTimeout)
+        }
       })
     }
   }
@@ -148,9 +151,11 @@ exports.leave = function (msg, suffix, bot) {
 }
 
 function waiting (vc) {
+  var music = fs.readdirSync('music/')
+  var randMusic = music[Math.floor(Math.random() * music.length)]
   var waitMusic = vc.voiceConnection.createExternalEncoder({
     type: 'ffmpeg',
-    source: 'Treehouse.mp3', // Caps sensitive why
+    source: randMusic,
     format: 'pcm'
   })
   waitMusic.play()
@@ -184,9 +189,11 @@ function next (msg, suffix, bot) {
         connection.voiceConnection.getEncoder().setVolume(vol)
         encoder.once('end', () => {
           msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
-            setTimeout(() => {
-              m.delete().catch((e) => Logger.error(e))
-            }, 3000)
+            if (Config.settings.autodeletemsg) {
+              setTimeout(() => {
+                m.delete().catch((e) => Logger.error(e))
+              }, Config.settings.deleteTimeout)
+            }
           })
           list[msg.guild.id].link.shift()
           list[msg.guild.id].info.shift()
@@ -195,16 +202,20 @@ function next (msg, suffix, bot) {
           list[msg.guild.id].skips.users = []
           if (list[msg.guild.id].link.length > 0) {
             msg.channel.sendMessage('Next up is **' + list[msg.guild.id].info[0] + '** requested by _' + list[msg.guild.id].requester[0] + '_').then((m) => {
-              setTimeout(() => {
-                m.delete().catch((e) => Logger.error(e))
-              }, 6000)
+              if (Config.settings.autodeletemsg) {
+                setTimeout(() => {
+                  m.delete().catch((e) => Logger.error(e))
+                }, Config.settings.deleteTimeoutLong)
+              }
             })
             next(msg, suffix, bot)
           } else {
             msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
-              setTimeout(() => {
-                m.delete().catch((e) => Logger.error(e))
-              }, 3000)
+              if (Config.settings.autodeletemsg) {
+                setTimeout(() => {
+                  m.delete().catch((e) => Logger.error(e))
+                }, Config.settingsdeleteTimeout)
+              }
             })
             connection.voiceConnection.disconnect()
           }
@@ -354,9 +365,11 @@ exports.request = function (msg, suffix, bot) {
     }, function (err, data) {
       if (err) {
         msg.channel.sendMessage('Something went wrong while requesting information about this playlist.').then((m) => {
-          setTimeout(() => {
-            m.delete().catch((e) => Logger.error(e))
-          }, 3000)
+          if (Config.settings.autodeletemsg) {
+            setTimeout(() => {
+              m.delete().catch((e) => Logger.error(e))
+            }, Config.settings.deleteTimeout)
+          }
         })
         Logger.error('Playlist failiure, ' + err)
         return
@@ -368,9 +381,11 @@ exports.request = function (msg, suffix, bot) {
   } else {
     fetch(suffix, msg).then((r) => {
       msg.channel.sendMessage(`Added **${r.title}** to the playlist.`).then((m) => {
-        setTimeout(() => {
-          m.delete().catch((e) => Logger.error(e))
-        }, 3000)
+        if (Config.settings.autodeletemsg) {
+          setTimeout(() => {
+            m.delete().catch((e) => Logger.error(e))
+          }, Config.settings.deleteTimeout)
+        }
       })
       if (r.autoplay === true) {
         next(msg, suffix, bot)
@@ -378,9 +393,11 @@ exports.request = function (msg, suffix, bot) {
     }).catch((e) => {
       Logger.error(e)
       msg.channel.sendMessage("I couldn't add that to the playlist.").then((m) => {
-        setTimeout(() => {
-          m.delete().catch((e) => Logger.error(e))
-        }, 3000)
+        if (Config.settings.autodeletemsg) {
+          setTimeout(() => {
+            m.delete().catch((e) => Logger.error(e))
+          }, Config.settings.deleteTimeout)
+        }
       })
     })
   }
