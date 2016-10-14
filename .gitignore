@@ -8,6 +8,7 @@ jsconfig.json
 
 # UGC
 config.json
+music
 
 # Runtime data
 pids
