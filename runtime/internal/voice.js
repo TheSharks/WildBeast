@@ -1,5 +1,4 @@
 var list = {}
-var time = {}
 var status = {}
 var requestLink = {}
 var splitLink = {}
@@ -38,11 +37,7 @@ exports.join = function (msg, suffix, bot) {
           joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
           msg.channel.sendMessage(joinmsg.join('\n'))
           status[msg.guild.id] = true
-          time[msg.guild.id] = setTimeout(function () {
-            leave(bot, msg)
-            status[msg.guild.id] = false
-          }, 660000)
-          waiting(vc)
+          waiting(vc, msg, bot)
         }).catch((err) => {
           if (err.message === 'Missing permission') {
             msg.reply("I could not join the channel you're in because I don't have `Connect` permissions :cry:")
@@ -69,11 +64,7 @@ exports.join = function (msg, suffix, bot) {
           joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
           msg.channel.sendMessage(joinmsg.join('\n'))
           status[msg.guild.id] = true
-          time[msg.guild.id] = setTimeout(function () {
-            leave(bot, msg)
-            status[msg.guild.id] = false
-          }, 660000)
-          waiting(vc)
+          waiting(vc, msg, bot)
         }).catch((err) => {
           if (err.message === 'Missing permission') {
             msg.reply("I could not the first voice channel in my list because I don't have `Connect` permissions :cry:")
@@ -104,11 +95,7 @@ exports.join = function (msg, suffix, bot) {
               joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
               msg.channel.sendMessage(joinmsg.join('\n'))
               status[msg.guild.id] = true
-              time[msg.guild.id] = setTimeout(function () {
-                leave(bot, msg)
-                status[msg.guild.id] = false
-              }, 660000)
-              waiting(vc)
+              waiting(vc, msg, bot)
             }).catch((err) => {
               if (err.message === 'Missing permission') {
                 msg.reply('Could not join channel as I do not have `Connect` permissions.')
@@ -141,7 +128,7 @@ function leave (bot, msg) {
 }
 
 exports.leave = function (msg, suffix, bot) {
-  clearTimeout(time[msg.guild.id])
+  status[msg.guild.id] = false
   var voice = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
   if (voice) {
     voice.voiceConnection.getEncoder().kill()
@@ -150,7 +137,7 @@ exports.leave = function (msg, suffix, bot) {
   }
 }
 
-function waiting (vc) {
+function waiting (vc, msg, bot) {
   var music = fs.readdirSync('music/')
   var randMusic = 'music/' + music[Math.floor(Math.random() * music.length)]
   var waitMusic = vc.voiceConnection.createExternalEncoder({
@@ -159,10 +146,15 @@ function waiting (vc) {
     format: 'pcm'
   })
   waitMusic.play()
+  waitMusic.once('end', () => {
+    if (status[vc.guildId] === true) {
+      leave(bot, msg)
+    }
+  })
 }
 
 function next (msg, suffix, bot) {
-  clearTimeout(time[msg.guild.id])
+  status[msg.guild.id] = false
   bot.VoiceConnections
     .map((connection) => {
       if (connection.voiceConnection.guild.id === msg.guild.id) {
