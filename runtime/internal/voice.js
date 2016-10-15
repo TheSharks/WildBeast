@@ -147,7 +147,7 @@ function waiting (vc, msg, bot) {
   })
   waitMusic.play()
   waitMusic.once('end', () => {
-    if (status[vc.guildId] === true) {
+    if (status[vc.voiceConnection.guildId] === true) {
       leave(bot, msg)
     }
   })
