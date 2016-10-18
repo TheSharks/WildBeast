@@ -277,6 +277,10 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
   }
 })
 
+process.on('unhandledRejection', (reason, p) => {
+  Logger.debug(`Unhandled promise: ${p}: ${reason}`) // I'm lazy
+})
+
 function start () {
   try {
     Config = require('./config.json')

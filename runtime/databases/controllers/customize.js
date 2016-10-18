@@ -184,6 +184,7 @@ exports.adjust = function (msg, what, how) {
       }
     }).catch(() => {
       initialize(msg.guild)
+      reject('No database')
     })
   })
 }
