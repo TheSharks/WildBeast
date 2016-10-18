@@ -6,6 +6,10 @@
     "password": "Again if you need this, optional",
     "oauth": "URL"
   },
+  "database":{
+    "host": "localhost",
+    "port": 28015
+  },
   "settings": {
     "prefix": "anything can be entered as the global prefix along side mentions"
   },

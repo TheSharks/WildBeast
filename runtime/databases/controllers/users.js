@@ -1,10 +1,12 @@
 'use strict'
-var Dash = require('rethinkdbdash')({
-  servers: [
-    {host: '50.3.72.123', port: 28015}
-  ]
+var Config = require('../../../config.json')
+var Dash = require('rethinkdbdash')
+var r = new Dash({
+  servers: [{
+    host: Config.database.host,
+    port: Config.database.port
+  }]
 })
-var r = new Dash()
 
 exports.namechange = function (user) {
   return new Promise(function (resolve, reject) {

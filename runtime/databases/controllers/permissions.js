@@ -1,12 +1,13 @@
 'use strict'
 var Config = require('../../../config.json')
 var Logger = require('../../internal/logger.js').Logger
-var Dash = require('rethinkdbdash')({
-    servers: [
-        {host: '50.3.72.123', port: 28015}
-    ]
+var Dash = require('rethinkdbdash')
+var r = new Dash({
+  servers: [{
+    host: Config.database.host,
+    port: Config.database.port
+  }]
 })
-var r = new Dash()
 
 exports.checkLevel = function (msg, user, roles) {
   return new Promise(function (resolve, reject) {

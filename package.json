@@ -47,6 +47,7 @@
     "imgflipper": "^1.0.1",
     "leetspeak": "0.0.1",
     "minimist": "^1.2.0",
+    "nedb": "x.x.x",
     "ora": "^0.2.1",
     "prompt": "^1.0.0",
     "request": "^2.72.0",
@@ -59,8 +60,7 @@
     "xml2js": "^0.4.16",
     "youtube-api": "^2.0.2",
     "youtube-dl": "^1.11.1",
-    "ytdl-core": "^0.7.15",
-    "nedb":"x.x.x"
+    "ytdl-core": "^0.7.15"
   },
   "devDependencies": {
     "eslint": "^3.0.0",

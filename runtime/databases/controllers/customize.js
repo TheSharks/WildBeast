@@ -1,10 +1,12 @@
 'use strict'
-var Dash = require('rethinkdbdash')({
-  servers: [
-    {host: '50.3.72.123', port: 28015}
-  ]
+var Config = require('../../../config.json')
+var Dash = require('rethinkdbdash')
+var r = new Dash({
+  servers: [{
+    host: Config.database.host,
+    port: Config.database.port
+  }]
 })
-var r = new Dash()
 var Logger = require('../../internal/logger.js').Logger
 
 exports.prefix = function (msg) {
@@ -121,9 +123,9 @@ exports.adjust = function (msg, what, how) {
               perms: how
             }
           }).run().then(() => {
-              resolve(how)
+            resolve(how)
           }).catch((e) => {
-              reject(e)
+            reject(e)
           })
           break
         case 'prefix':
@@ -132,9 +134,9 @@ exports.adjust = function (msg, what, how) {
               prefix: how
             }
           }).run().then(() => {
-              resolve(how)
+            resolve(how)
           }).catch((e) => {
-              reject(e)
+            reject(e)
           })
           break
         case 'timeout':
@@ -143,9 +145,9 @@ exports.adjust = function (msg, what, how) {
               timeout: how
             }
           }).run().then(() => {
-              resolve(how)
+            resolve(how)
           }).catch((e) => {
-              reject(e)
+            reject(e)
           })
           break
         case 'welcoming':
@@ -154,9 +156,9 @@ exports.adjust = function (msg, what, how) {
               welcome: how
             }
           }).run().then(() => {
-              resolve(how)
+            resolve(how)
           }).catch((e) => {
-              reject(e)
+            reject(e)
           })
           break
         case 'welcome':
@@ -165,9 +167,9 @@ exports.adjust = function (msg, what, how) {
               welcomeMessage: how
             }
           }).run().then(() => {
-              resolve(how)
+            resolve(how)
           }).catch((e) => {
-              reject(e)
+            reject(e)
           })
           break
         default:
