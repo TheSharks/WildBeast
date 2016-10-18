@@ -76,7 +76,7 @@ Commands.tag = {
                 content: content
               }).run().then((g) => {
                 if (g.replaced === 1) {
-                  msg.channel.sendMessage('Tag successfully created.')
+                  msg.channel.sendMessage('Tag successfully edited.')
                 } else if (g.errors > 1) {
                   msg.channel.sendMessage('Something went wrong.')
                 }
@@ -93,8 +93,8 @@ Commands.tag = {
               msg.channel.sendMessage('That tag is not yours to delete.')
             } else {
               r.db('Discord').table('Tags').get(index[1].toLowerCase()).delete().run().then((g) => {
-                if (g.replaced === 1) {
-                  msg.channel.sendMessage('Tag successfully created.')
+                if (g.deleted === 1) {
+                  msg.channel.sendMessage('Tag successfully deleted.')
                 } else if (g.errors > 1) {
                   msg.channel.sendMessage('Something went wrong.')
                 }
