@@ -129,12 +129,15 @@ exports.adjust = function (msg, what, how) {
           })
           break
         case 'prefix':
+          if (how.indexOf('"') === -1) {
+            return reject('`Put new prefixes between double quotes please.`')
+          }
           r.db('Discord').table('Guilds').get(msg.guild.id).update({
             customize: {
-              prefix: how
+              prefix: how.split('"')[1]
             }
           }).run().then(() => {
-            resolve(how)
+            resolve(how.split('"')[1])
           }).catch((e) => {
             reject(e)
           })
