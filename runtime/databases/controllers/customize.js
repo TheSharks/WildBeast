@@ -154,6 +154,9 @@ exports.adjust = function (msg, what, how) {
           })
           break
         case 'welcoming':
+          if (how !== 'on' && how !== 'off' && how !== 'private' && how !== 'channel') {
+            return reject('`Invalid target.`')
+          }
           r.db('Discord').table('Guilds').get(msg.guild.id).update({
             customize: {
               welcome: how
