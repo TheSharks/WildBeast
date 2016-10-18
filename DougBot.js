@@ -4,7 +4,7 @@ process.title = 'WildBeast'
 try {
   require('./config.json')
 } catch (e) {
-  console.log("\nWildBeast encountered an error while trying to load the config file, please resolve this issue and restart WildBeast\n\n" + e.message)
+  console.log('\nWildBeast encountered an error while trying to load the config file, please resolve this issue and restart WildBeast\n\n' + e.message)
   process.exit()
 }
 
@@ -117,7 +117,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
         timeout.check(commands[cmd], c.message.guild.id, c.message.author.id).then((y) => {
           if (y !== true) {
             datacontrol.customize.reply(c.message, 'timeout').then((x) => {
-              if (x === 'default') {
+              if (x === null || x === 'default') {
                 c.message.channel.sendMessage(`Wait ${Math.round(y)} more seconds before using that again.`)
               } else {
                 c.message.channel.sendMessage(x.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%timeout/, Math.round(y)))
@@ -144,7 +144,7 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                       }
                     } else {
                       datacontrol.customize.reply(c.message, 'nsfw').then((d) => {
-                        if (d === 'default') {
+                        if (d === null || d === 'default') {
                           c.message.channel.sendMessage('This channel does not allow NSFW commands, enable them first with `setnsfw`')
                         } else {
                           c.message.channel.sendMessage(d.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name))
@@ -158,8 +158,8 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                   })
                 }
               } else {
-                datacontrol.customize.reply(c.message, 'permissions').then((u) => {
-                  if (u === 'default') {
+                datacontrol.customize.reply(c.message, 'perms').then((u) => {
+                  if (u === null || u === 'default') {
                     if (r > -1 && !commands[cmd].hidden) {
                       var reason = (r > 4) ? '**This is a master user only command**, ask the bot owner to add you as a master user if you really think you should be able to use this command.' : 'Ask the server owner to modify your level with `setlevel`.'
                       c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\n' + reason)
@@ -207,8 +207,8 @@ bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s) {
   datacontrol.customize.isKnown(s.guild)
   datacontrol.customize.check(s.guild).then((r) => {
     if (r === 'on' || r === 'channel') {
-      datacontrol.customize.reply(s, 'welcome').then((x) => {
-        if (x === 'default') {
+      datacontrol.customize.reply(s, 'welcomeMessage').then((x) => {
+        if (x === null || x === 'default') {
           s.guild.generalChannel.sendMessage(`Welcome ${s.member.username} to ${s.guild.name}!`)
         } else {
           s.guild.generalChannel.sendMessage(x.replace(/%user/g, s.member.mention).replace(/%server/g, s.guild.name))
@@ -217,8 +217,8 @@ bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s) {
         Logger.error(e)
       })
     } else if (r === 'private') {
-      datacontrol.customize.reply(s, 'welcome').then((x) => {
-        if (x === 'default') {
+      datacontrol.customize.reply(s, 'welcomeMessage').then((x) => {
+        if (x === null || x === 'default') {
           s.member.openDM().then((g) => g.sendMessage(`Welcome to ${s.guild.name}! Please enjoy your stay!`))
         } else {
           s.member.openDM().then((g) => g.sendMessage(x.replace(/%user/g, s.member.mention).replace(/%server/g, s.guild.name)))

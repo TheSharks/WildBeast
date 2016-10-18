@@ -1,25 +1,30 @@
 'use strict'
-var Dash = require('rethinkdbdash')
+var Dash = require('rethinkdbdash')({
+  servers: [
+    {host: '50.3.72.123', port: 28015}
+  ]
+})
 var r = new Dash()
 
 exports.namechange = function (user) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(user.id).then(() => {
-      r.db('Discord').table('Users').get(user.id)('names').append(user.username).run().then(() => {
+    getDatabaseDocument(user).then((d) => {
+      d.names.push(user.username)
+      r.db('Discord').table('Users').update(d).run().then(() => {
         resolve()
-      }).catch(() => {
-        reject()
+      }).catch((e) => {
+        reject(e)
       })
-    }).catch(() => {
+    }).catch((e) => {
       initialize(user)
-      reject()
+      reject(e)
     })
   })
 }
 
 exports.names = function (user) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(user.id).then((i) => {
+    getDatabaseDocument(user).then((i) => {
       try {
         resolve(i.names)
       } catch (e) {
@@ -32,7 +37,7 @@ exports.names = function (user) {
 
 exports.isKnown = function (user) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(user.id).then(() => {
+    getDatabaseDocument(user).then(() => {
       resolve()
     }).catch(() => {
       initialize(user).then(() => {
@@ -60,7 +65,7 @@ function initialize (user) {
 
 function getDatabaseDocument (user) {
   return new Promise(function (resolve, reject) {
-    r.db('Discord').table('Users').get(user).then((i) => {
+    r.db('Discord').table('Users').get(user.id).then((i) => {
       if (i !== null) {
         resolve(i)
       } else {
@@ -71,3 +76,4 @@ function getDatabaseDocument (user) {
     })
   })
 }
+

@@ -1,5 +1,9 @@
 'use strict'
-var Dash = require('rethinkdbdash')
+var Dash = require('rethinkdbdash')({
+  servers: [
+    {host: '50.3.72.123', port: 28015}
+  ]
+})
 var r = new Dash()
 var Logger = require('../../internal/logger.js').Logger
 
@@ -8,8 +12,8 @@ exports.prefix = function (msg) {
     if (msg.isPrivate) {
       return resolve(false)
     }
-    getDatabaseDocument(msg.guild.id).then((i) => {
-      resolve((i.ustomize.prefix === null) ? false : i.customize.prefix)
+    getDatabaseDocument(msg.guild).then((i) => {
+      resolve((i.customize.prefix === null) ? false : i.customize.prefix)
     }).catch(() => {
       initialize(msg.guild)
       reject('No database')
@@ -19,8 +23,8 @@ exports.prefix = function (msg) {
 
 exports.check = function (guild) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(guild.id).then((i) => {
-      resolve(i.customize.welcoming)
+    getDatabaseDocument(guild).then((i) => {
+      resolve(i.customize.welcome)
     }).catch(() => {
       initialize(guild)
       reject('No database')
@@ -30,7 +34,7 @@ exports.check = function (guild) {
 
 exports.reply = function (msg, what) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(msg.guild.id).then((t) => {
+    getDatabaseDocument(msg.guild).then((t) => {
       if (!t.customize.hasOwnProperty(what)) {
         return reject('Unsupported reply method')
       } else {
@@ -79,9 +83,13 @@ exports.helpHandle = function (msg) {
 
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
-    r.db('Discord').get(guild.id).delete().run().then(() => {
-      initialize(guild).then(() => {
-        resolve('Done!')
+    getDatabaseDocument(guild).then((d) => {
+      r.db('Discord').table('Guilds').delete(d).run().then(() => {
+        initialize(guild).then(() => {
+          resolve('Done!')
+        }).catch((e) => {
+          reject(e)
+        })
       }).catch((e) => {
         reject(e)
       })
@@ -94,49 +102,73 @@ exports.restore = function (guild) {
 exports.adjust = function (msg, what, how) {
   /* eslint indent: 0 */
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(msg.guild.id).then(() => {
+    getDatabaseDocument(msg.guild).then(() => {
       switch (what) {
         case 'nsfw':
           r.db('Discord').table('Guilds').get(msg.guild.id).update({
             customize: {
-              nsfw: [how]
+              nsfw: how
             }
-          }).run()
+          }).run().then(() => {
+            resolve(how)
+          }).catch((e) => {
+            reject(e)
+          })
           break
         case 'permissions':
           r.db('Discord').table('Guilds').get(msg.guild.id).update({
             customize: {
-              perms: [how]
+              perms: how
             }
-          }).run()
+          }).run().then(() => {
+              resolve(how)
+          }).catch((e) => {
+              reject(e)
+          })
           break
         case 'prefix':
           r.db('Discord').table('Guilds').get(msg.guild.id).update({
             customize: {
-              prefix: [how]
+              prefix: how
             }
-          }).run()
+          }).run().then(() => {
+              resolve(how)
+          }).catch((e) => {
+              reject(e)
+          })
           break
         case 'timeout':
           r.db('Discord').table('Guilds').get(msg.guild.id).update({
             customize: {
-              timeout: [how]
+              timeout: how
             }
-          }).run()
-          break
-        case 'welcome':
-          r.db('Discord').table('Guilds').get(msg.guild.id).update({
-            customize: {
-              welcomingMessage: [how]
-            }
-          }).run()
+          }).run().then(() => {
+              resolve(how)
+          }).catch((e) => {
+              reject(e)
+          })
           break
         case 'welcoming':
           r.db('Discord').table('Guilds').get(msg.guild.id).update({
             customize: {
-              welcoming: [how]
+              welcome: how
             }
-          }).run()
+          }).run().then(() => {
+              resolve(how)
+          }).catch((e) => {
+              reject(e)
+          })
+          break
+        case 'welcome':
+          r.db('Discord').table('Guilds').get(msg.guild.id).update({
+            customize: {
+              welcomeMessage: how
+            }
+          }).run().then(() => {
+              resolve(how)
+          }).catch((e) => {
+              reject(e)
+          })
           break
         default:
           reject('Unsupported method')
@@ -190,24 +222,28 @@ function initialize (guild) {
 
 exports.isKnown = function (guild) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(guild.id).then((r) => {
+    getDatabaseDocument(guild).then((r) => {
       if (r !== null) {
         return resolve()
       } else {
         return reject()
       }
+    }).catch((e) => {
+      reject(e)
     })
   })
 }
 
 function getDatabaseDocument (guild) {
   return new Promise(function (resolve, reject) {
-    r.db('Discord').table('Guilds').get(guild).then((t) => {
+    r.db('Discord').table('Guilds').get(guild.id).then((t) => {
       if (t !== null) {
         resolve(t)
       } else {
         reject(null)
       }
+    }).catch((e) => {
+      reject(e)
     })
   })
 }
