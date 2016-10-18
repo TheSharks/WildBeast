@@ -47,6 +47,7 @@
     "imgflipper": "^1.0.1",
     "leetspeak": "0.0.1",
     "minimist": "^1.2.0",
+    "nedb": "x.x.x",
     "ora": "^0.2.1",
     "prompt": "^1.0.0",
     "request": "^2.72.0",
