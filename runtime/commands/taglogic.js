@@ -103,7 +103,7 @@ Commands.tag = {
           }
         })
       } else {
-        r.db('Discord').table('Tags').get(index[1].toLowerCase()).run().then((g) => {
+        r.db('Discord').table('Tags').get(index[0].toLowerCase()).run().then((g) => {
           if (g === null) {
             msg.channel.sendMessage('This tag does not exist.')
           } else {
