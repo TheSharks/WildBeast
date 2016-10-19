@@ -47,9 +47,7 @@ exports.helpHandle = function (msg, suffix) {
   var cmdone = []
   if (!suffix) {
     for (var index in commands) {
-      if (commands[index].hidden || commands[index].level === 'master') {
-        continue
-      } else {
+      if (!commands[index].hidden && !commands[index].level === 'master') {
         cmdone.push(commands[index].name + ' = "' + commands[index].help + '"')
       }
     }

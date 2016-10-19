@@ -33,22 +33,7 @@ if (argv.shardmode && !isNaN(argv.shardid) && !isNaN(argv.shardcount)) {
   bot = new Discordie()
 }
 
-if (argv.forceupgrade) {
-  if (argv.shardmode) {
-    Logger.warn("Can't upgrade databases in ShardMode, restart normally to upgrade databases.")
-    start()
-  } else {
-    Logger.warn('Force-starting database upgrade.')
-    runtime.internal.upgrade.init().then((r) => {
-      Logger.info(r)
-      start()
-    }).catch((e) => {
-      Logger.error(e)
-    })
-  }
-} else {
-  start()
-}
+start()
 
 bot.Dispatcher.on(Event.GATEWAY_READY, function () {
   bot.Users.fetchMembers()
@@ -61,7 +46,7 @@ bot.Dispatcher.on(Event.GATEWAY_READY, function () {
   })
   Logger.info('Ready to start!')
   Logger.info(`Logged in as ${bot.User.username}#${bot.User.discriminator} (ID: ${bot.User.id}) and serving ${bot.Users.length} users in ${bot.Guilds.length} servers.`)
-  if(argv.shutdownwhenready) {
+  if (argv.shutdownwhenready) {
     console.log('o okei bai')
     process.exit(0)
   }
@@ -251,18 +236,12 @@ bot.Dispatcher.on(Event.GATEWAY_RESUMED, function () {
 
 bot.Dispatcher.on(Event.PRESENCE_MEMBER_INFO_UPDATE, (user) => {
   datacontrol.users.isKnown(user.new).catch(() => {
-    datacontrol.users.namechange(user.new).catch((e) => {
-      Logger.error(e)
-    })
+    if (user.old.username !== user.new.username) {
+      datacontrol.users.namechange(user.new).catch((e) => {
+        Logger.error(e)
+      })
+    }
   })
-  // We only handle name changes, nothing else
-  if (user.old.username !== user.new.username) {
-    datacontrol.users.namechange(user.new)
-  }
-})
-
-bot.Dispatcher.on(Event.VOICE_CHANNEL_LEAVE, function (e) {
-  runtime.internal.voice.leaveRequired(bot, e.guildId)
 })
 
 bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
@@ -278,7 +257,7 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
 })
 
 process.on('unhandledRejection', (reason, p) => {
-  Logger.debug(`Unhandled promise: ${p}: ${reason}`) // I'm lazy
+  Logger.debug(`Unhandled promise: ${require('util').inspect(p, {depth:3})}: ${reason}`) // I'm lazy
 })
 
 function start () {

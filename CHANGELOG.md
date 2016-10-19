@@ -1,3 +1,8 @@
+# 4.0.0
+## Release phase
+### 4.0.0
+Retired nedb for datastorage, now using RethinkDB.   
+
 # 3.0.0
 ## Release phase
 ### 3.2.0
