@@ -7,7 +7,6 @@ var argv = require('minimist')(process.argv.slice(2))
 Commands.ping = {
   name: 'ping',
   help: "I'll reply to you with pong!",
-  module: 'default',
   timeout: 10,
   level: 0,
   fn: function (msg) {
@@ -22,7 +21,6 @@ Commands.say = {
   name: 'say',
   help: 'Repeat after me.',
   aliases: ['echo', 'repeat'],
-  module: 'default',
   timeout: 10,
   level: 0,
   fn: function (msg, suffix) {
@@ -272,7 +270,6 @@ Commands.setlevel = {
   name: 'setlevel',
   help: 'This changes the permission level of a user.',
   noDM: true,
-  module: 'default',
   level: 3,
   fn: function (msg, suffix, bot) {
     var Permissions = require('../databases/controllers/permissions.js')
@@ -300,7 +297,6 @@ Commands.setnsfw = {
   name: 'setnsfw',
   help: 'This changes if the channel allows NSFW commands.',
   noDM: true,
-  module: 'default',
   usage: '<on | off>',
   level: 3,
   fn: function (msg, suffix) {
@@ -338,7 +334,6 @@ Commands.hello = {
 Commands.setstatus = {
   name: 'setstatus',
   help: 'This will change my current status to something else.',
-  module: 'default',
   usage: '<online / idle / twitch url> [playing status]',
   level: 'master',
   fn: function (msg, suffix, bot) {
@@ -368,7 +363,6 @@ Commands['server-info'] = {
   help: "I'll tell you some information about the server you're currently in.",
   aliases: ['serverinfo'],
   noDM: true,
-  module: 'default',
   timeout: 20,
   level: 0,
   fn: function (msg) {
@@ -409,7 +403,6 @@ Commands.userinfo = {
   name: 'userinfo',
   help: "I'll get some information about the user you've mentioned.",
   noDM: true,
-  module: 'default',
   level: 0,
   fn: function (msg) {
     var Permissions = require('../databases/controllers/permissions.js')
@@ -484,7 +477,6 @@ Commands['join-server'] = {
   name: 'join-server',
   help: "I'll join the server you've requested me to join, as long as the invite is valid and I'm not banned of already in the requested server.",
   aliases: ['join', 'joinserver', 'invite'],
-  module: 'default',
   usage: '<bot-mention> <instant-invite>',
   level: 0,
   fn: function (msg, suffix, bot) {
@@ -538,7 +530,6 @@ Commands.kick = {
   name: 'kick',
   help: 'Kick the user(s) out of the server!',
   noDM: true,
-  module: 'default',
   usage: '<user-mention>',
   level: 0,
   fn: function (msg, suffix, bot) {
@@ -572,7 +563,6 @@ Commands.ban = {
   name: 'ban',
   help: 'Swing the banhammer on someone!',
   noDM: true,
-  module: 'default',
   usage: '<user-mention> [days]',
   level: 0,
   fn: function (msg, suffix, bot) {
@@ -609,7 +599,6 @@ Commands.ban = {
 Commands.prefix = {
   name: 'prefix',
   help: "If you, despite reading this have no clue what my prefix is, I'll tell you!",
-  module: 'default',
   timeout: 5,
   level: 0,
   fn: function (msg) {

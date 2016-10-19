@@ -62,7 +62,6 @@ Commands.rip = {
 Commands.fortunecow = {
   name: 'fortunecow',
   help: "I'll get a random fortunecow!",
-  module: 'fun',
   timeout: 20,
   level: 0,
   fn: function (msg) {
@@ -79,7 +78,6 @@ Commands.randomcat = {
   name: 'randomcat',
   help: "I'll get a random cat image for you!",
   aliases: ['cat'],
-  module: 'fun',
   timeout: 10,
   level: 0,
   fn: function (msg) {
@@ -465,7 +463,6 @@ Commands.magic8ball = {
   name: 'magic8ball',
   help: "I'll make a prediction using a Magic 8 Ball",
   aliases: ['8ball'],
-  module: 'fun',
   timeout: 5,
   level: 0,
   fn: function (msg) {
