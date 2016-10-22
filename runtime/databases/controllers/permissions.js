@@ -23,7 +23,7 @@ exports.checkLevel = function (msg, user, roles) {
       return resolve(0)
     }
     getDatabaseDocument(msg.guild).then((d) => {
-      if (user.id === d.superUser) {
+      if (user === d.superUser) {
         return resolve(4)
       }
       var level = d.perms.standard.everyone
