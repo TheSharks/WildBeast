@@ -104,6 +104,15 @@ Commands.tag = {
             }
           }
         })
+      } else if (index[0].toLowerCase() === 'raw') {
+        r.db('Discord').table('Tags').get(index[1].toLowerCase()).run().then((g) => {
+          if (g === null) {
+            msg.channel.sendMessage('This tag does not exist.')
+          } else {
+            var cp = g.content.replace('@everyone', '@every\u200Bone').replace('@here', '@he\u200Bre')
+            msg.channel.sendMessage('`' + cp + '`')
+          }
+        })
       } else {
         r.db('Discord').table('Tags').get(index[0].toLowerCase()).run().then((g) => {
           if (g === null) {
