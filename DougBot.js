@@ -8,16 +8,24 @@ try {
   process.exit()
 }
 
+var argv = require('minimist')(process.argv.slice(2))
+var Logger = require('./runtime/internal/logger.js').Logger
+
+if (argv.createdatabase) {
+  Logger.info('Creating crucial database info...')
+  require('./runtime/internal/datacreate.js').create()
+  Logger.info('Done, please restart without createdatabase flag.')
+  process.exit()
+}
+
 var Discordie = require('discordie')
 var Event = Discordie.Events
 var bot
 var runtime = require('./runtime/runtime.js')
-var Logger = runtime.internal.logger.Logger
 var timeout = runtime.internal.timeouts
 var commands = runtime.commandcontrol.Commands
 var aliases = runtime.commandcontrol.Aliases
 var datacontrol = runtime.datacontrol
-var argv = require('minimist')(process.argv.slice(2))
 var Config
 var restarted = false
 
