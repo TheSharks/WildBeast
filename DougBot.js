@@ -11,12 +11,7 @@ try {
 var argv = require('minimist')(process.argv.slice(2))
 var Logger = require('./runtime/internal/logger.js').Logger
 
-if (argv.createdatabase) {
-  Logger.info('Creating crucial database info...')
-  require('./runtime/internal/datacreate.js').create()
-  Logger.info('Done, please restart without createdatabase flag.')
-  process.exit()
-}
+require('./runtime/internal/datacreate.js').check()
 
 var Discordie = require('discordie')
 var Event = Discordie.Events

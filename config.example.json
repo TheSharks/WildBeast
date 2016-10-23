@@ -8,7 +8,9 @@
   },
   "database":{
     "host": "localhost",
-    "port": 28015
+    "port": 28015,
+    "password": "",
+    "user": "admin"
   },
   "settings": {
     "prefix": "anything can be entered as the global prefix, refer to installation guide",

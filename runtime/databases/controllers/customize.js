@@ -2,6 +2,9 @@
 var Config = require('../../../config.json')
 var Dash = require('rethinkdbdash')
 var r = new Dash({
+  user: Config.database.user,
+  password: Config.database.password,
+  silent: true,
   servers: [{
     host: Config.database.host,
     port: Config.database.port
