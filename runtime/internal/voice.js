@@ -417,9 +417,9 @@ function fetch (v, msg, stats) {
     }
     var options
     if (v.indexOf('youtu') > -1) {
-      options = ['--skip-download', '--add-header', 'Authorization:' + Config.api_keys.google]
+      options = ['--skip-download', '-f bestaudio/worstvideo', '--add-header', 'Authorization:' + Config.api_keys.google]
     } else {
-      options = ['--skip-download']
+      options = ['--skip-download', '-f bestaudio/worstvideo']
     }
     YT.getInfo(v, options, function (err, i) {
       if (!err && i) {
@@ -503,7 +503,8 @@ function DLFetch (video, msg) {
   return new Promise(function (resolve, reject) {
     var first = false
     DL.getInfo('https://youtube.com/watch?v=' + video.snippet.resourceId.videoId, {
-      quality: 140
+      quality: 140,
+      filter: 'audio'
     }, (err, i) => {
       if (!err && i) {
         if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {
