@@ -1,7 +1,9 @@
 # 4.0.0
 ## Release phase
 ### 4.0.0
-Retired nedb for datastorage, now using RethinkDB.   
+Retired nedb for datastorage, now using RethinkDB.  
+Tags now use TagScript.     
+YouTubeDL now tries to get only audio.    
 
 # 3.0.0
 ## Release phase
