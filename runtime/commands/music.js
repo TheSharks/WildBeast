@@ -117,7 +117,7 @@ Commands.request = {
   fn: function (msg, suffix, bot) {
     var u = require('url').parse(suffix)
     if (u.host === null) {
-      msg.channel.sendMessage("That's not how you do it, you need to enter a link to a file for me to play.")
+      v.request(msg, 'ytsearch:' + suffix, bot)
     } else {
       v.request(msg, suffix, bot)
     }
