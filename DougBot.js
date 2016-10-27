@@ -4,7 +4,7 @@ process.title = 'WildBeast'
 try {
   require('./config.json')
 } catch (e) {
-  console.log("\nWildBeast encountered an error while trying to load the config file, please resolve this issue and restart WildBeast\n\n" + e.message)
+  console.log('\nWildBeast encountered an error while trying to load the config file, please resolve this issue and restart WildBeast\n\n' + e.message)
   process.exit()
 }
 
@@ -61,7 +61,7 @@ bot.Dispatcher.on(Event.GATEWAY_READY, function () {
   })
   Logger.info('Ready to start!')
   Logger.info(`Logged in as ${bot.User.username}#${bot.User.discriminator} (ID: ${bot.User.id}) and serving ${bot.Users.length} users in ${bot.Guilds.length} servers.`)
-  if(argv.shutdownwhenready) {
+  if (argv.shutdownwhenready) {
     console.log('o okei bai')
     process.exit(0)
   }
