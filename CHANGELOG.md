@@ -1,7 +1,7 @@
 # 4.0.0
 ## Release phase
 ### 4.0.0
-**This update is a breaking change, back up your configs before updating!** 
+**This update is a breaking change, back up your configs before updating!**     
 Retired nedb for datastorage, now using RethinkDB. Setup process now requires setup of local RDB server, documentation updated to reflect.     
 Tags now use TagScript which allows for a more flexible tag system.     
 YouTubeDL now tries to get only audio to lower your bandwidth usage.     
