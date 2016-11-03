@@ -1,65 +1,53 @@
 'use strict'
-var Db = require('nedb')
-var Logger = require('../../internal/logger.js').Logger
-var database = new Db({
-  filename: './runtime/databases/customize',
-  autoload: true
+var Config = require('../../../config.json')
+var Dash = require('rethinkdbdash')
+var r = new Dash({
+  user: Config.database.user,
+  password: Config.database.password,
+  silent: true,
+  servers: [{
+    host: Config.database.host,
+    port: Config.database.port
+  }]
 })
+var Logger = require('../../internal/logger.js').Logger
 
 exports.prefix = function (msg) {
   return new Promise(function (resolve, reject) {
     if (msg.isPrivate) {
       return resolve(false)
     }
-    database.find({
-      _id: msg.guild.id
-    }, function (err, doc) {
-      if (err) {
-        reject(err)
-      } else if (doc) {
-        if (doc.length <= 0) {
-          initialize(msg.guild)
-          return reject()
-        }
-        try {
-          return resolve(doc[0].settings.prefix)
-        } catch (e) {
-          initialize(msg.guild)
-          return reject('Try/catch block reject!')
-        }
-      }
+    getDatabaseDocument(msg.guild).then((i) => {
+      resolve((i.customize.prefix === null) ? false : i.customize.prefix)
+    }).catch(() => {
+      initialize(msg.guild)
+      reject('No database')
     })
   })
 }
 
 exports.check = function (guild) {
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: guild.id
-    }, function (err, doc) {
-      if (err) {
-        reject(err)
-      } else if (doc) {
-        resolve(doc[0].settings.welcoming)
-      }
+    getDatabaseDocument(guild).then((i) => {
+      resolve(i.customize.welcome)
+    }).catch(() => {
+      initialize(guild)
+      reject('No database')
     })
   })
 }
 
 exports.reply = function (msg, what) {
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: msg.guild.id
-    }, function (err, doc) {
-      if (err) {
-        reject(err)
-      } else if (doc) {
-        if (!doc[0].replies.hasOwnProperty(what)) {
-          reject('Not supported!')
-        } else {
-          resolve(doc[0].replies[what])
-        }
+    getDatabaseDocument(msg.guild).then((t) => {
+      if (!t.customize.hasOwnProperty(what)) {
+        return reject('Unsupported reply method')
+      } else {
+        return resolve(t.customize[what])
       }
+    }).catch((e) => {
+      initialize(msg.guild)
+      reject(e)
     })
   })
 }
@@ -100,27 +88,18 @@ exports.helpHandle = function (msg) {
 
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: guild.id
-    }, function (err, docs) {
-      if (err) {
-        reject(err)
-      } else if (docs) {
-        if (docs.length > 0) {
-          database.remove({
-            _id: guild.id
-          }, function (err) {
-            if (err) {
-              return reject(err)
-            }
-          })
-        }
-      }
-      initialize(guild).then(() => {
-        return resolve('Done!')
+    getDatabaseDocument(guild).then((d) => {
+      r.db('Discord').table('Guilds').delete(d).run().then(() => {
+        initialize(guild).then(() => {
+          resolve('Done!')
+        }).catch((e) => {
+          reject(e)
+        })
       }).catch((e) => {
-        return reject(e)
+        reject(e)
       })
+    }).catch((e) => {
+      reject(e)
     })
   })
 }
@@ -128,113 +107,87 @@ exports.restore = function (guild) {
 exports.adjust = function (msg, what, how) {
   /* eslint indent: 0 */
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: msg.guild.id
-    }, function (err, doc) {
-      if (err) {
-        reject(err)
-      } else if (doc) {
-        switch (what) {
-          case 'welcoming':
-            if (how !== 'off' && how !== 'private' && how !== 'channel') {
-              return reject('Welcoming can only be `off`, `private` or `channel`')
+    getDatabaseDocument(msg.guild).then(() => {
+      switch (what) {
+        case 'nsfw':
+          r.db('Discord').table('Guilds').get(msg.guild.id).update({
+            customize: {
+              nsfw: how
             }
-            database.update({
-              _id: msg.guild.id
-            }, {
-              $set: {
-                'settings.welcoming': how
-              }
-            }, {}, function (err, doc) {
-              if (err) {
-                reject(err)
-              } else if (doc) {
-                resolve(how)
-              }
-            })
-            break
-          case 'nsfw':
-            database.update({
-              _id: msg.guild.id
-            }, {
-              $set: {
-                'replies.nsfw': how
-              }
-            }, {}, function (err, doc) {
-              if (err) {
-                reject(err)
-              } else if (doc) {
-                resolve(how)
-              }
-            })
-            break
-          case 'permissions':
-            database.update({
-              _id: msg.guild.id
-            }, {
-              $set: {
-                'replies.permissions': how
-              }
-            }, {}, function (err, doc) {
-              if (err) {
-                reject(err)
-              } else if (doc) {
-                resolve(how)
-              }
-            })
-            break
-          case 'welcome':
-            database.update({
-              _id: msg.guild.id
-            }, {
-              $set: {
-                'replies.welcome': how
-              }
-            }, {}, function (err, doc) {
-              if (err) {
-                reject(err)
-              } else if (doc) {
-                resolve(how)
-              }
-            })
-            break
-          case 'timeout':
-            database.update({
-              _id: msg.guild.id
-            }, {
-              $set: {
-                'replies.timeout': how
-              }
-            }, {}, function (err, doc) {
-              if (err) {
-                reject(err)
-              } else if (doc) {
-                resolve(how)
-              }
-            })
-            break
-          case 'prefix':
-            if (how.indexOf('"') === -1) {
-              return reject('`Put new prefixes between double quotes please.`')
+          }).run().then(() => {
+            resolve(how)
+          }).catch((e) => {
+            reject(e)
+          })
+          break
+        case 'permissions':
+          r.db('Discord').table('Guilds').get(msg.guild.id).update({
+            customize: {
+              perms: how
             }
-            database.update({
-              _id: msg.guild.id
-            }, {
-              $set: {
-                'settings.prefix': how.split('"')[1]
-              }
-            }, {}, function (err, doc) {
-              if (err) {
-                reject(err)
-              } else if (doc) {
-                resolve(how.split('"')[1])
-              }
-            })
-            break
-          default:
-            reject('Not supported!')
-        }
+          }).run().then(() => {
+            resolve(how)
+          }).catch((e) => {
+            reject(e)
+          })
+          break
+        case 'prefix':
+          if (how.indexOf('"') === -1) {
+            return reject('`Put new prefixes between double quotes please.`')
+          }
+          r.db('Discord').table('Guilds').get(msg.guild.id).update({
+            customize: {
+              prefix: how.split('"')[1]
+            }
+          }).run().then(() => {
+            resolve(how.split('"')[1])
+          }).catch((e) => {
+            reject(e)
+          })
+          break
+        case 'timeout':
+          r.db('Discord').table('Guilds').get(msg.guild.id).update({
+            customize: {
+              timeout: how
+            }
+          }).run().then(() => {
+            resolve(how)
+          }).catch((e) => {
+            reject(e)
+          })
+          break
+        case 'welcoming':
+          if (how !== 'on' && how !== 'off' && how !== 'private' && how !== 'channel') {
+            return reject('`Invalid target.`')
+          }
+          r.db('Discord').table('Guilds').get(msg.guild.id).update({
+            customize: {
+              welcome: how
+            }
+          }).run().then(() => {
+            resolve(how)
+          }).catch((e) => {
+            reject(e)
+          })
+          break
+        case 'welcome':
+          r.db('Discord').table('Guilds').get(msg.guild.id).update({
+            customize: {
+              welcomeMessage: how
+            }
+          }).run().then(() => {
+            resolve(how)
+          }).catch((e) => {
+            reject(e)
+          })
+          break
+        default:
+          reject('Unsupported method')
+          break
       }
+    }).catch(() => {
+      initialize(msg.guild)
+      reject('No database')
     })
   })
 }
@@ -242,48 +195,67 @@ exports.adjust = function (msg, what, how) {
 function initialize (guild) {
   return new Promise(function (resolve, reject) {
     var doc = {
-      _id: guild.id,
-      replies: {
-        permissions: 'default',
-        welcome: 'default',
-        nsfw: 'default',
-        timeout: 'default'
+      customize: {
+        nsfw: null,
+        perms: null,
+        prefix: null,
+        timeout: null,
+        welcome: false,
+        welcomeMessage: null
       },
-      settings: {
-        welcoming: false,
-        prefix: false
-      }
+      id: guild.id,
+      lang: 'en',
+      perms: {
+        roles: {
+          level1: [],
+          level2: [],
+          level3: [],
+          negative: []
+        },
+        standard: {
+          everyone: 0,
+          level1: [],
+          level2: [],
+          level3: [],
+          negative: []
+        },
+        nsfw: []
+      },
+      superUser: guild.owner_id
     }
-    database.insert(doc, function (err, doc) {
-      if (err) {
-        reject(err)
-      } else if (doc) {
-        resolve('ok')
-      }
+    r.db('Discord').table('Guilds').insert(doc).run().then(() => {
+      resolve('ok')
+    }).catch((e) => {
+      Logger.error(e)
+      reject(e)
     })
   })
 }
 
 exports.isKnown = function (guild) {
   return new Promise(function (resolve, reject) {
-    database.find({
-      _id: guild.id
-    }, function (err, docs) {
-      if (err) {
-        reject(err)
-      } else if (docs) {
-        if (docs.length <= 0) {
-          initialize(guild).then((r) => {
-            resolve(r)
-          }).catch((e) => {
-            reject(e)
-          })
-        } else {
-          resolve()
-        }
+    getDatabaseDocument(guild).then((r) => {
+      if (r !== null) {
+        return resolve()
+      } else {
+        return reject()
       }
+    }).catch((e) => {
+      reject(e)
     })
   })
 }
 
-exports.Database = database
+function getDatabaseDocument (guild) {
+  return new Promise(function (resolve, reject) {
+    r.db('Discord').table('Guilds').get(guild.id).then((t) => {
+      if (t !== null) {
+        resolve(t)
+      } else {
+        reject(null)
+      }
+    }).catch((e) => {
+      reject(e)
+    })
+  })
+}

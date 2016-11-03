@@ -6,6 +6,12 @@
     "password": "Again if you need this, optional",
     "oauth": "Bot OAuth URL, see wiki"
   },
+  "database":{
+    "host": "localhost",
+    "port": 28015,
+    "password": "",
+    "user": "admin"
+  },
   "settings": {
     "prefix": "anything can be entered as the global prefix, refer to installation guide",
     "autodeletemsg": true,

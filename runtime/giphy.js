@@ -2,7 +2,7 @@ var qs = require('querystring')
 
 exports.get_gif = function (tags, func) {
   var params = {
-    'api_key': 'dc6zaTOxFJmzC',
+    'api_key': 'dc6zaTOxFJmzC', // This is Giphy's public API key, so no, I haven't leaked my keys
     'rating': 'r',
     'format': 'json',
     'limit': 1

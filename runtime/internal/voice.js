@@ -72,37 +72,35 @@ exports.join = function (msg, suffix, bot) {
         })
       }
     } else if (!voiceCheck) {
-      msg.channel.guild.voiceChannels
-        .forEach((channel) => {
-          if (channel.name.toLowerCase().indexOf(suffix.toLowerCase()) >= 0) {
-            channel.join().then((vc) => {
-              var prefix = Config.settings.prefix
-              require('../datacontrol.js').customize.prefix(msg).then((r) => {
-                if (r !== false) prefix = r
-              })
-              var joinmsg = []
-              joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
-              joinmsg.push(`You have until the end of the wait music to request something.`)
-              joinmsg.push(`__**Voice Commands**__`)
-              joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
-              joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
-              joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
-              joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
-              joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
-              joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
-              joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
-              joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
-              joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
-              msg.channel.sendMessage(joinmsg.join('\n'))
-              status[msg.guild.id] = true
-              waiting(vc, msg, bot)
-            }).catch((err) => {
-              if (err.message === 'Missing permission') {
-                msg.reply('Could not join channel as I do not have `Connect` permissions.')
-              }
-            })
-          }
+      var channel = msg.channel.guild.voiceChannels.find((a) => {
+        return a.name.toLowerCase().indexOf(suffix.toLowerCase()) >= 0
+      })
+      channel.join().then((vc) => {
+        var prefix = Config.settings.prefix
+        require('../datacontrol.js').customize.prefix(msg).then((r) => {
+          if (r !== false) prefix = r
         })
+        var joinmsg = []
+        joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
+        joinmsg.push(`You have until the end of the wait music to request something.`)
+        joinmsg.push(`__**Voice Commands**__`)
+        joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+        joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
+        joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
+        joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
+        joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
+        joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
+        joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
+        joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
+        joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
+        msg.channel.sendMessage(joinmsg.join('\n'))
+        status[msg.guild.id] = true
+        waiting(vc, msg, bot)
+      }).catch((err) => {
+        if (err.message === 'Missing permission') {
+          msg.reply('Could not join channel as I do not have `Connect` permissions.')
+        }
+      })
     } else {
       msg.reply('I am already streaming on this server in channel **' + voiceCheck.voiceConnection.channel.name + '**').then((m) => {
         if (Config.settings.autodeletemsg) {
@@ -247,7 +245,7 @@ exports.voteSkip = function (msg, bot) {
   } else if (list[msg.guild.id] === undefined) {
     msg.reply('Try requesting a song first before voting to skip.')
   } else if (msg.member.getVoiceChannel().id !== connect[0].voiceConnection.channel.id) {
-    msg.reply('You\'re not allowed to vote because you\'re not in the voice channel.')
+    msg.reply("You're not allowed to vote because you're not in the voice channel.")
   } else {
     var count = Math.round((connect[0].voiceConnection.channel.members.length - 2) / 2)
     if (list[msg.guild.id].skips.users.indexOf(msg.author.id) > -1) {
@@ -417,9 +415,9 @@ function fetch (v, msg, stats) {
     }
     var options
     if (v.indexOf('youtu') > -1) {
-      options = ['--skip-download', '--add-header', 'Authorization:' + Config.api_keys.google]
+      options = ['--skip-download', '-f bestaudio/worstvideo', '--add-header', 'Authorization:' + Config.api_keys.google]
     } else {
-      options = ['--skip-download']
+      options = ['--skip-download', '-f bestaudio/worstvideo']
     }
     YT.getInfo(v, options, function (err, i) {
       if (!err && i) {
@@ -503,7 +501,8 @@ function DLFetch (video, msg) {
   return new Promise(function (resolve, reject) {
     var first = false
     DL.getInfo('https://youtube.com/watch?v=' + video.snippet.resourceId.videoId, {
-      quality: 140
+      quality: 140,
+      filter: 'audio'
     }, (err, i) => {
       if (!err && i) {
         if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {

@@ -443,7 +443,7 @@ Commands.meme = {
     var imgflipper = new Imgflipper(config.api_keys.imgflip.username, config.api_keys.imgflip.password)
     imgflipper.generateMeme(meme[memetype], tags[1] ? tags[1] : '', tags[3] ? tags[3] : '', (err, image) => {
       if (err) {
-        msg.reply('Please try again.')
+        msg.reply('Please try again, use `help meme` if you do not know how to use this command.')
       } else {
         var guild = msg.guild
         var user = bot.User

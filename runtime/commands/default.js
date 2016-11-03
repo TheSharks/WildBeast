@@ -12,7 +12,7 @@ Commands.ping = {
   fn: function (msg) {
     var initTime = new Date(msg.timestamp)
     msg.reply('Pong!').then((m) => {
-      m.edit('<@' + msg.author.id + '>, Pong! Time taken ' + Math.floor(new Date(m.timestamp) - initTime) + ' ms.')
+      m.edit('<@' + msg.author.id + '>, Pong! Time taken: ' + Math.floor(new Date(m.timestamp) - initTime) + ' ms.')
     })
   }
 }
@@ -278,7 +278,7 @@ Commands.setlevel = {
       msg.reply('Your first parameter is not a number!')
     } else if (suffix[0] > 3) {
       msg.channel.sendMessage('Setting a level higher than 3 is not allowed.')
-    } else if (msg.mentions.length === 0 && msg.mention_roles.length === 0) {
+    } else if (msg.mentions.length === 0 && msg.mention_roles.length === 0 && !msg.mention_everyone) {
       msg.reply('Please @mention the user(s)/role(s) you want to set the permission level of.')
     } else if (msg.mentions.length === 1 && msg.mentions[0].id === bot.User.id) {
       msg.reply("I don't need any level set, I can do anything regardless of access levels.")
@@ -412,7 +412,7 @@ Commands.userinfo = {
     if (msg.mentions.length === 0) {
       Permissions.checkLevel(msg, msg.author.id, msg.member.roles).then((level) => {
         var msgArray = []
-        var tempRoles = msg.member.roles.sort(function (a,b) {return a.position - b.position}).reverse()
+        var tempRoles = msg.member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
         var roles = []
         for (var i in tempRoles) {
           roles.push(tempRoles[i].name)
@@ -444,7 +444,7 @@ Commands.userinfo = {
         var msgArray = []
         var guild = msg.guild
         var member = guild.members.find((m) => m.id === user.id)
-        var tempRoles = member.roles.sort(function (a,b) {return a.position - b.position}).reverse()
+        var tempRoles = member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
         var roles = []
         for (var i in tempRoles) {
           roles.push(tempRoles[i].name)
@@ -605,7 +605,7 @@ Commands.prefix = {
     var datacontrol = require('../datacontrol')
     datacontrol.customize.prefix(msg).then((prefix) => {
       if (prefix) {
-        msg.channel.sendMessage(`My prefix is ${prefix}`)
+        msg.channel.sendMessage(`My prefix on this server is ${prefix}`)
       } else {
         msg.channel.sendMessage(`My prefix is ${config.settings.prefix}`) // Default prefix, if none is set in customize
       }
