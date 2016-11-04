@@ -78,20 +78,23 @@ Commands.randomcat = {
   name: 'randomcat',
   help: "I'll get a random cat image for you!",
   aliases: ['cat'],
+  module: 'fun',
   timeout: 10,
   level: 0,
   fn: function (msg) {
-    unirest.get('https://nijikokun-random-cats.p.mashape.com/random')
-      .header('X-Mashape-Key', config.api_keys.mashape)
-      .header('Accept', 'application/json')
-      .end(function (result) {
+    var request = require('request')
+    request('http://random.cat/meow', function (error, response, body) {
+      if (!error && response.statusCode === 200) {
         try {
-          msg.reply(result.body.source)
+          JSON.parse(body)
         } catch (e) {
-          Logger.error(e)
-          msg.reply('Something went wrong, try again later.')
+          msg.channel.sendMessage('The API returned an unconventional response.')
+          return
         }
-      })
+        var cat = JSON.parse(body)
+        msg.channel.sendMessage(cat.file)
+      }
+    })
   }
 }
 
