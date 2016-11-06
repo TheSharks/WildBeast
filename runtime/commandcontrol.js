@@ -70,7 +70,7 @@ exports.helpHandle = function (msg, suffix) {
       y.sendMessage(msgArraytwo.join('\n'))
     }).catch((e) => {
       Logger.error(e)
-      msg.channel.sendMessage('Well, this is akward, something went wrong while trying to PM you, do you have them enabled on this server?')
+      msg.channel.sendMessage('Well, this is awkward, something went wrong while trying to PM you. Do you have them enabled on this server?')
     })
   } else if (suffix) {
     if (commands[suffix] || alias[suffix]) {
