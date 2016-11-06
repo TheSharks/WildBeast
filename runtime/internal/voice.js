@@ -282,6 +282,17 @@ exports.volume = function (msg, suffix, bot) {
 }
 
 exports.skip = function (msg, suffix, bot) {
+  var connect = bot.VoiceConnections
+    .filter(function (connection) {
+      return connection.voiceConnection.guild.id === msg.guild.id
+    })
+  if (connect.length < 1) {
+    msg.reply('No connection.')
+    return
+  } else if (list[msg.guild.id] === undefined) {
+    msg.reply('Try requesting a song first before skipping.')
+    return
+  }
   list[msg.guild.id].link.shift()
   list[msg.guild.id].info.shift()
   list[msg.guild.id].requester.shift()
