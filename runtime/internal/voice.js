@@ -72,15 +72,10 @@ exports.join = function (msg, suffix, bot) {
         })
       }
     } else if (!voiceCheck) {
-      var VCChannels = []
-      msg.guild.voiceChannels
-          .find((c) => {
-            VCChannels.push(c.name.toLowerCase())
-          })
-      if (VCChannels.indexOf(suffix.toLowerCase()) !== -1) {
-        var channel = msg.channel.guild.voiceChannels.find((a) => {
-          return a.name.toLowerCase().indexOf(suffix.toLowerCase()) >= 0
-        })
+      var channel = msg.channel.guild.voiceChannels.find((a) => {
+        return a.name.toLowerCase().indexOf(suffix.toLowerCase()) >= 0
+      })
+      if (channel !== undefined) {
         channel.join().then((vc) => {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
