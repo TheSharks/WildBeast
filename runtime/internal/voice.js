@@ -75,32 +75,36 @@ exports.join = function (msg, suffix, bot) {
       var channel = msg.channel.guild.voiceChannels.find((a) => {
         return a.name.toLowerCase().indexOf(suffix.toLowerCase()) >= 0
       })
-      channel.join().then((vc) => {
-        var prefix = Config.settings.prefix
-        require('../datacontrol.js').customize.prefix(msg).then((r) => {
-          if (r !== false) prefix = r
+      if (channel === undefined) {
+        msg.reply('That is not a valid voice channel.')
+      } else {
+        channel.join().then((vc) => {
+          var prefix = Config.settings.prefix
+          require('../datacontrol.js').customize.prefix(msg).then((r) => {
+            if (r !== false) prefix = r
+          })
+          var joinmsg = []
+          joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
+          joinmsg.push(`You have until the end of the wait music to request something.`)
+          joinmsg.push(`__**Voice Commands**__`)
+          joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+          joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
+          joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
+          joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
+          joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
+          joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
+          joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
+          joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
+          joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
+          msg.channel.sendMessage(joinmsg.join('\n'))
+          status[msg.guild.id] = true
+          waiting(vc, msg, bot)
+        }).catch((err) => {
+          if (err.message === 'Missing permission') {
+            msg.reply('Could not join channel as I do not have `Connect` permissions.')
+          }
         })
-        var joinmsg = []
-        joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
-        joinmsg.push(`You have until the end of the wait music to request something.`)
-        joinmsg.push(`__**Voice Commands**__`)
-        joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
-        joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
-        joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
-        joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
-        joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
-        joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
-        joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
-        joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
-        joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
-        msg.channel.sendMessage(joinmsg.join('\n'))
-        status[msg.guild.id] = true
-        waiting(vc, msg, bot)
-      }).catch((err) => {
-        if (err.message === 'Missing permission') {
-          msg.reply('Could not join channel as I do not have `Connect` permissions.')
-        }
-      })
+      }
     } else {
       msg.reply('I am already streaming on this server in channel **' + voiceCheck.voiceConnection.channel.name + '**').then((m) => {
         if (Config.settings.autodeletemsg) {
@@ -204,7 +208,7 @@ function next (msg, suffix, bot) {
               if (Config.settings.autodeletemsg) {
                 setTimeout(() => {
                   m.delete().catch((e) => Logger.error(e))
-                }, Config.settingsdeleteTimeout)
+                }, Config.settings.deleteTimeout)
               }
             })
             connection.voiceConnection.disconnect()
@@ -214,24 +218,37 @@ function next (msg, suffix, bot) {
     })
 }
 
-exports.shuffle = function (msg) {
-  var currentIndex = list[msg.guild.id].link.length
-  var temporaryValue
-  var randomIndex
-  while (currentIndex !== 0) {
-    randomIndex = Math.floor(Math.random() * currentIndex)
-    currentIndex -= 1
-    if (currentIndex !== 0 && randomIndex !== 0) {
-      temporaryValue = list[msg.guild.id].link[currentIndex]
-      list[msg.guild.id].link[currentIndex] = list[msg.guild.id].link[randomIndex]
-      list[msg.guild.id].link[randomIndex] = temporaryValue
-      temporaryValue = list[msg.guild.id].info[currentIndex]
-      list[msg.guild.id].info[currentIndex] = list[msg.guild.id].info[randomIndex]
-      list[msg.guild.id].info[randomIndex] = temporaryValue
-      temporaryValue = list[msg.guild.id].requester[currentIndex]
-      list[msg.guild.id].requester[currentIndex] = list[msg.guild.id].requester[randomIndex]
-      list[msg.guild.id].requester[randomIndex] = temporaryValue
+exports.shuffle = function (msg, bot) {
+  var connect = bot.VoiceConnections
+      .filter(function (connection) {
+        return connection.voiceConnection.guild.id === msg.guild.id
+      })
+  if (connect.length < 1) {
+    msg.reply('I am not currently in any voice channel.')
+  } else if (list[msg.guild.id] === undefined) {
+    msg.reply("There's nothing in the playlist for me to shuffle!")
+  } else if (list[msg.guild.id].link !== undefined && list[msg.guild.id].link.length <= 4) {
+    msg.reply('Add more songs to the playlist before using this command again.')
+  } else {
+    var currentIndex = list[msg.guild.id].link.length
+    var temporaryValue
+    var randomIndex
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex)
+      currentIndex -= 1
+      if (currentIndex !== 0 && randomIndex !== 0) {
+        temporaryValue = list[msg.guild.id].link[currentIndex]
+        list[msg.guild.id].link[currentIndex] = list[msg.guild.id].link[randomIndex]
+        list[msg.guild.id].link[randomIndex] = temporaryValue
+        temporaryValue = list[msg.guild.id].info[currentIndex]
+        list[msg.guild.id].info[currentIndex] = list[msg.guild.id].info[randomIndex]
+        list[msg.guild.id].info[randomIndex] = temporaryValue
+        temporaryValue = list[msg.guild.id].requester[currentIndex]
+        list[msg.guild.id].requester[currentIndex] = list[msg.guild.id].requester[randomIndex]
+        list[msg.guild.id].requester[randomIndex] = temporaryValue
+      }
     }
+    msg.reply('Playlist has been shuffled')
   }
 }
 
