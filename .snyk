@@ -1,0 +1,6 @@
+version: v1.5.0
+ignore: {}
+patch:
+  'npm:tough-cookie:20160722':
+    - youtube-api > googleapis > request > tough-cookie:
+        patched: '2016-11-09T10:37:02.218Z'
