@@ -72,10 +72,10 @@ exports.join = function (msg, suffix, bot) {
         })
       }
     } else if (!voiceCheck) {
-      var VCChannels = [];
+      var VCChannels = []
       msg.guild.voiceChannels
           .find((c) => {
-            VCChannels.push(c.name.toLowerCase());
+            VCChannels.push(c.name.toLowerCase())
           })
       if (VCChannels.indexOf(suffix.toLowerCase()) !== -1) {
         var channel = msg.channel.guild.voiceChannels.find((a) => {
