@@ -25,6 +25,9 @@ exports.join = function (msg, suffix, bot) {
   if (bot.VoiceConnections.length > Config.settings.maxvcslots) {
     msg.channel.sendMessage('Sorry, all streaming slots are taken, try again later. :cry:')
   } else {
+    list[msg.guild.id] = {
+      vanity: false
+    }
     var voiceCheck = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
     if (!voiceCheck && !suffix) {
       var VC = msg.member.getVoiceChannel()
@@ -65,7 +68,7 @@ exports.join = function (msg, suffix, bot) {
           joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** because you didn't specify a voice channel for me to join.`)
           joinmsg.push(`You have until the end of the wait music to request something.`)
           joinmsg.push(`__**Voice Commands**__`)
-          joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+          joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link,  or any kind of compatible music file.*`)
           joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
           joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
           joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
@@ -466,9 +469,10 @@ function fetch (v, msg, stats) {
     YT.getInfo(v, options, function (err, i) {
       if (!err && i) {
         y++
-        if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {
+        if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
           list[msg.guild.id] = {
             link: [i.url],
+            vanity: false,
             info: [i.title],
             volume: 100,
             requester: [msg.author.username],
@@ -549,8 +553,9 @@ function DLFetch (video, msg) {
       filter: 'audio'
     }, (err, i) => {
       if (!err && i) {
-        if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {
+        if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
           list[msg.guild.id] = {
+            vanity: false,
             link: [],
             info: [],
             volume: 100,
