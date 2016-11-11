@@ -9,6 +9,18 @@ var fs = require('fs')
 var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
 
+exports.registerVanity = function (msg) {
+  list[msg.guild.id] = {
+    vanity: true
+  }
+}
+
+exports.unregisterVanity = function (msg) {
+  list[msg.guild.id] = {
+    vanity: false
+  }
+}
+
 exports.join = function (msg, suffix, bot) {
   if (bot.VoiceConnections.length > Config.settings.maxvcslots) {
     msg.channel.sendMessage('Sorry, all streaming slots are taken, try again later. :cry:')
@@ -220,9 +232,9 @@ function next (msg, suffix, bot) {
 
 exports.shuffle = function (msg, bot) {
   var connect = bot.VoiceConnections
-      .filter(function (connection) {
-        return connection.voiceConnection.guild.id === msg.guild.id
-      })
+    .filter(function (connection) {
+      return connection.voiceConnection.guild.id === msg.guild.id
+    })
   if (connect.length < 1) {
     msg.reply('I am not currently in any voice channel.')
   } else if (list[msg.guild.id] === undefined) {
@@ -344,6 +356,10 @@ exports.fetchList = function (msg) {
 }
 
 exports.request = function (msg, suffix, bot) {
+  if (list[msg.guild.id].vanity === true) {
+    msg.reply(`You've used a special command to get the bot into a voice channel, you cannot use regular voice commands while this is active.`)
+    return
+  }
   var connect = bot.VoiceConnections
     .filter(function (connection) {
       return connection.voiceConnection.guild.id === msg.guild.id
