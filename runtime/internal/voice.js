@@ -359,84 +359,82 @@ exports.fetchList = function (msg) {
 }
 
 exports.request = function (msg, suffix, bot) {
-  if (list[msg.guild.id].vanity === true) {
-    msg.reply(`You've used a special command to get the bot into a voice channel, you cannot use regular voice commands while this is active.`)
-    return
-  }
   var connect = bot.VoiceConnections
     .filter(function (connection) {
       return connection.voiceConnection.guild.id === msg.guild.id
     })
   if (connect.length < 1) {
     msg.channel.sendMessage("I'm not connected to any voice channel in this server, try initializing me with the command `voice` first!")
-    return
-  }
-  var link = require('url').parse(suffix)
-  var query = require('querystring').parse(link.query)
-  msg.channel.sendTyping()
-  if (suffix.includes('list=') !== suffix.includes('playlist?')) {
-    requestLink[msg.guild.id] = suffix
-    if (suffix.includes('youtu.be')) { // If the link is shortened with youtu.be
-      splitLink[msg.guild.id] = requestLink[msg.guild.id].split('?list=') // Check for this instead of &list
-      msg.channel.sendMessage(`Try that again with either a link to the video or the playlist.
+  } else if (list[msg.guild.id].vanity) {
+    msg.reply(`You've used a special command to get the bot into a voice channel, you cannot use regular voice commands while this is active.`)
+  } else {
+    var link = require('url').parse(suffix)
+    var query = require('querystring').parse(link.query)
+    msg.channel.sendTyping()
+    if (suffix.includes('list=') !== suffix.includes('playlist?')) {
+      requestLink[msg.guild.id] = suffix
+      if (suffix.includes('youtu.be')) { // If the link is shortened with youtu.be
+        splitLink[msg.guild.id] = requestLink[msg.guild.id].split('?list=') // Check for this instead of &list
+        msg.channel.sendMessage(`Try that again with either a link to the video or the playlist.
 **Video:** <${splitLink[msg.guild.id][0]}>
 **Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
+      } else {
+        splitLink[msg.guild.id] = requestLink[msg.guild.id].split('&list=')
+        msg.channel.sendMessage(`Try that again with either a link to the video or the playlist.
+**Video:** <${splitLink[msg.guild.id][0]}>
+**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
+      }
+    } else if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
+      msg.channel.sendMessage('Playlist fetching might take a while...')
+      var api = require('youtube-api')
+      api.authenticate({
+        type: 'key',
+        key: Config.api_keys.google
+      })
+      api.playlistItems.list({
+        part: 'snippet',
+        pageToken: [],
+        maxResults: 50,
+        playlistId: query.list
+      }, function (err, data) {
+        if (err) {
+          msg.channel.sendMessage('Something went wrong while requesting information about this playlist.').then((m) => {
+            if (Config.settings.autodeletemsg) {
+              setTimeout(() => {
+                m.delete().catch((e) => Logger.error(e))
+              }, Config.settings.deleteTimeout)
+            }
+          })
+          Logger.error('Playlist failiure, ' + err)
+          return
+        } else if (data) {
+          temp = data.items
+          safeLoop(msg, suffix, bot)
+        }
+      })
     } else {
-      splitLink[msg.guild.id] = requestLink[msg.guild.id].split('&list=')
-      msg.channel.sendMessage(`Try that again with either a link to the video or the playlist.
-**Video:** <${splitLink[msg.guild.id][0]}>
-**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
-    }
-  } else if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
-    msg.channel.sendMessage('Playlist fetching might take a while...')
-    var api = require('youtube-api')
-    api.authenticate({
-      type: 'key',
-      key: Config.api_keys.google
-    })
-    api.playlistItems.list({
-      part: 'snippet',
-      pageToken: [],
-      maxResults: 50,
-      playlistId: query.list
-    }, function (err, data) {
-      if (err) {
-        msg.channel.sendMessage('Something went wrong while requesting information about this playlist.').then((m) => {
+      fetch(suffix, msg).then((r) => {
+        msg.channel.sendMessage(`Added **${r.title}** to the playlist.`).then((m) => {
           if (Config.settings.autodeletemsg) {
             setTimeout(() => {
               m.delete().catch((e) => Logger.error(e))
             }, Config.settings.deleteTimeout)
           }
         })
-        Logger.error('Playlist failiure, ' + err)
-        return
-      } else if (data) {
-        temp = data.items
-        safeLoop(msg, suffix, bot)
-      }
-    })
-  } else {
-    fetch(suffix, msg).then((r) => {
-      msg.channel.sendMessage(`Added **${r.title}** to the playlist.`).then((m) => {
-        if (Config.settings.autodeletemsg) {
-          setTimeout(() => {
-            m.delete().catch((e) => Logger.error(e))
-          }, Config.settings.deleteTimeout)
+        if (r.autoplay === true) {
+          next(msg, suffix, bot)
         }
+      }).catch((e) => {
+        Logger.error(e)
+        msg.channel.sendMessage("I couldn't add that to the playlist.").then((m) => {
+          if (Config.settings.autodeletemsg) {
+            setTimeout(() => {
+              m.delete().catch((e) => Logger.error(e))
+            }, Config.settings.deleteTimeout)
+          }
+        })
       })
-      if (r.autoplay === true) {
-        next(msg, suffix, bot)
-      }
-    }).catch((e) => {
-      Logger.error(e)
-      msg.channel.sendMessage("I couldn't add that to the playlist.").then((m) => {
-        if (Config.settings.autodeletemsg) {
-          setTimeout(() => {
-            m.delete().catch((e) => Logger.error(e))
-          }, Config.settings.deleteTimeout)
-        }
-      })
-    })
+    }
   }
 }
 
