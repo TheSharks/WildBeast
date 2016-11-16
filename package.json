@@ -23,8 +23,7 @@
     "prestart": "npm update",
     "test": "standard & eslint **",
     "start": "node DougBot.js",
-    "snyk-protect": "snyk protect",
-    "prepublish": "npm run snyk-protect"
+    "snyk-protect": "snyk protect"
   },
   "author": {
     "name": "Remco Jongschaap",
