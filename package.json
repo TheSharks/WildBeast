@@ -22,7 +22,9 @@
   "scripts": {
     "prestart": "npm update",
     "test": "standard & eslint **",
-    "start": "node DougBot.js"
+    "start": "node DougBot.js",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "author": {
     "name": "Remco Jongschaap",
@@ -60,10 +62,12 @@
     "xml2js": "^0.4.16",
     "youtube-api": "^2.0.2",
     "youtube-dl": "^1.11.1",
-    "ytdl-core": "^0.7.15"
+    "ytdl-core": "^0.7.15",
+    "snyk": "^1.19.1"
   },
   "devDependencies": {
     "eslint": "^3.0.0",
     "standard": "^8.1.0"
-  }
+  },
+  "snyk": true
 }

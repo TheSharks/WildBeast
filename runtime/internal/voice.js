@@ -9,10 +9,25 @@ var fs = require('fs')
 var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
 
+exports.registerVanity = function (msg) {
+  list[msg.guild.id] = {
+    vanity: true
+  }
+}
+
+exports.unregisterVanity = function (msg) {
+  list[msg.guild.id] = {
+    vanity: false
+  }
+}
+
 exports.join = function (msg, suffix, bot) {
   if (bot.VoiceConnections.length > Config.settings.maxvcslots) {
     msg.channel.sendMessage('Sorry, all streaming slots are taken, try again later. :cry:')
   } else {
+    list[msg.guild.id] = {
+      vanity: false
+    }
     var voiceCheck = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
     if (!voiceCheck && !suffix) {
       var VC = msg.member.getVoiceChannel()
@@ -53,7 +68,7 @@ exports.join = function (msg, suffix, bot) {
           joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** because you didn't specify a voice channel for me to join.`)
           joinmsg.push(`You have until the end of the wait music to request something.`)
           joinmsg.push(`__**Voice Commands**__`)
-          joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+          joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link,  or any kind of compatible music file.*`)
           joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
           joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
           joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
@@ -75,32 +90,36 @@ exports.join = function (msg, suffix, bot) {
       var channel = msg.channel.guild.voiceChannels.find((a) => {
         return a.name.toLowerCase().indexOf(suffix.toLowerCase()) >= 0
       })
-      channel.join().then((vc) => {
-        var prefix = Config.settings.prefix
-        require('../datacontrol.js').customize.prefix(msg).then((r) => {
-          if (r !== false) prefix = r
+      if (channel === undefined) {
+        msg.reply('That is not a valid voice channel.')
+      } else {
+        channel.join().then((vc) => {
+          var prefix = Config.settings.prefix
+          require('../datacontrol.js').customize.prefix(msg).then((r) => {
+            if (r !== false) prefix = r
+          })
+          var joinmsg = []
+          joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
+          joinmsg.push(`You have until the end of the wait music to request something.`)
+          joinmsg.push(`__**Voice Commands**__`)
+          joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+          joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
+          joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
+          joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
+          joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
+          joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
+          joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
+          joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
+          joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
+          msg.channel.sendMessage(joinmsg.join('\n'))
+          status[msg.guild.id] = true
+          waiting(vc, msg, bot)
+        }).catch((err) => {
+          if (err.message === 'Missing permission') {
+            msg.reply('Could not join channel as I do not have `Connect` permissions.')
+          }
         })
-        var joinmsg = []
-        joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
-        joinmsg.push(`You have until the end of the wait music to request something.`)
-        joinmsg.push(`__**Voice Commands**__`)
-        joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
-        joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
-        joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
-        joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
-        joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
-        joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
-        joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
-        joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
-        joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
-        msg.channel.sendMessage(joinmsg.join('\n'))
-        status[msg.guild.id] = true
-        waiting(vc, msg, bot)
-      }).catch((err) => {
-        if (err.message === 'Missing permission') {
-          msg.reply('Could not join channel as I do not have `Connect` permissions.')
-        }
-      })
+      }
     } else {
       msg.reply('I am already streaming on this server in channel **' + voiceCheck.voiceConnection.channel.name + '**').then((m) => {
         if (Config.settings.autodeletemsg) {
@@ -204,7 +223,7 @@ function next (msg, suffix, bot) {
               if (Config.settings.autodeletemsg) {
                 setTimeout(() => {
                   m.delete().catch((e) => Logger.error(e))
-                }, Config.settingsdeleteTimeout)
+                }, Config.settings.deleteTimeout)
               }
             })
             connection.voiceConnection.disconnect()
@@ -214,24 +233,37 @@ function next (msg, suffix, bot) {
     })
 }
 
-exports.shuffle = function (msg) {
-  var currentIndex = list[msg.guild.id].link.length
-  var temporaryValue
-  var randomIndex
-  while (currentIndex !== 0) {
-    randomIndex = Math.floor(Math.random() * currentIndex)
-    currentIndex -= 1
-    if (currentIndex !== 0 && randomIndex !== 0) {
-      temporaryValue = list[msg.guild.id].link[currentIndex]
-      list[msg.guild.id].link[currentIndex] = list[msg.guild.id].link[randomIndex]
-      list[msg.guild.id].link[randomIndex] = temporaryValue
-      temporaryValue = list[msg.guild.id].info[currentIndex]
-      list[msg.guild.id].info[currentIndex] = list[msg.guild.id].info[randomIndex]
-      list[msg.guild.id].info[randomIndex] = temporaryValue
-      temporaryValue = list[msg.guild.id].requester[currentIndex]
-      list[msg.guild.id].requester[currentIndex] = list[msg.guild.id].requester[randomIndex]
-      list[msg.guild.id].requester[randomIndex] = temporaryValue
+exports.shuffle = function (msg, bot) {
+  var connect = bot.VoiceConnections
+    .filter(function (connection) {
+      return connection.voiceConnection.guild.id === msg.guild.id
+    })
+  if (connect.length < 1) {
+    msg.reply('I am not currently in any voice channel.')
+  } else if (list[msg.guild.id] === undefined) {
+    msg.reply("There's nothing in the playlist for me to shuffle!")
+  } else if (list[msg.guild.id].link !== undefined && list[msg.guild.id].link.length <= 4) {
+    msg.reply('Add more songs to the playlist before using this command again.')
+  } else {
+    var currentIndex = list[msg.guild.id].link.length
+    var temporaryValue
+    var randomIndex
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex)
+      currentIndex -= 1
+      if (currentIndex !== 0 && randomIndex !== 0) {
+        temporaryValue = list[msg.guild.id].link[currentIndex]
+        list[msg.guild.id].link[currentIndex] = list[msg.guild.id].link[randomIndex]
+        list[msg.guild.id].link[randomIndex] = temporaryValue
+        temporaryValue = list[msg.guild.id].info[currentIndex]
+        list[msg.guild.id].info[currentIndex] = list[msg.guild.id].info[randomIndex]
+        list[msg.guild.id].info[randomIndex] = temporaryValue
+        temporaryValue = list[msg.guild.id].requester[currentIndex]
+        list[msg.guild.id].requester[currentIndex] = list[msg.guild.id].requester[randomIndex]
+        list[msg.guild.id].requester[randomIndex] = temporaryValue
+      }
     }
+    msg.reply('Playlist has been shuffled')
   }
 }
 
@@ -333,74 +365,76 @@ exports.request = function (msg, suffix, bot) {
     })
   if (connect.length < 1) {
     msg.channel.sendMessage("I'm not connected to any voice channel in this server, try initializing me with the command `voice` first!")
-    return
-  }
-  var link = require('url').parse(suffix)
-  var query = require('querystring').parse(link.query)
-  msg.channel.sendTyping()
-  if (suffix.includes('list=') !== suffix.includes('playlist?')) {
-    requestLink[msg.guild.id] = suffix
-    if (suffix.includes('youtu.be')) { // If the link is shortened with youtu.be
-      splitLink[msg.guild.id] = requestLink[msg.guild.id].split('?list=') // Check for this instead of &list
-      msg.channel.sendMessage(`Try that again with either a link to the video or the playlist.
+  } else if (list[msg.guild.id].vanity) {
+    msg.reply(`You've used a special command to get the bot into a voice channel, you cannot use regular voice commands while this is active.`)
+  } else {
+    var link = require('url').parse(suffix)
+    var query = require('querystring').parse(link.query)
+    msg.channel.sendTyping()
+    if (suffix.includes('list=') !== suffix.includes('playlist?')) {
+      requestLink[msg.guild.id] = suffix
+      if (suffix.includes('youtu.be')) { // If the link is shortened with youtu.be
+        splitLink[msg.guild.id] = requestLink[msg.guild.id].split('?list=') // Check for this instead of &list
+        msg.channel.sendMessage(`Try that again with either a link to the video or the playlist.
 **Video:** <${splitLink[msg.guild.id][0]}>
 **Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
+      } else {
+        splitLink[msg.guild.id] = requestLink[msg.guild.id].split('&list=')
+        msg.channel.sendMessage(`Try that again with either a link to the video or the playlist.
+**Video:** <${splitLink[msg.guild.id][0]}>
+**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
+      }
+    } else if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
+      msg.channel.sendMessage('Playlist fetching might take a while...')
+      var api = require('youtube-api')
+      api.authenticate({
+        type: 'key',
+        key: Config.api_keys.google
+      })
+      api.playlistItems.list({
+        part: 'snippet',
+        pageToken: [],
+        maxResults: 50,
+        playlistId: query.list
+      }, function (err, data) {
+        if (err) {
+          msg.channel.sendMessage('Something went wrong while requesting information about this playlist.').then((m) => {
+            if (Config.settings.autodeletemsg) {
+              setTimeout(() => {
+                m.delete().catch((e) => Logger.error(e))
+              }, Config.settings.deleteTimeout)
+            }
+          })
+          Logger.error('Playlist failiure, ' + err)
+          return
+        } else if (data) {
+          temp = data.items
+          safeLoop(msg, suffix, bot)
+        }
+      })
     } else {
-      splitLink[msg.guild.id] = requestLink[msg.guild.id].split('&list=')
-      msg.channel.sendMessage(`Try that again with either a link to the video or the playlist.
-**Video:** <${splitLink[msg.guild.id][0]}>
-**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[msg.guild.id][1]}>`)
-    }
-  } else if (query.list && query.list.length > 8 && link.host.indexOf('youtu') > -1) {
-    msg.channel.sendMessage('Playlist fetching might take a while...')
-    var api = require('youtube-api')
-    api.authenticate({
-      type: 'key',
-      key: Config.api_keys.google
-    })
-    api.playlistItems.list({
-      part: 'snippet',
-      pageToken: [],
-      maxResults: 50,
-      playlistId: query.list
-    }, function (err, data) {
-      if (err) {
-        msg.channel.sendMessage('Something went wrong while requesting information about this playlist.').then((m) => {
+      fetch(suffix, msg).then((r) => {
+        msg.channel.sendMessage(`Added **${r.title}** to the playlist.`).then((m) => {
           if (Config.settings.autodeletemsg) {
             setTimeout(() => {
               m.delete().catch((e) => Logger.error(e))
             }, Config.settings.deleteTimeout)
           }
         })
-        Logger.error('Playlist failiure, ' + err)
-        return
-      } else if (data) {
-        temp = data.items
-        safeLoop(msg, suffix, bot)
-      }
-    })
-  } else {
-    fetch(suffix, msg).then((r) => {
-      msg.channel.sendMessage(`Added **${r.title}** to the playlist.`).then((m) => {
-        if (Config.settings.autodeletemsg) {
-          setTimeout(() => {
-            m.delete().catch((e) => Logger.error(e))
-          }, Config.settings.deleteTimeout)
+        if (r.autoplay === true) {
+          next(msg, suffix, bot)
         }
+      }).catch((e) => {
+        Logger.error(e)
+        msg.channel.sendMessage("I couldn't add that to the playlist.").then((m) => {
+          if (Config.settings.autodeletemsg) {
+            setTimeout(() => {
+              m.delete().catch((e) => Logger.error(e))
+            }, Config.settings.deleteTimeout)
+          }
+        })
       })
-      if (r.autoplay === true) {
-        next(msg, suffix, bot)
-      }
-    }).catch((e) => {
-      Logger.error(e)
-      msg.channel.sendMessage("I couldn't add that to the playlist.").then((m) => {
-        if (Config.settings.autodeletemsg) {
-          setTimeout(() => {
-            m.delete().catch((e) => Logger.error(e))
-          }, Config.settings.deleteTimeout)
-        }
-      })
-    })
+    }
   }
 }
 
@@ -433,9 +467,10 @@ function fetch (v, msg, stats) {
     YT.getInfo(v, options, function (err, i) {
       if (!err && i) {
         y++
-        if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {
+        if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
           list[msg.guild.id] = {
             link: [i.url],
+            vanity: false,
             info: [i.title],
             volume: 100,
             requester: [msg.author.username],
@@ -516,8 +551,9 @@ function DLFetch (video, msg) {
       filter: 'audio'
     }, (err, i) => {
       if (!err && i) {
-        if (list[msg.guild.id] === undefined || list[msg.guild.id].link.length < 1) {
+        if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
           list[msg.guild.id] = {
+            vanity: false,
             link: [],
             info: [],
             volume: 100,

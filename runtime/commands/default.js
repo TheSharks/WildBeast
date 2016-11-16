@@ -24,6 +24,10 @@ Commands.say = {
   timeout: 10,
   level: 0,
   fn: function (msg, suffix) {
+    if (!suffix) {
+      msg.reply('Cannot send an empty message, ya doof.')
+      return
+    }
     var re = /(discord(\.gg|app\.com\/invite)\/([\w]{16}|([\w]+-?){3}))/
     if (msg.mentions.length >= 5) {
       msg.reply('No more than five mentions at a time please.')
@@ -206,7 +210,7 @@ Commands.info = {
     } catch (e) {
       owner = `'s ID is ${config.permissions.master[0]}`
     }
-    msg.channel.sendMessage('```xl\n' + `I am ${bot.User.username}#${bot.User.discriminator}, and my ID is ${bot.User.id}
+    msg.channel.sendMessage('```fix\n' + `I am ${bot.User.username}#${bot.User.discriminator}, and my ID is ${bot.User.id}
 I am running on WildBeast version ${require('../../package.json').version}
 My owner${owner}
 My developer is Dougley#6248

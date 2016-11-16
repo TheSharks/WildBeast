@@ -219,6 +219,10 @@ Commands.urbandictionary = {
   timeout: 10,
   level: 0,
   fn: function (msg, suffix) {
+    if (!suffix) {
+      msg.reply('Yes, let\'s just look up absolutly nothing.')
+      return
+    }
     var request = require('request')
     request('http://api.urbandictionary.com/v0/define?term=' + suffix, function (error, response, body) {
       if (!error && response.statusCode === 200) {
@@ -468,7 +472,11 @@ Commands.magic8ball = {
   aliases: ['8ball'],
   timeout: 5,
   level: 0,
-  fn: function (msg) {
+  fn: function (msg, suffix) {
+    if (!suffix) {
+      msg.reply('I mean I can shake this 8ball all I want but without a question it\'s kinda dumb.')
+      return
+    }
     var answers = [
       'Signs point to yes.',
       'Yes.',

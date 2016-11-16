@@ -39,9 +39,8 @@ Commands.shuffle = {
   help: 'Shuffle the current playlist.',
   noDM: true,
   level: 2,
-  fn: function (msg) {
-    v.shuffle(msg)
-    msg.reply('Playlist shuffled')
+  fn: function (msg, suffix, bot) {
+    v.shuffle(msg, bot)
   }
 }
 
