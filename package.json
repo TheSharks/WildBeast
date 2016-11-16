@@ -38,7 +38,7 @@
     "url": "git+https://github.com/TheSharks/WildBeast.git"
   },
   "engines": {
-    "node": "4.x.x - 5.10.1",
+    "node": "4.x.x - 6.x.x",
     "npm": ">=3.x.x"
   },
   "license": "GPL-3.0",
