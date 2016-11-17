@@ -23,7 +23,7 @@ exports.unregisterVanity = function (msg) {
 
 exports.join = function (msg, suffix, bot) {
   if (bot.VoiceConnections.length > Config.settings.maxvcslots) {
-    msg.channel.sendMessage('Sorry, all streaming slots are taken, try again later. :cry:')
+    msg.channel.sendMessage('Sorry, maximum limit of voice connections has been reached. Try again later.')
   } else {
     list[msg.guild.id] = {
       vanity: false
