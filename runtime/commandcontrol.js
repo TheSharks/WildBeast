@@ -1,5 +1,7 @@
 'use strict'
 var directory = require('require-directory')
+var bugsnag = require("bugsnag")
+bugsnag.register("4ffbc0d61936b035a66bf59ef0afc3f4")
 var com = directory(module, './commands', {
   exclude: /custom/
 })
@@ -120,6 +122,7 @@ exports.helpHandle = function (msg, suffix) {
           y.sendMessage(msgArray.join('\n'))
         }).catch((e) => {
           Logger.error(e)
+          bugsnag.notify(e)
           msg.channel.sendMessage('Whoops, try again.')
         })
       }

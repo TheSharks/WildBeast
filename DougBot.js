@@ -1,6 +1,9 @@
 'use strict'
 process.title = 'WildBeast'
 
+var bugsnag = require("bugsnag")
+bugsnag.register("4ffbc0d61936b035a66bf59ef0afc3f4")
+
 try {
   require('./config.json')
 } catch (e) {
@@ -259,9 +262,11 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
   }
 })
 
-process.on('unhandledRejection', (reason, p) => {
-  Logger.debug(`Unhandled promise: ${require('util').inspect(p, {depth:3})}: ${reason}`) // I'm lazy
+process.on('unhandledRejection', (err, promise) => {
+  Logger.debug("Unhandled rejection: " + (err && err.stack || err))
+  bugsnag.notify(err)
 })
+
 
 function start () {
   try {

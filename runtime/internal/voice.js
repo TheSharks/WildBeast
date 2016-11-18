@@ -8,6 +8,8 @@ var YT = require('youtube-dl')
 var fs = require('fs')
 var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
+var bugsnag = require("bugsnag")
+bugsnag.register("4ffbc0d61936b035a66bf59ef0afc3f4")
 
 exports.registerVanity = function (msg) {
   list[msg.guild.id] = {
@@ -509,6 +511,7 @@ function fetch (v, msg, stats) {
           }
         }
       } else if (err) {
+        bugsnag.notify(err)
         y++
         if (y > x) {
           return reject({
@@ -570,6 +573,7 @@ function DLFetch (video, msg) {
         list[msg.guild.id].requester.push(msg.author.username)
         return resolve(first)
       } else {
+        bugsnag.notify(err)
         Logger.debug('Playlist debug, ' + err)
         return reject(first)
       }

@@ -3,6 +3,8 @@ var request = require('request')
 var config = require('../../config.json')
 var Logger = require('../internal/logger.js').Logger
 var argv = require('minimist')(process.argv.slice(2))
+var bugsnag = require("bugsnag")
+bugsnag.register("4ffbc0d61936b035a66bf59ef0afc3f4")
 
 Commands.ping = {
   name: 'ping',
@@ -155,6 +157,9 @@ Commands.twitch = {
         'Client-ID': config.api_keys.twitchId
       }
     }, function (error, response, body) {
+      if (error) {
+        bugsnag.notify(error)
+      }
       if (!error && response.statusCode === 200) {
         var resp
         try {
@@ -291,6 +296,7 @@ Commands.setlevel = {
         msg.channel.sendMessage('Alright! The permission levels have been set successfully!')
       }).catch(function (err) {
         msg.channel.sendMessage('Help! Something went wrong!')
+        bugsnag.notify(err)
         Logger.error(err)
       })
     }
