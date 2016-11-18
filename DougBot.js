@@ -262,9 +262,8 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
   }
 })
 
-process.on('unhandledRejection', (err) => {
-  Logger.debug("Unhandled rejection: " + ((err !== null && err.stack) ? err.stack : err))
-  bugsnag.notify(err)
+process.on('unhandledRejection', (reason, p) => {
+  bugsnag.notify(new Error(`Unhandled promise: ${require('util').inspect(p, {depth:3})}: ${reason}`))
 })
 
 
