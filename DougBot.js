@@ -1,8 +1,8 @@
 'use strict'
 process.title = 'WildBeast'
 
-var bugsnag = require("bugsnag")
-bugsnag.register("4ffbc0d61936b035a66bf59ef0afc3f4")
+var bugsnag = require('bugsnag')
+bugsnag.register('4ffbc0d61936b035a66bf59ef0afc3f4')
 
 try {
   require('./config.json')
@@ -263,9 +263,10 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
 })
 
 process.on('unhandledRejection', (reason, p) => {
-  bugsnag.notify(new Error(`Unhandled promise: ${require('util').inspect(p, {depth:3})}: ${reason}`))
+  if (p !== null && reason !== null) {
+    bugsnag.notify(new Error(`Unhandled promise: ${require('util').inspect(p, {depth:3})}: ${reason}`))
+  }
 })
-
 
 function start () {
   try {
