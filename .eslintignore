@@ -4,6 +4,8 @@
 *.log
 *.mp3
 *.exe
+*.yml
+*.sh
 customize
 perms
 users
@@ -11,3 +13,4 @@ ffmpeg
 ffprobe
 ffplay
 ffserver
+Dockerfile
