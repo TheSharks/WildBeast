@@ -262,8 +262,8 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
   }
 })
 
-process.on('unhandledRejection', (err, promise) => {
-  Logger.debug("Unhandled rejection: " + (err && err.stack || err))
+process.on('unhandledRejection', (err) => {
+  Logger.debug("Unhandled rejection: " + ((err.stack) ? err.stack : err))
   bugsnag.notify(err)
 })
 
