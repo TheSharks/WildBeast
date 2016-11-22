@@ -62,8 +62,9 @@ exports.helpHandle = function (msg, suffix) {
     msgArray.push('```')
     msgArraytwo.push('```ini')
     msgArraytwo.push(cmdtwo.sort().join('\n') + '\n')
-    msgArraytwo.push('For questions: https://discord.gg/0cFoiR5QVh5LZlQO')
     msgArraytwo.push('```')
+    msgArraytwo.push('If you want more information on the commands, check the command reference at http://docs.thesharks.xyz/commands.')
+    msgArraytwo.push('For further questions, join our server: https://discord.gg/0cFoiR5QVh5LZlQO')
     msg.author.openDM().then((y) => {
       if (!msg.isPrivate) {
         msg.channel.sendMessage('Help is underway ' + msg.author.mention + '!')
