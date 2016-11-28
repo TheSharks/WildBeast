@@ -9,7 +9,7 @@ var fs = require('fs')
 var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
 var bugsnag = require('bugsnag')
-bugsnag.register(config.api_keys.bugsnag)
+bugsnag.register(Config.api_keys.bugsnag)
 
 exports.registerVanity = function (msg) {
   list[msg.guild.id] = {
