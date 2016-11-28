@@ -91,7 +91,7 @@ exports.helpHandle = function (msg) {
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
     getDatabaseDocument(guild).then((d) => {
-      r.db('Discord').table('Guilds').delete(d).run().then(() => {
+      r.db('Discord').table('Guilds').get(guild.id).delete().run().then(() => {
         initialize(guild).then(() => {
           resolve('Done!')
         }).catch((e) => {

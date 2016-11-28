@@ -92,7 +92,7 @@ exports.adjustLevel = function (msg, users, level, roles) {
         d.perms.standard.negative.push.apply(d.perms.standard.negative, userIds)
       }
 
-      r.db('Discord').table('Guilds').update(d).run().then(() => {
+      r.db('Discord').table('Guilds').get(msg.guild.id).update(d).run().then(() => {
         resolve('Done!')
       }).catch((e) => {
         reject(e)
@@ -107,7 +107,7 @@ exports.adjustLevel = function (msg, users, level, roles) {
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
       getDatabaseDocument(guild).then((d) => {
-          r.db('Discord').table('Guilds').delete(d).run().then(() => {
+          r.db('Discord').table('Guilds').get(guild.id).delete().run().then(() => {
               initialize(guild).then(() => {
                   resolve('Done!')
               }).catch((e) => {
@@ -144,7 +144,7 @@ exports.adjustNSFW = function (msg, what) {
             resolve(1)
           } else {
             d.perms.nsfw.push(msg.channel.id.toString())
-            r.db('Discord').table('Guilds').update(d).run().then(() => {
+            r.db('Discord').table('Guilds').get(msg.guild.id).update(d).run().then(() => {
               resolve(1)
             }).catch((e) => {
               Logger.error(e)
@@ -157,7 +157,7 @@ exports.adjustNSFW = function (msg, what) {
         getDatabaseDocument(msg.guild).then((d) => {
           if (d.perms.nsfw.indexOf(msg.channel.id) > -1) {
             d.perms.nsfw.splice(d.perms.nsfw.indexOf(msg.channel.id), 1)
-              r.db('Discord').table('Guilds').update(d).run().then(() => {
+              r.db('Discord').table('Guilds').get(msg.guild.id).update(d).run().then(() => {
                 resolve(0)
             }).catch((e) => {
                 Logger.error(e)
