@@ -15,7 +15,7 @@ exports.namechange = function (user) {
   return new Promise(function (resolve, reject) {
     getDatabaseDocument(user).then((d) => {
       d.names.push(user.username)
-      r.db('Discord').table('Users').update(d).run().then(() => {
+      r.db('Discord').table('Users').get(user.id).update(d).run().then(() => {
         resolve()
       }).catch((e) => {
         reject(e)
