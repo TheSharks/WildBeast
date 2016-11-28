@@ -1,5 +1,6 @@
 'use strict'
 var v = require('../internal/voice.js')
+var checkLevel = require('../databases/controllers/permissions.js').checkLevel
 var Commands = []
 
 Commands.music = {
@@ -71,37 +72,48 @@ Commands.playlist = {
   noDM: true,
   timeout: 5,
   level: 0,
-  fn: function (msg, suffix) {
+  fn: function (msg, suffix, bot) {
     suffix = suffix.toLowerCase().split(' ')
-    if (suffix[0] === 'delete') {
-      v.deleteFromPlaylist(msg, suffix[1]-1).then(s => {
-        msg.channel.sendMessage(`**${s}** has been removed from the playlist`).then(m => {
-            setTimeout(() => {
-                m.delete()
-            }, 15000)
-        })
-      }).catch(e => {
-        msg.channel.sendMessage(e)
-      })
-    } else {
-      v.fetchList(msg).then((r) => {
-        var arr = []
-        arr.push('Now playing: **' + r.info[0] + '** \n')
-        for (var i = 1; i < r.info.length; i++) {
-          arr.push((i + 1) + '. **' + r.info[i] + '** Requested by ' + r.requester[i])
-          if (i === 9) {
-            if (r.info.length - 10 !== 0) arr.push( 'And about ' + (r.info.length - 10) + ' more songs.')
-            break
+    var connect = bot.VoiceConnections.find(v => v.voiceConnection.guild.id === msg.guild.id)
+    if (connect) {
+      if (suffix[0] === 'delete') {
+        checkLevel(msg, msg.author.id, msg.member.roles).then(function (r) {
+          if (r >= 1) {
+            v.deleteFromPlaylist(msg, suffix[1] - 1).then(s => {
+              msg.channel.sendMessage(`**${s}** has been removed from the playlist`).then(m => {
+                setTimeout(() => {
+                  m.delete()
+                }, 15000)
+              })
+            }).catch(e => {
+              msg.channel.sendMessage(e)
+            })
+          } else {
+            msg.channel.sendMessage('You have no permission to run this command!\nYou need level 1, you have level ' + r + '\nAsk the server owner to modify your level with `setlevel`.')
           }
-        }
-        msg.channel.sendMessage(arr.join('\n')).then((m) => {
-          setTimeout(() => {
-            m.delete()
-          }, 15000)
         })
-      }).catch(() => {
-        msg.channel.sendMessage("It appears that there aren't any songs in the current queue.")
-      })
+      } else {
+        v.fetchList(msg).then((r) => {
+          var arr = []
+          arr.push('Now playing: **' + r.info[0] + '** \n')
+          for (var i = 1; i < r.info.length; i++) {
+            arr.push((i + 1) + '. **' + r.info[i] + '** Requested by ' + r.requester[i])
+            if (i === 9) {
+              if (r.info.length - 10 !== 0) arr.push('And about ' + (r.info.length - 10) + ' more songs.')
+              break
+            }
+          }
+          msg.channel.sendMessage(arr.join('\n')).then((m) => {
+            setTimeout(() => {
+              m.delete()
+            }, 15000)
+          })
+        }).catch(() => {
+          msg.channel.sendMessage("It appears that there aren't any songs in the current queue.")
+        })
+      }
+    } else {
+      msg.channel.sendMessage('I am not streaming music in this server.')
     }
   }
 }
