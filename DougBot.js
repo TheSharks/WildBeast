@@ -241,7 +241,7 @@ bot.Dispatcher.on(Event.GATEWAY_RESUMED, function () {
 })
 
 bot.Dispatcher.on(Event.PRESENCE_MEMBER_INFO_UPDATE, (user) => {
-  datacontrol.users.isKnown(user.new).catch(() => {
+  datacontrol.users.isKnown(user.new).then(() => {
     if (user.old.username !== user.new.username) {
       datacontrol.users.namechange(user.new).catch((e) => {
         Logger.error(e)
