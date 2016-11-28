@@ -4,7 +4,7 @@ var config = require('../../config.json')
 var Logger = require('../internal/logger.js').Logger
 var argv = require('minimist')(process.argv.slice(2))
 var bugsnag = require('bugsnag')
-bugsnag.register('config.api_keys.bugsnag')
+bugsnag.register(config.api_keys.bugsnag)
 
 Commands.ping = {
   name: 'ping',
