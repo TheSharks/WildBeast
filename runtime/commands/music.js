@@ -76,7 +76,7 @@ Commands.playlist = {
     suffix = suffix.toLowerCase().split(' ')
     var connect = bot.VoiceConnections.find(v => v.voiceConnection.guild.id === msg.guild.id)
     if (connect) {
-      if (suffix[0] === 'delete') {
+      if (suffix[0] === 'delete' && suffix[1] >= 2) {
         checkLevel(msg, msg.author.id, msg.member.roles).then(function (r) {
           if (r >= 1) {
             v.deleteFromPlaylist(msg, suffix[1] - 1).then(s => {
