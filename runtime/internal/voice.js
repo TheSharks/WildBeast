@@ -360,6 +360,19 @@ exports.fetchList = function (msg) {
   })
 }
 
+exports.deleteFromPlaylist = function (msg, what) {
+  return new Promise(function (resolve, reject) {
+    if (list[msg.guild.id].info[what] !== undefined) {
+      resolve(list[msg.guild.id].info[what])
+      list[msg.guild.id].info.splice(what, 1)
+      list[msg.guild.id].requester.splice(what, 1)
+      list[msg.guild.id].link.splice(what, 1)
+    } else {
+      reject('That is not a valid song number.')
+    }
+  })
+}
+
 exports.request = function (msg, suffix, bot) {
   var connect = bot.VoiceConnections
     .filter(function (connection) {
@@ -407,7 +420,7 @@ exports.request = function (msg, suffix, bot) {
               }, Config.settings.deleteTimeout)
             }
           })
-          Logger.error('Playlist failiure, ' + err)
+          Logger.error('Playlist faiiure, ' + err)
           return
         } else if (data) {
           temp = data.items
