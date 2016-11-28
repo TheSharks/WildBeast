@@ -66,30 +66,43 @@ Commands.skip = {
 
 Commands.playlist = {
   name: 'playlist',
-  help: "I'll fetch you the playlist I'm currently playing!",
+  help: "Use delete and a song number to remove it from the list else I will fetch you the playlist I'm currently playing!",
   aliases: ['list'],
   noDM: true,
-  timeout: 10,
+  timeout: 5,
   level: 0,
-  fn: function (msg) {
-    v.fetchList(msg).then((r) => {
-      var arr = []
-      arr.push('Now playing: **' + r.info[0] + '** \n')
-      for (var i = 1; i < r.info.length; i++) {
-        arr.push((i + 1) + '. **' + r.info[i] + '** Requested by ' + r.requester[i])
-        if (i === 9) {
-          arr.push('And about ' + (r.info.length - 10) + ' more songs.')
-          break
-        }
-      }
-      msg.channel.sendMessage(arr.join('\n')).then((m) => {
-        setTimeout(() => {
-          m.delete()
-        }, 15000)
+  fn: function (msg, suffix) {
+    suffix = suffix.toLowerCase().split(' ')
+    if (suffix[0] === 'delete') {
+      v.deleteFromPlaylist(msg, suffix[1]-1).then(s => {
+        msg.channel.sendMessage(`**${s}** has been removed from the playlist`).then(m => {
+            setTimeout(() => {
+                m.delete()
+            }, 15000)
+        })
+      }).catch(e => {
+        msg.channel.sendMessage(e)
       })
-    }).catch(() => {
-      msg.channel.sendMessage("It appears that there aren't any songs in the current queue.")
-    })
+    } else {
+      v.fetchList(msg).then((r) => {
+        var arr = []
+        arr.push('Now playing: **' + r.info[0] + '** \n')
+        for (var i = 1; i < r.info.length; i++) {
+          arr.push((i + 1) + '. **' + r.info[i] + '** Requested by ' + r.requester[i])
+          if (i === 9) {
+            if (r.info.length - 10 !== 0) arr.push( 'And about ' + (r.info.length - 10) + ' more songs.')
+            break
+          }
+        }
+        msg.channel.sendMessage(arr.join('\n')).then((m) => {
+          setTimeout(() => {
+            m.delete()
+          }, 15000)
+        })
+      }).catch(() => {
+        msg.channel.sendMessage("It appears that there aren't any songs in the current queue.")
+      })
+    }
   }
 }
 
