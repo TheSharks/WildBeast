@@ -554,7 +554,10 @@ function DLFetch (video, msg) {
       filter: 'audio'
     }, (err, i) => {
       if (!err && i) {
-        if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
+        if (list[msg.guild.id] === undefined) {
+          temp = null
+          return reject(first)
+        } else if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
           list[msg.guild.id] = {
             vanity: false,
             link: [],
