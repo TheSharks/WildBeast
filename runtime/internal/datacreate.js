@@ -10,7 +10,7 @@ var r = new Dash({
   }]
 })
 
-exports.check = function() {
+exports.check = function () {
   r.db('Discord').table('Guilds').then(() => {
     return
   }).catch((e) => {

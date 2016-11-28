@@ -106,7 +106,7 @@ exports.adjustLevel = function (msg, users, level, roles) {
 
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
-      getDatabaseDocument(guild).then((d) => {
+      getDatabaseDocument(guild).then(() => {
           r.db('Discord').table('Guilds').get(guild.id).delete().run().then(() => {
               initialize(guild).then(() => {
                   resolve('Done!')
