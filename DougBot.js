@@ -1,8 +1,9 @@
 'use strict'
 process.title = 'WildBeast'
 
+var config = require('./config.json')
 var bugsnag = require('bugsnag')
-bugsnag.register('4ffbc0d61936b035a66bf59ef0afc3f4')
+bugsnag.register(config.api_keys.bugsnag)
 
 try {
   require('./config.json')
