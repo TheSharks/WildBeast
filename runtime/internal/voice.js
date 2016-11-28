@@ -420,7 +420,7 @@ exports.request = function (msg, suffix, bot) {
               }, Config.settings.deleteTimeout)
             }
           })
-          Logger.error('Playlist faiiure, ' + err)
+          Logger.error('Playlist failure, ' + err)
           return
         } else if (data) {
           temp = data.items
