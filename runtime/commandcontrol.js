@@ -1,7 +1,7 @@
 'use strict'
 var directory = require('require-directory')
-var bugsnag = require("bugsnag")
-bugsnag.register("4ffbc0d61936b035a66bf59ef0afc3f4")
+var bugsnag = require('bugsnag')
+bugsnag.register('4ffbc0d61936b035a66bf59ef0afc3f4')
 var com = directory(module, './commands', {
   exclude: /custom/
 })

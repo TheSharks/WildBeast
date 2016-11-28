@@ -11,8 +11,8 @@ var r = new Dash({
   }]
 })
 var Logger = require('../../internal/logger.js').Logger
-var bugsnag = require("bugsnag")
-bugsnag.register("4ffbc0d61936b035a66bf59ef0afc3f4")
+var bugsnag = require('bugsnag')
+bugsnag.register('4ffbc0d61936b035a66bf59ef0afc3f4')
 
 exports.prefix = function (msg) {
   return new Promise(function (resolve, reject) {
@@ -90,7 +90,7 @@ exports.helpHandle = function (msg) {
 
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(guild).then((d) => {
+    getDatabaseDocument(guild).then(() => {
       r.db('Discord').table('Guilds').get(guild.id).delete().run().then(() => {
         initialize(guild).then(() => {
           resolve('Done!')
