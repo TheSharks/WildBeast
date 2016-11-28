@@ -12,7 +12,7 @@ var r = new Dash({
 })
 var Logger = require('../../internal/logger.js').Logger
 var bugsnag = require('bugsnag')
-bugsnag.register('4ffbc0d61936b035a66bf59ef0afc3f4')
+bugsnag.register(config.api_keys.bugsnag)
 
 exports.prefix = function (msg) {
   return new Promise(function (resolve, reject) {
