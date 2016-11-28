@@ -469,7 +469,12 @@ function fetch (v, msg, stats) {
     YT.getInfo(v, options, function (err, i) {
       if (!err && i) {
         y++
-        if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
+        if (list[msg.guild.id] === undefined) {
+          return reject({
+            error: 'Bot no longer in voice',
+            done: true
+          })
+        } else if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
           list[msg.guild.id] = {
             link: [i.url],
             vanity: false,
