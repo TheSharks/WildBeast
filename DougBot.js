@@ -1,10 +1,6 @@
 'use strict'
 process.title = 'WildBeast'
 
-var config = require('./config.json')
-var bugsnag = require('bugsnag')
-bugsnag.register(config.api_keys.bugsnag)
-
 try {
   require('./config.json')
 } catch (e) {
@@ -27,6 +23,10 @@ var aliases = runtime.commandcontrol.Aliases
 var datacontrol = runtime.datacontrol
 var Config
 var restarted = false
+
+var config = require('./config.json')
+var bugsnag = require('bugsnag')
+bugsnag.register(config.api_keys.bugsnag)
 
 Logger.info('Initializing...')
 
