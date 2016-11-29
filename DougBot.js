@@ -1,11 +1,10 @@
 'use strict'
 process.title = 'WildBeast'
 
-var bugsnag = require('bugsnag')
-bugsnag.register('4ffbc0d61936b035a66bf59ef0afc3f4')
+var Config
 
 try {
-  require('./config.json')
+  Config = require('./config.json')
 } catch (e) {
   console.log('\nWildBeast encountered an error while trying to load the config file, please resolve this issue and restart WildBeast\n\n' + e.message)
   process.exit()
@@ -24,7 +23,6 @@ var timeout = runtime.internal.timeouts
 var commands = runtime.commandcontrol.Commands
 var aliases = runtime.commandcontrol.Aliases
 var datacontrol = runtime.datacontrol
-var Config
 var restarted = false
 
 Logger.info('Initializing...')
@@ -40,6 +38,9 @@ if (argv.shardmode && !isNaN(argv.shardid) && !isNaN(argv.shardcount)) {
 }
 
 start()
+
+var bugsnag = require('bugsnag')
+bugsnag.register(Config.api_keys.bugsnag)
 
 bot.Dispatcher.on(Event.GATEWAY_READY, function () {
   bot.Users.fetchMembers()
