@@ -1,8 +1,10 @@
 'use strict'
 process.title = 'WildBeast'
 
+var Config
+
 try {
-  require('./config.json')
+  Config = require('./config.json')
 } catch (e) {
   console.log('\nWildBeast encountered an error while trying to load the config file, please resolve this issue and restart WildBeast\n\n' + e.message)
   process.exit()
@@ -21,7 +23,6 @@ var timeout = runtime.internal.timeouts
 var commands = runtime.commandcontrol.Commands
 var aliases = runtime.commandcontrol.Aliases
 var datacontrol = runtime.datacontrol
-var Config
 var restarted = false
 
 Logger.info('Initializing...')
