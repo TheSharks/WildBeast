@@ -24,10 +24,6 @@ var datacontrol = runtime.datacontrol
 var Config
 var restarted = false
 
-var config = require('./config.json')
-var bugsnag = require('bugsnag')
-bugsnag.register(config.api_keys.bugsnag)
-
 Logger.info('Initializing...')
 
 if (argv.shardmode && !isNaN(argv.shardid) && !isNaN(argv.shardcount)) {
@@ -41,6 +37,9 @@ if (argv.shardmode && !isNaN(argv.shardid) && !isNaN(argv.shardcount)) {
 }
 
 start()
+
+var bugsnag = require('bugsnag')
+bugsnag.register(Config.api_keys.bugsnag)
 
 bot.Dispatcher.on(Event.GATEWAY_READY, function () {
   bot.Users.fetchMembers()
