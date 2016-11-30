@@ -15,7 +15,11 @@ exports.namechange = function (user) {
   return new Promise(function (resolve, reject) {
     getDatabaseDocument(user).then((d) => {
       if (d.names[d.names.length - 1] === user.username) {
+<<<<<<< HEAD
         resolve()
+=======
+        reject('Last username stored in DB is the same as new username.')
+>>>>>>> d474d4d77861c714d62baf4aa4152035d36c4fbb
       } else {
         d.names.push(user.username)
         r.db('Discord').table('Users').get(user.id).update(d).run().then(() => {
