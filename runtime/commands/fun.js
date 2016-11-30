@@ -466,6 +466,52 @@ Commands.meme = {
   }
 }
 
+Commands.xkcd = {
+  name: 'xkcd',
+  help: "I'll get a XKCD comic for you, you can define a comic number and I'll fetch that one.",
+  timeout: 10,
+  usage: 'Nothing for a random comic, current for latest, number to get that comic.',
+  level: 0,
+  fn: function (msg, suffix) {
+    var request = require('request')
+    var xkcdInfo
+    request('http://xkcd.com/info.0.json', function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+        xkcdInfo = JSON.parse(body)
+        if (suffix.toLowerCase() === 'current') {
+          msg.reply(`**Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
+        } else if (!suffix) {
+          var xkcdRandom = Math.floor(Math.random() * (xkcdInfo.num - 1)) + 1
+          request(`http://xkcd.com/${xkcdRandom}/info.0.json`, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+              xkcdInfo = JSON.parse(body)
+              msg.reply(`**Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
+            } else {
+              msg.reply('Please try again later.')
+              Logger.error(`Got an error: ${error}, status code: ${response.statusCode}`)
+            }
+          })
+        } else if (!isNaN(parseInt(suffix, 10)) && (parseInt(suffix, 10) <= xkcdInfo.num)) {
+          request(`http://xkcd.com/${suffix}/info.0.json`, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+              xkcdInfo = JSON.parse(body)
+              msg.reply(`**Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
+            } else {
+              msg.reply('Please try again later.')
+              Logger.error(`Got an error: ${error}, status code: ${response.statusCode}`)
+            }
+          })
+        } else {
+          msg.reply(`There are only ${xkcdInfo.num} xkcd comics!`)
+        }
+      } else {
+        msg.reply('Please try again later.')
+        Logger.error(`Got an error: ${error}, status code: ${response.statusCode}`)
+      }
+    })
+  }
+}
+
 Commands.magic8ball = {
   name: 'magic8ball',
   help: "I'll make a prediction using a Magic 8 Ball",
