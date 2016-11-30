@@ -491,7 +491,7 @@ Commands.xkcd = {
               Logger.error(`Got an error: ${error}, status code: ${response.statusCode}`)
             }
           })
-        } else if (!isNaN(parseInt(suffix, 10)) && parseInt(suffix, 10) < 0 && (parseInt(suffix, 10) <= xkcdInfo.num)) {
+        } else if (!isNaN(parseInt(suffix, 10)) && parseInt(suffix, 10) > 0 && (parseInt(suffix, 10) <= xkcdInfo.num)) {
           request(`http://xkcd.com/${suffix}/info.0.json`, function (error, response, body) {
             if (!error && response.statusCode === 200) {
               xkcdInfo = JSON.parse(body)
