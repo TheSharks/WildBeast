@@ -70,7 +70,7 @@ r.db('Discord').table('Guilds').then(() => {
   }
 })
 
-function checkGuilds() {
+function checkGuilds () {
   return new Promise(function (resolve, reject) {
     r.db('Discord').tableCreate('Guilds').run().then(() => {
       resolve('Table Guilds has been created')
@@ -83,7 +83,7 @@ function checkGuilds() {
     })
   })
 }
-function checkTags() {
+function checkTags () {
   return new Promise(function (resolve, reject) {
     r.db('Discord').tableCreate('Tags').run().then(() => {
       resolve('Table Tags has been created')
@@ -97,7 +97,7 @@ function checkTags() {
   })
 }
 
-function checkUsers() {
+function checkUsers () {
   return new Promise(function (resolve, reject) {
     r.db('Discord').tableCreate('Users').run().then(() => {
       resolve('Table Users has been created')
@@ -111,7 +111,7 @@ function checkUsers() {
   })
 }
 
-function drainAndExit() {
+function drainAndExit () {
   r.getPoolMaster().drain().then(() => {
     process.exit()
   })
