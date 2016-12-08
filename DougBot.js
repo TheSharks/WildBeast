@@ -13,8 +13,6 @@ try {
 var argv = require('minimist')(process.argv.slice(2))
 var Logger = require('./runtime/internal/logger.js').Logger
 
-require('./runtime/internal/datacreate.js').check()
-
 var Discordie = require('discordie')
 var Event = Discordie.Events
 var bot
