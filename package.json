@@ -23,7 +23,7 @@
     "prestart": "npm update",
     "test": "standard & eslint **",
     "start": "node DougBot.js",
-    "dbcreate": "node runtime/internals/dbcreate.js",
+    "dbcreate": "node runtime/internal/dbcreate.js",
     "snyk-protect": "snyk protect"
   },
   "author": {
