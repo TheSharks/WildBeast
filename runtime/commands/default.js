@@ -6,6 +6,23 @@ var argv = require('minimist')(process.argv.slice(2))
 var bugsnag = require('bugsnag')
 bugsnag.register(config.api_keys.bugsnag)
 
+function getUptime () {
+  var d = Math.floor(process.uptime() / 86400)
+  var hrs = Math.floor((process.uptime() % 86400) / 3600)
+  var min = Math.floor(((process.uptime() % 86400) % 3600) / 60)
+  var sec = Math.floor(((process.uptime() % 86400) % 3600) % 60)
+
+  if (d === 0 && hrs !== 0) {
+    return `${hrs} hrs, ${min} mins, ${sec} seconds`
+  } else if (d === 0 && hrs === 0 && min !== 0) {
+    return `${min} mins, ${sec} seconds`
+  } else if (d === 0 && hrs === 0 && min === 0) {
+    return `${sec} seconds`
+  } else {
+    return `${d} days, ${hrs} hrs, ${min} mins, ${sec} seconds`
+  }
+}
+
 Commands.ping = {
   name: 'ping',
   help: "I'll reply to you with pong!",
@@ -211,22 +228,31 @@ Commands.info = {
   fn: function (msg, suffix, bot) {
     var owner
     try {
-      owner = ` is ${bot.Users.get(config.permissions.master[0]).username}#${bot.Users.get(config.permissions.master[0]).discriminator}`
+      owner = `${bot.Users.get(config.permissions.master[0]).username}#${bot.Users.get(config.permissions.master[0]).discriminator}`
     } catch (e) {
-      owner = `'s ID is ${config.permissions.master[0]}`
+      owner = `'ID: ${config.permissions.master[0]}`
     }
-    msg.channel.sendMessage('```fix\n' + `I am ${bot.User.username}#${bot.User.discriminator}, and my ID is ${bot.User.id}
-I am running on WildBeast version ${require('../../package.json').version}
-My owner${owner}
-My developer is Dougley#6248
--------------------------------------------------------
-Servers connected:  ${bot.Guilds.length}
-Channels connected: ${bot.Channels.length}
-Private channels:   ${bot.DirectMessageChannels.length}
-Messages recieved:  ${bot.Messages.length}
-Users known:        ${bot.Users.length}
-Bot is sharded?     ${(argv.shardmode ? 'Yes, this is shard ' + argv.shardid + ', and ' + argv.shardcount + ' shards are propagated.' : 'No')}
-` + '```')
+    var field = [{name: 'Servers Connected', value: '```fix`\n' + bot.Guilds.length + '```', inline: true},
+        {name: 'Users Known', value: '```fix`\n' + bot.Users.length + '```', inline: true},
+        {name: 'Channels Connected', value: '```fix`\n' + bot.Channels.length + '```', inline: true},
+        {name: 'Private Channels', value: '```fix`\n' + bot.DirectMessageChannels.length + '```', inline: true},
+        {name: 'Messages Received', value: '```fix`\n' + bot.Messages.length + '```', inline: true},
+        {name: 'Owner', value: '```\n' + owner + '```', inline: true},
+        {name: 'Sharded?', value: '```\n' + `${argv.shardmode ? 'Yes' : 'No'}` + '```', inline: true}]
+    if (argv.shardmode) {
+      field.push({name: 'Shard ID', value: '```\n' + argv.shardid + '```', inline: true})
+      field.push({name: 'Shard Count', value: '```\n' + argv.shardcount + '```', inline: true})
+    }
+    msg.channel.sendMessage('', false, {
+      color: 0x3498db,
+      author: {icon_url: bot.User.avatarURL, name: `${bot.User.username}#${bot.User.discriminator} (${bot.User.id})`},
+      title: `Running on WildBeast version ${require('../../package.json').version}`,
+      timestamp: new Date(),
+      fields: field,
+      description: '*My developer is Dougley#6248*',
+      url: 'https://github.com/TheSharks/WildBeast',
+      footer: {text: `Online for ${getUptime()}`}
+    })
   }
 }
 
