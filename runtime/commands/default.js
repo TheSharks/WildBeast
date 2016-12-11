@@ -462,7 +462,7 @@ Commands.userinfo = {
           field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + msg.author.gameName + '```', inline: true})
         }
         var embed = {
-          author: {name: `Userinfo for ${msg.author.username}#${msg.author.discriminator} (${msg.author.id})`},
+          author: {name: `${msg.author.username}#${msg.author.discriminator} (${msg.author.id})`},
           timestamp: new Date(),
           fields: field,
           footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
@@ -498,7 +498,7 @@ Commands.userinfo = {
           field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + user.gameName + '```', inline: true})
         }
         var embed = {
-          author: {name: `Userinfo for ${user.username}#${user.discriminator} (${user.id})`},
+          author: {name: `${user.username}#${user.discriminator} (${user.id})`},
           timestamp: new Date(),
           fields: field,
           footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
