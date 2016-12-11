@@ -440,44 +440,47 @@ Commands.userinfo = {
   help: "I'll get some information about the user you've mentioned.",
   noDM: true,
   level: 0,
-  fn: function (msg) {
+  fn: function (msg, suffix, bot) {
     var Permissions = require('../databases/controllers/permissions.js')
     if (msg.isPrivate) {
       msg.channel.sendMessage("Sorry you can't use this in DMs")
     }
     if (msg.mentions.length === 0) {
       Permissions.checkLevel(msg, msg.author.id, msg.member.roles).then((level) => {
-        var msgArray = []
         var tempRoles = msg.member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
         var roles = []
         for (var i in tempRoles) {
           roles.push(tempRoles[i].name)
         }
         roles = roles.splice(0, roles.length).join(', ')
-        msgArray.push('```')
-        msgArray.push('Requested user: ' + msg.author.username + '#' + msg.author.discriminator)
-        msgArray.push('ID: ' + msg.author.id)
-        msgArray.push('Status: ' + msg.author.status)
-        msgArray.push('Account created at: ' + msg.author.createdAt)
+        var field = [
+          {name: 'Status', value: '```fix`\n' + msg.author.status + '```', inline: true},
+          {name: 'Account Creation', value: '```fix`\n' + msg.author.createdAt + '```'},
+          {name: 'Access Level', value: '```fix`\n' + level + '```'},
+          {name: 'Roles', value: '```fix`\n' + roles + '```'}]
         if (msg.author.gameName) {
-          msgArray.push('Playing: ' + msg.author.gameName)
+          field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + msg.author.gameName + '```', inline: true})
         }
-        msgArray.push('Roles: ' + roles)
-        msgArray.push('Current access level: ' + level)
+        var embed = {
+          author: {name: `Userinfo for ${msg.author.username}#${msg.author.discriminator} (${msg.author.id})`},
+          timestamp: new Date(),
+          fields: field,
+          footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
+        }
         if (msg.author.avatarURL) {
-          msgArray.push('Avatar: ' + msg.author.avatarURL)
+          embed.author.icon_url = msg.author.avatarURL
+          embed.thumbnail = {url: msg.author.avatarURL}
+          embed.url = msg.author.avatarURL
         }
-        msgArray.push('```')
-        msg.channel.sendMessage(msgArray.join('\n'))
+        msg.channel.sendMessage('', false, embed)
       }).catch((error) => {
         msg.channel.sendMessage('Something went wrong, try again later.')
-        Logger.error(error)
+        console.error(error)
       })
       return
     }
     msg.mentions.map(function (user) {
       Permissions.checkLevel(msg, user.id, user.memberOf(msg.guild).roles).then(function (level) {
-        var msgArray = []
         var guild = msg.guild
         var member = guild.members.find((m) => m.id === user.id)
         var tempRoles = member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
@@ -486,23 +489,28 @@ Commands.userinfo = {
           roles.push(tempRoles[i].name)
         }
         roles = roles.splice(0, roles.length).join(', ')
-        msgArray.push('Information requested by ' + msg.author.username)
-        msgArray.push('```', 'Requested user: ' + user.username + '#' + user.discriminator)
-        msgArray.push('ID: ' + user.id)
-        msgArray.push('Status: ' + user.status)
-        msgArray.push('RegisteredAt: ' + user.registeredAt)
+        var field = [
+          {name: 'Status', value: '```fix`\n' + user.status + '```', inline: true},
+          {name: 'Account Creation', value: '```fix`\n' + user.createdAt + '```'},
+          {name: 'Access Level', value: '```fix`\n' + level + '```'},
+          {name: 'Roles', value: '```fix`\n' + roles + '```'}]
         if (user.gameName) {
-          msgArray.push('Playing: ' + user.gameName)
+          field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + user.gameName + '```', inline: true})
         }
-        msgArray.push('Roles: ' + roles)
-        msgArray.push('Current access level: ' + level)
+        var embed = {
+          author: {name: `Userinfo for ${user.username}#${user.discriminator} (${user.id})`},
+          timestamp: new Date(),
+          fields: field,
+          footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
+        }
         if (user.avatarURL) {
-          msgArray.push('Avatar: ' + user.avatarURL)
+          embed.author.icon_url = user.avatarURL
+          embed.thumbnail = {url: user.avatarURL}
+          embed.url = user.avatarURL
         }
-        msgArray.push('```')
-        msg.channel.sendMessage(msgArray.join('\n'))
+        msg.channel.sendMessage('', false, embed)
       }).catch(function (err) {
-        Logger.error(err)
+        console.error(err)
         msg.channel.sendMessage('Something went wrong, try again later.')
       })
     })
