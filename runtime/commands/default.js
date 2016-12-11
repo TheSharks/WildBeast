@@ -475,7 +475,7 @@ Commands.userinfo = {
         msg.channel.sendMessage('', false, embed)
       }).catch((error) => {
         msg.channel.sendMessage('Something went wrong, try again later.')
-        console.error(error)
+        Logger.error(error)
       })
       return
     }
@@ -510,7 +510,7 @@ Commands.userinfo = {
         }
         msg.channel.sendMessage('', false, embed)
       }).catch(function (err) {
-        console.error(err)
+        Logger.error(err)
         msg.channel.sendMessage('Something went wrong, try again later.')
       })
     })
