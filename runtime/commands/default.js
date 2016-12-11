@@ -401,34 +401,34 @@ Commands['server-info'] = {
   noDM: true,
   timeout: 20,
   level: 0,
-  fn: function (msg) {
+  fn: function (msg, suffix, bot) {
     // if we're not in a PM, return some info about the channel
     if (msg.guild) {
-      var roles = msg.guild.roles.map((r) => r.name)
-      roles = roles.splice(0, roles.length).join(', ').toString()
-      roles = roles.replace('@everyone', '@every' + '\u200b' + 'one')
-      var msgArray = []
-      msgArray.push('Information requested by ' + msg.author.mention)
-      msgArray.push('Server name: **' + msg.guild.name + '** (id: `' + msg.guild.id + '`)')
-      msgArray.push('Server acronym: **' + msg.guild.acronym + '**')
-      msgArray.push('Owned by **' + msg.guild.owner.username + '#' + msg.guild.owner.discriminator + '** (id: `' + msg.guild.owner_id + '`)')
-      msgArray.push('Current region: **' + msg.guild.region + '**.')
-      msgArray.push('This server has **' + msg.guild.members.length + '** members')
-      msgArray.push('This server has **' + msg.guild.textChannels.length + '** text channels.')
-      msgArray.push('This server has **' + msg.guild.voiceChannels.length + '** voice channels.')
-      msgArray.push('This server has **' + msg.guild.roles.length + '** roles registered.')
-      msgArray.push("This server's roles are **" + roles + '**')
+      var field = [{name: 'Server name', value: `${msg.guild.name} (${msg.guild.acronym})`},
+      {name: 'Owned by', value: '```fix`\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
+      {name: 'Current Region', value: '```fix`\n' + msg.guild.region + '```', inline: true},
+      {name: 'Members', value: '```fix`\n' + msg.guild.members.length + '```', inline: true},
+      {name: 'Text Channels', value: '```fix`\n' + msg.guild.textChannels.length + '```', inline: true},
+      {name: 'Voice Channels', value: '```fix`\n' + msg.guild.voiceChannels.length + '```', inline: true},
+      {name: 'Total Roles', value: '```fix`\n' + msg.guild.roles.length + '```', inline: true}]
+
       if (msg.guild.afk_channel === null) {
-        msgArray.push('No voice AFK-channel present.')
+        field.push({name: 'AFK-Channel', value: '```fix`\nNone```'})
       } else {
-        msgArray.push('Voice AFK-channel: **' + msg.guild.afk_channel.name + '** (id: `' + msg.guild.afk_channel.id + '`)')
+        field.push({name: 'AFK-channel', value: '```fix`\n' + `${msg.guild.afk_channel.name} (${msg.guild.afk_channel.id})` + '```'})
       }
-      if (msg.guild.icon === null) {
-        msgArray.push('No server icon present.')
-      } else {
-        msgArray.push('Server icon: ' + msg.guild.iconURL)
+      var embed = {
+        author: {name: `Information requested by ${msg.author.username}`},
+        timestamp: new Date(),
+        color: 0x3498db,
+        fields: field,
+        footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
       }
-      msg.channel.sendMessage(msgArray.join('\n'))
+      if (msg.guild.icon) {
+        embed.thumbnail = {url: msg.guild.iconURL}
+        embed.url = msg.guild.iconURL
+      }
+      msg.channel.sendMessage('', false, embed)
     } else {
       msg.channel.sendMessage("You can't do that in a DM, dummy!.")
     }
