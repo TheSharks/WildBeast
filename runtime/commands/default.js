@@ -401,34 +401,34 @@ Commands['server-info'] = {
   noDM: true,
   timeout: 20,
   level: 0,
-  fn: function (msg) {
+  fn: function (msg, suffix, bot) {
     // if we're not in a PM, return some info about the channel
     if (msg.guild) {
-      var roles = msg.guild.roles.map((r) => r.name)
-      roles = roles.splice(0, roles.length).join(', ').toString()
-      roles = roles.replace('@everyone', '@every' + '\u200b' + 'one')
-      var msgArray = []
-      msgArray.push('Information requested by ' + msg.author.mention)
-      msgArray.push('Server name: **' + msg.guild.name + '** (id: `' + msg.guild.id + '`)')
-      msgArray.push('Server acronym: **' + msg.guild.acronym + '**')
-      msgArray.push('Owned by **' + msg.guild.owner.username + '#' + msg.guild.owner.discriminator + '** (id: `' + msg.guild.owner_id + '`)')
-      msgArray.push('Current region: **' + msg.guild.region + '**.')
-      msgArray.push('This server has **' + msg.guild.members.length + '** members')
-      msgArray.push('This server has **' + msg.guild.textChannels.length + '** text channels.')
-      msgArray.push('This server has **' + msg.guild.voiceChannels.length + '** voice channels.')
-      msgArray.push('This server has **' + msg.guild.roles.length + '** roles registered.')
-      msgArray.push("This server's roles are **" + roles + '**')
+      var field = [{name: 'Server name', value: `${msg.guild.name} (${msg.guild.acronym})`},
+      {name: 'Owned by', value: '```fix`\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
+      {name: 'Current Region', value: '```fix`\n' + msg.guild.region + '```', inline: true},
+      {name: 'Members', value: '```fix`\n' + msg.guild.members.length + '```', inline: true},
+      {name: 'Text Channels', value: '```fix`\n' + msg.guild.textChannels.length + '```', inline: true},
+      {name: 'Voice Channels', value: '```fix`\n' + msg.guild.voiceChannels.length + '```', inline: true},
+      {name: 'Total Roles', value: '```fix`\n' + msg.guild.roles.length + '```', inline: true}]
+
       if (msg.guild.afk_channel === null) {
-        msgArray.push('No voice AFK-channel present.')
+        field.push({name: 'AFK-Channel', value: '```fix`\nNone```'})
       } else {
-        msgArray.push('Voice AFK-channel: **' + msg.guild.afk_channel.name + '** (id: `' + msg.guild.afk_channel.id + '`)')
+        field.push({name: 'AFK-channel', value: '```fix`\n' + `${msg.guild.afk_channel.name} (${msg.guild.afk_channel.id})` + '```'})
       }
-      if (msg.guild.icon === null) {
-        msgArray.push('No server icon present.')
-      } else {
-        msgArray.push('Server icon: ' + msg.guild.iconURL)
+      var embed = {
+        author: {name: `Information requested by ${msg.author.username}`},
+        timestamp: new Date(),
+        color: 0x3498db,
+        fields: field,
+        footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
       }
-      msg.channel.sendMessage(msgArray.join('\n'))
+      if (msg.guild.icon) {
+        embed.thumbnail = {url: msg.guild.iconURL}
+        embed.url = msg.guild.iconURL
+      }
+      msg.channel.sendMessage('', false, embed)
     } else {
       msg.channel.sendMessage("You can't do that in a DM, dummy!.")
     }
@@ -440,35 +440,39 @@ Commands.userinfo = {
   help: "I'll get some information about the user you've mentioned.",
   noDM: true,
   level: 0,
-  fn: function (msg) {
+  fn: function (msg, suffix, bot) {
     var Permissions = require('../databases/controllers/permissions.js')
     if (msg.isPrivate) {
       msg.channel.sendMessage("Sorry you can't use this in DMs")
     }
     if (msg.mentions.length === 0) {
       Permissions.checkLevel(msg, msg.author.id, msg.member.roles).then((level) => {
-        var msgArray = []
         var tempRoles = msg.member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
         var roles = []
         for (var i in tempRoles) {
           roles.push(tempRoles[i].name)
         }
         roles = roles.splice(0, roles.length).join(', ')
-        msgArray.push('```')
-        msgArray.push('Requested user: ' + msg.author.username + '#' + msg.author.discriminator)
-        msgArray.push('ID: ' + msg.author.id)
-        msgArray.push('Status: ' + msg.author.status)
-        msgArray.push('Account created at: ' + msg.author.createdAt)
+        var field = [
+          {name: 'Status', value: '```fix`\n' + msg.author.status + '```', inline: true},
+          {name: 'Account Creation', value: '```fix`\n' + msg.author.createdAt + '```'},
+          {name: 'Access Level', value: '```fix`\n' + level + '```'},
+          {name: 'Roles', value: '```fix`\n' + roles + '```'}]
         if (msg.author.gameName) {
-          msgArray.push('Playing: ' + msg.author.gameName)
+          field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + msg.author.gameName + '```', inline: true})
         }
-        msgArray.push('Roles: ' + roles)
-        msgArray.push('Current access level: ' + level)
+        var embed = {
+          author: {name: `${msg.author.username}#${msg.author.discriminator} (${msg.author.id})`},
+          timestamp: new Date(),
+          fields: field,
+          footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
+        }
         if (msg.author.avatarURL) {
-          msgArray.push('Avatar: ' + msg.author.avatarURL)
+          embed.author.icon_url = msg.author.avatarURL
+          embed.thumbnail = {url: msg.author.avatarURL}
+          embed.url = msg.author.avatarURL
         }
-        msgArray.push('```')
-        msg.channel.sendMessage(msgArray.join('\n'))
+        msg.channel.sendMessage('', false, embed)
       }).catch((error) => {
         msg.channel.sendMessage('Something went wrong, try again later.')
         Logger.error(error)
@@ -477,7 +481,6 @@ Commands.userinfo = {
     }
     msg.mentions.map(function (user) {
       Permissions.checkLevel(msg, user.id, user.memberOf(msg.guild).roles).then(function (level) {
-        var msgArray = []
         var guild = msg.guild
         var member = guild.members.find((m) => m.id === user.id)
         var tempRoles = member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
@@ -486,21 +489,26 @@ Commands.userinfo = {
           roles.push(tempRoles[i].name)
         }
         roles = roles.splice(0, roles.length).join(', ')
-        msgArray.push('Information requested by ' + msg.author.username)
-        msgArray.push('```', 'Requested user: ' + user.username + '#' + user.discriminator)
-        msgArray.push('ID: ' + user.id)
-        msgArray.push('Status: ' + user.status)
-        msgArray.push('RegisteredAt: ' + user.registeredAt)
+        var field = [
+          {name: 'Status', value: '```fix`\n' + user.status + '```', inline: true},
+          {name: 'Account Creation', value: '```fix`\n' + user.createdAt + '```'},
+          {name: 'Access Level', value: '```fix`\n' + level + '```'},
+          {name: 'Roles', value: '```fix`\n' + roles + '```'}]
         if (user.gameName) {
-          msgArray.push('Playing: ' + user.gameName)
+          field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + user.gameName + '```', inline: true})
         }
-        msgArray.push('Roles: ' + roles)
-        msgArray.push('Current access level: ' + level)
+        var embed = {
+          author: {name: `${user.username}#${user.discriminator} (${user.id})`},
+          timestamp: new Date(),
+          fields: field,
+          footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
+        }
         if (user.avatarURL) {
-          msgArray.push('Avatar: ' + user.avatarURL)
+          embed.author.icon_url = user.avatarURL
+          embed.thumbnail = {url: user.avatarURL}
+          embed.url = user.avatarURL
         }
-        msgArray.push('```')
-        msg.channel.sendMessage(msgArray.join('\n'))
+        msg.channel.sendMessage('', false, embed)
       }).catch(function (err) {
         Logger.error(err)
         msg.channel.sendMessage('Something went wrong, try again later.')
