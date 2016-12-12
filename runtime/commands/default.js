@@ -457,7 +457,7 @@ Commands.userinfo = {
           {name: 'Status', value: '```fix`\n' + msg.author.status + '```', inline: true},
           {name: 'Account Creation', value: '```fix`\n' + msg.author.createdAt + '```'},
           {name: 'Access Level', value: '```fix`\n' + level + '```'},
-          {name: 'Roles', value: '```fix`\n' + roles + '```'}]
+          {name: 'Roles', value: '```fix`\n' + `${tempRoles.length > 0 ? roles : 'None'}` + '```'}]
         if (msg.author.gameName) {
           field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + msg.author.gameName + '```', inline: true})
         }
@@ -493,7 +493,7 @@ Commands.userinfo = {
           {name: 'Status', value: '```fix`\n' + user.status + '```', inline: true},
           {name: 'Account Creation', value: '```fix`\n' + user.createdAt + '```'},
           {name: 'Access Level', value: '```fix`\n' + level + '```'},
-          {name: 'Roles', value: '```fix`\n' + roles + '```'}]
+          {name: 'Roles', value: '```fix`\n' + `${tempRoles.length > 0 ? roles : 'None'}` + '```'}]
         if (user.gameName) {
           field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + user.gameName + '```', inline: true})
         }
