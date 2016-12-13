@@ -404,7 +404,7 @@ Commands['server-info'] = {
   fn: function (msg, suffix, bot) {
     // if we're not in a PM, return some info about the channel
     if (msg.guild) {
-      var field = [{name: 'Server name', value: `${msg.guild.name} (${msg.guild.acronym})`},
+      var field = [{name: 'Server name', value: `${msg.guild.name} [${msg.guild.acronym}] (${msg.guild.id})`},
       {name: 'Owned by', value: '```fix`\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
       {name: 'Current Region', value: '```fix`\n' + msg.guild.region + '```', inline: true},
       {name: 'Members', value: '```fix`\n' + msg.guild.members.length + '```', inline: true},
