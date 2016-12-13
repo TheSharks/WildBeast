@@ -235,6 +235,14 @@ bot.Dispatcher.on(Event.GUILD_CREATE, function (s) {
   }
 })
 
+bot.Dispatcher.on(Event.GUILD_UPDATE, g => {
+  if (!bot.connected) return
+  var guild = g.getChanges()
+    if (guild.before.owner_id !== guild.after.owner_id) {
+      datacontrol.permissions.updateGuildOwner(g.guild)
+    }
+})
+
 bot.Dispatcher.on(Event.GATEWAY_RESUMED, function () {
   Logger.info('Connection to the Discord gateway has been resumed.')
 })

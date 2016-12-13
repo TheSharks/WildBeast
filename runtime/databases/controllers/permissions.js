@@ -106,19 +106,19 @@ exports.adjustLevel = function (msg, users, level, roles) {
 
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
-      getDatabaseDocument(guild).then(() => {
-          r.db('Discord').table('Guilds').get(guild.id).delete().run().then(() => {
-              initialize(guild).then(() => {
-                  resolve('Done!')
-              }).catch((e) => {
-                  reject(e)
-              })
-          }).catch((e) => {
-              reject(e)
-          })
-      }).catch((e) => {
+    getDatabaseDocument(guild).then(() => {
+      r.db('Discord').table('Guilds').get(guild.id).delete().run().then(() => {
+        initialize(guild).then(() => {
+          resolve('Done!')
+        }).catch((e) => {
           reject(e)
+        })
+      }).catch((e) => {
+        reject(e)
       })
+    }).catch((e) => {
+      reject(e)
+    })
   })
 }
 
@@ -157,11 +157,11 @@ exports.adjustNSFW = function (msg, what) {
         getDatabaseDocument(msg.guild).then((d) => {
           if (d.perms.nsfw.indexOf(msg.channel.id) > -1) {
             d.perms.nsfw.splice(d.perms.nsfw.indexOf(msg.channel.id), 1)
-              r.db('Discord').table('Guilds').get(msg.guild.id).update(d).run().then(() => {
-                resolve(0)
+            r.db('Discord').table('Guilds').get(msg.guild.id).update(d).run().then(() => {
+              resolve(0)
             }).catch((e) => {
-                Logger.error(e)
-                reject(e)
+              Logger.error(e)
+              reject(e)
             })
           } else {
             resolve(0)
@@ -172,6 +172,17 @@ exports.adjustNSFW = function (msg, what) {
         reject('Unknown option')
         break
     }
+  })
+}
+
+exports.updateGuildOwner = function (guild) {
+  return new Promise(function (resolve, reject) {
+    getDatabaseDocument(guild).then(d => {
+      d.superUser = guild.owner.id
+      r.db('Discord').table('Guilds').get(guild.id).update(d).run().then(() => {
+        resolve(true)
+      })
+    }).catch((e) => reject(e))
   })
 }
 
@@ -206,7 +217,7 @@ function initialize (guild) {
       },
       superUser: guild.owner_id
     }
-      r.db('Discord').table('Guilds').insert(doc).run().then(() => {
+    r.db('Discord').table('Guilds').insert(doc).run().then(() => {
       resolve('ok')
     }).catch((e) => {
       Logger.error(e)
