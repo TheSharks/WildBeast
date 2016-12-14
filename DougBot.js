@@ -192,7 +192,11 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
       }
     }
   }).catch(function (e) {
-    Logger.error('Prefix error: ' + e)
+    if (e === 'No database') {
+      Logger.warn('Database file missing for a server, creating one now...')
+    } else {
+      Logger.error('Prefix error: ' + e)
+    }
   })
 })
 
