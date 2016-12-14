@@ -21,7 +21,7 @@ Commands.tag = {
   aliases: ['t'],
   fn: function (msg, suffix, bot) {
     var index = suffix.split(' ')
-    if (suffix) {
+    if (suffix && index.length > 1) {
       if (index[0].toLowerCase() === 'create') {
         if (Config.permissions.master.indexOf(msg.author.id) === -1) {
           var re = /(discord(\.gg|app\.com\/invite)\/([\w]{16}|([\w]+-?){3}))/
