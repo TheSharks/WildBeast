@@ -21,8 +21,8 @@ Commands.tag = {
   aliases: ['t'],
   fn: function (msg, suffix, bot) {
     var index = suffix.split(' ')
-    if (suffix && index.length > 1) {
-      if (index[0].toLowerCase() === 'create') {
+    if (suffix) {
+      if (index[1] !== undefined && index[0].toLowerCase() === 'create') {
         if (Config.permissions.master.indexOf(msg.author.id) === -1) {
           var re = /(discord(\.gg|app\.com\/invite)\/([\w]{16}|([\w]+-?){3}))/
           if (msg.mentions.length >= 5) {
@@ -50,7 +50,7 @@ Commands.tag = {
             msg.channel.sendMessage('Something went wrong.')
           }
         })
-      } else if (index[0] === 'owner') {
+      } else if (index[1] !== undefined && index[0] === 'owner') {
         r.db('Discord').table('Tags').get(index[1].toLowerCase()).run().then((g) => {
           if (g === null) {
             msg.channel.sendMessage('This tag does not exist.')
@@ -89,7 +89,7 @@ Commands.tag = {
             }
           }
         })
-      } else if (index[0].toLowerCase() === 'delete') {
+      } else if (index[1] !== undefined && index[0].toLowerCase() === 'delete') {
         r.db('Discord').table('Tags').get(index[1].toLowerCase()).run().then((g) => {
           if (g === null) {
             msg.channel.sendMessage('This tag does not exist.')
@@ -107,7 +107,7 @@ Commands.tag = {
             }
           }
         })
-      } else if (index[0].toLowerCase() === 'raw') {
+      } else if (index[1] !== undefined && index[0].toLowerCase() === 'raw') {
         r.db('Discord').table('Tags').get(index[1].toLowerCase()).run().then((g) => {
           if (g === null) {
             msg.channel.sendMessage('This tag does not exist.')
