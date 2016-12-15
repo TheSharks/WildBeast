@@ -32,8 +32,7 @@
     },
     "google": "A google key",
     "mashape": "A mashape key",
-    "cse": "Not required anymore, ignore this field",
     "twitchId": "A twitch Client-ID",
-    "bugsnag": "A Bugsnag api key."
+    "bugsnag": "A Bugsnag api key, Bugnsnag tracker users only"
   }
 }
