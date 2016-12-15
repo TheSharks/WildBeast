@@ -80,6 +80,7 @@ exports.helpHandle = function (msg) {
   arr.push('`%timeout`: Refers to the amount of seconds the used command cools down for, __can only be used with timeout__.')
   arr.push('`%nlevel`: Short for NeedLevel. Refers to the access level an user needs to execute this command, __can only be used with permissions__.')
   arr.push('`%ulevel`: Short for UserLevel. Refers to the access level an user has right now, __can only be used with permissions__.')
+  arr.push('For more information, check http://docs.thesharks.xyz/commands/, the Customize command section.')
   msg.author.openDM().then((y) => {
     y.sendMessage(arr.join('\n'))
   }).catch((e) => {
