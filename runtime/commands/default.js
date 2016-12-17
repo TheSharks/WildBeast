@@ -329,6 +329,34 @@ Commands.setlevel = {
   }
 }
 
+Commands.rankup = {
+  name: 'rankup',
+  help: 'Level up somebody\'s level by one.',
+  timeout: 5,
+  level: 4,
+  fn: function (msg, suffix) {
+    var Permissions = require('../databases/controllers/permissions.js')
+    if (suffix && msg.mentions.length === 1) {
+      msg.mentions.map(function (user) {
+        Permissions.checkLevel(msg, user.id, user.memberOf(msg.guild).roles).then(function (level) {
+          if (level > 3) {
+            msg.reply(`${user.username} is already level 3 or more.`)
+          } else {
+            Permissions.adjustLevel(msg, msg.mentions, level + 1, msg.mention_roles)
+            msg.reply(`Set Permisson level for **${user.username}** from ${level} to ${level + 1}.`)
+          }
+        }).catch(function (err) {
+          msg.channel.sendMessage('Help! Something went wrong!')
+          bugsnag.notify(err)
+          Logger.error(err)
+        })
+      })
+    } else {
+      msg.reply('Please @mention the user(s) you want to rank up the permission level of.')
+    }
+  }
+}
+
 Commands.setnsfw = {
   name: 'setnsfw',
   help: 'This changes if the channel allows NSFW commands.',
