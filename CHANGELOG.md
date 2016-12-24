@@ -1,5 +1,14 @@
 # 4.0.0
 ## Release phase
+### 4.1.0
+Added Dockerfiles.   
+Upon server owner change, database will update accordingly.   
+Added a npm script to create database tables. (`npm run-script dbcreate`)    
+Informational commands like `info` use Discord embeds now.   
+Added xkcd command back.    
+Songs can now be deleted from the playlist. (`++playlist delete 1`)   
+Bugsnag is added as a dependency for reporting errors, *bugsnag is not required to run WildBeast.*    
+
 ### 4.0.0
 **This update is a breaking change, back up your configs before updating!**     
 Retired nedb for datastorage, now using RethinkDB. Setup process now requires setup of local RDB server, documentation updated to reflect.     
