@@ -7,7 +7,8 @@ Added a npm script to create database tables. (`npm run-script dbcreate`)
 Informational commands like `info` use Discord embeds now.   
 Added xkcd command back.    
 Songs can now be deleted from the playlist. (`++playlist delete 1`)   
-Bugsnag is added as a dependency for reporting errors, *bugsnag is not required to run WildBeast.*    
+Bugsnag is added as a dependency for reporting errors, **bugsnag is not required to run WildBeast.**    
+Added rankup command which allows increase of user level by one.	
 
 ### 4.0.0
 **This update is a breaking change, back up your configs before updating!**     
