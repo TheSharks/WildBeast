@@ -14,12 +14,16 @@ var r = new Dash({
 exports.namechange = function (user) {
   return new Promise(function (resolve, reject) {
     getDatabaseDocument(user).then((d) => {
-      d.names.push(user.username)
-      r.db('Discord').table('Users').update(d).run().then(() => {
+      if (d.names[d.names.length - 1] === user.username) {
         resolve()
-      }).catch((e) => {
-        reject(e)
-      })
+      } else {
+        d.names.push(user.username)
+        r.db('Discord').table('Users').get(user.id).update(d).run().then(() => {
+          resolve()
+        }).catch((e) => {
+          reject(e)
+        })
+      }
     }).catch((e) => {
       initialize(user)
       reject(e)

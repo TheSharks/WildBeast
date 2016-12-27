@@ -2,33 +2,7 @@
 var Winston = require('winston')
 var path = require('path')
 
-// Chat Logger
-
 Winston.emitErrs = true
-
-exports.ChatLog = new Winston.Logger({
-  transports: [
-    new (require('winston-daily-rotate-file'))({
-      level: 'info',
-      filename: path.resolve(__dirname, '..', '..', 'logs/chatlog'),
-      json: false,
-      datePattern: '-dd-MM-yyyy.log'
-    })
-  ]
-})
-
-exports.DebugLog = new Winston.Logger({
-  transports: [
-    new (require('winston-daily-rotate-file'))({
-      level: 'info',
-      filename: path.resolve(__dirname, '..', '..', 'logs/debuglog'),
-      json: false,
-      datePattern: '-dd-MM-yyyy.log'
-    })
-  ]
-})
-
-// Command Error Logger
 
 exports.Logger = new Winston.Logger({
   colors: {

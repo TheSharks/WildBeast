@@ -3,6 +3,25 @@ var request = require('request')
 var config = require('../../config.json')
 var Logger = require('../internal/logger.js').Logger
 var argv = require('minimist')(process.argv.slice(2))
+var bugsnag = require('bugsnag')
+bugsnag.register(config.api_keys.bugsnag)
+
+function getUptime () {
+  var d = Math.floor(process.uptime() / 86400)
+  var hrs = Math.floor((process.uptime() % 86400) / 3600)
+  var min = Math.floor(((process.uptime() % 86400) % 3600) / 60)
+  var sec = Math.floor(((process.uptime() % 86400) % 3600) % 60)
+
+  if (d === 0 && hrs !== 0) {
+    return `${hrs} hrs, ${min} mins, ${sec} seconds`
+  } else if (d === 0 && hrs === 0 && min !== 0) {
+    return `${min} mins, ${sec} seconds`
+  } else if (d === 0 && hrs === 0 && min === 0) {
+    return `${sec} seconds`
+  } else {
+    return `${d} days, ${hrs} hrs, ${min} mins, ${sec} seconds`
+  }
+}
 
 Commands.ping = {
   name: 'ping',
@@ -155,6 +174,9 @@ Commands.twitch = {
         'Client-ID': config.api_keys.twitchId
       }
     }, function (error, response, body) {
+      if (error) {
+        bugsnag.notify(error)
+      }
       if (!error && response.statusCode === 200) {
         var resp
         try {
@@ -212,22 +234,31 @@ Commands.info = {
   fn: function (msg, suffix, bot) {
     var owner
     try {
-      owner = ` is ${bot.Users.get(config.permissions.master[0]).username}#${bot.Users.get(config.permissions.master[0]).discriminator}`
+      owner = `${bot.Users.get(config.permissions.master[0]).username}#${bot.Users.get(config.permissions.master[0]).discriminator}`
     } catch (e) {
-      owner = `'s ID is ${config.permissions.master[0]}`
+      owner = `'ID: ${config.permissions.master[0]}`
     }
-    msg.channel.sendMessage('```fix\n' + `I am ${bot.User.username}#${bot.User.discriminator}, and my ID is ${bot.User.id}
-I am running on WildBeast version ${require('../../package.json').version}
-My owner${owner}
-My developer is Dougley#6248
--------------------------------------------------------
-Servers connected:  ${bot.Guilds.length}
-Channels connected: ${bot.Channels.length}
-Private channels:   ${bot.DirectMessageChannels.length}
-Messages recieved:  ${bot.Messages.length}
-Users known:        ${bot.Users.length}
-Bot is sharded?     ${(argv.shardmode ? 'Yes, this is shard ' + argv.shardid + ', and ' + argv.shardcount + ' shards are propagated.' : 'No')}
-` + '```')
+    var field = [{name: 'Servers Connected', value: '```fix`\n' + bot.Guilds.length + '```', inline: true},
+        {name: 'Users Known', value: '```fix`\n' + bot.Users.length + '```', inline: true},
+        {name: 'Channels Connected', value: '```fix`\n' + bot.Channels.length + '```', inline: true},
+        {name: 'Private Channels', value: '```fix`\n' + bot.DirectMessageChannels.length + '```', inline: true},
+        {name: 'Messages Received', value: '```fix`\n' + bot.Messages.length + '```', inline: true},
+        {name: 'Owner', value: '```\n' + owner + '```', inline: true},
+        {name: 'Sharded?', value: '```\n' + `${argv.shardmode ? 'Yes' : 'No'}` + '```', inline: true}]
+    if (argv.shardmode) {
+      field.push({name: 'Shard ID', value: '```\n' + argv.shardid + '```', inline: true})
+      field.push({name: 'Shard Count', value: '```\n' + argv.shardcount + '```', inline: true})
+    }
+    msg.channel.sendMessage('', false, {
+      color: 0x3498db,
+      author: {icon_url: bot.User.avatarURL, name: `${bot.User.username}#${bot.User.discriminator} (${bot.User.id})`},
+      title: `Running on WildBeast version ${require('../../package.json').version}`,
+      timestamp: new Date(),
+      fields: field,
+      description: '*My developer is Dougley#6248*',
+      url: 'https://github.com/TheSharks/WildBeast',
+      footer: {text: `Online for ${getUptime()}`}
+    })
   }
 }
 
@@ -297,11 +328,49 @@ Commands.setlevel = {
         msg.channel.sendMessage('Alright! The permission levels have been set successfully!')
       }).catch(function (err) {
         msg.channel.sendMessage('Help! Something went wrong!')
+        bugsnag.notify(err)
         Logger.error(err)
       })
     }
   }
 }
+
+Commands.rankup = {
+  name: 'rankup',
+  help: 'Level up somebody\'s level by one.',
+  timeout: 5,
+  level: 3,
+  fn: function (msg, suffix) {
+    var Permissions = require('../databases/controllers/permissions.js')
+    var array = []
+    if (suffix && msg.mentions.length > 0) {
+      msg.mentions.map(function (user) {
+        Permissions.checkLevel(msg, msg.author.id, msg.member.roles).then((authorlevel) => {
+          Permissions.checkLevel(msg, user.id, user.memberOf(msg.guild).roles).then(function (level) {
+            if (authorlevel > 3 && level >= 3) {
+              msg.reply(`${user.username} is already level 3 or more.`)
+            } else if (authorlevel === 3 && level >= 2) {
+              msg.reply(`${user.username} is already level 2 or more.`)
+            } else if ((authorlevel === 3 && level < 2) || (authorlevel > 3 && level < 3)) {
+              array.push(user.username)
+              Permissions.adjustLevel(msg, msg.mentions, level + 1, msg.mention_roles)
+            }
+            if (msg.mentions.indexOf(user) + 1 === msg.mentions.length && array.length > 0) {
+              msg.reply('**' + array.join(', ') + '** have been leveled up!')
+            }
+          }).catch(function (err) {
+            msg.channel.sendMessage('Help! Something went wrong!')
+            bugsnag.notify(err)
+            Logger.error(err)
+          })
+        })
+      })
+    } else {
+      msg.reply('Please @mention the user(s) you want to rank up the permission level of.')
+    }
+  }
+}
+
 
 Commands.setnsfw = {
   name: 'setnsfw',
@@ -375,34 +444,34 @@ Commands['server-info'] = {
   noDM: true,
   timeout: 20,
   level: 0,
-  fn: function (msg) {
+  fn: function (msg, suffix, bot) {
     // if we're not in a PM, return some info about the channel
     if (msg.guild) {
-      var roles = msg.guild.roles.map((r) => r.name)
-      roles = roles.splice(0, roles.length).join(', ').toString()
-      roles = roles.replace('@everyone', '@every' + '\u200b' + 'one')
-      var msgArray = []
-      msgArray.push('Information requested by ' + msg.author.mention)
-      msgArray.push('Server name: **' + msg.guild.name + '** (id: `' + msg.guild.id + '`)')
-      msgArray.push('Server acronym: **' + msg.guild.acronym + '**')
-      msgArray.push('Owned by **' + msg.guild.owner.username + '#' + msg.guild.owner.discriminator + '** (id: `' + msg.guild.owner_id + '`)')
-      msgArray.push('Current region: **' + msg.guild.region + '**.')
-      msgArray.push('This server has **' + msg.guild.members.length + '** members')
-      msgArray.push('This server has **' + msg.guild.textChannels.length + '** text channels.')
-      msgArray.push('This server has **' + msg.guild.voiceChannels.length + '** voice channels.')
-      msgArray.push('This server has **' + msg.guild.roles.length + '** roles registered.')
-      msgArray.push("This server's roles are **" + roles + '**')
+      var field = [{name: 'Server name', value: `${msg.guild.name} [${msg.guild.acronym}] (${msg.guild.id})`},
+      {name: 'Owned by', value: '```fix`\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
+      {name: 'Current Region', value: '```fix`\n' + msg.guild.region + '```', inline: true},
+      {name: 'Members', value: '```fix`\n' + msg.guild.members.length + '```', inline: true},
+      {name: 'Text Channels', value: '```fix`\n' + msg.guild.textChannels.length + '```', inline: true},
+      {name: 'Voice Channels', value: '```fix`\n' + msg.guild.voiceChannels.length + '```', inline: true},
+      {name: 'Total Roles', value: '```fix`\n' + msg.guild.roles.length + '```', inline: true}]
+
       if (msg.guild.afk_channel === null) {
-        msgArray.push('No voice AFK-channel present.')
+        field.push({name: 'AFK-Channel', value: '```fix`\nNone```'})
       } else {
-        msgArray.push('Voice AFK-channel: **' + msg.guild.afk_channel.name + '** (id: `' + msg.guild.afk_channel.id + '`)')
+        field.push({name: 'AFK-channel', value: '```fix`\n' + `${msg.guild.afk_channel.name} (${msg.guild.afk_channel.id})` + '```'})
       }
-      if (msg.guild.icon === null) {
-        msgArray.push('No server icon present.')
-      } else {
-        msgArray.push('Server icon: ' + msg.guild.iconURL)
+      var embed = {
+        author: {name: `Information requested by ${msg.author.username}`},
+        timestamp: new Date(),
+        color: 0x3498db,
+        fields: field,
+        footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
       }
-      msg.channel.sendMessage(msgArray.join('\n'))
+      if (msg.guild.icon) {
+        embed.thumbnail = {url: msg.guild.iconURL}
+        embed.url = msg.guild.iconURL
+      }
+      msg.channel.sendMessage('', false, embed)
     } else {
       msg.channel.sendMessage("You can't do that in a DM, dummy!.")
     }
@@ -414,35 +483,39 @@ Commands.userinfo = {
   help: "I'll get some information about the user you've mentioned.",
   noDM: true,
   level: 0,
-  fn: function (msg) {
+  fn: function (msg, suffix, bot) {
     var Permissions = require('../databases/controllers/permissions.js')
     if (msg.isPrivate) {
       msg.channel.sendMessage("Sorry you can't use this in DMs")
     }
     if (msg.mentions.length === 0) {
       Permissions.checkLevel(msg, msg.author.id, msg.member.roles).then((level) => {
-        var msgArray = []
         var tempRoles = msg.member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
         var roles = []
         for (var i in tempRoles) {
           roles.push(tempRoles[i].name)
         }
         roles = roles.splice(0, roles.length).join(', ')
-        msgArray.push('```')
-        msgArray.push('Requested user: ' + msg.author.username + '#' + msg.author.discriminator)
-        msgArray.push('ID: ' + msg.author.id)
-        msgArray.push('Status: ' + msg.author.status)
-        msgArray.push('Account created at: ' + msg.author.createdAt)
+        var field = [
+          {name: 'Status', value: '```fix`\n' + msg.author.status + '```', inline: true},
+          {name: 'Account Creation', value: '```fix`\n' + msg.author.createdAt + '```'},
+          {name: 'Access Level', value: '```fix`\n' + level + '```'},
+          {name: 'Roles', value: '```fix`\n' + `${tempRoles.length > 0 ? roles : 'None'}` + '```'}]
         if (msg.author.gameName) {
-          msgArray.push('Playing: ' + msg.author.gameName)
+          field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + msg.author.gameName + '```', inline: true})
         }
-        msgArray.push('Roles: ' + roles)
-        msgArray.push('Current access level: ' + level)
+        var embed = {
+          author: {name: `${msg.author.username}#${msg.author.discriminator} (${msg.author.id})`},
+          timestamp: new Date(),
+          fields: field,
+          footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
+        }
         if (msg.author.avatarURL) {
-          msgArray.push('Avatar: ' + msg.author.avatarURL)
+          embed.author.icon_url = msg.author.avatarURL
+          embed.thumbnail = {url: msg.author.avatarURL}
+          embed.url = msg.author.avatarURL
         }
-        msgArray.push('```')
-        msg.channel.sendMessage(msgArray.join('\n'))
+        msg.channel.sendMessage('', false, embed)
       }).catch((error) => {
         msg.channel.sendMessage('Something went wrong, try again later.')
         Logger.error(error)
@@ -451,7 +524,6 @@ Commands.userinfo = {
     }
     msg.mentions.map(function (user) {
       Permissions.checkLevel(msg, user.id, user.memberOf(msg.guild).roles).then(function (level) {
-        var msgArray = []
         var guild = msg.guild
         var member = guild.members.find((m) => m.id === user.id)
         var tempRoles = member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
@@ -460,21 +532,26 @@ Commands.userinfo = {
           roles.push(tempRoles[i].name)
         }
         roles = roles.splice(0, roles.length).join(', ')
-        msgArray.push('Information requested by ' + msg.author.username)
-        msgArray.push('```', 'Requested user: ' + user.username + '#' + user.discriminator)
-        msgArray.push('ID: ' + user.id)
-        msgArray.push('Status: ' + user.status)
-        msgArray.push('RegisteredAt: ' + user.registeredAt)
+        var field = [
+          {name: 'Status', value: '```fix`\n' + user.status + '```', inline: true},
+          {name: 'Account Creation', value: '```fix`\n' + user.createdAt + '```'},
+          {name: 'Access Level', value: '```fix`\n' + level + '```'},
+          {name: 'Roles', value: '```fix`\n' + `${tempRoles.length > 0 ? roles : 'None'}` + '```'}]
         if (user.gameName) {
-          msgArray.push('Playing: ' + user.gameName)
+          field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + user.gameName + '```', inline: true})
         }
-        msgArray.push('Roles: ' + roles)
-        msgArray.push('Current access level: ' + level)
+        var embed = {
+          author: {name: `${user.username}#${user.discriminator} (${user.id})`},
+          timestamp: new Date(),
+          fields: field,
+          footer: {text: `Online for ${getUptime()}`, icon_url: bot.User.avatarURL}
+        }
         if (user.avatarURL) {
-          msgArray.push('Avatar: ' + user.avatarURL)
+          embed.author.icon_url = user.avatarURL
+          embed.thumbnail = {url: user.avatarURL}
+          embed.url = user.avatarURL
         }
-        msgArray.push('```')
-        msg.channel.sendMessage(msgArray.join('\n'))
+        msg.channel.sendMessage('', false, embed)
       }).catch(function (err) {
         Logger.error(err)
         msg.channel.sendMessage('Something went wrong, try again later.')

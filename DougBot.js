@@ -1,8 +1,10 @@
 'use strict'
 process.title = 'WildBeast'
 
+var Config
+
 try {
-  require('./config.json')
+  Config = require('./config.json')
 } catch (e) {
   console.log('\nWildBeast encountered an error while trying to load the config file, please resolve this issue and restart WildBeast\n\n' + e.message)
   process.exit()
@@ -10,8 +12,6 @@ try {
 
 var argv = require('minimist')(process.argv.slice(2))
 var Logger = require('./runtime/internal/logger.js').Logger
-
-require('./runtime/internal/datacreate.js').check()
 
 var Discordie = require('discordie')
 var Event = Discordie.Events
@@ -21,7 +21,6 @@ var timeout = runtime.internal.timeouts
 var commands = runtime.commandcontrol.Commands
 var aliases = runtime.commandcontrol.Aliases
 var datacontrol = runtime.datacontrol
-var Config
 var restarted = false
 
 Logger.info('Initializing...')
@@ -37,6 +36,9 @@ if (argv.shardmode && !isNaN(argv.shardid) && !isNaN(argv.shardcount)) {
 }
 
 start()
+
+var bugsnag = require('bugsnag')
+bugsnag.register(Config.api_keys.bugsnag)
 
 bot.Dispatcher.on(Event.GATEWAY_READY, function () {
   bot.Users.fetchMembers()
@@ -190,7 +192,11 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
       }
     }
   }).catch(function (e) {
-    Logger.error('Prefix error: ' + e)
+    if (e === 'No database') {
+      Logger.warn('Database file missing for a server, creating one now...')
+    } else {
+      Logger.error('Prefix error: ' + e)
+    }
   })
 })
 
@@ -233,12 +239,20 @@ bot.Dispatcher.on(Event.GUILD_CREATE, function (s) {
   }
 })
 
+bot.Dispatcher.on(Event.GUILD_UPDATE, g => {
+  if (!bot.connected) return
+  var guild = g.getChanges()
+    if (guild.before.owner_id !== guild.after.owner_id) {
+      datacontrol.permissions.updateGuildOwner(g.guild)
+    }
+})
+
 bot.Dispatcher.on(Event.GATEWAY_RESUMED, function () {
   Logger.info('Connection to the Discord gateway has been resumed.')
 })
 
 bot.Dispatcher.on(Event.PRESENCE_MEMBER_INFO_UPDATE, (user) => {
-  datacontrol.users.isKnown(user.new).catch(() => {
+  datacontrol.users.isKnown(user.new).then(() => {
     if (user.old.username !== user.new.username) {
       datacontrol.users.namechange(user.new).catch((e) => {
         Logger.error(e)
@@ -260,7 +274,9 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
 })
 
 process.on('unhandledRejection', (reason, p) => {
-  Logger.debug(`Unhandled promise: ${require('util').inspect(p, {depth:3})}: ${reason}`) // I'm lazy
+  if (p !== null && reason !== null) {
+    bugsnag.notify(new Error(`Unhandled promise: ${require('util').inspect(p, {depth: 3})}: ${reason}`))
+  }
 })
 
 function start () {

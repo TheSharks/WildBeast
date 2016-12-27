@@ -1,5 +1,16 @@
 # 4.0.0
 ## Release phase
+### 4.1.0
+Added Dockerfiles = Docker support. Documentation for Docker installation added.   
+Added a npm script to create database tables, `npm run-script dbcreate`. Removes `--createdatabase` being required at intial run.    
+Informational commands like `info` use Discord embeds now.   
+Added xkcd comic search command back.    
+Songs can now be deleted from the playlist. (`++playlist delete <position>`)   
+Bugsnag is added as a dependency for reporting errors, **bugsnag is not required to run WildBeast.**    
+Added rankup command which allows increase of user level by one.    
+Database now tracks guild owner changes so level 4 permissions are transferred automatically.    
+Remove obsolete features (CSE, chat logger etc.) that are remnants from pre-2.0 or similar.    
+
 ### 4.0.0
 **This update is a breaking change, back up your configs before updating!**     
 Retired nedb for datastorage, now using RethinkDB. Setup process now requires setup of local RDB server, documentation updated to reflect.     

@@ -8,6 +8,8 @@ var YT = require('youtube-dl')
 var fs = require('fs')
 var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
+var bugsnag = require('bugsnag')
+bugsnag.register(Config.api_keys.bugsnag)
 
 exports.registerVanity = function (msg) {
   list[msg.guild.id] = {
@@ -358,6 +360,21 @@ exports.fetchList = function (msg) {
   })
 }
 
+exports.deleteFromPlaylist = function (msg, what) {
+  return new Promise(function (resolve, reject) {
+    if (list[msg.guild.id].info === undefined) {
+      reject('The playlist is currently empty, try adding some songs!')
+    } else if (list[msg.guild.id].info[what] !== undefined) {
+      resolve(list[msg.guild.id].info[what])
+      list[msg.guild.id].info.splice(what, 1)
+      list[msg.guild.id].requester.splice(what, 1)
+      list[msg.guild.id].link.splice(what, 1)
+    } else {
+      reject('That is not a valid song number.')
+    }
+  })
+}
+
 exports.request = function (msg, suffix, bot) {
   var connect = bot.VoiceConnections
     .filter(function (connection) {
@@ -405,7 +422,7 @@ exports.request = function (msg, suffix, bot) {
               }, Config.settings.deleteTimeout)
             }
           })
-          Logger.error('Playlist failiure, ' + err)
+          Logger.error('Playlist failure, ' + err)
           return
         } else if (data) {
           temp = data.items
@@ -467,7 +484,12 @@ function fetch (v, msg, stats) {
     YT.getInfo(v, options, function (err, i) {
       if (!err && i) {
         y++
-        if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
+        if (list[msg.guild.id] === undefined) {
+          return reject({
+            error: 'Bot no longer in voice',
+            done: true
+          })
+        } else if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
           list[msg.guild.id] = {
             link: [i.url],
             vanity: false,
@@ -509,6 +531,7 @@ function fetch (v, msg, stats) {
           }
         }
       } else if (err) {
+        bugsnag.notify(err)
         y++
         if (y > x) {
           return reject({
@@ -551,7 +574,10 @@ function DLFetch (video, msg) {
       filter: 'audio'
     }, (err, i) => {
       if (!err && i) {
-        if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
+        if (list[msg.guild.id] === undefined) {
+          temp = null
+          return reject(first)
+        } else if (list[msg.guild.id].link === undefined || list[msg.guild.id].link.length < 1) {
           list[msg.guild.id] = {
             vanity: false,
             link: [],
@@ -570,6 +596,7 @@ function DLFetch (video, msg) {
         list[msg.guild.id].requester.push(msg.author.username)
         return resolve(first)
       } else {
+        bugsnag.notify(err)
         Logger.debug('Playlist debug, ' + err)
         return reject(first)
       }

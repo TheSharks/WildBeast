@@ -11,6 +11,8 @@ var r = new Dash({
   }]
 })
 var Logger = require('../../internal/logger.js').Logger
+var bugsnag = require('bugsnag')
+bugsnag.register(Config.api_keys.bugsnag)
 
 exports.prefix = function (msg) {
   return new Promise(function (resolve, reject) {
@@ -78,6 +80,7 @@ exports.helpHandle = function (msg) {
   arr.push('`%timeout`: Refers to the amount of seconds the used command cools down for, __can only be used with timeout__.')
   arr.push('`%nlevel`: Short for NeedLevel. Refers to the access level an user needs to execute this command, __can only be used with permissions__.')
   arr.push('`%ulevel`: Short for UserLevel. Refers to the access level an user has right now, __can only be used with permissions__.')
+  arr.push('For more information, check http://docs.thesharks.xyz/commands/, the Customize command section.')
   msg.author.openDM().then((y) => {
     y.sendMessage(arr.join('\n'))
   }).catch((e) => {
@@ -88,8 +91,8 @@ exports.helpHandle = function (msg) {
 
 exports.restore = function (guild) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(guild).then((d) => {
-      r.db('Discord').table('Guilds').delete(d).run().then(() => {
+    getDatabaseDocument(guild).then(() => {
+      r.db('Discord').table('Guilds').get(guild.id).delete().run().then(() => {
         initialize(guild).then(() => {
           resolve('Done!')
         }).catch((e) => {
