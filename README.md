@@ -37,12 +37,14 @@ There is extensive support and resources for users wishing to run WildBeast on t
 
 If you are not into hosting the bot yourself, you can always invite WildBot to your server [from here](http://invite.wildbot.dougley.com).
 
-##Music Credits
+## Music Credits
 
-#####[Whispers Invoke Paranoia](http://freemusicarchive.org/music/Nihilore/The_Hermeneutic_Circle/Nihilore_-_The_Hermeneutic_Circle_-_02_Whispers_Invoke_Paranoia) by [Nihilore](http://freemusicarchive.org/music/Nihilore/) 
+##### [Whispers Invoke Paranoia](http://freemusicarchive.org/music/Nihilore/The_Hermeneutic_Circle/Nihilore_-_The_Hermeneutic_Circle_-_02_Whispers_Invoke_Paranoia) by [Nihilore](http://freemusicarchive.org/music/Nihilore/) 
 ---
 
 <p align="center">
   <a href="https://github.com/feross/standard"><img src="https://cdn.rawgit.com/feross/standard/master/badge.svg" alt="JavaScript Standard Code Style"></a>
   <a href="https://discord.gg/0cFoiR5QVh5LZlQO"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png?style=banner2" alt="Discord server"></a>
 </p>
+---
+Discord is a trademark from Hammer and Chisel.
