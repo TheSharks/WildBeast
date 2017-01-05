@@ -238,11 +238,11 @@ Commands.info = {
     } catch (e) {
       owner = `'ID: ${config.permissions.master[0]}`
     }
-    var field = [{name: 'Servers Connected', value: '```fix`\n' + bot.Guilds.length + '```', inline: true},
-        {name: 'Users Known', value: '```fix`\n' + bot.Users.length + '```', inline: true},
-        {name: 'Channels Connected', value: '```fix`\n' + bot.Channels.length + '```', inline: true},
-        {name: 'Private Channels', value: '```fix`\n' + bot.DirectMessageChannels.length + '```', inline: true},
-        {name: 'Messages Received', value: '```fix`\n' + bot.Messages.length + '```', inline: true},
+    var field = [{name: 'Servers Connected', value: '```\n' + bot.Guilds.length + '```', inline: true},
+        {name: 'Users Known', value: '```\n' + bot.Users.length + '```', inline: true},
+        {name: 'Channels Connected', value: '```\n' + bot.Channels.length + '```', inline: true},
+        {name: 'Private Channels', value: '```\n' + bot.DirectMessageChannels.length + '```', inline: true},
+        {name: 'Messages Received', value: '```\n' + bot.Messages.length + '```', inline: true},
         {name: 'Owner', value: '```\n' + owner + '```', inline: true},
         {name: 'Sharded?', value: '```\n' + `${argv.shardmode ? 'Yes' : 'No'}` + '```', inline: true}]
     if (argv.shardmode) {
@@ -448,17 +448,17 @@ Commands['server-info'] = {
     // if we're not in a PM, return some info about the channel
     if (msg.guild) {
       var field = [{name: 'Server name', value: `${msg.guild.name} [${msg.guild.acronym}] (${msg.guild.id})`},
-      {name: 'Owned by', value: '```fix`\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
-      {name: 'Current Region', value: '```fix`\n' + msg.guild.region + '```', inline: true},
-      {name: 'Members', value: '```fix`\n' + msg.guild.members.length + '```', inline: true},
-      {name: 'Text Channels', value: '```fix`\n' + msg.guild.textChannels.length + '```', inline: true},
-      {name: 'Voice Channels', value: '```fix`\n' + msg.guild.voiceChannels.length + '```', inline: true},
-      {name: 'Total Roles', value: '```fix`\n' + msg.guild.roles.length + '```', inline: true}]
+      {name: 'Owned by', value: '```\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
+      {name: 'Current Region', value: '```\n' + msg.guild.region + '```', inline: true},
+      {name: 'Members', value: '```\n' + msg.guild.members.length + '```', inline: true},
+      {name: 'Text Channels', value: '```\n' + msg.guild.textChannels.length + '```', inline: true},
+      {name: 'Voice Channels', value: '```\n' + msg.guild.voiceChannels.length + '```', inline: true},
+      {name: 'Total Roles', value: '```\n' + msg.guild.roles.length + '```', inline: true}]
 
       if (msg.guild.afk_channel === null) {
-        field.push({name: 'AFK-Channel', value: '```fix`\nNone```'})
+        field.push({name: 'AFK-Channel', value: '```\nNone```'})
       } else {
-        field.push({name: 'AFK-channel', value: '```fix`\n' + `${msg.guild.afk_channel.name} (${msg.guild.afk_channel.id})` + '```'})
+        field.push({name: 'AFK-channel', value: '```\n' + `${msg.guild.afk_channel.name} (${msg.guild.afk_channel.id})` + '```'})
       }
       var embed = {
         author: {name: `Information requested by ${msg.author.username}`},
@@ -497,12 +497,12 @@ Commands.userinfo = {
         }
         roles = roles.splice(0, roles.length).join(', ')
         var field = [
-          {name: 'Status', value: '```fix`\n' + msg.author.status + '```', inline: true},
-          {name: 'Account Creation', value: '```fix`\n' + msg.author.createdAt + '```'},
-          {name: 'Access Level', value: '```fix`\n' + level + '```'},
-          {name: 'Roles', value: '```fix`\n' + `${tempRoles.length > 0 ? roles : 'None'}` + '```'}]
+          {name: 'Status', value: '```\n' + msg.author.status + '```', inline: true},
+          {name: 'Account Creation', value: '```\n' + msg.author.createdAt + '```'},
+          {name: 'Access Level', value: '```\n' + level + '```'},
+          {name: 'Roles', value: '```\n' + `${tempRoles.length > 0 ? roles : 'None'}` + '```'}]
         if (msg.author.gameName) {
-          field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + msg.author.gameName + '```', inline: true})
+          field.splice(1, 0, {name: 'Playing', value: '```\n' + msg.author.gameName + '```', inline: true})
         }
         var embed = {
           author: {name: `${msg.author.username}#${msg.author.discriminator} (${msg.author.id})`},
@@ -533,12 +533,12 @@ Commands.userinfo = {
         }
         roles = roles.splice(0, roles.length).join(', ')
         var field = [
-          {name: 'Status', value: '```fix`\n' + user.status + '```', inline: true},
-          {name: 'Account Creation', value: '```fix`\n' + user.createdAt + '```'},
-          {name: 'Access Level', value: '```fix`\n' + level + '```'},
-          {name: 'Roles', value: '```fix`\n' + `${tempRoles.length > 0 ? roles : 'None'}` + '```'}]
+          {name: 'Status', value: '```\n' + user.status + '```', inline: true},
+          {name: 'Account Creation', value: '```\n' + user.createdAt + '```'},
+          {name: 'Access Level', value: '```\n' + level + '```'},
+          {name: 'Roles', value: '```\n' + `${tempRoles.length > 0 ? roles : 'None'}` + '```'}]
         if (user.gameName) {
-          field.splice(1, 0, {name: 'Playing', value: '```fix`\n' + user.gameName + '```', inline: true})
+          field.splice(1, 0, {name: 'Playing', value: '```\n' + user.gameName + '```', inline: true})
         }
         var embed = {
           author: {name: `${user.username}#${user.discriminator} (${user.id})`},
