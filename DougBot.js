@@ -261,6 +261,10 @@ bot.Dispatcher.on(Event.PRESENCE_MEMBER_INFO_UPDATE, (user) => {
   })
 })
 
+bot.Dispatcher.on(Event.GATEWAY_HELLO, (gatewayInfo) => {
+  Logger.debug(`Gateway trace, ${gatewayInfo.data._trace}`)
+})
+
 bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
   Logger.error('Disconnected from the Discord gateway: ' + e.error)
   if (!restarted) {
