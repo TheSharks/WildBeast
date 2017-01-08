@@ -6,7 +6,7 @@
     "password": "Again if you need this, optional",
     "oauth": "Bot OAuth URL, see wiki"
   },
-  "database":{
+  "database": {
     "host": "localhost",
     "port": 28015,
     "password": "",
@@ -18,6 +18,12 @@
     "deleteTimeout": 3000,
     "deleteTimeoutLong": 6000,
     "maxvcslots": 10
+  },
+  "elasticsearch": {
+    "use": false,
+    "client": {
+      "host": "localhost:9200"
+    }
   },
   "permissions": {
     "master": ["you need to enter the ID from the user you want as master here", "you can extend this array like this if you need more"],
