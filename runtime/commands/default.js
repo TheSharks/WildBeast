@@ -321,6 +321,8 @@ Commands.setlevel = {
       msg.channel.sendMessage('Setting a level higher than 3 is not allowed.')
     } else if (msg.mentions.length === 0 && msg.mention_roles.length === 0 && !msg.mention_everyone) {
       msg.reply('Please @mention the user(s)/role(s) you want to set the permission level of.')
+    } else if (msg.mentions.length === 1 && msg.mentions[0].id === msg.guild.owner.id) {
+      msg.reply("You cannot set the server owner's level.")
     } else if (msg.mentions.length === 1 && msg.mentions[0].id === bot.User.id) {
       msg.reply("I don't need any level set, I can do anything regardless of access levels.")
     } else {
