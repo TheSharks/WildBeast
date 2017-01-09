@@ -12,7 +12,8 @@ if (config.elasticsearch.use === true) {
   var elasticsearch = require('elasticsearch')
   var esTransportOpts = {
     level: 'silly',
-    client: new elasticsearch.Client(config.elasticsearch.client)
+    client: new elasticsearch.Client(config.elasticsearch.client),
+    indexPrefix: 'wildbeast'
   }
   Logger = new Winston.Logger({
     colors: {
