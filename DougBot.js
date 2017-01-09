@@ -52,7 +52,7 @@ bot.Dispatcher.on(Event.GATEWAY_READY, function () {
     }
   })
   Logger.info('Ready to start!', {
-    bot: bot.User,
+    botID: bot.User.id,
     version: require('./package.json').version
   })
   Logger.info(`Logged in as ${bot.User.username}#${bot.User.discriminator} (ID: ${bot.User.id}) and serving ${bot.Users.length} users in ${bot.Guilds.length} servers.`)
@@ -66,6 +66,12 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
   if (!bot.connected) return
   datacontrol.users.isKnown(c.message.author)
   var prefix
+  var loggingGuild = {}
+  for (var k in c.message.guild) {
+    loggingGuild[k] = c.message.guild[k]
+  }
+  loggingGuild.roles = []
+  loggingGuild.emojis = []
   datacontrol.customize.prefix(c.message).then(function (p) {
     if (!p) {
       prefix = Config.settings.prefix
@@ -101,10 +107,9 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
         return // ignore JS build-in array functions
       }
       Logger.info(`Executing <${c.message.resolveContent()}> from ${c.message.author.username}`, {
-        message: c.message,
         author: c.message.author,
-        guild: c.message.guild,
-        bot: bot.User,
+        guild: loggingGuild,
+        botID: bot.User.id,
         cmd: cmd
       })
       if (commands[cmd].level === 'master') {
@@ -114,10 +119,9 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
           } catch (e) {
             c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
             Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`, {
-              message: c.message,
               author: c.message.author,
-              guild: c.message.guild,
-              bot: bot.User,
+              guild: loggingGuild,
+              botID: bot.User.id,
               cmd: cmd,
               error: e
             })
@@ -144,10 +148,9 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                   } catch (e) {
                     c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
                     Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`, {
-                      message: c.message,
                       author: c.message.author,
-                      guild: c.message.guild,
-                      bot: bot.User,
+                      guild: loggingGuild,
+                      botID: bot.User.id,
                       cmd: cmd,
                       error: e
                     })
@@ -160,10 +163,9 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                       } catch (e) {
                         c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
                         Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`, {
-                          message: c.message,
                           author: c.message.author,
-                          guild: c.message.guild,
-                          bot: bot.User,
+                          guild: loggingGuild,
+                          botID: bot.User.id,
                           cmd: cmd,
                           error: e
                         })
@@ -178,20 +180,18 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                       }).catch((e) => {
                         Logger.error('Reply check error, ' + e, {
                           replyType: 'nsfw',
-                          message: c.message,
                           author: c.message.author,
-                          guild: c.message.guild,
-                          bot: bot.User,
+                          guild: loggingGuild,
+                          botID: bot.User.id,
                           cmd: cmd
                         })
                       })
                     }
                   }).catch(function (e) {
                     Logger.error('Permission error: ' + e, {
-                      message: c.message,
                       author: c.message.author,
-                      guild: c.message.guild,
-                      bot: bot.User,
+                      guild: loggingGuild,
+                      botID: bot.User.id,
                       cmd: cmd
                     })
                   })
@@ -209,10 +209,9 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                 }).catch((e) => {
                   Logger.error('Reply check error, ' + e, {
                     replyType: 'perms',
-                    message: c.message,
                     author: c.message.author,
-                    guild: c.message.guild,
-                    bot: bot.User,
+                    guild: loggingGuild,
+                    botID: bot.User.id,
                     cmd: cmd,
                     error: e
                   })
@@ -220,10 +219,9 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
               }
             }).catch(function (e) {
               Logger.error('Permission error: ' + e, {
-                message: c.message,
                 author: c.message.author,
-                guild: c.message.guild,
-                bot: bot.User,
+                guild: loggingGuild,
+                botID: bot.User.id,
                 cmd: cmd,
                 error: e
               })
@@ -248,10 +246,9 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
           }
         }).catch(function (e) {
           Logger.error('Permission error: ' + e, {
-            message: c.message,
             author: c.message.author,
-            guild: c.message.guild,
-            bot: bot.User,
+            guild: loggingGuild,
+            botID: bot.User.id,
             cmd: cmd,
             error: e
           })
@@ -263,10 +260,9 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
       Logger.warn('Database file missing for a server, creating one now...')
     } else {
       Logger.error('Prefix error: ' + e, {
-        message: c.message,
         author: c.message.author,
-        guild: c.message.guild,
-        bot: bot.User,
+        guild: loggingGuild,
+        botID: bot.User.id,
         error: e
       })
     }
@@ -336,7 +332,7 @@ bot.Dispatcher.on(Event.PRESENCE_MEMBER_INFO_UPDATE, (user) => {
 
 bot.Dispatcher.on(Event.GATEWAY_HELLO, (gatewayInfo) => {
   Logger.debug(`Gateway trace, ${gatewayInfo.data._trace}`, {
-    bot: bot.User,
+    botID: bot.User.id,
     gatewayTrace: gatewayInfo.data._trace
   })
 })
