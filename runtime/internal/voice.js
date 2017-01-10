@@ -242,7 +242,7 @@ exports.shuffle = function (msg, bot) {
     })
   if (connect.length < 1) {
     msg.reply('I am not currently in any voice channel.')
-  } else if (list[msg.guild.id] === undefined) {
+  } else if (list[msg.guild.id].link === undefined) {
     msg.reply("There's nothing in the playlist for me to shuffle!")
   } else if (list[msg.guild.id].link !== undefined && list[msg.guild.id].link.length <= 4) {
     msg.reply('Add more songs to the playlist before using this command again.')
@@ -276,7 +276,7 @@ exports.voteSkip = function (msg, bot) {
     })
   if (connect.length < 1) {
     msg.reply('No connection.')
-  } else if (list[msg.guild.id].skips === undefined) {
+  } else if (list[msg.guild.id].link === undefined) {
     msg.reply('Try requesting a song first before voting to skip.')
   } else if (!msg.member.getVoiceChannel() || (msg.member.getVoiceChannel().id !== connect[0].voiceConnection.channel.id)) {
     msg.reply("You're not allowed to vote because you're not in the voice channel.")
@@ -323,7 +323,7 @@ exports.skip = function (msg, suffix, bot) {
   if (connect.length < 1) {
     msg.reply('No connection.')
     return
-  } else if (list[msg.guild.id] === undefined) {
+  } else if (list[msg.guild.id].link === undefined) {
     msg.reply('Try requesting a song first before skipping.')
     return
   }
