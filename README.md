@@ -47,4 +47,4 @@ If you are not into hosting the bot yourself, you can always invite WildBot to y
   <a href="https://discord.gg/0cFoiR5QVh5LZlQO"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png?style=banner2" alt="Discord server"></a>
 </p>
 ---
-Discord is a trademark from Hammer and Chisel.
+"Discord", "Discord App", and any associated logos are registered trademarks of Hammer & Chisel, inc.
