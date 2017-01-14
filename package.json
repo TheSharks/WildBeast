@@ -50,7 +50,7 @@
     "imgflipper": "^1.0.1",
     "leetspeak": "0.0.1",
     "minimist": "^1.2.0",
-    "ora": "^0.3.0",
+    "ora": "^0.4.1",
     "prompt": "^1.0.0",
     "request": "^2.72.0",
     "require-directory": "^2.1.1",
