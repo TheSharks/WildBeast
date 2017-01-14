@@ -116,6 +116,20 @@ Commands.tag = {
             msg.channel.sendMessage('`' + cp + '`')
           }
         })
+      } else if (index[0].toLowerCase() === 'random') {
+        r.db('Discord').table('Tags').count().run().then((c) => {
+          if (c === 0) {
+            msg.channel.sendMessage('No tags found in the database.')
+            return
+          } else {
+            r.db('Discord').table('Tags').sample(1).run().then((tag) => {
+              var msgArray = []
+              msgArray.push(`Tag: **${tag[0].id}**`)
+              msgArray.push(tag[0].content)
+              msg.channel.sendMessage(msgArray.join('\n'))
+            })
+          }
+        })
       } else {
         r.db('Discord').table('Tags').get(index[0].toLowerCase()).run().then((g) => {
           if (g === null) {
