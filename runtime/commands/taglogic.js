@@ -131,6 +131,10 @@ Commands.tag = {
               for (var i in tags) {
                 tagsArray.push(tags[i].id)
               }
+              if (tagsArray.join(', ').length > 1950) {
+                msg.channel.sendMessage(`The length of ${msg.author.id === author.id ? "your" : "this user's"} tag list excesses 2000 characters.`)
+                return
+              }
               msg.channel.sendMessage(`Found ${c} tags for **${author.username}**:\n${tagsArray.join(', ')}`)
             })
           }
