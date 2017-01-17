@@ -12,6 +12,7 @@ if (config.elasticsearch.use === true) {
   var elasticsearch = require('elasticsearch')
   var esTransportOpts = {
     level: 'silly',
+    consistency: false,
     client: new elasticsearch.Client(config.elasticsearch.client),
     indexPrefix: 'wildbeast'
   }
