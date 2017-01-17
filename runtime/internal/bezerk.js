@@ -8,6 +8,10 @@ var bot // eslint-disable-line
 if (Config.bezerk.use === true) {
   Bezerk = new Websocket(Config.bezerk.uri)
   var argv = require('minimist')(process.argv.slice(2))
+  Bezerk.on('close', () => {
+    Logger.warn('Bezerk connection lost.')
+    delete Bezerk // eslint-disable-line
+  })
   Bezerk.on('open', () => {
     argv.shardid = (argv.shardid !== null) ? 1 : argv.shardid
     argv.shardcount = (argv.shardcount !== null) ? 1 : argv.shardcount
