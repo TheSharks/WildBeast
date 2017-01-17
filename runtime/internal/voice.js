@@ -38,7 +38,6 @@ exports.join = function (msg, suffix, bot) {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
             if (r !== false) prefix = r
-          })
           var joinmsg = []
           joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** which you're currently connected to.`)
           joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -55,6 +54,7 @@ exports.join = function (msg, suffix, bot) {
           msg.channel.sendMessage(joinmsg.join('\n'))
           status[msg.guild.id] = true
           waiting(vc, msg, bot)
+          })
         }).catch((err) => {
           if (err.message === 'Missing permission') {
             msg.reply("I could not join the channel you're in because I don't have `Connect` permissions :cry:")
@@ -65,7 +65,6 @@ exports.join = function (msg, suffix, bot) {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
             if (r !== false) prefix = r
-          })
           var joinmsg = []
           joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** because you didn't specify a voice channel for me to join.`)
           joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -82,6 +81,7 @@ exports.join = function (msg, suffix, bot) {
           msg.channel.sendMessage(joinmsg.join('\n'))
           status[msg.guild.id] = true
           waiting(vc, msg, bot)
+          })
         }).catch((err) => {
           if (err.message === 'Missing permission') {
             msg.reply("I could not the first voice channel in my list because I don't have `Connect` permissions :cry:")
@@ -99,7 +99,6 @@ exports.join = function (msg, suffix, bot) {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
             if (r !== false) prefix = r
-          })
           var joinmsg = []
           joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
           joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -116,6 +115,7 @@ exports.join = function (msg, suffix, bot) {
           msg.channel.sendMessage(joinmsg.join('\n'))
           status[msg.guild.id] = true
           waiting(vc, msg, bot)
+          })
         }).catch((err) => {
           if (err.message === 'Missing permission') {
             msg.reply('Could not join channel as I do not have `Connect` permissions.')
