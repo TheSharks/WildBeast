@@ -558,6 +558,7 @@ Commands.randommeme = {
   name: 'randommeme',
   help: "I'll get a random meme for you!",
   level: '0',
+  nsfw: true,
   fn: function (msg) {
     var unirest = require('unirest')
     unirest.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`) // 20 Memes per page, 160 Memes
