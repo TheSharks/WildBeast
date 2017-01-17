@@ -9,8 +9,8 @@ if (Config.bezerk.use === true) {
   Bezerk = new Websocket(Config.bezerk.uri)
   var argv = require('minimist')(process.argv.slice(2))
   Bezerk.on('open', () => {
-    (argv.shardid === null) ? argv.shardid = 1 : argv.shardid = argv.shardid
-    (argv.shardcout === null) ? argv.shardcout = 1 : argv.shardcout = argv.shardcout
+    argv.shardid = (argv.shardid !== null) ? 1 : argv.shardid
+    argv.shardcount = (argv.shardcount !== null) ? 1 : argv.shardcount
     Bezerk.send(JSON.stringify({
       op: 'IDENTIFY_SHARD',
       c: [argv.shardid, argv.shardcount]
