@@ -12,6 +12,7 @@ try {
 
 var argv = require('minimist')(process.argv.slice(2))
 var Logger = require('./runtime/internal/logger.js').Logger
+var Bezerk = require('./runtime/internal/bezerk.js')
 
 var Discordie = require('discordie')
 var Event = Discordie.Events
@@ -347,6 +348,11 @@ bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
     Logger.warn('Something happened while reconnecting. Not trying to login again, exiting...')
     process.exit(1)
   }
+})
+
+bot.Dispatcher.onAny((type, data) => {
+  if (data.type === 'READY' || type === 'VOICE_CHANNEL_JOIN' || type === 'VOICE_CHANNEL_LEAVE' || type.indexOf('VOICE_USER') === 0 || type === 'PRESENCE_UPDATE' || type === 'TYPING_START') return
+  Bezerk.emit(type, data)
 })
 
 process.on('unhandledRejection', (reason, p) => {
