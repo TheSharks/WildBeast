@@ -157,6 +157,7 @@ exports.leave = function (msg, suffix, bot) {
 }
 
 function waiting (vc, msg, bot) {
+  require('../datacontrol.js').customize.volume(msg).then((v) => {
   var music = fs.readdirSync('music/')
   var randMusic = 'music/' + music[Math.floor(Math.random() * music.length)]
   var waitMusic = vc.voiceConnection.createExternalEncoder({
@@ -165,10 +166,12 @@ function waiting (vc, msg, bot) {
     format: 'pcm'
   })
   waitMusic.play()
+  bot.VoiceConnections.find(v => v.voiceConnection.guild.id === msg.guild.id).voiceConnection.getEncoder().setVolume(v)
   waitMusic.once('end', () => {
     if (status[vc.voiceConnection.guildId] === true) {
       leave(bot, msg)
     }
+  })
   })
 }
 
@@ -196,8 +199,9 @@ function next (msg, suffix, bot) {
           source: list[msg.guild.id].link[0]
         })
         encoder.play()
-        var vol = (list[msg.guild.id].volume !== undefined) ? list[msg.guild.id].volume : 100
-        connection.voiceConnection.getEncoder().setVolume(vol)
+        require('../datacontrol.js').customize.volume(msg).then((v) => {
+          connection.voiceConnection.getEncoder().setVolume(v)
+        })
         encoder.once('end', () => {
           msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
             if (Config.settings.autodeletemsg) {
@@ -364,6 +368,15 @@ exports.deleteFromPlaylist = function (msg, what) {
   return new Promise(function (resolve, reject) {
     if (list[msg.guild.id].info === undefined) {
       reject('The playlist is currently empty, try adding some songs!')
+    } else if (what === 'all') {
+      try {
+        list[msg.guild.id].info.splice(1)
+        list[msg.guild.id].link.splice(1)
+        list[msg.guild.id].requester.splice(1)
+        resolve('Playlist has been cleared.')
+      } catch(e) {
+        reject(e)
+      }
     } else if (list[msg.guild.id].info[what] !== undefined) {
       resolve(list[msg.guild.id].info[what])
       list[msg.guild.id].info.splice(what, 1)
@@ -494,7 +507,6 @@ function fetch (v, msg, stats) {
             link: [i.url],
             vanity: false,
             info: [i.title],
-            volume: 100,
             requester: [msg.author.username],
             skips: {
               count: 0,
@@ -582,7 +594,6 @@ function DLFetch (video, msg) {
             vanity: false,
             link: [],
             info: [],
-            volume: 100,
             requester: [],
             skips: {
               count: 0,

@@ -28,6 +28,17 @@ exports.prefix = function (msg) {
   })
 }
 
+exports.volume = function (msg) {
+  return new Promise(function (resolve, reject) {
+    getDatabaseDocument(msg.guild).then((i) => {
+      resolve((i.customize.volume === (null || undefined)) ? 25 : i.customize.volume)
+    }).catch(() => {
+      initialize(msg.guild)
+      reject('No database')
+    })
+  })
+}
+
 exports.check = function (guild) {
   return new Promise(function (resolve, reject) {
     getDatabaseDocument(guild).then((i) => {
@@ -184,6 +195,21 @@ exports.adjust = function (msg, what, how) {
             reject(e)
           })
           break
+        case 'volume':
+          if (isNaN(how) || how < 0 || how > 100) {
+            reject('this must be a number between 0 and 100.')
+          } else {
+            r.db('Discord').table('Guilds').get(msg.guild.id).update({
+              customize: {
+                volume: how
+              }
+            }).run().then(() => {
+              resolve(how)
+            }).catch(e => {
+              reject(e)
+            })
+          }
+          break
         default:
           reject('Unsupported method')
           break
@@ -202,6 +228,7 @@ function initialize (guild) {
         nsfw: null,
         perms: null,
         prefix: null,
+        volume: 25,
         timeout: null,
         welcome: false,
         welcomeMessage: null

@@ -76,18 +76,28 @@ Commands.playlist = {
     suffix = suffix.toLowerCase().split(' ')
     var connect = bot.VoiceConnections.find(v => v.voiceConnection.guild.id === msg.guild.id)
     if (connect) {
-      if ((suffix[0] === 'delete' || suffix[0] === 'remove') && suffix[1] >= 2) {
+      if ((suffix[0] === 'delete' || suffix[0] === 'remove') && (suffix[1] >= 2) || suffix[1] !== undefined && suffix[1].toLowerCase() === 'all') {
         checkLevel(msg, msg.author.id, msg.member.roles).then(function (r) {
           if (r >= 1) {
-            v.deleteFromPlaylist(msg, suffix[1] - 1).then(s => {
-              msg.channel.sendMessage(`**${s}** has been removed from the playlist`).then(m => {
-                setTimeout(() => {
-                  m.delete()
-                }, 15000)
+            if (isNaN(suffix[1])) {
+              v.deleteFromPlaylist(msg, 'all').then(s => {
+                msg.channel.sendMessage(s).then(m => {
+                  setTimeout(() => {m.delete()}, 15000)
+                })
+              }).catch(e => {
+                msg.channel.sendMessage(e)
               })
-            }).catch(e => {
-              msg.channel.sendMessage(e)
-            })
+            } else {
+              v.deleteFromPlaylist(msg, suffix[1] - 1).then(s => {
+                msg.channel.sendMessage(`**${s}** has been removed from the playlist`).then(m => {
+                  setTimeout(() => {
+                    m.delete()
+                  }, 15000)
+                })
+              }).catch(e => {
+                msg.channel.sendMessage(e)
+              })
+            }
           } else {
             msg.channel.sendMessage('You have no permission to run this command!\nYou need level 1, you have level ' + r + '\nAsk the server owner to modify your level with `setlevel`.')
           }
