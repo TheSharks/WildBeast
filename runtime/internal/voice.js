@@ -199,9 +199,13 @@ function next (msg, suffix, bot) {
           source: list[msg.guild.id].link[0]
         })
         encoder.play()
-        require('../datacontrol.js').customize.volume(msg).then((v) => {
-          connection.voiceConnection.getEncoder().setVolume(v)
-        })
+        if (list[msg.guild.id].volume !== undefined) {
+          connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
+        } else {
+          require('../datacontrol.js').customize.volume(msg).then((v) => {
+            connection.voiceConnection.getEncoder().setVolume(v)
+          })
+        }
         encoder.once('end', () => {
           msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
             if (Config.settings.autodeletemsg) {
@@ -302,21 +306,26 @@ exports.voteSkip = function (msg, bot) {
 }
 
 exports.volume = function (msg, suffix, bot) {
-  if (!isNaN(suffix) && suffix <= 100 && suffix > 0) {
-    bot.VoiceConnections
-      .map((connection) => {
-        if (connection.voiceConnection.guild.id === msg.guild.id) {
-          if (list[msg.guild.id] === undefined) {
-            msg.reply('Try requesting a song first before changing the volume.')
-            return
-          }
-          list[msg.guild.id].volume = parseInt(suffix)
-          connection.voiceConnection.getEncoder().setVolume(suffix)
+  return new Promise((resolve, reject) => {
+    var connect = bot.VoiceConnections.find(v => v.voiceConnection.guild.id === msg.guild.id)
+    if (connect) {
+      if (suffix.length === 0) {
+        if (list[msg.guild.id].volume === undefined) {
+          require('../datacontrol.js').customize.volume(msg).then((v) => {
+            resolve(`The volume has been customized to be **${v}** by default.`)
+          })
+        } else {
+          resolve(`The volume is currently set to ${list[msg.guild.id].volume}.`)
         }
-      })
-  } else {
-    msg.channel.sendMessage('Select a volume percentage between 0 and 100.')
-  }
+      } else if (!isNaN(suffix) && suffix <= 100 && suffix > 0) {
+        list[msg.guild.id].volume = suffix
+        connect.voiceConnection.getEncoder().setVolume(suffix)
+        resolve(`The volume has been set to ${suffix}.`)
+      } else {
+        reject('Select a number between 0 and 100.')
+      }
+    }
+  })
 }
 
 exports.skip = function (msg, suffix, bot) {
@@ -373,6 +382,8 @@ exports.deleteFromPlaylist = function (msg, what) {
         list[msg.guild.id].info.splice(1)
         list[msg.guild.id].link.splice(1)
         list[msg.guild.id].requester.splice(1)
+        list[msg.guild.id].skips.count = 0
+        list[msg.guild.id].skips.users = []
         resolve('Playlist has been cleared.')
       } catch(e) {
         reject(e)
@@ -507,6 +518,7 @@ function fetch (v, msg, stats) {
             link: [i.url],
             vanity: false,
             info: [i.title],
+            volume: undefined,
             requester: [msg.author.username],
             skips: {
               count: 0,
@@ -594,6 +606,7 @@ function DLFetch (video, msg) {
             vanity: false,
             link: [],
             info: [],
+            volume: undefined,
             requester: [],
             skips: {
               count: 0,

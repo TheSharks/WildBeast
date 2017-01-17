@@ -21,7 +21,11 @@ Commands.volume = {
   noDM: true,
   level: 1,
   fn: function (msg, suffix, bot) {
-    v.volume(msg, suffix, bot)
+    v.volume(msg, suffix, bot).then(v => {
+      msg.channel.sendMessage(v)
+    }).catch(err => {
+      msg.channel.sendMessage(err)
+    })
   }
 }
 
