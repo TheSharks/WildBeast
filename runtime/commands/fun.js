@@ -554,4 +554,18 @@ Commands.magic8ball = {
   }
 }
 
+Commands.randommeme = {
+  name: 'randommeme',
+  help: "I'll get a random meme for you!",
+  level: '0',
+  fn: function (msg) {
+    var unirest = require('unirest')
+    unirest.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`) // 20 Memes per page, 160 Memes
+    .header('Authorization', 'Client-ID ' + config.api_keys.imgur)
+    .end(function (result) {
+      msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
+    })
+  }
+}
+
 exports.Commands = Commands
