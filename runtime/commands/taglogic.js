@@ -17,7 +17,7 @@ Commands.tag = {
   name: 'tag',
   help: 'Tags!',
   level: 0,
-  usage: '<create/edit/delete/owner/raw> <tagname> [content] OR <tagname>',
+  usage: '<create/edit/delete/owner/raw/list/random> <tagname> [content] OR <tagname>',
   aliases: ['t'],
   fn: function (msg, suffix, bot) {
     var index = suffix.split(' ')
