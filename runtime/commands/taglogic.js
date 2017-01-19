@@ -124,7 +124,6 @@ Commands.tag = {
         r.db('Discord').table('Tags').filter({owner: author.id}).count().run().then((c) => {
           if (c === 0) {
             msg.channel.sendMessage(`${msg.author.id === author.id ? "You don't" : 'This user does not'} have any tags!`)
-            return
           } else {
             var tagsArray = []
             r.db('Discord').table('Tags').filter({owner: author.id}).run().then((tags) => {
@@ -136,6 +135,19 @@ Commands.tag = {
                 return
               }
               msg.channel.sendMessage(`Found ${c} tags for **${author.username}**:\n${tagsArray.join(', ')}`)
+            })
+          }
+        })
+      } else if (index[0].toLowerCase() === 'random') {
+        r.db('Discord').table('Tags').count().run().then((c) => {
+          if (c === 0) {
+            msg.channel.sendMessage('No tags found in the database.')
+          } else {
+            r.db('Discord').table('Tags').sample(1).run().then((tag) => {
+              var msgArray = []
+              msgArray.push(`Tag: **${tag[0].id}**`)
+              msgArray.push(tag[0].content)
+              msg.channel.sendMessage(msgArray.join('\n'))
             })
           }
         })
