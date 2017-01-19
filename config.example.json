@@ -39,6 +39,7 @@
     "google": "A google key",
     "mashape": "A mashape key",
     "twitchId": "A twitch Client-ID",
-    "bugsnag": "A Bugsnag api key, Bugnsnag tracker users only"
+    "bugsnag": "A Bugsnag api key, Bugnsnag tracker users only",
+    "imgur": "A Imgur Client-ID"
   }
 }
