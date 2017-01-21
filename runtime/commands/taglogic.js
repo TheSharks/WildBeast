@@ -17,7 +17,7 @@ Commands.tag = {
   name: 'tag',
   help: 'Tags!',
   level: 0,
-  usage: '<create/edit/delete/owner/raw> <tagname> [content] OR <tagname>',
+  usage: '<create/edit/delete/owner/raw/list/random> <tagname> [content] OR <tagname>',
   aliases: ['t'],
   fn: function (msg, suffix, bot) {
     var index = suffix.split(' ')
@@ -116,11 +116,32 @@ Commands.tag = {
             msg.channel.sendMessage('`' + cp + '`')
           }
         })
+      } else if (index[0].toLowerCase() === 'list') {
+        var author = msg.author
+        if (index[1] && msg.mentions.length === 1) {
+          author = msg.mentions[0]
+        }
+        r.db('Discord').table('Tags').filter({owner: author.id}).count().run().then((c) => {
+          if (c === 0) {
+            msg.channel.sendMessage(`${msg.author.id === author.id ? "You don't" : 'This user does not'} have any tags!`)
+          } else {
+            var tagsArray = []
+            r.db('Discord').table('Tags').filter({owner: author.id}).run().then((tags) => {
+              for (var i in tags) {
+                tagsArray.push(tags[i].id)
+              }
+              if (tagsArray.join(', ').length > 1950) {
+                msg.channel.sendMessage(`The length of ${msg.author.id === author.id ? "your" : "this user's"} tag list exceeds 2000 characters.`)
+                return
+              }
+              msg.channel.sendMessage(`Found ${c} tags for **${author.username}**:\n${tagsArray.join(', ')}`)
+            })
+          }
+        })
       } else if (index[0].toLowerCase() === 'random') {
         r.db('Discord').table('Tags').count().run().then((c) => {
           if (c === 0) {
             msg.channel.sendMessage('No tags found in the database.')
-            return
           } else {
             r.db('Discord').table('Tags').sample(1).run().then((tag) => {
               var msgArray = []

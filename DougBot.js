@@ -26,7 +26,9 @@ var restarted = false
 Logger.info('Initializing...')
 
 if (argv.shardmode && !isNaN(argv.shardid) && !isNaN(argv.shardcount)) {
-  Logger.info('Starting in ShardMode, this is shard ' + argv.shardid)
+  Logger.info('Starting in ShardMode, this is shard ' + argv.shardid, {
+    shardInfo: [argv.shardcount, argv.shardid]
+  })
   bot = new Discordie({
     shardId: argv.shardid,
     shardCount: argv.shardcount
@@ -49,7 +51,10 @@ bot.Dispatcher.on(Event.GATEWAY_READY, function () {
       Logger.info(`Version check: ${res}`)
     }
   })
-  Logger.info('Ready to start!')
+  Logger.info('Ready to start!', {
+    botID: bot.User.id,
+    version: require('./package.json').version
+  })
   Logger.info(`Logged in as ${bot.User.username}#${bot.User.discriminator} (ID: ${bot.User.id}) and serving ${bot.Users.length} users in ${bot.Guilds.length} servers.`)
   if (argv.shutdownwhenready) {
     console.log('o okei bai')
@@ -61,6 +66,12 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
   if (!bot.connected) return
   datacontrol.users.isKnown(c.message.author)
   var prefix
+  var loggingGuild = {}
+  for (var k in c.message.guild) {
+    loggingGuild[k] = c.message.guild[k]
+  }
+  loggingGuild.roles = []
+  loggingGuild.emojis = []
   datacontrol.customize.prefix(c.message).then(function (p) {
     if (!p) {
       prefix = Config.settings.prefix
@@ -95,14 +106,25 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
       if (typeof commands[cmd] !== 'object') {
         return // ignore JS build-in array functions
       }
-      Logger.info(`Executing <${c.message.resolveContent()}> from ${c.message.author.username}`)
+      Logger.info(`Executing <${c.message.resolveContent()}> from ${c.message.author.username}`, {
+        author: c.message.author,
+        guild: loggingGuild,
+        botID: bot.User.id,
+        cmd: cmd
+      })
       if (commands[cmd].level === 'master') {
         if (Config.permissions.master.indexOf(c.message.author.id) > -1) {
           try {
             commands[cmd].fn(c.message, suffix, bot)
           } catch (e) {
             c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
-            Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`)
+            Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`, {
+              author: c.message.author,
+              guild: loggingGuild,
+              botID: bot.User.id,
+              cmd: cmd,
+              error: e
+            })
           }
         } else {
           c.message.channel.sendMessage('This command is only for the bot owner.')
@@ -125,7 +147,13 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                     commands[cmd].fn(c.message, suffix, bot)
                   } catch (e) {
                     c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
-                    Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`)
+                    Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`, {
+                      author: c.message.author,
+                      guild: loggingGuild,
+                      botID: bot.User.id,
+                      cmd: cmd,
+                      error: e
+                    })
                   }
                 } else {
                   datacontrol.permissions.checkNSFW(c.message).then(function (q) {
@@ -134,7 +162,13 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                         commands[cmd].fn(c.message, suffix, bot)
                       } catch (e) {
                         c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
-                        Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`)
+                        Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`, {
+                          author: c.message.author,
+                          guild: loggingGuild,
+                          botID: bot.User.id,
+                          cmd: cmd,
+                          error: e
+                        })
                       }
                     } else {
                       datacontrol.customize.reply(c.message, 'nsfw').then((d) => {
@@ -144,11 +178,22 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                           c.message.channel.sendMessage(d.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name))
                         }
                       }).catch((e) => {
-                        Logger.error('Reply check error, ' + e)
+                        Logger.error('Reply check error, ' + e, {
+                          replyType: 'nsfw',
+                          author: c.message.author,
+                          guild: loggingGuild,
+                          botID: bot.User.id,
+                          cmd: cmd
+                        })
                       })
                     }
                   }).catch(function (e) {
-                    Logger.error('Permission error: ' + e)
+                    Logger.error('Permission error: ' + e, {
+                      author: c.message.author,
+                      guild: loggingGuild,
+                      botID: bot.User.id,
+                      cmd: cmd
+                    })
                   })
                 }
               } else {
@@ -162,11 +207,24 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                     c.message.channel.sendMessage(u.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%nlevel/, commands[cmd].level).replace(/%ulevel/, r))
                   }
                 }).catch((e) => {
-                  Logger.error('Reply check error, ' + e)
+                  Logger.error('Reply check error, ' + e, {
+                    replyType: 'perms',
+                    author: c.message.author,
+                    guild: loggingGuild,
+                    botID: bot.User.id,
+                    cmd: cmd,
+                    error: e
+                  })
                 })
               }
             }).catch(function (e) {
-              Logger.error('Permission error: ' + e)
+              Logger.error('Permission error: ' + e, {
+                author: c.message.author,
+                guild: loggingGuild,
+                botID: bot.User.id,
+                cmd: cmd,
+                error: e
+              })
             })
           }
         })
@@ -187,7 +245,13 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
             c.message.channel.sendMessage('You have no permission to run this command in DM, you probably tried to use restricted commands that are either for master users only or only for server owners.')
           }
         }).catch(function (e) {
-          Logger.error('Permission error: ' + e)
+          Logger.error('Permission error: ' + e, {
+            author: c.message.author,
+            guild: loggingGuild,
+            botID: bot.User.id,
+            cmd: cmd,
+            error: e
+          })
         })
       }
     }
@@ -195,7 +259,12 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
     if (e === 'No database') {
       Logger.warn('Database file missing for a server, creating one now...')
     } else {
-      Logger.error('Prefix error: ' + e)
+      Logger.error('Prefix error: ' + e, {
+        author: c.message.author,
+        guild: loggingGuild,
+        botID: bot.User.id,
+        error: e
+      })
     }
   })
 })
@@ -242,9 +311,9 @@ bot.Dispatcher.on(Event.GUILD_CREATE, function (s) {
 bot.Dispatcher.on(Event.GUILD_UPDATE, g => {
   if (!bot.connected) return
   var guild = g.getChanges()
-    if (guild.before.owner_id !== guild.after.owner_id) {
-      datacontrol.permissions.updateGuildOwner(g.guild)
-    }
+  if (guild.before.owner_id !== guild.after.owner_id) {
+    datacontrol.permissions.updateGuildOwner(g.guild)
+  }
 })
 
 bot.Dispatcher.on(Event.GATEWAY_RESUMED, function () {
@@ -262,7 +331,10 @@ bot.Dispatcher.on(Event.PRESENCE_MEMBER_INFO_UPDATE, (user) => {
 })
 
 bot.Dispatcher.on(Event.GATEWAY_HELLO, (gatewayInfo) => {
-  Logger.debug(`Gateway trace, ${gatewayInfo.data._trace}`)
+  Logger.debug(`Gateway trace, ${gatewayInfo.data._trace}`, {
+    botID: bot.User.id,
+    gatewayTrace: gatewayInfo.data._trace
+  })
 })
 
 bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
