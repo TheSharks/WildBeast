@@ -22,13 +22,13 @@ exports.checkLevel = function (msg, user, roles) {
       return resolve(2)
     } else if (Config.permissions.level3.indexOf(user) > -1) {
       return resolve(3)
-    } else if (msg.isPrivate || !msg.guild) {
-      return resolve(0)
     } else {
       r.db('Discord').table('Users').get(user).then(u => {
         if (u !== null) {
           if (u.banned) {
             return resolve(-1)
+          } else if (msg.isPrivate || !msg.guild) {
+            return resolve(0)
           } else {
             getDatabaseDocument(msg.guild).then((d) => {
               if (user === d.superUser) {
