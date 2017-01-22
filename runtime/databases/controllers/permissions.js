@@ -24,39 +24,50 @@ exports.checkLevel = function (msg, user, roles) {
       return resolve(3)
     } else if (msg.isPrivate || !msg.guild) {
       return resolve(0)
-    }
-    getDatabaseDocument(msg.guild).then((d) => {
-      if (user === d.superUser) {
-        return resolve(4)
-      }
-      var level = d.perms.standard.everyone
-      if (roles) {
-        for (var r of roles) {
-          if (d.perms.roles.level1.indexOf(r.id) > -1) {
-            level = (level > 1) ? level : (level !== -1) ? 1 : -1
-          } else if (d.perms.roles.level2.indexOf(r.id) > -1) {
-            level = (level > 1) ? level : (level !== -1) ? 2 : -1
-          } else if (d.perms.roles.level3.indexOf(r.id) > -1) {
-            level = (level > 1) ? level : (level !== -1) ? 3 : -1
-          } else if (d.perms.roles.negative.indexOf(r.id) > -1) {
-            level = -1
+    } else {
+      r.db('Discord').table('Users').get(user).then(u => {
+        if (u !== null) {
+          if (u.banned) {
+            return resolve(-1)
+          } else {
+            getDatabaseDocument(msg.guild).then((d) => {
+              if (user === d.superUser) {
+                return resolve(4)
+              }
+              var level = d.perms.standard.everyone
+              if (roles) {
+                for (var r of roles) {
+                  if (d.perms.roles.level1.indexOf(r.id) > -1) {
+                    level = (level > 1) ? level : (level !== -1) ? 1 : -1
+                  } else if (d.perms.roles.level2.indexOf(r.id) > -1) {
+                    level = (level > 1) ? level : (level !== -1) ? 2 : -1
+                  } else if (d.perms.roles.level3.indexOf(r.id) > -1) {
+                    level = (level > 1) ? level : (level !== -1) ? 3 : -1
+                  } else if (d.perms.roles.negative.indexOf(r.id) > -1) {
+                    level = -1
+                  }
+                }
+              }
+              if (d.perms.standard.level1.indexOf(user) > -1) {
+                level = (level > 1) ? level : (level !== -1) ? 1 : -1
+              } else if (d.perms.standard.level2.indexOf(user) > -1) {
+                level = (level > 1) ? level : (level !== -1) ? 2 : -1
+              } else if (d.perms.standard.level3.indexOf(user) > -1) {
+                level = (level > 1) ? level : (level !== -1) ? 3 : -1
+              } else if (d.perms.standard.negative.indexOf(user) > -1) {
+                level = -1
+              }
+              return resolve(level)
+            }).catch((e) => {
+              initialize(msg.guild)
+              reject(e)
+            })
           }
+        } else {
+          return resolve(0)
         }
-      }
-      if (d.perms.standard.level1.indexOf(user) > -1) {
-        level = (level > 1) ? level : (level !== -1) ? 1 : -1
-      } else if (d.perms.standard.level2.indexOf(user) > -1) {
-        level = (level > 1) ? level : (level !== -1) ? 2 : -1
-      } else if (d.perms.standard.level3.indexOf(user) > -1) {
-        level = (level > 1) ? level : (level !== -1) ? 3 : -1
-      } else if (d.perms.standard.negative.indexOf(user) > -1) {
-        level = -1
-      }
-      return resolve(level)
-    }).catch((e) => {
-      initialize(msg.guild)
-      reject(e)
-    })
+      })
+    }
   })
 }
 
