@@ -213,8 +213,7 @@ Commands.customize = {
       datacontrol.customize.prefix(msg).then((prefix) => {
         msg.channel.sendMessage(`No option entered! Check ${prefix ? prefix : config.settings.prefix}customize help to see the various options you can set.`)
       })
-    }
-    else if (suffix[0] === 'help') {
+    } else if (suffix[0] === 'help') {
       c.helpHandle(msg)
     } else {
       c.adjust(msg, suffix[0], x).then((r) => {
