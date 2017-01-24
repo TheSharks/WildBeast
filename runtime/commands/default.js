@@ -157,6 +157,24 @@ Commands.plaineval = {
   }
 }
 
+Commands.globalban = {
+  name: 'globalban',
+  alias: ['globalignore'],
+  help: 'Deny a user from using the bot globally.',
+  level: 'master',
+  fn: function(msg, suffix) {
+    var users = require('../databases/controllers/users.js')
+    var what = suffix.split(' ')[0]
+    var who = suffix.split(' ')[1] !== undefined ? suffix.split(' ')[1] : what
+    var reason = suffix.substr(what.length + who.length + 1)
+    users.globalBan(what, who, reason).then(x => {
+      msg.reply(x)
+    }).catch(err => {
+      msg.reply(err)
+    })
+  }
+}
+
 Commands.twitch = {
   name: 'twitch',
   help: 'Tells you if a specified streamer is live on Twitch.tv',
