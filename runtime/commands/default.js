@@ -161,6 +161,7 @@ Commands.globalban = {
   name: 'globalban',
   alias: ['globalignore'],
   help: 'Deny a user from using the bot globally.',
+  usage: '<ban/unban/status> <userid>',
   level: 'master',
   fn: function(msg, suffix) {
     var users = require('../databases/controllers/users.js')
