@@ -35,15 +35,16 @@ if (Config.bezerk.use === true) {
       Logger.info('Bezerk connection established.')
       return
     }
+    if (!msg.c) return
     try {
-      if (!msg.c) return
+      eval(msg.c)
       Bezerk.send(JSON.stringify({
         op: 'EVAL_REPLY',
         c: eval(msg.c)
       }))
     } catch (e) {
       Bezerk.send(JSON.stringify({
-        op: 'EVAL_REPLY',
+        op: 'ERROR',
         c: e
       }))
     }
