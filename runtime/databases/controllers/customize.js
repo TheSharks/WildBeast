@@ -77,6 +77,7 @@ exports.helpHandle = function (msg) {
   arr.push('`welcoming`: Changes wether I should welcome new people.')
   arr.push('`timeout`: Changes my reply when someones uses a command that is still in cooldown')
   arr.push('`prefix`: Changes the prefix I listen to on this server, mentions will still count as a global prefix')
+  arr.push('`volume`: Changes the default volume the bot will assume when joining a voice channel.')
   arr.push('\n')
   arr.push('Some customize methods support special words, here is what they are and how to use them.')
   arr.push('**Note the following:**')
@@ -91,7 +92,7 @@ exports.helpHandle = function (msg) {
   arr.push('`%timeout`: Refers to the amount of seconds the used command cools down for, __can only be used with timeout__.')
   arr.push('`%nlevel`: Short for NeedLevel. Refers to the access level an user needs to execute this command, __can only be used with permissions__.')
   arr.push('`%ulevel`: Short for UserLevel. Refers to the access level an user has right now, __can only be used with permissions__.')
-  arr.push('For more information, check http://docs.thesharks.xyz/commands/, the Customize command section.')
+  arr.push('For more information, check https://docs.thesharks.xyz/commands/#customize-command.')
   msg.author.openDM().then((y) => {
     y.sendMessage(arr.join('\n'))
   }).catch((e) => {
