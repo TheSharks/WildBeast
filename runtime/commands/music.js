@@ -72,6 +72,7 @@ Commands.skip = {
 Commands.playlist = {
   name: 'playlist',
   help: "Use delete and a song number to remove it from the list else I will fetch you the playlist I'm currently playing!",
+  usage: '<clear/delete/remove> <number>',
   aliases: ['list'],
   noDM: true,
   timeout: 5,
