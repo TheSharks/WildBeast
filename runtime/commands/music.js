@@ -82,19 +82,25 @@ Commands.playlist = {
     var connect = bot.VoiceConnections.find(v => v.voiceConnection.guild.id === msg.guild.id)
     if (connect) {
       if (suffix[0] !== undefined && ['clear', 'delete', 'remove'].indexOf(suffix[0]) > -1) {
-        if (suffix[0] === 'clear'){
-          v.deleteFromPlaylist(msg, 'all').then(r => {
-            msg.channel.sendMessage(r)
-          }).catch(err => {
-            msg.channel.sendMessage(err)
-          })
-        } else {
-          v.deleteFromPlaylist(msg, (suffix[1])).then(r => {
-            msg.channel.sendMessage(`**${r}** has been removed from the playlist.`)
-          }).catch(err => {
-            msg.channel.sendMessage(err)
-          })
-        }
+        checkLevel(msg, msg.author.id, msg.member.roles).then(x => {
+          if (x >= 1) {
+            if (suffix[0] === 'clear') {
+              v.deleteFromPlaylist(msg, 'all').then(r => {
+                msg.channel.sendMessage(r)
+              }).catch(err => {
+                msg.channel.sendMessage(err)
+              })
+            } else {
+              v.deleteFromPlaylist(msg, (suffix[1])).then(r => {
+                msg.channel.sendMessage(`**${r}** has been removed from the playlist.`)
+              }).catch(err => {
+                msg.channel.sendMessage(err)
+              })
+            }
+          } else {
+            msg.channel.sendMessage('You do not have the required setlevel for this subcommand, check with the server owner if you should be allowed to do this, required level is 1 or higher.')
+          }
+        })
       } else {
         v.fetchList(msg).then((r) => {
           var arr = []
@@ -109,7 +115,7 @@ Commands.playlist = {
           msg.channel.sendMessage(arr.join('\n')).then((m) => {
             setTimeout(() => {
               m.delete()
-            }, 15000)
+            }, 30000)
           })
         }).catch(() => {
           msg.channel.sendMessage("It appears that there aren't any songs in the current queue.")
