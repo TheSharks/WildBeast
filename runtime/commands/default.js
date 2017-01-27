@@ -165,7 +165,7 @@ Commands.globalban = {
   level: 'master',
   fn: function(msg, suffix) {
     var users = require('../databases/controllers/users.js')
-    var what = suffix.split(' ')[0]
+    var what = suffix.toLowerCase().split(' ')[0]
     var who = suffix.split(' ')[1] !== undefined ? suffix.split(' ')[1] : what
     var reason = suffix.substr(what.length + who.length + 1)
     users.globalBan(what, who, reason).then(x => {

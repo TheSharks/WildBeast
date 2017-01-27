@@ -388,7 +388,7 @@ exports.deleteFromPlaylist = function (msg, what) {
       } catch (e) {
         reject(e)
       }
-    } else if (list[msg.guild.id].info[what] !== undefined) {
+    } else if (what > 0 && list[msg.guild.id].info[what] !== undefined) {
       resolve(list[msg.guild.id].info[what])
       list[msg.guild.id].info.splice(what, 1)
       list[msg.guild.id].requester.splice(what, 1)
