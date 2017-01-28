@@ -1,7 +1,7 @@
 # 4.0.0
 ## Release phase
 ### 4.2.0
-Added Elasticsearch as an option to store logs to, file based logging is semi-depricated because of this.   
+Added Elasticsearch as an option to store logs to, file based logging is semi-deprecated because of this.   
 Added [Bezerk](https://github.com/TheSharks/Bezerk) support.   
 Added Imgur key, required for the new `randommeme` command.   
 Added global ignoring.    
