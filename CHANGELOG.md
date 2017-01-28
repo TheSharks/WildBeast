@@ -1,5 +1,17 @@
 # 4.0.0
 ## Release phase
+### 4.2.0
+Added Elasticsearch as an option to store logs to, file based logging is semi-depricated because of this.   
+Added [Bezerk](https://github.com/TheSharks/Bezerk) support.   
+Added Imgur key, required for the new `randommeme` command.   
+Added global ignoring.    
+Added the ability to customize initial volume when joining voice.   
+Playlist can be cleared with `++playlist clear`   
+Specific songs can be removed from the playlist with `++playlist remove <number>`   
+Tags from users can be listed with `++tag list @User`   
+Random tags can be showed with `++tag random`   
+Botapi variable for node-cleverbot has been set.   
+
 ### 4.1.0
 Added Dockerfiles = Docker support. Documentation for Docker installation added.   
 Added a npm script to create database tables, `npm run-script dbcreate`. Removes `--createdatabase` being required at intial run.    
