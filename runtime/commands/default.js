@@ -157,6 +157,25 @@ Commands.plaineval = {
   }
 }
 
+Commands.globalban = {
+  name: 'globalban',
+  alias: ['globalignore'],
+  help: 'Deny a user from using the bot globally.',
+  usage: '<ban/unban/status> <userid>',
+  level: 'master',
+  fn: function(msg, suffix) {
+    var users = require('../databases/controllers/users.js')
+    var what = suffix.toLowerCase().split(' ')[0]
+    var who = suffix.split(' ')[1] !== undefined ? suffix.split(' ')[1] : what
+    var reason = suffix.substr(what.length + who.length + 1)
+    users.globalBan(what, who, reason).then(x => {
+      msg.reply(x)
+    }).catch(err => {
+      msg.reply(err)
+    })
+  }
+}
+
 Commands.twitch = {
   name: 'twitch',
   help: 'Tells you if a specified streamer is live on Twitch.tv',
@@ -213,8 +232,7 @@ Commands.customize = {
       datacontrol.customize.prefix(msg).then((prefix) => {
         msg.channel.sendMessage(`No option entered! Check ${prefix ? prefix : config.settings.prefix}customize help to see the various options you can set.`)
       })
-    }
-    else if (suffix[0] === 'help') {
+    } else if (suffix[0] === 'help') {
       c.helpHandle(msg)
     } else {
       c.adjust(msg, suffix[0], x).then((r) => {

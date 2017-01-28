@@ -16,12 +16,17 @@ Commands.music = {
 
 Commands.volume = {
   name: 'volume',
-  help: "I'll change my volume!",
+  help: "I'll change my volume or return the current volume if you don't provide a number!",
+  usage: "<nothing/number>",
   aliases: ['vol'],
   noDM: true,
   level: 1,
   fn: function (msg, suffix, bot) {
-    v.volume(msg, suffix, bot)
+    v.volume(msg, suffix, bot).then(v => {
+      msg.channel.sendMessage(v)
+    }).catch(err => {
+      msg.channel.sendMessage(err)
+    })
   }
 }
 
@@ -68,6 +73,7 @@ Commands.skip = {
 Commands.playlist = {
   name: 'playlist',
   help: "Use delete and a song number to remove it from the list else I will fetch you the playlist I'm currently playing!",
+  usage: '<clear/delete/remove> <number>',
   aliases: ['list'],
   noDM: true,
   timeout: 5,
@@ -76,20 +82,24 @@ Commands.playlist = {
     suffix = suffix.toLowerCase().split(' ')
     var connect = bot.VoiceConnections.find(v => v.voiceConnection.guild.id === msg.guild.id)
     if (connect) {
-      if ((suffix[0] === 'delete' || suffix[0] === 'remove') && suffix[1] >= 2) {
-        checkLevel(msg, msg.author.id, msg.member.roles).then(function (r) {
-          if (r >= 1) {
-            v.deleteFromPlaylist(msg, suffix[1] - 1).then(s => {
-              msg.channel.sendMessage(`**${s}** has been removed from the playlist`).then(m => {
-                setTimeout(() => {
-                  m.delete()
-                }, 15000)
+      if (suffix[0] !== undefined && ['clear', 'delete', 'remove'].indexOf(suffix[0]) > -1) {
+        checkLevel(msg, msg.author.id, msg.member.roles).then(x => {
+          if (x >= 1) {
+            if (suffix[0] === 'clear') {
+              v.deleteFromPlaylist(msg, 'all').then(r => {
+                msg.channel.sendMessage(r)
+              }).catch(err => {
+                msg.channel.sendMessage(err)
               })
-            }).catch(e => {
-              msg.channel.sendMessage(e)
-            })
+            } else {
+              v.deleteFromPlaylist(msg, (suffix[1])).then(r => {
+                msg.channel.sendMessage(`**${r}** has been removed from the playlist.`)
+              }).catch(err => {
+                msg.channel.sendMessage(err)
+              })
+            }
           } else {
-            msg.channel.sendMessage('You have no permission to run this command!\nYou need level 1, you have level ' + r + '\nAsk the server owner to modify your level with `setlevel`.')
+            msg.channel.sendMessage('You do not have the required setlevel for this subcommand, check with the server owner if you should be allowed to do this, required level is 1 or higher.')
           }
         })
       } else {
@@ -97,7 +107,7 @@ Commands.playlist = {
           var arr = []
           arr.push('Now playing: **' + r.info[0] + '** \n')
           for (var i = 1; i < r.info.length; i++) {
-            arr.push((i + 1) + '. **' + r.info[i] + '** Requested by ' + r.requester[i])
+            arr.push((i) + '. **' + r.info[i] + '** Requested by ' + r.requester[i])
             if (i === 9) {
               if (r.info.length - 10 !== 0) arr.push('And about ' + (r.info.length - 10) + ' more songs.')
               break
@@ -106,7 +116,7 @@ Commands.playlist = {
           msg.channel.sendMessage(arr.join('\n')).then((m) => {
             setTimeout(() => {
               m.delete()
-            }, 15000)
+            }, 30000)
           })
         }).catch(() => {
           msg.channel.sendMessage("It appears that there aren't any songs in the current queue.")

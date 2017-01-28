@@ -5,6 +5,9 @@ var Cb = require('cleverbot-node')
 var config = require('../../config.json')
 var unirest = require('unirest')
 var cleverbot = new Cb()
+cleverbot.configure({
+  botapi: 'wildbeast-discord'
+})
 Cb.prepare(function () {
   Logger.debug('Launched cleverbot')
 })
@@ -551,6 +554,20 @@ Commands.magic8ball = {
     ]
     var answer = answers[Math.floor(Math.random() * answers.length)]
     msg.channel.sendMessage('The Magic 8 Ball says:\n```' + answer + '```')
+  }
+}
+
+Commands.randommeme = {
+  name: 'randommeme',
+  help: "I'll get a random meme for you!",
+  level: '0',
+  nsfw: true,
+  fn: function (msg) {
+    unirest.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`) // 20 Memes per page, 160 Memes
+    .header('Authorization', 'Client-ID ' + config.api_keys.imgur)
+    .end(function (result) {
+      msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
+    })
   }
 }
 

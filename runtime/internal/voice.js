@@ -38,23 +38,23 @@ exports.join = function (msg, suffix, bot) {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
             if (r !== false) prefix = r
+            var joinmsg = []
+            joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** which you're currently connected to.`)
+            joinmsg.push(`You have until the end of the wait music to request something.`)
+            joinmsg.push(`__**Voice Commands**__`)
+            joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+            joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
+            joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
+            joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
+            joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
+            joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
+            joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
+            joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
+            joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
+            msg.channel.sendMessage(joinmsg.join('\n'))
+            status[msg.guild.id] = true
+            waiting(vc, msg, bot)
           })
-          var joinmsg = []
-          joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** which you're currently connected to.`)
-          joinmsg.push(`You have until the end of the wait music to request something.`)
-          joinmsg.push(`__**Voice Commands**__`)
-          joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
-          joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
-          joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
-          joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
-          joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
-          joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
-          joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
-          joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
-          joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
-          msg.channel.sendMessage(joinmsg.join('\n'))
-          status[msg.guild.id] = true
-          waiting(vc, msg, bot)
         }).catch((err) => {
           if (err.message === 'Missing permission') {
             msg.reply("I could not join the channel you're in because I don't have `Connect` permissions :cry:")
@@ -65,23 +65,23 @@ exports.join = function (msg, suffix, bot) {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
             if (r !== false) prefix = r
+            var joinmsg = []
+            joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** because you didn't specify a voice channel for me to join.`)
+            joinmsg.push(`You have until the end of the wait music to request something.`)
+            joinmsg.push(`__**Voice Commands**__`)
+            joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link,  or any kind of compatible music file.*`)
+            joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
+            joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
+            joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
+            joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
+            joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
+            joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
+            joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
+            joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
+            msg.channel.sendMessage(joinmsg.join('\n'))
+            status[msg.guild.id] = true
+            waiting(vc, msg, bot)
           })
-          var joinmsg = []
-          joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** because you didn't specify a voice channel for me to join.`)
-          joinmsg.push(`You have until the end of the wait music to request something.`)
-          joinmsg.push(`__**Voice Commands**__`)
-          joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link,  or any kind of compatible music file.*`)
-          joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
-          joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
-          joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
-          joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
-          joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
-          joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
-          joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
-          joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
-          msg.channel.sendMessage(joinmsg.join('\n'))
-          status[msg.guild.id] = true
-          waiting(vc, msg, bot)
         }).catch((err) => {
           if (err.message === 'Missing permission') {
             msg.reply("I could not the first voice channel in my list because I don't have `Connect` permissions :cry:")
@@ -99,23 +99,23 @@ exports.join = function (msg, suffix, bot) {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
             if (r !== false) prefix = r
+            var joinmsg = []
+            joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
+            joinmsg.push(`You have until the end of the wait music to request something.`)
+            joinmsg.push(`__**Voice Commands**__`)
+            joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
+            joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
+            joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
+            joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
+            joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
+            joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
+            joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
+            joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
+            joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
+            msg.channel.sendMessage(joinmsg.join('\n'))
+            status[msg.guild.id] = true
+            waiting(vc, msg, bot)
           })
-          var joinmsg = []
-          joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
-          joinmsg.push(`You have until the end of the wait music to request something.`)
-          joinmsg.push(`__**Voice Commands**__`)
-          joinmsg.push(`**${prefix}request** - *Request a song via a youtube or soundcloud link, or any kind of compatible music file.*`)
-          joinmsg.push(`**${prefix}music pause** - *Pauses the current song.*`)
-          joinmsg.push(`**${prefix}music play** - *Resumes the current song.*`)
-          joinmsg.push(`**${prefix}volume** - *Change the volume of the current song.*`)
-          joinmsg.push(`**${prefix}playlist** - *List upcoming requested songs.*`)
-          joinmsg.push(`**${prefix}shuffle** - *Shuffle the music playlist.*`)
-          joinmsg.push(`**${prefix}voteskip** - *Vote to skip the current song.*`)
-          joinmsg.push(`**${prefix}skip** - *Force skip the current song.*`)
-          joinmsg.push(`**${prefix}leave-voice** - *Leaves the voice channel.*`)
-          msg.channel.sendMessage(joinmsg.join('\n'))
-          status[msg.guild.id] = true
-          waiting(vc, msg, bot)
         }).catch((err) => {
           if (err.message === 'Missing permission') {
             msg.reply('Could not join channel as I do not have `Connect` permissions.')
@@ -157,18 +157,21 @@ exports.leave = function (msg, suffix, bot) {
 }
 
 function waiting (vc, msg, bot) {
-  var music = fs.readdirSync('music/')
-  var randMusic = 'music/' + music[Math.floor(Math.random() * music.length)]
-  var waitMusic = vc.voiceConnection.createExternalEncoder({
-    type: 'ffmpeg',
-    source: randMusic,
-    format: 'pcm'
-  })
-  waitMusic.play()
-  waitMusic.once('end', () => {
-    if (status[vc.voiceConnection.guildId] === true) {
-      leave(bot, msg)
-    }
+  require('../datacontrol.js').customize.volume(msg).then((v) => {
+    var music = fs.readdirSync('music/')
+    var randMusic = 'music/' + music[Math.floor(Math.random() * music.length)]
+    var waitMusic = vc.voiceConnection.createExternalEncoder({
+      type: 'ffmpeg',
+      source: randMusic,
+      format: 'pcm'
+    })
+    waitMusic.play()
+    bot.VoiceConnections.find(v => v.voiceConnection.guild.id === msg.guild.id).voiceConnection.getEncoder().setVolume(v)
+    waitMusic.once('end', () => {
+      if (status[vc.voiceConnection.guildId] === true) {
+        leave(bot, msg)
+      }
+    })
   })
 }
 
@@ -196,8 +199,13 @@ function next (msg, suffix, bot) {
           source: list[msg.guild.id].link[0]
         })
         encoder.play()
-        var vol = (list[msg.guild.id].volume !== undefined) ? list[msg.guild.id].volume : 100
-        connection.voiceConnection.getEncoder().setVolume(vol)
+        if (list[msg.guild.id].volume !== undefined) {
+          connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
+        } else {
+          require('../datacontrol.js').customize.volume(msg).then((v) => {
+            connection.voiceConnection.getEncoder().setVolume(v)
+          })
+        }
         encoder.once('end', () => {
           msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
             if (Config.settings.autodeletemsg) {
@@ -288,31 +296,36 @@ exports.voteSkip = function (msg, bot) {
       list[msg.guild.id].skips.users.push(msg.author.id)
       list[msg.guild.id].skips.count++
       if (list[msg.guild.id].skips.count >= count) {
-        msg.channel.sendMessage('Voteskip passed, next song coming up!')
-        exports.skip(msg, null, bot)
-      } else {
-        msg.reply(`Voteskip registered, ${count - list[msg.guild.id].skips.count} more votes needed for the vote to pass.`)
-      }
+          msg.channel.sendMessage('Voteskip passed, next song coming up!')
+          exports.skip(msg, null, bot)
+        } else {
+          msg.reply(`Voteskip registered, ${count - list[msg.guild.id].skips.count} more votes needed for the vote to pass.`)
+        }
     }
   }
 }
 
 exports.volume = function (msg, suffix, bot) {
-  if (!isNaN(suffix) && suffix <= 100 && suffix > 0) {
-    bot.VoiceConnections
-      .map((connection) => {
-        if (connection.voiceConnection.guild.id === msg.guild.id) {
-          if (list[msg.guild.id] === undefined) {
-            msg.reply('Try requesting a song first before changing the volume.')
-            return
-          }
-          list[msg.guild.id].volume = parseInt(suffix)
-          connection.voiceConnection.getEncoder().setVolume(suffix)
+  return new Promise((resolve, reject) => {
+    var connect = bot.VoiceConnections.find(v => v.voiceConnection.guild.id === msg.guild.id)
+    if (connect) {
+      if (suffix.length === 0) {
+        if (list[msg.guild.id].volume === undefined) {
+          require('../datacontrol.js').customize.volume(msg).then((v) => {
+            resolve(`The volume has been customized to be **${v}** by default.`)
+          })
+        } else {
+          resolve(`The volume is currently set to ${list[msg.guild.id].volume}.`)
         }
-      })
-  } else {
-    msg.channel.sendMessage('Select a volume percentage between 0 and 100.')
-  }
+      } else if (!isNaN(suffix) && suffix <= 100 && suffix > 0) {
+        list[msg.guild.id].volume = suffix
+        connect.voiceConnection.getEncoder().setVolume(suffix)
+        resolve(`The volume has been set to ${suffix}.`)
+      } else {
+        reject('Select a number between 0 and 100.')
+      }
+    }
+  })
 }
 
 exports.skip = function (msg, suffix, bot) {
@@ -364,7 +377,18 @@ exports.deleteFromPlaylist = function (msg, what) {
   return new Promise(function (resolve, reject) {
     if (list[msg.guild.id].info === undefined) {
       reject('The playlist is currently empty, try adding some songs!')
-    } else if (list[msg.guild.id].info[what] !== undefined) {
+    } else if (what === 'all') {
+      try {
+        list[msg.guild.id].info.splice(1)
+        list[msg.guild.id].link.splice(1)
+        list[msg.guild.id].requester.splice(1)
+        list[msg.guild.id].skips.count = 0
+        list[msg.guild.id].skips.users = []
+        resolve('Playlist has been cleared.')
+      } catch (e) {
+        reject(e)
+      }
+    } else if (what > 0 && list[msg.guild.id].info[what] !== undefined) {
       resolve(list[msg.guild.id].info[what])
       list[msg.guild.id].info.splice(what, 1)
       list[msg.guild.id].requester.splice(what, 1)
@@ -494,7 +518,7 @@ function fetch (v, msg, stats) {
             link: [i.url],
             vanity: false,
             info: [i.title],
-            volume: 100,
+            volume: undefined,
             requester: [msg.author.username],
             skips: {
               count: 0,
@@ -582,7 +606,7 @@ function DLFetch (video, msg) {
             vanity: false,
             link: [],
             info: [],
-            volume: 100,
+            volume: undefined,
             requester: [],
             skips: {
               count: 0,
