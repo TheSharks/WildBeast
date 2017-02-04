@@ -6,7 +6,7 @@
 <a href="http://nodejs.org"><img src="https://img.shields.io/badge/Node.js-6.9.1-blue.svg" alt="Node JS"></a>
 <a href="http://npmjs.com"><img src="https://img.shields.io/badge/npm-4.0.5-blue.svg" alt="npm"></a>
 <a><img src="https://img.shields.io/badge/Version-4.1.0-blue.svg" alt="Version"></a>
-<a href="https://discord.gg/0cFoiR5QVh5LZlQO"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png" alt="Discord server"></a>
+<a href="https://discord.gg/wildbot"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png" alt="Discord server"></a>
 </p>
 
 ---
@@ -39,12 +39,12 @@ If you are not into hosting the bot yourself, you can always invite WildBot to y
 
 ## Music Credits
 
-##### [Whispers Invoke Paranoia](http://freemusicarchive.org/music/Nihilore/The_Hermeneutic_Circle/Nihilore_-_The_Hermeneutic_Circle_-_02_Whispers_Invoke_Paranoia) by [Nihilore](http://freemusicarchive.org/music/Nihilore/) 
+##### [Whispers Invoke Paranoia](http://freemusicarchive.org/music/Nihilore/The_Hermeneutic_Circle/Nihilore_-_The_Hermeneutic_Circle_-_02_Whispers_Invoke_Paranoia) by [Nihilore](http://freemusicarchive.org/music/Nihilore/)
 ---
 
 <p align="center">
   <a href="https://github.com/feross/standard"><img src="https://cdn.rawgit.com/feross/standard/master/badge.svg" alt="JavaScript Standard Code Style"></a>
-  <a href="https://discord.gg/0cFoiR5QVh5LZlQO"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png?style=banner2" alt="Discord server"></a>
+  <a href="https://discord.gg/wildbot"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png?style=banner2" alt="Discord server"></a>
 </p>
 ---
 "Discord", "Discord App", and any associated logos are registered trademarks of Hammer & Chisel, inc.
