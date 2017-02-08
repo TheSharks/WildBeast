@@ -566,7 +566,11 @@ Commands.randommeme = {
     unirest.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`) // 20 Memes per page, 160 Memes
     .header('Authorization', 'Client-ID ' + config.api_keys.imgur)
     .end(function (result) {
-      msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
+      if (!result.body.data.error) {
+        msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
+      } else {
+        Logger.error(result.body.data.error)
+      }
     })
   }
 }
