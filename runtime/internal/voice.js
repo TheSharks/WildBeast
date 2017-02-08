@@ -467,7 +467,7 @@ exports.request = function (msg, suffix, bot) {
         }
       }).catch((e) => {
         Logger.error(e)
-        msg.channel.sendMessage("I couldn't add that to the playlist, error returned:" + e.error.split('ERROR:')[1]).replace(Config.api_keys.google, '👀').then((m) => {
+        msg.channel.sendMessage("I couldn't add that to the playlist, error returned:" + e.error.split('ERROR:')[1]).replace(Config.api_keys.google, '👀').split('Traceback')[0].then((m) => {
           if (Config.settings.autodeletemsg) {
             setTimeout(() => {
               m.delete().catch((e) => Logger.error(e))
