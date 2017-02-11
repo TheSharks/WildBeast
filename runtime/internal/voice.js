@@ -296,11 +296,11 @@ exports.voteSkip = function (msg, bot) {
       list[msg.guild.id].skips.users.push(msg.author.id)
       list[msg.guild.id].skips.count++
       if (list[msg.guild.id].skips.count >= count) {
-          msg.channel.sendMessage('Voteskip passed, next song coming up!')
-          exports.skip(msg, null, bot)
-        } else {
-          msg.reply(`Voteskip registered, ${count - list[msg.guild.id].skips.count} more votes needed for the vote to pass.`)
-        }
+        msg.channel.sendMessage('Voteskip passed, next song coming up!')
+        exports.skip(msg, null, bot)
+      } else {
+        msg.reply(`Voteskip registered, ${count - list[msg.guild.id].skips.count} more votes needed for the vote to pass.`)
+      }
     }
   }
 }

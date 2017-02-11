@@ -17,7 +17,7 @@ Commands.music = {
 Commands.volume = {
   name: 'volume',
   help: "I'll change my volume or return the current volume if you don't provide a number!",
-  usage: "<nothing/number>",
+  usage: '<nothing/number>',
   aliases: ['vol'],
   noDM: true,
   level: 1,

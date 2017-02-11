@@ -236,20 +236,20 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
           c.message.channel.sendMessage('This command cannot be used in DM, invite the bot to a server and try this command again.')
         } else {
           datacontrol.permissions.checkLevel(c.message, c.message.author.id, []).then(function (r) {
-              if (r !== -1 && r >= commands[cmd].level) {
-                try {
-                  commands[cmd].fn(c.message, suffix, bot)
-                } catch (e) {
-                  c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
-                  Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`)
-                }
-              } else {
-                if (r === -1) {
-                  c.message.channel.sendMessage('You have been blacklisted from using this bot, for more help contact my developers.')
-                } else {
-                  c.message.channel.sendMessage('You have no permission to run this command in DM, you probably tried to use restricted commands that are either for master users only or only for server owners.')
-                }
+            if (r !== -1 && r >= commands[cmd].level) {
+              try {
+                commands[cmd].fn(c.message, suffix, bot)
+              } catch (e) {
+                c.message.channel.sendMessage('An error occured while trying to process this command, you should let the bot author know. \n```' + e + '```')
+                Logger.error(`Command error, thrown by ${commands[cmd].name}: ${e}`)
               }
+            } else {
+              if (r === -1) {
+                c.message.channel.sendMessage('You have been blacklisted from using this bot, for more help contact my developers.')
+              } else {
+                c.message.channel.sendMessage('You have no permission to run this command in DM, you probably tried to use restricted commands that are either for master users only or only for server owners.')
+              }
+            }
           }).catch(function (e) {
             Logger.error('Permission error: ' + e, {
               author: c.message.author,

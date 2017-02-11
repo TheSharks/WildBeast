@@ -163,7 +163,7 @@ Commands.globalban = {
   help: 'Deny a user from using the bot globally.',
   usage: '<ban/unban/status> <userid>',
   level: 'master',
-  fn: function(msg, suffix) {
+  fn: function (msg, suffix) {
     var users = require('../databases/controllers/users.js')
     var what = suffix.toLowerCase().split(' ')[0]
     var who = suffix.split(' ')[1] !== undefined ? suffix.split(' ')[1] : what
@@ -230,7 +230,7 @@ Commands.customize = {
     if (suffix[0].length === 0) {
       var datacontrol = require('../datacontrol')
       datacontrol.customize.prefix(msg).then((prefix) => {
-        msg.channel.sendMessage(`No option entered! Check ${prefix ? prefix : config.settings.prefix}customize help to see the various options you can set.`)
+        msg.channel.sendMessage(`No option entered! Check ${prefix !== false ? prefix : config.settings.prefix}customize help to see the various options you can set.`)
       })
     } else if (suffix[0] === 'help') {
       c.helpHandle(msg)
@@ -390,7 +390,6 @@ Commands.rankup = {
     }
   }
 }
-
 
 Commands.setnsfw = {
   name: 'setnsfw',
