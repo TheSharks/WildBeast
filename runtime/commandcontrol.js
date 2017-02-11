@@ -66,6 +66,7 @@ exports.helpHandle = function (msg, suffix) {
     msgArraytwo.push('```')
     msgArraytwo.push('If you want more information on the commands, check the command reference at http://docs.thesharks.xyz/commands.')
     msgArraytwo.push('For further questions, join our server: https://discord.gg/wildbot')
+    msgArraytwo.push('Like what we do? Consider supporting my developer at Patreon! <https://www.patreon.com/Dougley>')
     msg.author.openDM().then((y) => {
       if (!msg.isPrivate) {
         msg.channel.sendMessage('Help is underway ' + msg.author.mention + '!')
