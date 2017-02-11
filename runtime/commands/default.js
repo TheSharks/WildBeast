@@ -98,7 +98,7 @@ Commands.eval = {
     if (msg.author.id === bot.User.id) return // To statisfy our styleguide :P
     var util = require('util')
     try {
-      var returned = eval(suffix)
+      var returned = eval(suffix) // eslint-disable-line no-eval
       var str = util.inspect(returned, {
         depth: 1
       })
@@ -145,7 +145,7 @@ Commands.plaineval = {
     var evalfin = []
     try {
       evalfin.push('```xl')
-      evalfin.push(eval(suffix))
+      evalfin.push(eval(suffix)) // eslint-disable-line no-eval
       evalfin.push('```')
     } catch (e) {
       evalfin = []
