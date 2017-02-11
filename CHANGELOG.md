@@ -1,5 +1,8 @@
 # 4.0.0
 ## Release phase
+### 4.2.1
+Miscellaneous fixes.   
+
 ### 4.2.0
 Added Elasticsearch as an option to store logs to, file based logging is semi-deprecated because of this.   
 Added [Bezerk](https://github.com/TheSharks/Bezerk) support.   
