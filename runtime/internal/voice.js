@@ -467,7 +467,8 @@ exports.request = function (msg, suffix, bot) {
         }
       }).catch((e) => {
         Logger.error(e)
-        msg.channel.sendMessage("I couldn't add that to the playlist, error returned:" + e.error.split('ERROR:')[1].replace(Config.api_keys.google, '👀').split('Traceback')[0]).then((m) => {
+        var error = (e.error.split('ERROR:')[1].length !== 2) ? e.error.split('ERROR:')[1] : e.error.split('WARNING:')[1]
+        msg.channel.sendMessage("I couldn't add that to the playlist, error returned:" + error.replace(Config.api_keys.google, '👀').split('Traceback')[0].split('please report')[0]).then((m) => {
           if (Config.settings.autodeletemsg) {
             setTimeout(() => {
               m.delete().catch((e) => Logger.error(e))
