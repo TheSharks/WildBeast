@@ -6,10 +6,7 @@ var config = require('../../config.json')
 var unirest = require('unirest')
 var cleverbot = new Cb()
 cleverbot.configure({
-  botapi: 'wildbeast-discord'
-})
-Cb.prepare(function () {
-  Logger.debug('Launched cleverbot')
+  botapi: config.api_keys.cleverbot
 })
 
 Commands.gif = {
