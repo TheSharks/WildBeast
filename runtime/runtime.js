@@ -1,3 +1,3 @@
-var directory = require('require-directory'),
-  blacklist = /dbcreate\.js$/
+var directory = require('require-directory')
+var blacklist = /dbcreate\.js$/
 module.exports = directory(module, {exclude: blacklist})
