@@ -10,7 +10,7 @@ if (Config.bezerk.use === true) {
   var argv = require('minimist')(process.argv.slice(2))
   Bezerk.on('close', () => {
     Logger.warn('Bezerk connection lost.')
-    delete Bezerk // eslint-disable-line
+    Bezerk = undefined
   })
   Bezerk.on('open', () => {
     argv.shardid = (argv.shardid !== null) ? 1 : argv.shardid
@@ -37,10 +37,10 @@ if (Config.bezerk.use === true) {
     }
     if (!msg.c) return
     try {
-      eval(msg.c)
+      eval(msg.c) // eslint-disable-line no-eval
       Bezerk.send(JSON.stringify({
         op: 'EVAL_REPLY',
-        c: eval(msg.c)
+        c: eval(msg.c) // eslint-disable-line no-eval
       }))
     } catch (e) {
       Bezerk.send(JSON.stringify({
