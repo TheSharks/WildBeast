@@ -45,7 +45,7 @@
   "license": "GPL-3.0",
   "dependencies": {
     "bugsnag": "^1.9.0",
-    "cleverbot-node": "^0.2.6",
+    "cleverbot-node": "^0.3.0",
     "discordie": "^0.11.0",
     "imgflipper": "^1.0.1",
     "leetspeak": "0.0.1",
