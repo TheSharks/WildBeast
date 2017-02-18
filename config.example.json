@@ -44,6 +44,8 @@
     "mashape": "A mashape key",
     "twitchId": "A twitch Client-ID",
     "bugsnag": "A Bugsnag api key, Bugsnag tracker users only",
-    "imgur": "A Imgur Client-ID"
+    "imgur": "A Imgur Client-ID",
+    "cleverbot_user": "",
+    "cleverbot_key": ""
   }
 }

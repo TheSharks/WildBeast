@@ -22,7 +22,6 @@ var timeout = runtime.internal.timeouts
 var commands = runtime.commandcontrol.Commands
 var aliases = runtime.commandcontrol.Aliases
 var datacontrol = runtime.datacontrol
-var restarted = false
 
 Logger.info('Initializing...')
 
@@ -346,14 +345,8 @@ bot.Dispatcher.on(Event.GATEWAY_HELLO, (gatewayInfo) => {
 
 bot.Dispatcher.on(Event.DISCONNECTED, function (e) {
   Logger.error('Disconnected from the Discord gateway: ' + e.error)
-  if (!restarted) {
-    restarted = true
-    Logger.info('Trying to login again...')
-    start()
-  } else {
-    Logger.warn('Something happened while reconnecting. Not trying to login again, exiting...')
-    process.exit(1)
-  }
+  Logger.info('Trying to login again...')
+  start()
 })
 
 bot.Dispatcher.onAny((type, data) => {

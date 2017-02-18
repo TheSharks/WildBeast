@@ -1,16 +1,10 @@
 var Commands = []
 var Logger = require('../internal/logger.js').Logger
 var Giphy = require('../giphy.js')
-var Cb = require('cleverbot-node')
+var Cleverbot = require('cleverbot.io')
 var config = require('../../config.json')
 var unirest = require('unirest')
-var cleverbot = new Cb()
-cleverbot.configure({
-  botapi: 'wildbeast-discord'
-})
-Cb.prepare(function () {
-  Logger.debug('Launched cleverbot')
-})
+var cleverbot = new Cleverbot(config.api_keys.cleverbot_user, config.api_keys.cleverbot_key)
 
 Commands.gif = {
   name: 'gif',
@@ -341,13 +335,14 @@ Commands.cleverbot = {
   aliases: ['chat', 'cb', 'talk'],
   level: 0,
   fn: function (msg, suffix) {
-    msg.channel.sendTyping()
-    var type = setInterval(function () {
+    cleverbot.create(function (err, session) {
+      if (err) Logger.error(err)
+      cleverbot.setNick('wildbeast')
       msg.channel.sendTyping()
-    }, 5000)
-    cleverbot.write(suffix, function (r) {
-      msg.channel.sendMessage(r.message)
-      clearInterval(type)
+      cleverbot.ask(suffix, function (e, r) {
+        if (e) Logger.error(e)
+        msg.channel.sendMessage(r)
+      })
     })
   }
 }
@@ -564,10 +559,14 @@ Commands.randommeme = {
   nsfw: true,
   fn: function (msg) {
     unirest.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`) // 20 Memes per page, 160 Memes
-    .header('Authorization', 'Client-ID ' + config.api_keys.imgur)
-    .end(function (result) {
-      msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
-    })
+      .header('Authorization', 'Client-ID ' + config.api_keys.imgur)
+      .end(function (result) {
+        if (!result.body.data.error) {
+          msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
+        } else {
+          Logger.error(result.body.data.error)
+        }
+      })
   }
 }
 

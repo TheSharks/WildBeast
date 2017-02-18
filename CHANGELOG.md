@@ -1,5 +1,14 @@
 # 4.0.0
 ## Release phase
+### 4.2.1
+Reworked sestatus command, particular improvements:   
+- Allow for more status options to be passed. (Online, idle, DND, invisible)   
+- Allow status to be cleared if no suffix is passed.   
+- Misc improvements and added PEBKAC repellant.   
+   
+More verbose logging for the request command to improve capability to debug voice errors.   
+Other miscellaneous fixes.   
+
 ### 4.2.0
 Added Elasticsearch as an option to store logs to, file based logging is semi-deprecated because of this.   
 Added [Bezerk](https://github.com/TheSharks/Bezerk) support.   
