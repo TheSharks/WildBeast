@@ -207,6 +207,7 @@ function next (msg, suffix, bot) {
           })
         }
         encoder.once('end', () => {
+          if (list[msg.guild.id].info.length === 0) return
           msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
             if (Config.settings.autodeletemsg) {
               setTimeout(() => {
