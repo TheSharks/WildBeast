@@ -26,20 +26,21 @@ data.permissions.level1 = '${PERMISSIONS_LEVEL1}'.split(",");
 data.permissions.level2 = '${PERMISSIONS_LEVEL2}'.split(",");
 data.permissions.level3 = '${PERMISSIONS_LEVEL3}'.split(",");
 
-data.bezerk.use = ${BEZERK_USE};
-data.bezerk.uri = ${BEZERK_URI};
+data.bezerk.use = '${BEZERK_USE}';
+data.bezerk.uri = '${BEZERK_URI}';
 
-data.elasticsearch.use = ${ELASTICSEARCH_USE};
-data.elasticsearch.client = ${ELASTICSEARCH_CLIENT};
+data.elasticsearch.use = '${ELASTICSEARCH_USE}';
+data.elasticsearch.client = '${ELASTICSEARCH_CLIENT}';
 
 data.api_keys.imgflip.username = '${API_KEYS_IMGFLIP_USERNAME}';
 data.api_keys.imgflip.password = '${API_KEYS_IMGFLIP_PASSWORD}';
 data.api_keys.google = '${API_KEYS_GOOGLE}';
 data.api_keys.mashape = '${API_KEYS_MASHAPE}';
 data.api_keys.twitchId = '${API_KEYS_TWITCH_ID}';
-data.api_keys.bugsnag = ${API_KEYS_BUGSNAG};
-data.api_keys.cleverbot_user = ${API_KEYS_CLEVERBOT_USER};
-data.api_keys.cleverbot_key = ${API_KEYS_CLEVERBOT_KEY}; 
+data.api_keys.bugsnag = '${API_KEYS_BUGSNAG}';
+data.api_keys.cleverbot_user = '${API_KEYS_CLEVERBOT_USER}';
+data.api_keys.cleverbot_key = '${API_KEYS_CLEVERBOT_KEY}'; 
+data.api_keys.imgur = '${API_KEYS_IMGUR}';
 
 console.log(JSON.stringify(data));
 
