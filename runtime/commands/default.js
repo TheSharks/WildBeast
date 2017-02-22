@@ -355,6 +355,78 @@ Commands.setlevel = {
   }
 }
 
+Commands.addrole = {
+  name: 'addrole',
+  help: 'Give a role to user or users.',
+  usage: '@user @user2 rolename',
+  noDM: true,
+  level: 3,
+  fn: function (msg, suffix, bot) {
+    var guild = msg.guild
+    var user = msg.author
+    var botuser = bot.User
+    var guildPerms = user.permissionsFor(guild)
+    var botPerms = botuser.permissionsFor(guild)
+
+    let roleToAdd = suffix.split(' ').splice(msg.mentions.length).join(' ')
+    let role = msg.guild.roles.find(r => r.name === roleToAdd)
+    if (!guildPerms.General.MANAGE_ROLES) {
+      msg.reply('You don\'t have Manage Roles permission here.')
+    } else if (!botPerms.General.MANAGE_ROLES) {
+      msg.channel.sendMessage('I don\'t have Manage Roles permission here, sorry!')
+    } else if (msg.mentions.length === 0 && !msg.mention_everyone) {
+      msg.reply('Please @mention the user(s) you want to give the role to.')
+    } else if (typeof role !== 'object') {
+      msg.reply('The role does not seem to exist. Check your spelling and remember that this command is case sensitive.')
+    } else {
+      msg.mentions.map(u => {
+        let guildMember = msg.guild.members.find(a => a.id === u.id)
+        guildMember.assignRole(role).then(() => {
+          msg.channel.sendMessage('Role `' + roleToAdd + '` successfully assigned to **' + guildMember.username + '**!')
+        }).catch(err => {
+          msg.reply('Something went wrong: ' + err)
+        })
+      })
+    }
+  }
+}
+
+Commands.takerole = {
+  name: 'takerole',
+  help: 'Take a role from a user or users',
+  usage: '@user @user2 rolename',
+  noDM: true,
+  level: 3,
+  fn: function (msg, suffix, bot) {
+    var guild = msg.guild
+    var user = msg.author
+    var botuser = bot.User
+    var guildPerms = user.permissionsFor(guild)
+    var botPerms = botuser.permissionsFor(guild)
+
+    let roleToRemove = suffix.split(' ').splice(msg.mentions.length).join(' ')
+    let role = msg.guild.roles.find(r => r.name === roleToRemove)
+    if (!guildPerms.General.MANAGE_ROLES) {
+      msg.reply('You don\'t have Manage Roles permission here.')
+    } else if (!botPerms.General.MANAGE_ROLES) {
+      msg.channel.sendMessage('I don\'t have Manage Roles permission here, sorry!')
+    } else if (msg.mentions.length === 0 && !msg.mention_everyone) {
+      msg.reply('Please @mention the user(s) you want to give the role to.')
+    } else if (typeof role !== 'object') {
+      msg.reply('The role does not seem to exist. Check your spelling and remember that this command is case sensitive.')
+    } else {
+      msg.mentions.map(u => {
+        let guildMember = msg.guild.members.find(a => a.id === u.id)
+        guildMember.unassignRole(role).then(() => {
+          msg.channel.sendMessage('Role `' + roleToRemove + '` successfully taken from **' + guildMember.username + '**!')
+        }).catch(err => {
+          msg.reply('Something went wrong: ' + err)
+        })
+      })
+    }
+  }
+}
+
 Commands.rankup = {
   name: 'rankup',
   help: 'Level up somebody\'s level by one.',
