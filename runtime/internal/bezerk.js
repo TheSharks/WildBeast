@@ -9,8 +9,8 @@ if (Config.bezerk.use === true) {
   Bezerk = new Websocket(Config.bezerk.uri)
   var argv = require('minimist')(process.argv.slice(2))
   Bezerk.on('close', () => {
-    Logger.warn('Bezerk connection lost.')
-    Bezerk = undefined
+    Logger.warn('Bezerk connection lost, reconnecting...')
+    Bezerk.connect()
   })
   Bezerk.on('open', () => {
     argv.shardid = (argv.shardid !== null) ? 1 : argv.shardid
