@@ -837,7 +837,7 @@ Commands.colorrole = {
       msg.reply('This role is higher or equal to my highest role, i cannot color it!')
       return
     }
-    role.commit(role.name, parseInt(hex.replace(Reg, '$1'), 16), false)
+    role.commit(role.name, parseInt(hex.replace(Reg, '$1'), 16))
     msg.channel.sendMessage(`Colored the role ${role.name} with the value \`${hex}\`!`)
   }
 }
