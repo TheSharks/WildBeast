@@ -67,11 +67,10 @@ Commands.purge = {
   timeout: 30,
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guild = msg.guild
-    var user = msg.author
-    var userPerms = user.permissionsFor(guild)
-    var botPerms = bot.User.permissionsFor(guild)
-    if (!userPerms.Text.MANAGE_MESSAGES) {
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
+    if (!guildPerms.Text.MANAGE_MESSAGES) {
       msg.reply('You do not have the permission to manage messages!')
     } else if (!botPerms.Text.MANAGE_MESSAGES) {
       msg.reply('I do not have `Manage Messages` permission!')
@@ -362,11 +361,8 @@ Commands.addrole = {
   noDM: true,
   level: 3,
   fn: function (msg, suffix, bot) {
-    var guild = msg.guild
-    var user = msg.author
-    var botuser = bot.User
-    var guildPerms = user.permissionsFor(guild)
-    var botPerms = botuser.permissionsFor(guild)
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
 
     let roleToAdd = suffix.split(' ').splice(msg.mentions.length).join(' ')
     let role = msg.guild.roles.find(r => r.name === roleToAdd)
@@ -398,11 +394,8 @@ Commands.takerole = {
   noDM: true,
   level: 3,
   fn: function (msg, suffix, bot) {
-    var guild = msg.guild
-    var user = msg.author
-    var botuser = bot.User
-    var guildPerms = user.permissionsFor(guild)
-    var botPerms = botuser.permissionsFor(guild)
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
 
     let roleToRemove = suffix.split(' ').splice(msg.mentions.length).join(' ')
     let role = msg.guild.roles.find(r => r.name === roleToRemove)
@@ -717,11 +710,9 @@ Commands.kick = {
   usage: '<user-mention>',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guild = msg.guild
-    var user = msg.author
-    var botuser = bot.User
-    var guildPerms = user.permissionsFor(guild)
-    var botPerms = botuser.permissionsFor(guild)
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
     if (!guildPerms.General.KICK_MEMBERS) {
       msg.channel.sendMessage('Sorry, you do not have enough permissions to kick members.')
     } else if (!botPerms.General.KICK_MEMBERS) {
@@ -750,11 +741,9 @@ Commands.ban = {
   usage: '<user-mention> [days]',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guild = msg.guild
-    var user = msg.author
-    var botuser = bot.User
-    var guildPerms = user.permissionsFor(guild)
-    var botPerms = botuser.permissionsFor(guild)
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
     if (!guildPerms.General.BAN_MEMBERS) {
       msg.reply('You do not have Ban Members permission here.')
     } else if (!botPerms.General.BAN_MEMBERS) {
@@ -829,12 +818,12 @@ Commands.colorrole = {
       return
     }
     if (!botPerms.General.MANAGE_ROLES) {
-      msg.reply('I do not have the MANAGE_ROLES permission!')
+      msg.reply('I do not have Manage Roles permission here, sorry!')
       return
     }
     var botRole = bot.User.memberOf(msg.guild).roles.sort(function (a, b) { return a.position < b.position })[0]
     if (role.position >= botRole.position) {
-      msg.reply('This role is higher or equal to my highest role, i cannot color it!')
+      msg.reply('This role is higher or equal to my highest role, I cannot color it!')
       return
     }
     role.commit(role.name, parseInt(hex.replace(Reg, '$1'), 16))
