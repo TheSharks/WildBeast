@@ -797,23 +797,20 @@ Commands.colorrole = {
   level: '3',
   fn: function (msg, suffix, bot) {
     var split = suffix.split(' ')
-    var role = msg.guild.roles.find(r => r.name === split[0])
-    var hex = split[1]
-    var Reg = /([\da-fA-F]{6})/
+    var hex = split[split.length - 1]
+    split.pop()
+    var role = msg.guild.roles.find(r => r.name === split.join(' '))
+    var Reg = /^#?([\da-fA-F]{6})$/
     var botPerms = bot.User.permissionsFor(msg.guild)
-    if (split.length !== 2) {
-      msg.reply('Input a role name and an hexadecimal value!')
-      return
-    }
-    if (typeof role !== 'object') {
-      msg.reply('This role does not exist!')
+    if (typeof role !== 'object' || hex.length === 0) {
+      msg.reply('Input a valid role name and an hexadecimal value!')
       return
     }
     if (!Reg.test(hex)) {
       msg.reply('Invalid hex value!')
       return
     }
-    if (typeof msg.member.roles.find(r => r.id === role.id) !== 'object') {
+    if (typeof msg.member.roles.find(r => r.id === role.id) !== 'object' && msg.author.id !== msg.guild.owner.id) {
       msg.reply('You do not have that role!')
       return
     }
