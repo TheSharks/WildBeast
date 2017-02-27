@@ -30,7 +30,7 @@
     }
   },
   "permissions": {
-    "master": ["you need to enter the ID from the user you want as master here", "you can extend this array like this if you need more"],
+    "master": ["161014852368859137"],
     "level1": [],
     "level2": [],
     "level3": []
