@@ -95,9 +95,9 @@ Commands.randomcat = {
   }
 }
 
-Commands.dogfacts = {
-  name: 'dogfacts',
-  help: "I'll give you some interesting dogfacts",
+Commands.dogfact = {
+  name: 'dogfact',
+  help: "I'll give you some interesting dogfacts!",
   timeout: 10,
   level: 0,
   fn: function(msg) {
