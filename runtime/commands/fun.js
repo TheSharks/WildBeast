@@ -100,17 +100,17 @@ Commands.dogfact = {
   help: "I'll give you some interesting dogfacts!",
   timeout: 10,
   level: 0,
-  fn: function(msg) {
+  fn: function (msg) {
     var request = require('request')
     request('https://dog-api.kinduff.com/api/facts', function (error, response, body) {
-      if (!error && response.statusCode == 200) {
+      if (!error && response.statusCode === 200) {
         try {
           JSON.parse(body)
-        } catch(e) {
+        } catch (e) {
           msg.channel.sendMessage('The API returned an unconventional response')
           return
         }
-        var dogFact = JSON.parse(body);
+        var dogFact = JSON.parse(body)
         msg.channel.sendMessage(dogFact.facts[0])
       }
     })
