@@ -13,26 +13,31 @@
 |[![CircleCI](https://circleci.com/gh/TheSharks/WildBeast/tree/master.svg?style=svg)](https://circleci.com/gh/TheSharks/WildBeast/tree/master) | [![CircleCI](https://circleci.com/gh/TheSharks/WildBeast/tree/experimental.svg?style=svg)](https://circleci.com/gh/TheSharks/WildBeast/tree/experimental) | [![CircleCI](https://circleci.com/gh/TheSharks/WildBeastDocs.svg?style=svg)](https://circleci.com/gh/TheSharks/WildBeastDocs)
 
 ---
-WildBeast is a multifunction Discord bot intended to be able to perform various tasks, ranging from easy server moderation (Kick, ban etc.) to having fun (Cleverbot etc.) in your Discord server. Written in JavaScript [Node.JS](https://nodejs.org), using the [Discordie](https://qeled.github.io/discordie) library.
+WildBeast is a multifunction Discord bot intended to be able to perform various tasks, ranging from easy server moderation (Kick, ban etc.) to having fun (Cleverbot etc.) in your Discord server. Written in JavaScript [Node.JS](https://nodejs.org), using the [discordie](https://qeled.github.io/discordie) library.
 
 ##Main features
-The bot mainly revolves around the following:
 
 - Music streaming from YouTube, SoundCloud etc.
 - Classy insults
 - Dank meme generation system with your own parameters
 - Useful advice
-- Moderation commands
-- NSFW images via e621 and rule34
+- Moderation commands (Ban, kick)
+- NSFW images via e621 and rule34 (If you choose to allow them)
 - Search for comics via XKCD
-- Server utilities (Welcome messages, server and user info etc.)
+- Extended server functionality (Welcome messages, server and user info)
+- Role management commands (Manage roles of users, change role color)
 - High level of customization (Changing messages on a per-server basis, permission level system)
-- And much more!
+- And more, check the [full command reference](http://docs.thesharks.xyz/commands/) for all the commands!
 
 Visit our [documentation](http://docs.thesharks.xyz) for more information.
 
-##Installing
-There is extensive support and resources for users wishing to run WildBeast on their own. We currently support installation on Linux and Windows (Including Docker on Windows) systems.
+##Want to use WildBeast but don't want to host it yourself?
+No problem, we maintain a public instance called WildBot that you can invite to your server! Visit http://invite.wildbot.dougley.com to get started!
+
+##Want more control and run WildBeast yourself?
+The advantages of selfhosting WildBeast are numerous. A few core freedoms that are added can be for instance the ability to tweak commands and add custom commands, changing the bot's workings et cetera.
+
+There is extensive support and resources for users wishing to run WildBeast on their own. We currently support installation on Linux (Ubuntu, Debian) and Windows (Native or Docker) machines.
 
 - [Linux installation guide](http://docs.thesharks.xyz/install_linux/)
 - [Windows installation guide](http://docs.thesharks.xyz/install_windows/)
@@ -40,7 +45,7 @@ There is extensive support and resources for users wishing to run WildBeast on t
 
 If you are not into hosting the bot yourself, you can always invite WildBot to your server [from here](http://invite.wildbot.dougley.com).
 
-## Music Credits
+##Music Credits
 
 ##### [Whispers Invoke Paranoia](http://freemusicarchive.org/music/Nihilore/The_Hermeneutic_Circle/Nihilore_-_The_Hermeneutic_Circle_-_02_Whispers_Invoke_Paranoia) by [Nihilore](http://freemusicarchive.org/music/Nihilore/)
 ---
