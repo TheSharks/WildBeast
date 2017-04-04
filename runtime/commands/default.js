@@ -79,7 +79,19 @@ Commands.purge = {
         msg.reply('Please try again with a number between **0** to **100**.')
       } else {
         msg.channel.fetchMessages(suffix).then((result) => {
-          bot.Messages.deleteMessages(result.messages)
+          var cantDelete = 0
+          var x = 0
+          var deleteMe = []
+          for (x = 0; x < result.messages.length; x++) {
+            var compareNums = (new Date(msg.timestamp) - new Date(result.messages[x].timestamp))
+            if (compareNums > 1209600000) {
+              cantDelete++
+            } else {
+              deleteMe.push(result.messages[x])
+            }
+          }
+          msg.channel.sendMessage(`${deleteMe.length} message(s) have been purged. ${cantDelete} were omitted due to them being over two weeks old.`)
+          bot.Messages.deleteMessages(deleteMe)
         }).catch((error) => {
           msg.channel.sendMessage('I could not fetch messages to delete, try again later.')
           Logger.error(error)
