@@ -79,6 +79,11 @@ Commands.purge = {
         msg.reply('Please try again with a number between **0** to **100**.')
       } else {
         msg.channel.fetchMessages(suffix).then((result) => {
+          var initTime = new Date(result.messages[`${suffix - 1}`].timestamp)
+          var purgeDate = (new Date(msg.timestamp) - initTime)
+          if (purgeDate > 1209600000) {
+            msg.channel.sendMessage('One or more of the messages selected to be purged was older than two weeks, try again with more recent messages.')
+          }
           bot.Messages.deleteMessages(result.messages)
         }).catch((error) => {
           msg.channel.sendMessage('I could not fetch messages to delete, try again later.')
