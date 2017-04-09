@@ -21,7 +21,7 @@ function init () {
     argv.shardcount = (argv.shardcount !== null) ? 1 : argv.shardcount
     Bezerk.send(JSON.stringify({
       op: 'IDENTIFY_SHARD',
-      c: [argv.shardid, argv.shardcount]
+      c: argv.shardid
     }))
   })
   Bezerk.on('message', (m) => {
