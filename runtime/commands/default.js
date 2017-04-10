@@ -67,11 +67,10 @@ Commands.purge = {
   timeout: 30,
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guild = msg.guild
-    var user = msg.author
-    var userPerms = user.permissionsFor(guild)
-    var botPerms = bot.User.permissionsFor(guild)
-    if (!userPerms.Text.MANAGE_MESSAGES) {
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
+    if (!guildPerms.Text.MANAGE_MESSAGES) {
       msg.reply('You do not have the permission to manage messages!')
     } else if (!botPerms.Text.MANAGE_MESSAGES) {
       msg.reply('I do not have `Manage Messages` permission!')
@@ -80,7 +79,19 @@ Commands.purge = {
         msg.reply('Please try again with a number between **0** to **100**.')
       } else {
         msg.channel.fetchMessages(suffix).then((result) => {
-          bot.Messages.deleteMessages(result.messages)
+          var cantDelete = 0
+          var x = 0
+          var deleteMe = []
+          for (x = 0; x < result.messages.length; x++) {
+            var compareNums = (new Date(msg.timestamp) - new Date(result.messages[x].timestamp))
+            if (compareNums > 1209600000) {
+              cantDelete++
+            } else {
+              deleteMe.push(result.messages[x])
+            }
+          }
+          msg.channel.sendMessage(`${deleteMe.length} message(s) have been purged. ${cantDelete} were omitted due to them being over two weeks old.`)
+          bot.Messages.deleteMessages(deleteMe)
         }).catch((error) => {
           msg.channel.sendMessage('I could not fetch messages to delete, try again later.')
           Logger.error(error)
@@ -350,6 +361,72 @@ Commands.setlevel = {
         msg.channel.sendMessage('Help! Something went wrong!')
         bugsnag.notify(err)
         Logger.error(err)
+      })
+    }
+  }
+}
+
+Commands.addrole = {
+  name: 'addrole',
+  help: 'Give a role to user or users.',
+  usage: '@user @user2 rolename',
+  noDM: true,
+  level: 3,
+  fn: function (msg, suffix, bot) {
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
+    let roleToAdd = suffix.split(' ').splice(msg.mentions.length).join(' ')
+    let role = msg.guild.roles.find(r => r.name === roleToAdd)
+    if (!guildPerms.General.MANAGE_ROLES) {
+      msg.reply('You don\'t have Manage Roles permission here.')
+    } else if (!botPerms.General.MANAGE_ROLES) {
+      msg.channel.sendMessage('I don\'t have Manage Roles permission here, sorry!')
+    } else if (msg.mentions.length === 0 && !msg.mention_everyone) {
+      msg.reply('Please @mention the user(s) you want to give the role to.')
+    } else if (typeof role !== 'object') {
+      msg.reply('The role does not seem to exist. Check your spelling and remember that this command is case sensitive.')
+    } else {
+      msg.mentions.map(u => {
+        let guildMember = msg.guild.members.find(a => a.id === u.id)
+        guildMember.assignRole(role).then(() => {
+          msg.channel.sendMessage('Role `' + roleToAdd + '` successfully assigned to **' + guildMember.username + '**!')
+        }).catch(err => {
+          msg.reply('Something went wrong: ' + err)
+        })
+      })
+    }
+  }
+}
+
+Commands.takerole = {
+  name: 'takerole',
+  help: 'Take a role from a user or users',
+  usage: '@user @user2 rolename',
+  noDM: true,
+  level: 3,
+  fn: function (msg, suffix, bot) {
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
+    let roleToRemove = suffix.split(' ').splice(msg.mentions.length).join(' ')
+    let role = msg.guild.roles.find(r => r.name === roleToRemove)
+    if (!guildPerms.General.MANAGE_ROLES) {
+      msg.reply('You don\'t have Manage Roles permission here.')
+    } else if (!botPerms.General.MANAGE_ROLES) {
+      msg.channel.sendMessage('I don\'t have Manage Roles permission here, sorry!')
+    } else if (msg.mentions.length === 0 && !msg.mention_everyone) {
+      msg.reply('Please @mention the user(s) you want to give the role to.')
+    } else if (typeof role !== 'object') {
+      msg.reply('The role does not seem to exist. Check your spelling and remember that this command is case sensitive.')
+    } else {
+      msg.mentions.map(u => {
+        let guildMember = msg.guild.members.find(a => a.id === u.id)
+        guildMember.unassignRole(role).then(() => {
+          msg.channel.sendMessage('Role `' + roleToRemove + '` successfully taken from **' + guildMember.username + '**!')
+        }).catch(err => {
+          msg.reply('Something went wrong: ' + err)
+        })
       })
     }
   }
@@ -645,11 +722,9 @@ Commands.kick = {
   usage: '<user-mention>',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guild = msg.guild
-    var user = msg.author
-    var botuser = bot.User
-    var guildPerms = user.permissionsFor(guild)
-    var botPerms = botuser.permissionsFor(guild)
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
     if (!guildPerms.General.KICK_MEMBERS) {
       msg.channel.sendMessage('Sorry, you do not have enough permissions to kick members.')
     } else if (!botPerms.General.KICK_MEMBERS) {
@@ -678,11 +753,9 @@ Commands.ban = {
   usage: '<user-mention> [days]',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guild = msg.guild
-    var user = msg.author
-    var botuser = bot.User
-    var guildPerms = user.permissionsFor(guild)
-    var botPerms = botuser.permissionsFor(guild)
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
     if (!guildPerms.General.BAN_MEMBERS) {
       msg.reply('You do not have Ban Members permission here.')
     } else if (!botPerms.General.BAN_MEMBERS) {
@@ -725,6 +798,45 @@ Commands.prefix = {
       Logger.error(error)
       msg.channel.sendMessage('Whoops, something went wrong.')
     })
+  }
+}
+
+Commands.colorrole = {
+  name: 'colorrole',
+  help: 'Use this to color a role you have!',
+  usage: '<role name> <hexadecimal value ("#FFFFFF" or "FFFFFF")',
+  timeout: 5,
+  level: '3',
+  fn: function (msg, suffix, bot) {
+    var split = suffix.split(' ')
+    var hex = split[split.length - 1]
+    split.pop()
+    var role = msg.guild.roles.find(r => r.name === split.join(' '))
+    var Reg = /^#?([\da-fA-F]{6})$/
+    var botPerms = bot.User.permissionsFor(msg.guild)
+    if (typeof role !== 'object' || hex.length === 0) {
+      msg.reply('Input a valid role name and an hexadecimal value!')
+      return
+    }
+    if (!Reg.test(hex)) {
+      msg.reply('Invalid hex value!')
+      return
+    }
+    if (typeof msg.member.roles.find(r => r.id === role.id) !== 'object' && msg.author.id !== msg.guild.owner.id) {
+      msg.reply('You do not have that role!')
+      return
+    }
+    if (!botPerms.General.MANAGE_ROLES) {
+      msg.reply('I do not have Manage Roles permission here, sorry!')
+      return
+    }
+    var botRole = bot.User.memberOf(msg.guild).roles.sort(function (a, b) { return a.position < b.position })[0]
+    if (role.position >= botRole.position) {
+      msg.reply('This role is higher or equal to my highest role, I cannot color it!')
+      return
+    }
+    role.commit(role.name, parseInt(hex.replace(Reg, '$1'), 16))
+    msg.channel.sendMessage(`Colored the role ${role.name} with the value \`${hex}\`!`)
   }
 }
 

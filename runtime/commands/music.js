@@ -149,6 +149,9 @@ Commands.request = {
   timeout: 10,
   level: 1,
   fn: function (msg, suffix, bot) {
+    if (!suffix) {
+      msg.reply('Please enter something to search for!')
+    }
     var u = require('url').parse(suffix)
     if (u.host === null) {
       v.request(msg, 'ytsearch:' + suffix, bot)

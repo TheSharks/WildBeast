@@ -95,6 +95,28 @@ Commands.randomcat = {
   }
 }
 
+Commands.dogfact = {
+  name: 'dogfact',
+  help: "I'll give you some interesting dogfacts!",
+  timeout: 10,
+  level: 0,
+  fn: function (msg) {
+    var request = require('request')
+    request('https://dog-api.kinduff.com/api/facts', function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        try {
+          JSON.parse(body)
+        } catch (e) {
+          msg.channel.sendMessage('The API returned an unconventional response')
+          return
+        }
+        var dogFact = JSON.parse(body)
+        msg.channel.sendMessage(dogFact.facts[0])
+      }
+    })
+  }
+}
+
 Commands.leetspeak = {
   name: 'leetspeak',
   help: "1'Ll 3nc0d3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
