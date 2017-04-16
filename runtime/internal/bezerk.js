@@ -17,8 +17,7 @@ function init () {
     setTimeout(init, 500)
   })
   Bezerk.on('open', () => {
-    argv.shardid = (argv.shardid !== null) ? 1 : argv.shardid
-    argv.shardcount = (argv.shardcount !== null) ? 1 : argv.shardcount
+    argv.shardid = (argv.shardid === undefined) ? 0 : argv.shardid
     Bezerk.send(JSON.stringify({
       op: 'IDENTIFY_SHARD',
       c: argv.shardid
@@ -41,10 +40,10 @@ function init () {
     }
     if (!msg.c) return
     try {
-      eval(msg.c) // eslint-disable-line no-eval
+      var resp = eval(msg.c) // eslint-disable-line no-eval
       Bezerk.send(JSON.stringify({
         op: 'EVAL_REPLY',
-        c: eval(msg.c) // eslint-disable-line no-eval
+        c: resp
       }))
     } catch (e) {
       Bezerk.send(JSON.stringify({
