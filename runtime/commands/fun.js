@@ -569,20 +569,20 @@ Commands.shorten = {
   level: 0,
   fn: function (msg, suffix) {
     var url = require('url')
-    if (suffix.length > 0) {
+    if (suffix.length === 0) {
       msg.reply('Enter an url!')
       return
     }
     if (url.parse(suffix).hostname) {
       request.post(`https://www.googleapis.com/urlshortener/v1/url`)
-      .query({ key: 'config.api_keys.google' })
+      .query({ key: config.api_keys.google })
       .send({ longUrl: suffix })
       .set('Content-Type', 'application/json')
       .end(function (err, res) {
         if (!err) {
           msg.channel.sendMessage(`:link: Shortened URL: **${res.body.id}**`)
         } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.statusCode}`)
+          Logger.debug(`Got an error: ${err}, status code: ${res.statusCode}`)
         }
       })
     } else {
