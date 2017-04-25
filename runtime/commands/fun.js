@@ -56,25 +56,6 @@ Commands.rip = {
   }
 }
 
-Commands.fortunecow = {
-  name: 'fortunecow',
-  help: "I'll get a random fortunecow!",
-  timeout: 20,
-  level: 0,
-  fn: function (msg) {
-    request.get('https://thibaultcha-fortunecow-v1.p.mashape.com/random')
-    .set('X-Mashape-Key', config.api_keys.mashape)
-    .set('Accept', 'text/plain')
-    .end((err, result) => {
-      if (!err) {
-        msg.reply('```' + result.body + '```')
-      } else {
-        Logger.error(err)
-      }
-    })
-  }
-}
-
 Commands.randomcat = {
   name: 'randomcat',
   help: "I'll get a random cat image for you!",
