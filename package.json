@@ -56,6 +56,7 @@
     "rethinkdbdash": "^2.3.23",
     "semver": "^5.1.0",
     "snyk": "^1.24.5",
+    "superagent": "^3.5.2",
     "tagscript": "github:guscaplan/tagscript",
     "unirest": "^0.5.0",
     "winston": "^2.3.1",
