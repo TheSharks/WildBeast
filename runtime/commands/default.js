@@ -1,5 +1,5 @@
 var Commands = []
-var request = require('request')
+var request = require('superagent')
 var config = require('../../config.json')
 var Logger = require('../internal/logger.js').Logger
 var argv = require('minimist')(process.argv.slice(2))
@@ -197,20 +197,16 @@ Commands.twitch = {
       return
     }
     var url = 'https://api.twitch.tv/kraken/streams/' + suffix
-    request({
-      url: url,
-      headers: {
-        'Accept': 'application/vnd.twitchtv.v3+json',
-        'Client-ID': config.api_keys.twitchId
-      }
-    }, function (error, response, body) {
+    request.get(url)
+    .set({'Accept': 'application/vnd.twitchtv.v3+json', 'Client-ID': config.api_keys.twitchId})
+    .end((error, response) => {
       if (error) {
         bugsnag.notify(error)
       }
       if (!error && response.statusCode === 200) {
         var resp
         try {
-          resp = JSON.parse(body)
+          resp = response.body
         } catch (e) {
           msg.channel.sendMessage('The API returned an unconventional response.')
         }
