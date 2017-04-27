@@ -56,6 +56,23 @@ Commands.rip = {
   }
 }
 
+Commands.fortunecow = {
+  name: 'fortunecow',
+  help: "I'll get a random fortunecow!",
+  timeout: 20,
+  level: 0,
+  fn: function (msg) {
+    request.get('https://fortunecow.dougley.com/')
+    .end((err, result) => {
+      if (!err && result.statusCode === 200) {
+        msg.reply('```' + result.text + '```')
+      } else {
+        Logger.error(err)
+      }
+    })
+  }
+}
+
 Commands.randomcat = {
   name: 'randomcat',
   help: "I'll get a random cat image for you!",
@@ -337,17 +354,14 @@ Commands.catfacts = {
   timeout: 10,
   level: 0,
   fn: function (msg) {
-    var request = require('request')
-    request('http://catfacts-api.appspot.com/api/facts', function (error, response, body) {
-      if (!error && response.statusCode === 200) {
-        try {
-          JSON.parse(body)
-        } catch (e) {
-          msg.channel.sendMessage('The API returned an unconventional response')
-          return
-        }
-        var catFact = JSON.parse(body)
-        msg.reply(catFact.facts[0])
+    request.get('http://catfacts-api.appspot.com/api/facts')
+    .buffer()
+    .end((err, res) => {
+      if (err) {
+        msg.channel.sendMessage('The API returned an unconventional response, please try again later.')
+      } else {
+        var fact = JSON.parse(res.text)
+        msg.reply(fact.facts[0])
       }
     })
   }
