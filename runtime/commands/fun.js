@@ -67,8 +67,8 @@ Commands.fortunecow = {
       if (!err && result.statusCode === 200) {
         msg.reply('```' + result.text + '```')
       } else if (result.statusCode === 429) {
-		    msg.channel.sendMessage("Too many requests, please try again later.")
-	    } else {
+        msg.channel.sendMessage('Too many requests, please try again later.')
+      } else {
         Logger.warn(err)
       }
     })
