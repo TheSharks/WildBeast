@@ -62,7 +62,7 @@ Commands.fortunecow = {
   timeout: 20,
   level: 0,
   fn: function (msg) {
-    request.get('https://fortunecow.dougley.com/')
+    request.get('https://fortunecow.dougley.com/random')
     .end((err, result) => {
       if (!err && result.statusCode === 200) {
         msg.reply('```' + result.text + '```')
