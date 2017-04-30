@@ -367,14 +367,7 @@ function start () {
     Logger.error('Config error: ' + e)
     process.exit(0)
   }
-  if (Config.bot.isbot) {
-    bot.connect({
-      token: Config.bot.token
-    })
-  } else {
-    bot.connect({
-      email: Config.bot.email,
-      password: Config.bot.password
-    })
-  }
+  bot.connect({
+    token: Config.bot.token
+  })
 }

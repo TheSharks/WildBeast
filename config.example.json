@@ -1,9 +1,6 @@
 {
   "bot": {
-    "isbot": true,
     "token": "Bot token",
-    "email": "If you need this, optional",
-    "password": "Again if you need this, optional",
     "oauth": "Bot OAuth URL, see wiki"
   },
   "database": {

@@ -666,47 +666,10 @@ Commands['join-server'] = {
   level: 0,
   fn: function (msg, suffix, bot) {
     if (bot.User.bot) {
-      msg.channel.sendMessage("Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: " + config.bot.oauth)
+      msg.channel.sendMessage("Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: <" + config.bot.oauth + '>')
       return
-    }
-    var re = /(discord(\.gg|app\.com\/invite)\/([\w]{16}|([\w]+-?){3}))/
-    var code = re.exec(suffix.split(' '))
-    if (msg.guild && bot.User.isMentioned(msg)) {
-      bot.Invites.resolve(code[3]).then(function (server) {
-        if (bot.Guilds.get(server.guild.id)) {
-          msg.channel.sendMessage("I'm already in **" + server.guild.name + '**')
-        } else {
-          bot.Invites.accept(server).then(function (server) {
-            Logger.log('debug', 'Joined ' + server.guild.name + ', at the request of ' + msg.author.username)
-            msg.channel.sendMessage("I've joined **" + server.guild.name + '** at your request.')
-          })
-        }
-      }).catch(function (error) {
-        Logger.warn('Invite link provided by ' + msg.author.username + ' gave us an error: ' + error)
-        if (error.status === 403) {
-          msg.channel.sendMessage("The server you're trying to invite me to appears to have banned me.")
-        } else {
-          msg.channel.sendMessage("The invite link you've provided me appears to be invalid!")
-        }
-      })
-    } else if (msg.isPrivate) {
-      bot.Invites.resolve(code[3]).then(function (server) {
-        if (bot.Guilds.get(server.guild.id)) {
-          msg.channel.sendMessage("I'm already in **" + server.guild.name + '**')
-        } else {
-          bot.Invites.accept(server).then(function (server) {
-            Logger.log('debug', 'Joined ' + server.guild.name + ', at the request of ' + msg.author.username)
-            msg.channel.sendMessage("I've joined **" + server.guild.name + '** at your request.')
-          })
-        }
-      }).catch(function (error) {
-        Logger.warn('Invite link provided by ' + msg.author.username + ' gave us an error: ' + error)
-        if (error.status === 403) {
-          msg.channel.sendMessage("The server you're trying to invite me to appears to have banned me.")
-        } else {
-          msg.channel.sendMessage("The invite link you've provided me appears to be invalid!")
-        }
-      })
+    } else {
+      Logger.warn('Using user accounts is deprecated!')
     }
   }
 }
