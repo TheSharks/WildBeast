@@ -413,8 +413,9 @@ Commands.rule34 = {
     request.post('http://rule34.xxx/index.php') // Fetching 100 rule34 pics
     .query({ page: 'dapi', s: 'post', q: 'index', tags: suffix })
     .end((err, result) => {
-      if (err) {
-        Logger.error(err)
+      if (err || result.status !== 200) {
+        Logger.error(`${err}, status code ${result.status}`)
+        msg.channel.sendMessage('The API returned an unconventional response.')
       }
       var xml2js = require('xml2js')
       if (result.text.length < 75) {
