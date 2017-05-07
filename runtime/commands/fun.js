@@ -94,6 +94,25 @@ Commands.randomcat = {
   }
 }
 
+Commands.randomdog = {
+  name: 'randomdog',
+  help: "I'll get a random doggo image for you!",
+  aliases: ['doggo'],
+  module: 'fun',
+  timeout: 10,
+  level: 0,
+  fn: function (msg) {
+    request.get('https://random.dog/woof.json')
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        msg.channel.sendMessage(res.body.url)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
+  }
+}
+
 Commands.dogfact = {
   name: 'dogfact',
   help: "I'll give you some interesting dogfacts!",
