@@ -93,9 +93,9 @@ exports.helpHandle = function (msg, suffix) {
         `Command name: \`${name}\``,
         `What this does: \`${c.help}\``,
         'Example:',
-        "```",
+        '```',
         `${(c.usage) ? config.settings.prefix + name + ' ' + c.usage : config.settings.prefix + name}`,
-        "```",
+        '```',
         `**Required access level**: ${c.level}`,
         `${(c.aliases) ? '**Aliases for this command**: ' + c.aliases.join(', ') + '\n' : ''}`
       ]
