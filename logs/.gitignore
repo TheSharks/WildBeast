@@ -1,2 +1,258 @@
 *
 !.gitignore
+const Discord = require('discord.js');
+const client = new Discord.Client();
+
+exports.run = (client, guild) => {
+
+  client.channels.get('302132211874922497').sendMessage(`New server added!\nName: ${guild.Dbz Bot Official Server}\nID: ${guild.id}\nIcon: ${guild.iconURL}\nMade: ${guild.createdAt}\nOwner: ${guild.owner.user.Damagedmydream} (ID: ${guild.ownerID})\nRegion: ${guild.region}\nRoles: ${guild.roles.size}\nVerification Level: ${guild.verificationLevel}\nMembers: ${guild.members.size}`)
+}
+function commandIs(str, msg){
+    return msg.content.toLowerCase().startsWith("!" + str);
+}
+
+function pluck(array) {
+    return array.map(function(item) { return item["name"]; });
+}
+
+function hasRole(mem, role) {
+    if(pluck(mem.roles).includes(role)){
+        return true;
+    } else {
+        return false;
+    }
+(bot.on("ready", () => {
+	/*
+console.log(`Ready to begin!)try {
+	var AuthDetails = require("./auth.json");
+} catch (e){
+	console.log("Please create an auth.json like auth.json.example with a bot token or an email and password.\n"+e.stack);
+	process.exit();
+}
+
+
+if(AuthDetails.bot_token){
+	console.log("logging in with token");
+	bot.login(AuthDetails.bot_token);
+} else {
+	console.log("Logging in as a user account. Consider switching to an official bot account instead!");
+	bot.login(AuthDetails.email, AuthDetails.password);
+}
+
+
+
+----[ AUTH.JSON ] ----
+
+{
+	"bot_token" : "",
+	"client_id" : "",
+        "email" : "",
+        "password" : "",
+	"wolfram_api_key": "",
+	"youtube_api_key": ""
+}
+
+}
+*/
+});
+
+client.user.setGame("!help | Say !suggestion "+ client.guilds.size +" servers ");
+  
+});
+    
+
+client.on('message', message => {
+    var args = message.content.split(/[ ]+/);
+    if(commandIs("help", message)){
+        message.author.sendMessage('These are all commands: !help)
+, !kaio-ken,
+ !say,
+ !delete,
+ !kick,
+ !ping,
+  !kamehameha,
+ !galick-gun,
+ !ban, 
+!transform-demon-vados,
+ !transform-grand-priest-dark
+ !kill-me
+ !transform-(from ssj1 up to ssjb)');
+    }
+    if(commandIs("kaio-ken", message)){
+        if(hasRole(message.member, "Saiyan") || hasRole (message.member, "Admin")){
+            if(args.length === 0){
+                message.channel.sendMessage('You have to say something after the command or it will not work.')
+            } else {
+                message.channel.sendMessage('KAIO-KEN!!!!!!!');
+            }    
+        } else {
+            message.channel.sendMessage('You did not acheive that transformation.');
+        }
+    }
+     if(commandIs("ping", message)){
+        message.channel.sendMessage('If You Checking if im Online Yes i am...');
+    }
+     if(commandIs("galick-gun", message)){
+        message.channel.sendMessage('You used the GAAAAAAAALICK-GUUUUUUN');
+    }
+    if(commandIs("dash", message)){
+        message.channel.sendMessage('You just dashed towards your enemy!');
+    }
+    if(commandIs("ki-blast", message)){
+        message.channel.sendMessage('You just shot a ki blast!');
+    }
+     if(commandIs("kamehameha", message)){
+        message.channel.sendMessage('You used the KAAAAAAA-MEEEEEE-HAAAAAAA-MEEEEEEEEE-HAAAAAAAAAAAAAAAAAAAAAAAAAA');
+    }
+     if(commandIs("charge", message)){
+        message.channel.sendMessage('You are charging your ki!');
+    }
+     if(commandIs("transform-ssj1", message)){
+        if(hasRole(message.member, "Super Saiyan") || hasRole (message.member, "Admin")){
+            if(args.length === 0){
+                message.channel.sendMessage('You have to say something after the command or it will not work.')
+            } else {
+                message.channel.sendMessage('You now are a `Super Saiyan`');
+            }    
+        } else {
+            message.channel.sendMessage('You did not acheive that transformation.');
+        }
+    }
+     if(commandIs("transform-ssj2", message)){
+        if(hasRole(message.member, "Super Saiyan 2") || hasRole (message.member, "Admin")){
+            if(args.length === 0){
+                message.channel.sendMessage('You have to say something after the command or it will not work.')
+            } else {
+                message.channel.sendMessage('Wow! You have ascended to a `Super Saiyan 2`');
+            }    
+        } else {
+            message.channel.sendMessage('You did not acheive that transformation.');
+        }
+    }
+     if(commandIs("transform-ssj3", message)){
+        if(hasRole(message.member, "Super Saiyan 3") || hasRole (message.member, "Admin")){
+            if(args.length === 0){
+                message.channel.sendMessage('You have to say something after the command or it will not work.')
+            } else {
+                message.channel.sendMessage('WOW!!! You have ascended to a power never seen before! You are a `Super Saiyan 3`');
+            }    
+        } else {
+            message.channel.sendMessage('You did not acheive that transformation.');
+        }
+    }
+     if(commandIs("transform-ssj4", message)){
+        if(hasRole(message.member, "Super Saiyan 4") || hasRole (message.member, "Admin")){
+            if(args.length === 0){
+                message.channel.sendMessage('You have to say something after the command or it will not work.')
+            } else {
+                message.channel.sendMessage('WOW!!! You are the most amazing being in the entire Universe!!! You have ascended to `Super Sayian 4');
+            }    
+        } else {
+            message.channel.sendMessage('You did not acheive that transformation.');
+        }
+    }
+     if(commandIs("transform-ssjg", message)){
+         if(hasRole(message.member, "Super Saiyan God") || hasRole (message.member, "Admin")){
+            if(args.length === 0){
+                message.channel.sendMessage('You have to say something after the command or it will not work.')
+            } else {
+                message.channel.sendMessage('You have ascended to `God KI` and are able to compete against Beerus, the God of Destruction. You now are a `Super Sayian God`');
+            }    
+        } else {
+            message.channel.sendMessage('You did not acheive that transformation.');
+        }
+    }
+     if(commandIs("transform-ssjb", message)){
+         if(hasRole(message.member, "Super Saiyan God Super Saiyan") || hasRole (message.member, "Admin")){
+            if(args.length === 0){
+                message.channel.sendMessage('You have to say something after the command or it will not work.')
+            } else {
+                message.channel.sendMessage('After absorbing `God Essence` and harshly training with `Whis`. You have ascended to a `Super Saiyan God Super Saiyan`');
+            }    
+        } else {
+            message.channel.sendMessage('You did not acheive that transformation.');
+        }
+    }
+    if(commandIs("transform-off", message)){
+       message.channel.sendMessage('You have descended from your transformation.');
+    }
+    if(commandIs("transform-grand-priest-dark", message)){
+        if(hasRole(message.member, "Grand Priest") || hasRole (message.member, "Admin")){
+            if(args.length === 0){
+                message.channel.sendMessage('You did not define a argument.Usage: `!say [message to say]`')
+            } else {
+                message.channel.sendMessage('SOMEBODY HAS ENRAGED THE STRONGEST FIGHTER IN ALL!! NOW IT IS TIME FOR THEM TO MEET THE `GRAND PRIEST DARK FORM`')
+            }    
+        } else {
+            message.channel.sendMessage('You are not an `Admin or an Owner`.');
+        }
+    }
+    if(commandIs("say", message)){
+        if(hasRole(message.member, "Owner") || hasRole (message.member, "Admin")){
+            if(args.length === 1){
+                message.channel.sendMessage('You did not define a argument.Usage: `!say [message to say]`')
+            } else {
+                message.channel.sendMessage(args.join(" ").substring(5));
+            }    
+        } else {
+            message.channel.sendMessage('You are not an `Admin or Mod an Owner`.');
+        }
+    }
+    if(commandIs("transform-demon-vados", message)){
+         if(hasRole(message.member, "Vados|Mentor") || hasRole (message.member, "Admin")){
+            if(args.length === 0){
+                message.channel.sendMessage('You have to say something after the command or it will not work.')
+            } else {
+                message.channel.sendMessage('YOU HAVE DONE IT NOW.... YOU HAVE ENRAGED THE DAUGHTER OF THE GRAND PRIEST.... NOW SHE IS `DEMON VADOS`');
+            }    
+        } else {
+            message.channel.sendMessage('You did not acheive that transformation.');
+        }
+    }
+    if(commandIs("delete", message)){
+         if(hasRole(message.member, "Owner") || hasRole(message.member, "Admin")){
+             if(args.length === 1){
+                 message.channel.sendMessage('You defied too many arguments. Usage: `!delete (numbers of messages to delete)`');
+             } else {
+                 var msg;
+                 if(args.length === 1){
+                     msg=2;
+                 } else {
+                     msg=parseInt(args[1]) + 1;
+                 }
+                 message.channel.fetchMessages({limit: msg}).then(messages => message.channel.bulkDelete(messages)).catch(console.error)
+             }
+         } else {
+             message.channel.sendMessage('You are not an `Admin or an Owner`.');
+         }
+    }
+    if(commandIs("kick", message)){
+        if(hasRole(message.member, "Owner") || hasRole(message.member, "Admin")){
+            if(args.length === 1){
+                message.channel.sendMessage('You did not define a argument.Usage: `!kick [user to kick]`')
+            } else {
+                message.guild.member(message.mentions.users.first()).kick();
+            }
+        }
+    }
+    if(commandIs("ban", message)){
+        if(hasRole(message.member, "Owner") || hasRole(message.member, "Admin")){
+            if(args.length === 1){
+                message.channel.sendMessage('You did not define a argument.Usage: `!kick [user to kick]`')
+            } else {
+                message.guild.member(message.mentions.users.first()).ban();
+            }  
+        }
+    }
+});
+     if(commandls("Report",message)){
+     if(hasRole(message.member,"Owner") || hasRole(message.member,"Admin")){
+  if(args.length===1){
+              message.channel.sendmessage ('You did not define a argument.Usage: !Report [User to Report`')
+   } else {
+            message.guild.member (message.metions.users.first()).report();
+         }
+       }
+     }
+ });
+   client.login('MzA4MTk5MTA4NjU1NDQ4MDY0.C-eHaQ.aip1ABRFPr2odpHdbSVcpPNw36Y');
