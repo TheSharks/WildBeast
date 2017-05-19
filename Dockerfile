@@ -8,8 +8,6 @@ COPY . /usr/src/WildBeast
 
 RUN npm install
 
-RUN npm run-script dbcreate
-
 ENV BOT_ISBOT=true BOT_TOKEN=token BOT_EMAIL=email BOT_PASSWORD=password BOT_OAUTH=oauth \
     DATABASE_HOST=localhost DATABASE_PORT=28015 DATABASE_PASSWORD= DATABASE_USER=admin \
     SETTINGS_PREFIX=++ SETTINGS_AUTODELETEMSG=true SETTINGS_DELETE_TIMEOUT=3000 SETTINGS_DELETE_TIMEOUT_LONG=6000 SETTINGS_MAXVCSLOTS=10 \
@@ -20,4 +18,4 @@ ENV BOT_ISBOT=true BOT_TOKEN=token BOT_EMAIL=email BOT_PASSWORD=password BOT_OAU
 
 RUN chmod 755 ./entrypoint.sh
 
-ENTRYPOINT [ "./entrypoint.sh" ]
+CMD [ "./entrypoint.sh" ]
