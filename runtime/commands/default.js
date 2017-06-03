@@ -748,14 +748,13 @@ Commands.hackban = {
     if (!guildPerms.General.BAN_MEMBERS) {
       msg.reply('You do not have Ban Members permission here.')
     } else if (!suffix) {
-      msg.channel.sendMessage('You need to mention a user or provide an ID to ban!')
+      msg.channel.sendMessage('You need to provide an ID to ban!')
     } else if (!botPerms.General.BAN_MEMBERS) {
       msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
     } else {
       msg.guild.ban(suffix).then(() => {
         msg.guild.getBans().then((bans) => {
-          var lastBan = bans[bans.length - 2]
-          msg.channel.sendMessage(`${lastBan.username} (${lastBan.id}) was banned.`)
+          msg.channel.sendMessage(':ok_hand:')
         }) // getREST isn't in Discordie master yet.
       }).catch((error) => {
         msg.channel.sendMessage('Failed to ban user.')
