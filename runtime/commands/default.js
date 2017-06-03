@@ -212,14 +212,11 @@ Commands.twitch = {
         }
         if (resp.stream !== null) {
           msg.channel.sendMessage(suffix + ' is currently live at https://www.twitch.tv/' + suffix)
-          return
         } else if (resp.stream === null) {
           msg.channel.sendMessage(suffix + ' is not currently streaming')
-          return
         }
       } else if (!error && response.statusCode === 404) {
         msg.channel.sendMessage('Channel does not exist!')
-        return
       }
     })
   }
@@ -667,7 +664,6 @@ Commands['join-server'] = {
   fn: function (msg, suffix, bot) {
     if (bot.User.bot) {
       msg.channel.sendMessage("Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: <" + config.bot.oauth + '>')
-      return
     } else {
       Logger.warn('Using user accounts is deprecated!')
     }
@@ -690,7 +686,6 @@ Commands.kick = {
       msg.reply("I don't have enough permissions to do this!")
     } else if (msg.mentions.length === 0) {
       msg.channel.sendMessage('Please mention the user(s) you want to kick.')
-      return
     } else {
       msg.mentions.map(function (user) {
         var member = msg.guild.members.find((m) => m.id === user.id)
@@ -736,6 +731,77 @@ Commands.ban = {
       } else {
         msg.reply('Your last argument must be a number or nothing for the default of 0, can only be 0, 1 or 7!')
       }
+    }
+  }
+}
+
+Commands.hackban = {
+  name: 'hackban',
+  help: 'Swing the ban hammer on someone who isn\'t a member of the server!',
+  noDM: true,
+  usage: '<user-mention>',
+  level: 0,
+  fn: function (msg, suffix, bot) {
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
+    if (!guildPerms.General.BAN_MEMBERS) {
+      msg.reply('You do not have Ban Members permission here.')
+    } else if (!suffix) {
+      msg.channel.sendMessage('You need to mention a user or provide an ID to ban!')
+    } else if (!botPerms.General.BAN_MEMBERS) {
+      msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
+    } else {
+      msg.guild.ban(suffix).then(() => {
+        msg.guild.getBans().then((bans) => {
+          var lastBan = bans[bans.length - 2]
+          msg.channel.sendMessage(`${lastBan.username} (${lastBan.id}) was banned.`)
+        }) // getREST isn't in Discordie master yet.
+      }).catch((error) => {
+        msg.channel.sendMessage('Failed to ban user.')
+        Logger.error(error)
+      })
+    }
+  }
+}
+
+Commands.softban = {
+  name: 'softban',
+  help: 'Softban a user from the server, which essentially kicks the user and deletes their messages.',
+  noDM: true,
+  usage: '<user-mention>',
+  level: 0,
+  fn: function (msg, suffix, bot) {
+    var guildPerms = msg.author.permissionsFor(msg.guild)
+    var botPerms = bot.User.permissionsFor(msg.guild)
+
+    if (!guildPerms.General.BAN_MEMBERS) {
+      msg.reply('You do not have Ban Members permission here.')
+    } else if (!suffix) {
+      msg.channel.sendMessage('You need to mention a user or provide an ID to ban!')
+    } else if (!botPerms.General.BAN_MEMBERS) {
+      msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
+    } else if (msg.mentions.length > 0) {
+      msg.mentions.map((user) => {
+        msg.guild.ban(user, 7).then(() => {
+          msg.guild.unban(user).then(() => {
+            msg.channel.sendMessage(`Softbanned ${user.username}.`)
+          })
+        }).catch((error) => {
+          msg.channel.sendMessage(`Failed to ban ${user.username}`)
+          Logger.error(error)
+        })
+      })
+    } else {
+      let user = bot.Users.get(suffix)
+      msg.guild.ban(user, 7).then(() => {
+        msg.guild.unban(user).then(() => {
+          msg.channel.sendMessage(`Softbanned ${user.username}.`)
+        })
+      }).catch((error) => {
+        msg.channel.sendMessage(`Failed to ban ${user.username}.`)
+        Logger.error(error)
+      })
     }
   }
 }
