@@ -752,17 +752,27 @@ Commands.hackban = {
     } else if (!botPerms.General.BAN_MEMBERS) {
       msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
     } else {
-      msg.guild.ban(suffix).then(() => {
-        msg.channel.sendMessage(':ok_hand:')
-      }).catch((error) => {
-        msg.channel.sendMessage('Failed to ban user.')
-        Logger.error(error)
+      let banMembers = {success: [], error: []}
+      let idArray = suffix.split(' ')
+      idArray.map((id) => {
+        msg.guild.ban(id).then(() => {
+          banMembers.success.push(id) // once getREST comes out, we'll add user info.
+          if (banMembers.success.length + banMembers.error.length === idArray.length) {
+            msg.reply(banMembers.success.length === idArray.length ? `${idArray.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} successfully banned.` : `${banMembers.success.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} banned.\n${banMembers.error.length} ${banMembers.error.length > 1 ? 'users' : 'user'} couldn't be banned.`)
+          }
+        }).catch((error) => {
+          banMembers.error.push(id)
+          if (banMembers.success.length + banMembers.error.length === idArray.length) {
+            msg.reply(banMembers.success.length === idArray.length ? `${idArray.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} successfully banned.` : `${banMembers.success.length} users were banned.\n${banMembers.error.length} ${banMembers.error.length > 1 ? 'users' : 'user'} couldn't be banned.`)
+          }
+          Logger.error(error)
+        })
       })
     }
   }
 }
 
-Commands.softban = {
+Commands.softban = { // add reason when Discordie updates to add support for them.
   name: 'softban',
   help: 'Softban a user from the server, which kicks the user and deletes their messages.',
   noDM: true,
@@ -785,35 +795,39 @@ Commands.softban = {
           msg.guild.unban(user).then(() => {
             banMembers.success.push(`\`${user.username}\``)
             if (banMembers.success.length + banMembers.error.length === msg.mentions.length) {
-              msg.reply(banMembers.error.length === 0 ? `Successfully banned ${banMembers.success.join(", ")}` : `Successfully softbanned ${banMembers.success.length > 0 ? banMembers.success.join(", ") : 'none'}, \nFailed to ban ${banMembers.error.join(", ")}.`)
+              msg.reply(banMembers.error.length === 0 ? `Successfully softbanned ${banMembers.success.join(', ')}` : `Successfully softbanned ${banMembers.success.length > 0 ? banMembers.success.join(', ') : 'none'}, \nFailed to ban ${banMembers.error.join(', ')}.`)
             }
           }).catch((error) => {
-            banMembers.push(`Failed to unban ${user.username}`)
+            banMembers.error.push(`\`${user.username}\``)
             Logger.error(error)
           })
         }).catch((error) => {
           banMembers.error.push(`\`${user.username}\``)
           if (msg.mentions.length === banMembers.error.length) {
-            msg.reply(banMembers.error.length === 0 ? `Successfully banned ${banMembers.success.join(", ")}` : `Successfully softbanned ${banMembers.success.length > 0 ? banMembers.success.join(", ") : 'none'}, \nFailed to ban ${banMembers.error.join(", ")}.`)
+            msg.reply(banMembers.error.length === 0 ? `Successfully softbanned ${banMembers.success.join(', ')}` : `Successfully softbanned ${banMembers.success.length > 0 ? banMembers.success.join(', ') : 'none'}, \nFailed to ban ${banMembers.error.join(', ')}.`)
           }
           Logger.error(error)
         })
       })
     } else if (!isNaN(suffix)) {
       let member = msg.guild.members.find(m => m.id === suffix)
+      if (!member) {
+        msg.reply('This user isn\'t a member of this server.')
+        return
+      }
       msg.guild.ban(member, 7).then(() => {
         member.unban(msg.guild).then(() => {
-          msg.channel.sendMessage(':ok_hand:')
+          msg.reply(`Successfully softbanned ${member.username}.`)
         }).catch((error) => {
-          msg.channel.sendMessage(`Failed to unban user ${member.username}.`)
+          msg.reply(`Failed to unban user ${member.username}.`)
           Logger.error(error)
         })
       }).catch((error) => {
-        msg.channel.sendMessage(`Failed to softban ${member.username}`)
+        msg.reply(`Failed to softban ${member.username}`)
         Logger.error(error)
       })
     } else {
-      msg.channel.sendMessage('Failed to softban user. Make sure they\'re in the server and you\'re providing a userid or mentioning someone!')
+      msg.reply('Failed to softban user. Make sure they\'re in the server and you\'re providing a userid or mentioning someone!')
     }
   }
 }
