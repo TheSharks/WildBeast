@@ -779,22 +779,22 @@ Commands.softban = {
     } else if (!botPerms.General.BAN_MEMBERS) {
       msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
     } else if (msg.mentions.length > 0) {
-      let banMembers = []
+      let banMembers = {success: [], error: []}
       msg.mentions.map((user) => {
         msg.guild.ban(user, 7).then(() => {
           msg.guild.unban(user).then(() => {
-            banMembers.push(`\`${user.username}\``)
-            if (banMembers.length === msg.mentions.length) {
-              msg.channel.sendMessage(`${banMembers.join(' ')} were banned.`)
+            banMembers.success.push(`\`${user.username}\``)
+            if (banMembers.success.length + banMembers.error.length === msg.mentions.length) {
+              msg.reply(banMembers.error.length === 0 ? `Successfully banned ${banMembers.success.join(", ")}` : `Successfully softbanned ${banMembers.success.length > 0 ? banMembers.success.join(", ") : 'none'}, \nFailed to ban ${banMembers.error.join(", ")}.`)
             }
           }).catch((error) => {
             banMembers.push(`Failed to unban ${user.username}`)
             Logger.error(error)
           })
         }).catch((error) => {
-          banMembers.push(`Failed to ban ${user.username}. `)
-          if (msg.mentions.length === banMembers.length) {
-            msg.channel.sendMessage(banMembers.join(' '))
+          banMembers.error.push(`\`${user.username}\``)
+          if (msg.mentions.length === banMembers.error.length) {
+            msg.reply(banMembers.error.length === 0 ? `Successfully banned ${banMembers.success.join(", ")}` : `Successfully softbanned ${banMembers.success.length > 0 ? banMembers.success.join(", ") : 'none'}, \nFailed to ban ${banMembers.error.join(", ")}.`)
           }
           Logger.error(error)
         })
