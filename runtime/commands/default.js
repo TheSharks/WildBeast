@@ -755,7 +755,7 @@ Commands.hackban = {
       msg.guild.ban(suffix).then(() => {
         msg.guild.getBans().then((bans) => {
           msg.channel.sendMessage(':ok_hand:')
-        }) // getREST isn't in Discordie master yet.
+        })
       }).catch((error) => {
         msg.channel.sendMessage('Failed to ban user.')
         Logger.error(error)
