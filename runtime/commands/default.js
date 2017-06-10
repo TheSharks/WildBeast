@@ -739,7 +739,7 @@ Commands.hackban = {
   name: 'hackban',
   help: 'Swing the ban hammer on someone who isn\'t a member of the server!',
   noDM: true,
-  usage: '<user-mention>',
+  usage: '<userid>',
   level: 0,
   fn: function (msg, suffix, bot) {
     var guildPerms = msg.author.permissionsFor(msg.guild)
@@ -753,9 +753,7 @@ Commands.hackban = {
       msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
     } else {
       msg.guild.ban(suffix).then(() => {
-        msg.guild.getBans().then((bans) => {
-          msg.channel.sendMessage(':ok_hand:')
-        })
+        msg.channel.sendMessage(':ok_hand:')
       }).catch((error) => {
         msg.channel.sendMessage('Failed to ban user.')
         Logger.error(error)
@@ -781,16 +779,23 @@ Commands.softban = {
     } else if (!botPerms.General.BAN_MEMBERS) {
       msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
     } else if (msg.mentions.length > 0) {
+      let banMembers = []
       msg.mentions.map((user) => {
         msg.guild.ban(user, 7).then(() => {
           msg.guild.unban(user).then(() => {
-            msg.channel.sendMessage(`Softbanned ${user.username}.`)
+            banMembers.push(`\`${user.username}\``)
+            if (banMembers.length === msg.mentions.length) {
+              msg.channel.sendMessage(`${banMembers.join(' ')} were banned.`)
+            }
           }).catch((error) => {
-            msg.channel.sendMessage(`Failed to unban ${user.username}`)
+            banMembers.push(`Failed to unban ${user.username}`)
             Logger.error(error)
           })
         }).catch((error) => {
-          msg.channel.sendMessage(`Failed to ban ${user.username}`)
+          banMembers.push(`Failed to ban ${user.username}. `)
+          if (msg.mentions.length === banMembers.length) {
+            msg.channel.sendMessage(banMembers.join(' '))
+          }
           Logger.error(error)
         })
       })
