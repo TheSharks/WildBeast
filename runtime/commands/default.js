@@ -766,13 +766,13 @@ Commands.hackban = {
 
 Commands.softban = {
   name: 'softban',
-  help: 'Softban a user from the server, which essentially kicks the user and deletes their messages.',
+  help: 'Softban a user from the server, which kicks the user and deletes their messages.',
   noDM: true,
-  usage: '<user-mention>',
+  usage: '<user-mention> | <userid>',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guildPerms = msg.author.permissionsFor(msg.guild)
-    var botPerms = bot.User.permissionsFor(msg.guild)
+    let guildPerms = msg.author.permissionsFor(msg.guild)
+    let botPerms = bot.User.permissionsFor(msg.guild)
 
     if (!guildPerms.General.BAN_MEMBERS) {
       msg.reply('You do not have Ban Members permission here.')
@@ -785,22 +785,30 @@ Commands.softban = {
         msg.guild.ban(user, 7).then(() => {
           msg.guild.unban(user).then(() => {
             msg.channel.sendMessage(`Softbanned ${user.username}.`)
+          }).catch((error) => {
+            msg.channel.sendMessage(`Failed to unban ${user.username}`)
+            Logger.error(error)
           })
         }).catch((error) => {
           msg.channel.sendMessage(`Failed to ban ${user.username}`)
           Logger.error(error)
         })
       })
-    } else {
-      let user = bot.Users.get(suffix)
-      msg.guild.ban(user, 7).then(() => {
-        msg.guild.unban(user).then(() => {
-          msg.channel.sendMessage(`Softbanned ${user.username}.`)
+    } else if (!isNaN(suffix)) {
+      let member = msg.guild.members.find(m => m.id === suffix)
+      msg.guild.ban(member, 7).then(() => {
+        member.unban(msg.guild).then(() => {
+          msg.channel.sendMessage(':ok_hand:')
+        }).catch((error) => {
+          msg.channel.sendMessage(`Failed to unban user ${member.username}.`)
+          Logger.error(error)
         })
       }).catch((error) => {
-        msg.channel.sendMessage(`Failed to ban ${user.username}.`)
+        msg.channel.sendMessage(`Failed to softban ${member.username}`)
         Logger.error(error)
       })
+    } else {
+      msg.channel.sendMessage('Failed to softban user. Make sure they\'re in the server and you\'re providing a userid or mentioning someone!')
     }
   }
 }
