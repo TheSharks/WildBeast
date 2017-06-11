@@ -739,7 +739,7 @@ Commands.hackban = {
   name: 'hackban',
   help: 'Swing the ban hammer on someone who isn\'t a member of the server!',
   noDM: true,
-  usage: '<userid | userids>',
+  usage: '<userid | userids> <optional reason>',
   level: 0,
   fn: function (msg, suffix, bot) {
     var guildPerms = msg.author.permissionsFor(msg.guild)
@@ -790,7 +790,7 @@ Commands.softban = {
   name: 'softban',
   help: 'Softban a user from the server, which kicks the user and deletes their messages.',
   noDM: true,
-  usage: '<user-mention> | <userid>',
+  usage: '<user-mention> | <userid> <optional reason>',
   level: 0,
   fn: function (msg, suffix, bot) {
     let guildPerms = msg.author.permissionsFor(msg.guild)
