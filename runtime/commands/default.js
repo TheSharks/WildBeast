@@ -740,6 +740,147 @@ Commands.ban = {
   }
 }
 
+Commands.hackban = {
+  name: 'hackban',
+  help: 'Swing the ban hammer on someone who isn\'t a member of the server!',
+  noDM: true,
+  usage: '<userid | userids> <optional reason>',
+  level: 0,
+  fn: function (msg, suffix, bot) {
+    let guildPerms = msg.author.permissionsFor(msg.guild)
+    let botPerms = bot.User.permissionsFor(msg.guild)
+
+    if (!guildPerms.General.BAN_MEMBERS) {
+      msg.reply('You do not have Ban Members permission here.')
+    } else if (!suffix) {
+      msg.channel.sendMessage('You need to provide an ID to ban!')
+    } else if (!botPerms.General.BAN_MEMBERS) {
+      msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
+    } else if (msg.mentions.length > 0) {
+      msg.channel.sendMessage('You need to provide an ID to ban! Mentions aren\'t supported for hackban.')
+    } else {
+      msg.reply('Please wait...').then((m) => {
+        let banMembers = {success: [], error: []}
+        let idArray = []
+        let reasonWords = []
+        suffix.split(' ').map((id) => {
+          if (isNaN(id)) {
+            reasonWords.push(id)
+          } else {
+            idArray.push(id)
+          }
+        })
+        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'no reason provided.'
+        idArray.map((id) => {
+          bot.Users.getREST(id).then((user) => {
+            msg.guild.ban(id, 0, `${msg.author.username}#${msg.author.discriminator} used hackban: ${reason}`).then(() => {
+              banMembers.success.push(`\`${user.username}#${user.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.` : `${banMembers.success.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} banned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            }).catch(() => {
+              banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            })
+          })
+        })
+      })
+    }
+  }
+}
+
+Commands.softban = {
+  name: 'softban',
+  help: 'Bans and immediately unbans the user, removing their messages.',
+  noDM: true,
+  usage: '<user-mention> | <userid> <optional reason>',
+  level: 0,
+  fn: function (msg, suffix, bot) {
+    let guildPerms = msg.author.permissionsFor(msg.guild)
+    let botPerms = bot.User.permissionsFor(msg.guild)
+
+    if (!guildPerms.General.BAN_MEMBERS) {
+      msg.reply('You do not have Ban Members permission here.')
+    } else if (!suffix) {
+      msg.channel.sendMessage('You need to mention a user or provide an ID to ban!')
+    } else if (!botPerms.General.BAN_MEMBERS) {
+      msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
+    } else if (msg.mentions.length > 0) {
+      msg.reply('Please wait...').then((m) => {
+        let banMembers = {success: [], error: []}
+        let reasonWords = []
+        suffix.split(' ').map((id) => {
+          if (id.startsWith('<@')) {} else {
+            reasonWords.push(id)
+          }
+        })
+        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'no reason provided.'
+        msg.mentions.map((user) => {
+          msg.guild.ban(user, 1, `${msg.author.username}#${msg.author.discriminator} used softban: ${reason}`).then(() => {
+            msg.guild.unban(user).then(() => {
+              banMembers.success.push(`\`${user.username}#${user.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === msg.mentions.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === msg.mentions.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.length === 0 ? 'Nobody' : banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            }).catch(() => {
+              banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
+              if (msg.mentions.length === banMembers.error.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === msg.mentions.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.length === 0 ? 'Nobody' : banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            })
+          }).catch(() => {
+            banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
+            if (msg.mentions.length === banMembers.error.length) {
+              m.edit(`${msg.author.mention}, ${banMembers.success.length === msg.mentions.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.length === 0 ? 'Nobody' : banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+            }
+          })
+        })
+      })
+    } else {
+      msg.reply('Please wait...').then((m) => {
+        let banMembers = {success: [], error: []}
+        let idArray = []
+        let reasonWords = []
+        suffix.split(' ').map((id) => {
+          if (isNaN(id)) {
+            reasonWords.push(id)
+          } else {
+            idArray.push(id)
+          }
+        })
+        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'no reason provided.'
+        idArray.map((id) => {
+          let member = msg.guild.members.find(m => m.id === id)
+          if (!member) {
+            m.edit('A provided ID isn\'t a member of this guild!')
+            return
+          }
+          msg.guild.ban(member, 7, `${msg.author.username}#${msg.author.discriminator} used softban: ${reason}`).then(() => {
+            member.unban(msg.guild).then(() => {
+              banMembers.success.push(`\`${member.username}#${member.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            }).catch(() => {
+              banMembers.error.push(`\`${member.username}#${member.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            })
+          }).catch(() => {
+            banMembers.error.push(`\`${member.username}#${member.discriminator}\``)
+            if (banMembers.success.length + banMembers.error.length === idArray.length) {
+              m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+            }
+          })
+        })
+      })
+    }
+  }
+}
+
 Commands.prefix = {
   name: 'prefix',
   help: "If you, despite reading this have no clue what my prefix is, I'll tell you!",

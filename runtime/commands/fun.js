@@ -476,10 +476,11 @@ Commands.meme = {
       if (err) {
         msg.reply('Please try again, use `help meme` if you do not know how to use this command.')
       } else {
-        var guild = msg.guild
+        var channel = msg.channel
         var user = bot.User
-        var guildPerms = user.permissionsFor(guild)
-        if (guildPerms.Text.MANAGE_MESSAGES) {
+        if (msg.isPrivate) {
+          msg.reply(image)
+        } else if (user.permissionsFor(channel).Text.MANAGE_MESSAGES) {
           msg.delete()
           msg.reply(image)
         } else {
