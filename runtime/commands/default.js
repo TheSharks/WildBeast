@@ -747,8 +747,8 @@ Commands.hackban = {
   usage: '<userid | userids> <optional reason>',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guildPerms = msg.author.permissionsFor(msg.guild)
-    var botPerms = bot.User.permissionsFor(msg.guild)
+    let guildPerms = msg.author.permissionsFor(msg.guild)
+    let botPerms = bot.User.permissionsFor(msg.guild)
 
     if (!guildPerms.General.BAN_MEMBERS) {
       msg.reply('You do not have Ban Members permission here.')
@@ -793,7 +793,7 @@ Commands.hackban = {
 
 Commands.softban = {
   name: 'softban',
-  help: 'Softban a user from the server, which kicks the user and deletes their messages.',
+  help: 'Bans and immediately unbans the user, removing their messages.',
   noDM: true,
   usage: '<user-mention> | <userid> <optional reason>',
   level: 0,
@@ -818,7 +818,7 @@ Commands.softban = {
         })
         let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'no reason provided.'
         msg.mentions.map((user) => {
-          msg.guild.ban(user, 7, `${msg.author.username}#${msg.author.discriminator} used softban: ${reason}`).then(() => {
+          msg.guild.ban(user, 1, `${msg.author.username}#${msg.author.discriminator} used softban: ${reason}`).then(() => {
             msg.guild.unban(user).then(() => {
               banMembers.success.push(`\`${user.username}#${user.discriminator}\``)
               if (banMembers.success.length + banMembers.error.length === msg.mentions.length) {
