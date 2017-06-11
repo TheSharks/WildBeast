@@ -739,7 +739,7 @@ Commands.hackban = {
   name: 'hackban',
   help: 'Swing the ban hammer on someone who isn\'t a member of the server!',
   noDM: true,
-  usage: '<userid>',
+  usage: '<userid | userids>',
   level: 0,
   fn: function (msg, suffix, bot) {
     var guildPerms = msg.author.permissionsFor(msg.guild)
@@ -751,28 +751,42 @@ Commands.hackban = {
       msg.channel.sendMessage('You need to provide an ID to ban!')
     } else if (!botPerms.General.BAN_MEMBERS) {
       msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
+    } else if (msg.mentions.length > 0) {
+      msg.channel.sendMessage('You need to provide an ID to ban! Mentions aren\'t supported for hackban.')
     } else {
-      let banMembers = {success: [], error: []}
-      let idArray = suffix.split(' ')
-      idArray.map((id) => {
-        msg.guild.ban(id).then(() => {
-          banMembers.success.push(id) // once getREST comes out, we'll add user info.
-          if (banMembers.success.length + banMembers.error.length === idArray.length) {
-            msg.reply(banMembers.success.length === idArray.length ? `${idArray.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} successfully banned.` : `${banMembers.success.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} banned.\n${banMembers.error.length} ${banMembers.error.length > 1 ? 'users' : 'user'} couldn't be banned.`)
+      msg.reply('Please wait...').then((m) => {
+        let banMembers = {success: [], error: []}
+        let idArray = []
+        let reasonWords = []
+        suffix.split(' ').map((id) => {
+          if (isNaN(id)) {
+            reasonWords.push(id)
+          } else {
+            idArray.push(id)
           }
-        }).catch((error) => {
-          banMembers.error.push(id)
-          if (banMembers.success.length + banMembers.error.length === idArray.length) {
-            msg.reply(banMembers.success.length === idArray.length ? `${idArray.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} successfully banned.` : `${banMembers.success.length} users were banned.\n${banMembers.error.length} ${banMembers.error.length > 1 ? 'users' : 'user'} couldn't be banned.`)
-          }
-          Logger.error(error)
+        })
+        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'no reason provided.'
+        idArray.map((id) => {
+          bot.Users.getREST(id).then((user) => {
+            msg.guild.ban(id, 0, `${msg.author.username}#${msg.author.discriminator} used hackban: ${reason}`).then(() => {
+              banMembers.success.push(`\`${user.username}#${user.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.` : `${banMembers.success.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} banned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            }).catch(() => {
+              banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            })
+          })
         })
       })
     }
   }
 }
 
-Commands.softban = { // add reason when Discordie updates to add support for them.
+Commands.softban = {
   name: 'softban',
   help: 'Softban a user from the server, which kicks the user and deletes their messages.',
   noDM: true,
@@ -789,45 +803,75 @@ Commands.softban = { // add reason when Discordie updates to add support for the
     } else if (!botPerms.General.BAN_MEMBERS) {
       msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
     } else if (msg.mentions.length > 0) {
-      let banMembers = {success: [], error: []}
-      msg.mentions.map((user) => {
-        msg.guild.ban(user, 7).then(() => {
-          msg.guild.unban(user).then(() => {
-            banMembers.success.push(`\`${user.username}\``)
-            if (banMembers.success.length + banMembers.error.length === msg.mentions.length) {
-              msg.reply(banMembers.error.length === 0 ? `Successfully softbanned ${banMembers.success.join(', ')}` : `Successfully softbanned ${banMembers.success.length > 0 ? banMembers.success.join(', ') : 'none'}, \nFailed to ban ${banMembers.error.join(', ')}.`)
-            }
-          }).catch((error) => {
-            banMembers.error.push(`\`${user.username}\``)
-            Logger.error(error)
-          })
-        }).catch((error) => {
-          banMembers.error.push(`\`${user.username}\``)
-          if (msg.mentions.length === banMembers.error.length) {
-            msg.reply(banMembers.error.length === 0 ? `Successfully softbanned ${banMembers.success.join(', ')}` : `Successfully softbanned ${banMembers.success.length > 0 ? banMembers.success.join(', ') : 'none'}, \nFailed to ban ${banMembers.error.join(', ')}.`)
+      msg.reply('Please wait...').then((m) => {
+        let banMembers = {success: [], error: []}
+        let reasonWords = []
+        suffix.split(' ').map((id) => {
+          if (id.startsWith('<@')) {} else {
+            reasonWords.push(id)
           }
-          Logger.error(error)
         })
-      })
-    } else if (!isNaN(suffix)) {
-      let member = msg.guild.members.find(m => m.id === suffix)
-      if (!member) {
-        msg.reply('This user isn\'t a member of this server.')
-        return
-      }
-      msg.guild.ban(member, 7).then(() => {
-        member.unban(msg.guild).then(() => {
-          msg.reply(`Successfully softbanned ${member.username}.`)
-        }).catch((error) => {
-          msg.reply(`Failed to unban user ${member.username}.`)
-          Logger.error(error)
+        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'no reason provided.'
+        msg.mentions.map((user) => {
+          msg.guild.ban(user, 7, `${msg.author.username}#${msg.author.discriminator} used softban: ${reason}`).then(() => {
+            msg.guild.unban(user).then(() => {
+              banMembers.success.push(`\`${user.username}#${user.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === msg.mentions.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === msg.mentions.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.length === 0 ? 'Nobody' : banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            }).catch(() => {
+              banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
+              if (msg.mentions.length === banMembers.error.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === msg.mentions.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.length === 0 ? 'Nobody' : banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            })
+          }).catch(() => {
+            banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
+            if (msg.mentions.length === banMembers.error.length) {
+              m.edit(`${msg.author.mention}, ${banMembers.success.length === msg.mentions.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.length === 0 ? 'Nobody' : banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+            }
+          })
         })
-      }).catch((error) => {
-        msg.reply(`Failed to softban ${member.username}`)
-        Logger.error(error)
       })
     } else {
-      msg.reply('Failed to softban user. Make sure they\'re in the server and you\'re providing a userid or mentioning someone!')
+      msg.reply('Please wait...').then((m) => {
+        let banMembers = {success: [], error: []}
+        let idArray = []
+        let reasonWords = []
+        suffix.split(' ').map((id) => {
+          if (isNaN(id)) {
+            reasonWords.push(id)
+          } else {
+            idArray.push(id)
+          }
+        })
+        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'no reason provided.'
+        idArray.map((id) => {
+          let member = msg.guild.members.find(m => m.id === id)
+          if (!member) {
+            m.edit('A provided ID isn\'t a member of this guild!')
+            return
+          }
+          msg.guild.ban(member, 7, `${msg.author.username}#${msg.author.discriminator} used softban: ${reason}`).then(() => {
+            member.unban(msg.guild).then(() => {
+              banMembers.success.push(`\`${member.username}#${member.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            }).catch(() => {
+              banMembers.error.push(`\`${member.username}#${member.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+              }
+            })
+          }).catch(() => {
+            banMembers.error.push(`\`${member.username}#${member.discriminator}\``)
+            if (banMembers.success.length + banMembers.error.length === idArray.length) {
+              m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully softbanned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+            }
+          })
+        })
+      })
     }
   }
 }
