@@ -212,11 +212,14 @@ Commands.twitch = {
         }
         if (resp.stream !== null) {
           msg.channel.sendMessage(suffix + ' is currently live at https://www.twitch.tv/' + suffix)
+          return
         } else if (resp.stream === null) {
           msg.channel.sendMessage(suffix + ' is not currently streaming')
+          return
         }
       } else if (!error && response.statusCode === 404) {
         msg.channel.sendMessage('Channel does not exist!')
+        return
       }
     })
   }
@@ -664,6 +667,7 @@ Commands['join-server'] = {
   fn: function (msg, suffix, bot) {
     if (bot.User.bot) {
       msg.channel.sendMessage("Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: <" + config.bot.oauth + '>')
+      return
     } else {
       Logger.warn('Using user accounts is deprecated!')
     }
@@ -686,6 +690,7 @@ Commands.kick = {
       msg.reply("I don't have enough permissions to do this!")
     } else if (msg.mentions.length === 0) {
       msg.channel.sendMessage('Please mention the user(s) you want to kick.')
+      return
     } else {
       msg.mentions.map(function (user) {
         var member = msg.guild.members.find((m) => m.id === user.id)
