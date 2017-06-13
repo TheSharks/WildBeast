@@ -1,3 +1,7 @@
+general:
+  branches:
+    ignore:
+      - gh-pages # Cirlcle pls
 machine:
   node:
     version: 6.9.5
