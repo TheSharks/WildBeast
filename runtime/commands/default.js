@@ -681,8 +681,8 @@ Commands.kick = {
   usage: '<user-mention>',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guildPerms = msg.author.permissionsFor(msg.guild)
-    var botPerms = bot.User.permissionsFor(msg.guild)
+    let guildPerms = msg.author.permissionsFor(msg.guild)
+    let botPerms = bot.User.permissionsFor(msg.guild)
 
     if (!guildPerms.General.KICK_MEMBERS) {
       msg.channel.sendMessage('Sorry, you do not have enough permissions to kick members.')
@@ -692,16 +692,14 @@ Commands.kick = {
       msg.channel.sendMessage('Please mention the user(s) you want to kick.')
       return
     } else {
-      msg.mentions.map(function (user) {
-        var member = msg.guild.members.find((m) => m.id === user.id)
-        if (member.id === bot.User.id) {} else {
-          member.kick().then(() => {
-            msg.channel.sendMessage(`Kicked \`${user.username}\``)
-          }).catch((error) => {
-            msg.channel.sendMessage(`Failed to kick \`${user.username}\``)
-            Logger.error(error)
-          })
-        }
+      msg.mentions.filter(u => u.id !== bot.User.id).map(function (user) {
+        let member = msg.guild.members.find((m) => m.id === user.id)
+        member.kick().then(() => {
+          msg.channel.sendMessage(`Kicked \`${user.username}\``)
+        }).catch((error) => {
+          msg.channel.sendMessage(`Failed to kick \`${user.username}\``)
+          Logger.error(error)
+        })
       })
     }
   }
@@ -714,8 +712,8 @@ Commands.ban = {
   usage: '<user-mention> [days]',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guildPerms = msg.author.permissionsFor(msg.guild)
-    var botPerms = bot.User.permissionsFor(msg.guild)
+    let guildPerms = msg.author.permissionsFor(msg.guild)
+    let botPerms = bot.User.permissionsFor(msg.guild)
 
     if (!guildPerms.General.BAN_MEMBERS) {
       msg.reply('You do not have Ban Members permission here.')
@@ -724,18 +722,16 @@ Commands.ban = {
     } else if (msg.mentions.length === 0) {
       msg.channel.sendMessage('Please mention the user(s) you want to ban.')
     } else {
-      var days = msg.mentions.length === 2 ? suffix.split(' ')[msg.mentions.length - 1] || 0 : suffix.split(' ')[msg.mentions.length] || 0
+      let days = suffix.match(/\d+$/) ? parseInt(suffix.match(/\d+$/)) : 0
       if ([0, 1, 7].indexOf(parseFloat(days)) > -1) {
-        msg.mentions.map(function (user) {
-          var member = msg.guild.members.find((m) => m.id === user.id)
-          if (member.id === bot.User.id) {} else {
-            member.ban(parseInt(days)).then(() => {
-              msg.channel.sendMessage(`I've banned \`${user.username}\` deleting **${days}** days of messages.`)
-            }).catch((error) => {
-              msg.channel.sendMessage(`Failed to ban \`${user.username}\``)
-              Logger.error(error)
-            })
-          }
+        msg.mentions.filter(u => u.id !== bot.User.id).map(function (user) {
+          let member = msg.guild.members.find((m) => m.id === user.id)
+          member.ban(days).then(() => {
+            msg.channel.sendMessage(`I've banned \`${user.username}\` deleting **${days}** days of messages.`)
+          }).catch((error) => {
+            msg.channel.sendMessage(`Failed to ban \`${user.username}\``)
+            Logger.error(error)
+          })
         })
       } else {
         msg.reply('Your last argument must be a number or nothing for the default of 0, can only be 0, 1 or 7!')
