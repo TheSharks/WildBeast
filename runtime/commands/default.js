@@ -694,12 +694,14 @@ Commands.kick = {
     } else {
       msg.mentions.map(function (user) {
         var member = msg.guild.members.find((m) => m.id === user.id)
-        member.kick().then(() => {
-          msg.channel.sendMessage('Kicked ' + user.username)
-        }).catch((error) => {
-          msg.channel.sendMessage('Failed to kick ' + user.username)
-          Logger.error(error)
-        })
+        if (member.id === bot.User.id) {} else {
+          member.kick().then(() => {
+            msg.channel.sendMessage(`Kicked \`${user.username}\``)
+          }).catch((error) => {
+            msg.channel.sendMessage(`Failed to kick \`${user.username}\``)
+            Logger.error(error)
+          })
+        }
       })
     }
   }
@@ -722,16 +724,18 @@ Commands.ban = {
     } else if (msg.mentions.length === 0) {
       msg.channel.sendMessage('Please mention the user(s) you want to ban.')
     } else {
-      var days = suffix.split(' ')[msg.mentions.length] || 0
+      var days = msg.mentions.length === 2 ? suffix.split(' ')[msg.mentions.length - 1] || 0 : suffix.split(' ')[msg.mentions.length] || 0
       if ([0, 1, 7].indexOf(parseFloat(days)) > -1) {
         msg.mentions.map(function (user) {
           var member = msg.guild.members.find((m) => m.id === user.id)
-          member.ban(days).then(() => {
-            msg.channel.sendMessage("I've banned " + user.username + ' deleting ' + days + ' days of messages.')
-          }).catch((error) => {
-            msg.channel.sendMessage('Failed to ban ' + user.username)
-            Logger.error(error)
-          })
+          if (member.id === bot.User.id) {} else {
+            member.ban(parseInt(days)).then(() => {
+              msg.channel.sendMessage(`I've banned \`${user.username}\` deleting **${days}** days of messages.`)
+            }).catch((error) => {
+              msg.channel.sendMessage(`Failed to ban \`${user.username}\``)
+              Logger.error(error)
+            })
+          }
         })
       } else {
         msg.reply('Your last argument must be a number or nothing for the default of 0, can only be 0, 1 or 7!')
