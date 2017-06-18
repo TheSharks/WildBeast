@@ -678,29 +678,50 @@ Commands.kick = {
   name: 'kick',
   help: 'Kick the user(s) out of the server!',
   noDM: true,
-  usage: '<user-mention>',
+  usage: '<user-mentions> [reason]',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guildPerms = msg.author.permissionsFor(msg.guild)
-    var botPerms = bot.User.permissionsFor(msg.guild)
-
-    if (!guildPerms.General.KICK_MEMBERS) {
-      msg.channel.sendMessage('Sorry, you do not have enough permissions to kick members.')
-    } else if (!botPerms.General.KICK_MEMBERS) {
-      msg.reply("I don't have enough permissions to do this!")
-    } else if (msg.mentions.length === 0) {
-      msg.channel.sendMessage('Please mention the user(s) you want to kick.')
+    let chunks = suffix.split(' ')
+    let members = msg.mentions.filter(u => u.id !== bot.User.id).map((user) => msg.guild.members.find(m => m.id === user.id))
+    let reason = chunks.slice(members.length).join(' ').length === 0 ? 'No reason specified' : chunks.slice(members.length).join(' ')
+    let list = {success: [], error: []}
+    if (!msg.member.permissionsFor(msg.guild).General.KICK_MEMBERS) {
+      msg.reply('Sorry but you do not have permission to kick members.')
+    } else if (!bot.User.permissionsFor(msg.guild).General.KICK_MEMBERS) {
+      msg.reply('Sorry but I do not have the required permission to kick members.')
       return
     } else {
-      msg.mentions.map(function (user) {
-        var member = msg.guild.members.find((m) => m.id === user.id)
-        member.kick().then(() => {
-          msg.channel.sendMessage('Kicked ' + user.username)
-        }).catch((error) => {
-          msg.channel.sendMessage('Failed to kick ' + user.username)
-          Logger.error(error)
-        })
-      })
+      safeLoop(msg, members, reason, list)
+    }
+
+    function safeLoop (msg, members, reason, list) {
+      let guildPerms = msg.author.permissionsFor(msg.guild)
+      let botPerms = bot.User.permissionsFor(msg.guild)
+
+      if (!guildPerms.General.KICK_MEMBERS) {
+        msg.channel.sendMessage('Sorry, you do not have enough permissions to kick members.')
+      } else if (!botPerms.General.KICK_MEMBERS) {
+        msg.reply("I don't have enough permissions to do this!")
+      } else if (msg.mentions.length === 0) {
+        msg.channel.sendMessage('Please mention the user(s) you want to kick.')
+      } else {
+        if (members.length === 0) {
+          let resp = ''
+          if (list.success.length !== 0) resp += `The following users were kicked: ${list.success.join(', ')} for reason: \`${reason}\`\n`
+          if (list.error.length !== 0) resp += `The following users were not kicked: ${list.error.join(', ')}`
+          msg.reply(resp)
+        } else {
+          members[0].kick(`${msg.author.username} used kick on ${members[0].username} for ${reason}`).then(() => {
+            list.success.push(`\`${members[0].username}\``)
+            members.shift()
+            safeLoop(msg, members, reason, list)
+          }).catch(() => {
+            list.error.push(`\`${members[0].username}\``)
+            members.shift()
+            safeLoop(msg, members, reason, list)
+          })
+        }
+      }
     }
   }
 }
@@ -709,11 +730,28 @@ Commands.ban = {
   name: 'ban',
   help: 'Swing the banhammer on someone!',
   noDM: true,
-  usage: '<user-mention> [days]',
+  usage: '[days (can be 0, 1, or 7)] <user-mention || user-mentions> [reason]',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guildPerms = msg.author.permissionsFor(msg.guild)
-    var botPerms = bot.User.permissionsFor(msg.guild)
+    function safeLoop (msg, days, members, reason, list) {
+      if (members.length === 0) {
+        let resp = `I was able to ban the following users: ${list.success.join(', ')}, cleaning **${days}** days of messages with the reason: *${reason}*`
+        if (list.error.length !== 0) resp += `\nThe following users were not banned: ${list.error.join(', ')}`
+        msg.reply(resp)
+      } else {
+        members[0].ban(parseInt(days), `${msg.author.username}#${msg.author.discriminator} used ban on ${members[0].username} for reason: ${reason}`).then(() => {
+          list.success.push(`\`${members[0].username}\``)
+          members.shift()
+          safeLoop(msg, days, members, reason, list)
+        }).catch(() => {
+          list.error.push(`\`${members[0].username}\``)
+          members.shift()
+          safeLoop(msg, days, members, reason, list)
+        })
+      }
+    }
+    let guildPerms = msg.author.permissionsFor(msg.guild)
+    let botPerms = bot.User.permissionsFor(msg.guild)
 
     if (!guildPerms.General.BAN_MEMBERS) {
       msg.reply('You do not have Ban Members permission here.')
@@ -722,17 +760,14 @@ Commands.ban = {
     } else if (msg.mentions.length === 0) {
       msg.channel.sendMessage('Please mention the user(s) you want to ban.')
     } else {
-      var days = suffix.split(' ')[msg.mentions.length] || 0
+      let chunks = suffix.split(' ')
+      let days = isNaN(parseInt(chunks[0], 10)) ? 1 : parseInt(chunks[0], 10)
       if ([0, 1, 7].indexOf(parseFloat(days)) > -1) {
-        msg.mentions.map(function (user) {
-          var member = msg.guild.members.find((m) => m.id === user.id)
-          member.ban(days).then(() => {
-            msg.channel.sendMessage("I've banned " + user.username + ' deleting ' + days + ' days of messages.')
-          }).catch((error) => {
-            msg.channel.sendMessage('Failed to ban ' + user.username)
-            Logger.error(error)
-          })
-        })
+        let members = msg.mentions.filter(u => u.id !== bot.User.id).map((user) => msg.guild.members.find(m => m.id === user.id))
+        let reason = chunks.slice(members.length).join(' ').length === 0 ? 'No reason specified' : chunks.slice(members.length).join(' ')
+        let list = {success: [], error: []}
+
+        safeLoop(msg, days, members, reason, list)
       } else {
         msg.reply('Your last argument must be a number or nothing for the default of 0, can only be 0, 1 or 7!')
       }
@@ -776,12 +811,12 @@ Commands.hackban = {
             msg.guild.ban(id, 0, `${msg.author.username}#${msg.author.discriminator} used hackban: ${reason}`).then(() => {
               banMembers.success.push(`\`${user.username}#${user.discriminator}\``)
               if (banMembers.success.length + banMembers.error.length === idArray.length) {
-                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.` : `${banMembers.success.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} banned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.length > 0 ? banMembers.success.join(', ') : 'nobody'} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.` : `${banMembers.success.length} ${banMembers.success.length > 1 ? 'users were' : 'user was'} banned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
               }
             }).catch(() => {
               banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
               if (banMembers.success.length + banMembers.error.length === idArray.length) {
-                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
+                m.edit(`${msg.author.mention}, ${banMembers.success.length === idArray.length ? `${banMembers.success.length > 0 ? banMembers.success.join(', ') : 'nobody'} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.` : `${banMembers.success.join(', ')} ${banMembers.success.length > 1 ? 'were' : 'was'} successfully banned.\n${banMembers.error.join(', ')} couldn't be banned.`}`)
               }
             })
           })
