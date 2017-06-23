@@ -1,11 +1,11 @@
-let Config;
+let Config
 try {
-  Config = require('../../config.json');
+  Config = require('../../config.json')
 } catch (e) {
-  console.log('\nEncountered an error while trying to load the config file, please resolve this issue run the last command again.\n\n' + e.message);
+  console.log('\nEncountered an error while trying to load the config file, please resolve this issue run the last command again.\n\n' + e.message)
   process.exit()
 }
-let Dash = require('rethinkdbdash');
+let Dash = require('rethinkdbdash')
 let r = new Dash({
   user: Config.database.user,
   password: Config.database.password,
@@ -14,12 +14,12 @@ let r = new Dash({
     host: Config.database.host,
     port: Config.database.port
   }]
-});
+})
 
-let tables = ['Guilds', 'Tags', 'Users'];
+let tables = ['Guilds', 'Tags', 'Users']
 
 r.db('Discord').tableList().then((list) => {
-  console.log(`Database Discord exists, checking for tables...`);
+  console.log(`Database Discord exists, checking for tables...`)
   if (tables.some(table => list.includes(table)) || tables.some(table => !list.includes(table))) {
     loop(tables[0])
   }
@@ -41,14 +41,14 @@ r.db('Discord').tableList().then((list) => {
   }
 });
 
-function loop(t) {
+function loop (t) {
   if (tables.length > 0) {
     checkTable(t).then((e) => {
-      console.log(e);
+      console.log(e)
       tables.shift()
       loop(tables[0])
     }).catch((err) => {
-      console.error(err);
+      console.error(err)
       drainAndExit(1)
     })
   } else {
@@ -56,7 +56,7 @@ function loop(t) {
   }
 }
 
-function checkTable(table) {
+function checkTable (table) {
   return new Promise(function (resolve, reject) {
     r.db('Discord').tableCreate(table).run().then(() => {
       resolve(`The table ${table} has been created`)
@@ -70,7 +70,7 @@ function checkTable(table) {
   })
 }
 
-function drainAndExit(exitCode) {
+function drainAndExit (exitCode) {
   r.getPoolMaster().drain().then(() => {
     process.exit(exitCode)
   })
