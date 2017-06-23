@@ -39,7 +39,7 @@ r.db('Discord').tableList().then((list) => {
     console.error(e)
     process.exit(1)
   }
-});
+})
 
 function loop (t) {
   if (tables.length > 0) {
