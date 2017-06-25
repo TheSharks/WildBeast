@@ -1,19 +1,10 @@
 {
   "private": true,
   "name": "WildBeast",
-  "version": "4.2.2",
+  "version": "4.3.0",
   "description": "A Discord Bot",
   "main": "DougBot.js",
   "maintainers": [
-    {
-      "name": "Pascal Meijer",
-      "email": "m1rr0rbr34k+github@gmail.com"
-    },
-    {
-      "name": "Curtis Hofstingburg",
-      "email": "curtis@curitzjt.cf",
-      "url": "https://curitzjt.cf/"
-    },
     {
       "name": "Anthony Zaza",
       "email": "tony@lemonmc.com"
@@ -46,18 +37,17 @@
   "dependencies": {
     "bugsnag": "^1.9.0",
     "cleverbot.io": "^1.0.4",
-    "discordie": "^0.11.0",
+    "discordie": "qeled/discordie#dev",
     "imgflipper": "^1.0.1",
     "leetspeak": "0.0.1",
     "minimist": "^1.2.0",
     "prompt": "^1.0.0",
-    "request": "^2.72.0",
     "require-directory": "^2.1.1",
     "rethinkdbdash": "^2.3.23",
     "semver": "^5.1.0",
     "snyk": "^1.24.5",
+    "superagent": "^3.5.2",
     "tagscript": "github:guscaplan/tagscript",
-    "unirest": "^0.5.0",
     "winston": "^2.3.1",
     "winston-daily-rotate-file": "^1.0.1",
     "winston-elasticsearch": "^0.5.0",

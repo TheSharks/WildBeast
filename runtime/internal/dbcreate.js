@@ -1,12 +1,12 @@
-var Config
+let Config
 try {
   Config = require('../../config.json')
 } catch (e) {
-  console.log('\nWildBeast encountered an error while trying to load the config file, please resolve this issue and restart the bot\n\n' + e.message)
+  console.log('\nEncountered an error while trying to load the config file, please resolve this issue run the last command again.\n\n' + e.message)
   process.exit()
 }
-var Dash = require('rethinkdbdash')
-var r = new Dash({
+let Dash = require('rethinkdbdash')
+let r = new Dash({
   user: Config.database.user,
   password: Config.database.password,
   silent: true,
@@ -16,80 +16,53 @@ var r = new Dash({
   }]
 })
 
-r.db('Discord').table('Guilds').then(() => {
-  console.log('Database Discord exists, checking for tables...')
-  checkGuilds().then((e) => {
-    console.log(e)
-    checkTags().then((e) => {
-      console.log(e)
-      checkUsers().then((e) => {
-        console.log(e)
-        drainAndExit()
-      }).catch(e => {
-        console.error(e)
-      })
-    }).catch(e => {
-      console.error(e)
-    })
-  }).catch(e => {
-    console.error(e)
-  })
+let tables = ['Guilds', 'Tags', 'Users']
+
+r.db('Discord').tableList().then((list) => {
+  console.log(`Database Discord exists, checking for tables...`)
+  if (tables.some(table => list.includes(table)) || tables.some(table => !list.includes(table))) {
+    loop(tables[0])
+  }
 }).catch(e => {
   if (e.msg === 'None of the pools have an opened connection and failed to open a new one') {
     console.error('Could not connect to the RethinkDB instance, make sure it is running!')
-    process.exit()
-  } else if (e.msg === 'Database `Discord` does not exist.') {
+    process.exit(1)
+  } else if (e.msg === `Database \`Discord\` does not exist.`) {
     console.log('Creating database and tables, this may take a little while.')
     r.dbCreate('Discord').run().then(() => {
-      checkGuilds().then((e) => {
-        console.log(e)
-        checkTags().then((e) => {
-          console.log(e)
-          checkUsers().then((e) => {
-            console.log(e)
-            drainAndExit()
-          }).catch(e => {
-            console.error(e)
-            drainAndExit()
-          })
-        }).catch(e => {
-          console.error(e)
-          drainAndExit()
-        })
-      }).catch(e => {
-        console.error(e)
-        drainAndExit()
-      })
+      loop(tables[0])
     }).catch(e => {
       console.error(e)
-      drainAndExit()
+      drainAndExit(1)
     })
   } else {
     console.error(e)
-    process.exit()
+    process.exit(1)
   }
 })
 
-function checkGuilds () {
-  return new Promise(function (resolve, reject) {
-    r.db('Discord').tableCreate('Guilds').run().then(() => {
-      resolve('Table Guilds has been created')
-    }).catch(e => {
-      if (e.msg === 'Table `Discord.Guilds` already exists.') {
-        resolve('The table Guilds already exists.')
-      } else {
-        reject(e)
-      }
+function loop (t) {
+  if (tables.length > 0) {
+    checkTable(t).then((e) => {
+      console.log(e)
+      tables.shift()
+      loop(tables[0])
+    }).catch((err) => {
+      console.error(err)
+      drainAndExit(1)
     })
-  })
+  } else {
+    process.exit(0)
+  }
 }
-function checkTags () {
+
+function checkTable (table) {
   return new Promise(function (resolve, reject) {
-    r.db('Discord').tableCreate('Tags').run().then(() => {
-      resolve('Table Tags has been created')
+    r.db('Discord').tableCreate(table).run().then(() => {
+      resolve(`The table ${table} has been created`)
     }).catch(e => {
-      if (e.msg === 'Table `Discord.Tags` already exists.') {
-        resolve('The table Tags already exists.')
+      if (e.msg === `Table \`Discord.${table}\` already exists.`) {
+        resolve(`The table ${table} already exists.`)
       } else {
         reject(e)
       }
@@ -97,22 +70,8 @@ function checkTags () {
   })
 }
 
-function checkUsers () {
-  return new Promise(function (resolve, reject) {
-    r.db('Discord').tableCreate('Users').run().then(() => {
-      resolve('Table Users has been created')
-    }).catch(e => {
-      if (e.msg === 'Table `Discord.Users` already exists.') {
-        resolve('The table Users already exists.')
-      } else {
-        reject(e)
-      }
-    })
-  })
-}
-
-function drainAndExit () {
+function drainAndExit (exitCode) {
   r.getPoolMaster().drain().then(() => {
-    process.exit()
+    process.exit(exitCode)
   })
 }

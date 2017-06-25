@@ -1,5 +1,5 @@
 var Commands = []
-var request = require('request')
+var request = require('superagent')
 var config = require('../../config.json')
 var Logger = require('../internal/logger.js').Logger
 var argv = require('minimist')(process.argv.slice(2))
@@ -197,20 +197,16 @@ Commands.twitch = {
       return
     }
     var url = 'https://api.twitch.tv/kraken/streams/' + suffix
-    request({
-      url: url,
-      headers: {
-        'Accept': 'application/vnd.twitchtv.v3+json',
-        'Client-ID': config.api_keys.twitchId
-      }
-    }, function (error, response, body) {
+    request.get(url)
+    .set({'Accept': 'application/vnd.twitchtv.v3+json', 'Client-ID': config.api_keys.twitchId})
+    .end((error, response) => {
       if (error) {
         bugsnag.notify(error)
       }
       if (!error && response.statusCode === 200) {
         var resp
         try {
-          resp = JSON.parse(body)
+          resp = response.body
         } catch (e) {
           msg.channel.sendMessage('The API returned an unconventional response.')
         }
@@ -670,47 +666,10 @@ Commands['join-server'] = {
   level: 0,
   fn: function (msg, suffix, bot) {
     if (bot.User.bot) {
-      msg.channel.sendMessage("Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: " + config.bot.oauth)
+      msg.channel.sendMessage("Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: <" + config.bot.oauth + '>')
       return
-    }
-    var re = /(discord(\.gg|app\.com\/invite)\/([\w]{16}|([\w]+-?){3}))/
-    var code = re.exec(suffix.split(' '))
-    if (msg.guild && bot.User.isMentioned(msg)) {
-      bot.Invites.resolve(code[3]).then(function (server) {
-        if (bot.Guilds.get(server.guild.id)) {
-          msg.channel.sendMessage("I'm already in **" + server.guild.name + '**')
-        } else {
-          bot.Invites.accept(server).then(function (server) {
-            Logger.log('debug', 'Joined ' + server.guild.name + ', at the request of ' + msg.author.username)
-            msg.channel.sendMessage("I've joined **" + server.guild.name + '** at your request.')
-          })
-        }
-      }).catch(function (error) {
-        Logger.warn('Invite link provided by ' + msg.author.username + ' gave us an error: ' + error)
-        if (error.status === 403) {
-          msg.channel.sendMessage("The server you're trying to invite me to appears to have banned me.")
-        } else {
-          msg.channel.sendMessage("The invite link you've provided me appears to be invalid!")
-        }
-      })
-    } else if (msg.isPrivate) {
-      bot.Invites.resolve(code[3]).then(function (server) {
-        if (bot.Guilds.get(server.guild.id)) {
-          msg.channel.sendMessage("I'm already in **" + server.guild.name + '**')
-        } else {
-          bot.Invites.accept(server).then(function (server) {
-            Logger.log('debug', 'Joined ' + server.guild.name + ', at the request of ' + msg.author.username)
-            msg.channel.sendMessage("I've joined **" + server.guild.name + '** at your request.')
-          })
-        }
-      }).catch(function (error) {
-        Logger.warn('Invite link provided by ' + msg.author.username + ' gave us an error: ' + error)
-        if (error.status === 403) {
-          msg.channel.sendMessage("The server you're trying to invite me to appears to have banned me.")
-        } else {
-          msg.channel.sendMessage("The invite link you've provided me appears to be invalid!")
-        }
-      })
+    } else {
+      Logger.warn('Using user accounts is deprecated!')
     }
   }
 }
@@ -719,29 +678,41 @@ Commands.kick = {
   name: 'kick',
   help: 'Kick the user(s) out of the server!',
   noDM: true,
-  usage: '<user-mention>',
+  usage: '<user-mentions> [reason]',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guildPerms = msg.author.permissionsFor(msg.guild)
-    var botPerms = bot.User.permissionsFor(msg.guild)
-
-    if (!guildPerms.General.KICK_MEMBERS) {
-      msg.channel.sendMessage('Sorry, you do not have enough permissions to kick members.')
-    } else if (!botPerms.General.KICK_MEMBERS) {
-      msg.reply("I don't have enough permissions to do this!")
-    } else if (msg.mentions.length === 0) {
+    if (!msg.member.permissionsFor(msg.guild).General.KICK_MEMBERS) {
+      msg.reply('Sorry but you do not have permission to kick members.')
+    } else if (!bot.User.permissionsFor(msg.guild).General.KICK_MEMBERS) {
+      msg.reply('Sorry but I do not have the required permission to kick members.')
+    } else if (msg.mentions.filter(m => m.id !== bot.User.id).length === 0) {
       msg.channel.sendMessage('Please mention the user(s) you want to kick.')
-      return
     } else {
-      msg.mentions.map(function (user) {
-        var member = msg.guild.members.find((m) => m.id === user.id)
-        member.kick().then(() => {
-          msg.channel.sendMessage('Kicked ' + user.username)
-        }).catch((error) => {
-          msg.channel.sendMessage('Failed to kick ' + user.username)
-          Logger.error(error)
+      let chunks = suffix.split(' ')
+      let members = msg.mentions.filter(u => u.id !== bot.User.id).map((user) => msg.guild.members.find(m => m.id === user.id))
+      let reason = chunks.slice(members.length).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length).join(' ')
+      let list = {success: [], error: []}
+      safeLoop(msg, members, reason, list)
+    }
+
+    function safeLoop (msg, members, reason, list) {
+      if (members.length === 0) {
+        let resp = ''
+        if (list.success.length !== 0) resp += `Kicked the following: ${list.success.join(', ')}\n`
+        if (list.error.length !== 0) resp += `Could not kick the following: ${list.error.join(', ')}\n`
+        resp += `Reason provided by user: ${reason}`
+        msg.reply(resp)
+      } else {
+        members[0].kick(`${msg.author.username}#${msg.author.discriminator} used kick for: ${reason}`).then(() => {
+          list.success.push(`\`${members[0].username}\``)
+          members.shift()
+          safeLoop(msg, members, reason, list)
+        }).catch(() => {
+          list.error.push(`\`${members[0].username}\``)
+          members.shift()
+          safeLoop(msg, members, reason, list)
         })
-      })
+      }
     }
   }
 }
@@ -750,33 +721,215 @@ Commands.ban = {
   name: 'ban',
   help: 'Swing the banhammer on someone!',
   noDM: true,
-  usage: '<user-mention> [days]',
+  usage: '[days (can be 0, 1, or 7)] <user-mention || user-mentions> [reason]',
   level: 0,
   fn: function (msg, suffix, bot) {
-    var guildPerms = msg.author.permissionsFor(msg.guild)
-    var botPerms = bot.User.permissionsFor(msg.guild)
+    function safeLoop (msg, days, members, reason, list) {
+      if (members.length === 0) {
+        let resp = ``
+        if (list.success.length !== 0) resp += `Banned the following for **${days}** days: ${list.success.join(', ')}\n`
+        if (list.error.length !== 0) resp += `Could not ban the following: ${list.error.join(', ')}\n`
+        resp += `Reason provided by user: ${reason}`
+        msg.reply(resp)
+      } else {
+        members[0].ban(parseInt(days), `${msg.author.username}#${msg.author.discriminator} used ban for: ${reason}`).then(() => {
+          list.success.push(`\`${members[0].username}\``)
+          members.shift()
+          safeLoop(msg, days, members, reason, list)
+        }).catch(() => {
+          list.error.push(`\`${members[0].username}\``)
+          members.shift()
+          safeLoop(msg, days, members, reason, list)
+        })
+      }
+    }
 
-    if (!guildPerms.General.BAN_MEMBERS) {
-      msg.reply('You do not have Ban Members permission here.')
-    } else if (!botPerms.General.BAN_MEMBERS) {
-      msg.channel.sendMessage('I do not have Ban Members permission, sorry!')
-    } else if (msg.mentions.length === 0) {
+    if (!msg.member.permissionsFor(msg.guild).General.BAN_MEMBERS) {
+      msg.reply('Sorry but you do not have permission to ban members.')
+    } else if (!bot.User.permissionsFor(msg.guild).General.BAN_MEMBERS) {
+      msg.reply('Sorry but I do not have the required permission to ban members.')
+    } else if (msg.mentions.filter(m => m.id !== bot.User.id).length === 0) {
       msg.channel.sendMessage('Please mention the user(s) you want to ban.')
     } else {
-      var days = suffix.split(' ')[msg.mentions.length] || 0
-      if ([0, 1, 7].indexOf(parseFloat(days)) > -1) {
-        msg.mentions.map(function (user) {
-          var member = msg.guild.members.find((m) => m.id === user.id)
-          member.ban(days).then(() => {
-            msg.channel.sendMessage("I've banned " + user.username + ' deleting ' + days + ' days of messages.')
-          }).catch((error) => {
-            msg.channel.sendMessage('Failed to ban ' + user.username)
-            Logger.error(error)
+      let chunks = suffix.split(' ')
+      let days = isNaN(parseInt(chunks[0], 10)) ? 1 : parseInt(chunks[0], 10)
+      if ([0, 1, 7].includes(days)) {
+        let members = msg.mentions.filter(u => u.id !== bot.User.id).map((user) => msg.guild.members.find(m => m.id === user.id))
+        let reason = isNaN(chunks[0]) ? chunks.slice(members.length).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length).join(' ') : chunks.slice(members.length + 1).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length + 1).join(' ')
+        let list = {success: [], error: []}
+
+        safeLoop(msg, days, members, reason, list)
+      } else {
+        msg.reply('Your first argument must be a number or nothing for the default of 1, can only be 0, 1 or 7!')
+      }
+    }
+  }
+}
+
+Commands.hackban = {
+  name: 'hackban',
+  help: 'Swing the ban hammer on someone who isn\'t a member of the server!',
+  noDM: true,
+  usage: '<userid | userids> <optional reason>',
+  level: 0,
+  fn: function (msg, suffix, bot) {
+    if (!msg.member.permissionsFor(msg.guild).General.BAN_MEMBERS) {
+      msg.reply('Sorry but you do not have permission to ban members.')
+    } else if (!bot.User.permissionsFor(msg.guild).General.BAN_MEMBERS) {
+      msg.reply('Sorry but I do not have the required permission to ban members.')
+    } else if (!suffix) {
+      msg.channel.sendMessage('You need to provide an ID to ban!')
+    } else if (msg.mentions.filter(m => m.id !== bot.User.id).length > 0) {
+      msg.channel.sendMessage('You need to provide an ID to ban! Mentions aren\'t supported for hackban.')
+    } else {
+      msg.reply('Please wait...').then((m) => {
+        let banMembers = {success: [], error: []}
+        let idArray = []
+        let reasonWords = []
+        suffix.split(' ').map((id) => {
+          if (isNaN(id) || id.length < 16) {
+            reasonWords.push(id)
+          } else {
+            idArray.push(id)
+          }
+        })
+        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'No reason provided.'
+        idArray.map((id) => {
+          bot.Users.getREST(id).then((user) => {
+            msg.guild.ban(id, 0, `${msg.author.username}#${msg.author.discriminator} used hackban for: ${reason}`).then(() => {
+              banMembers.success.push(`\`${user.username}#${user.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                let resp = ''
+                if (banMembers.success.length !== 0) resp += `Hackbanned the following: ${banMembers.success.join(', ')}\n`
+                if (banMembers.error.length !== 0) resp += `Could not hackban the following: ${banMembers.error.join(', ')}\n`
+                resp += `Reason provided by user: ${reason}`
+                m.edit(resp)
+              }
+            }).catch(() => {
+              banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                let resp = ''
+                if (banMembers.success.length !== 0) resp += `Hackbanned the following: ${banMembers.success.join(', ')}\n`
+                if (banMembers.error.length !== 0) resp += `Could not hackban the following: ${banMembers.error.join(', ')}\n`
+                resp += `Reason provided by user: ${reason}`
+                m.edit(resp)
+              }
+            })
           })
         })
-      } else {
-        msg.reply('Your last argument must be a number or nothing for the default of 0, can only be 0, 1 or 7!')
-      }
+      })
+    }
+  }
+}
+
+Commands.softban = {
+  name: 'softban',
+  help: 'Bans and immediately unbans the user, removing their messages.',
+  noDM: true,
+  usage: '<user-mention> | <userid> <optional reason>',
+  level: 0,
+  fn: function (msg, suffix, bot) {
+    if (!msg.member.permissionsFor(msg.guild).General.BAN_MEMBERS) {
+      msg.reply('Sorry but you do not have permission to ban members.')
+    } else if (!bot.User.permissionsFor(msg.guild).General.BAN_MEMBERS) {
+      msg.reply('Sorry but I do not have the required permission to ban members.')
+    } else if (!suffix) {
+      msg.channel.sendMessage('You need to provide an ID to ban!')
+    } else if (msg.mentions.filter(m => m.id !== bot.User.id).length > 0) {
+      msg.reply('Please wait...').then((m) => {
+        let membersToBan = msg.mentions.filter(m => m.id !== bot.User.id)
+        let banMembers = {success: [], error: []}
+        let reasonWords = []
+        suffix.split(' ').map((id) => {
+          if (id.startsWith('<@')) {} else {
+            reasonWords.push(id)
+          }
+        })
+        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'No reason provided.'
+        membersToBan.map((user) => {
+          msg.guild.ban(user, 1, `${msg.author.username}#${msg.author.discriminator} used softban for: ${reason}`).then(() => {
+            msg.guild.unban(user).then(() => {
+              banMembers.success.push(`\`${user.username}#${user.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === membersToBan.length) {
+                let resp = ''
+                if (banMembers.success.length !== 0) resp += `Softbanned the following: ${banMembers.success.join(', ')}\n`
+                if (banMembers.error.length !== 0) resp += `Could not softban the following: ${banMembers.error.join(', ')}\n`
+                resp += `Reason provided by user: ${reason}`
+                m.edit(resp)
+              }
+            }).catch(() => {
+              banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
+              if (membersToBan.length === banMembers.error.length) {
+                let resp = ''
+                if (banMembers.success.length !== 0) resp += `Softbanned the following: ${banMembers.success.join(', ')}\n`
+                if (banMembers.error.length !== 0) resp += `Could not softban the following: ${banMembers.error.join(', ')}\n`
+                resp += `Reason provided by user: ${reason}`
+                m.edit(resp)
+              }
+            })
+          }).catch(() => {
+            banMembers.error.push(`\`${user.username}#${user.discriminator}\``)
+            if (membersToBan.length === banMembers.error.length) {
+              let resp = ''
+              if (banMembers.success.length !== 0) resp += `Softbanned the following: ${banMembers.success.join(', ')}\n`
+              if (banMembers.error.length !== 0) resp += `Could not softban the following: ${banMembers.error.join(', ')}\n`
+              resp += `Reason provided by user: ${reason}`
+              m.edit(resp)
+            }
+          })
+        })
+      })
+    } else {
+      msg.reply('Please wait...').then((m) => {
+        let banMembers = {success: [], error: []}
+        let idArray = []
+        let reasonWords = []
+        suffix.split(' ').map((id) => {
+          if (isNaN(id) || id.length < 16) {
+            reasonWords.push(id)
+          } else {
+            idArray.push(id)
+          }
+        })
+        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'No reason provided.'
+        idArray.map((id) => {
+          let member = msg.guild.members.find(m => m.id === id)
+          if (!member) {
+            m.edit('A provided ID isn\'t a member of this guild!')
+            return
+          }
+          msg.guild.ban(member, 7, `${msg.author.username}#${msg.author.discriminator} used softban for: ${reason}`).then(() => {
+            member.unban(msg.guild).then(() => {
+              banMembers.success.push(`\`${member.username}#${member.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                let resp = ''
+                if (banMembers.success.length !== 0) resp += `Softbanned the following: ${banMembers.success.join(', ')}\n`
+                if (banMembers.error.length !== 0) resp += `Could not softban the following: ${banMembers.error.join(', ')}\n`
+                resp += `Reason provided by user: ${reason}`
+                m.edit(resp)
+              }
+            }).catch(() => {
+              banMembers.error.push(`\`${member.username}#${member.discriminator}\``)
+              if (banMembers.success.length + banMembers.error.length === idArray.length) {
+                let resp = ''
+                if (banMembers.success.length !== 0) resp += `Softbanned the following: ${banMembers.success.join(', ')}\n`
+                if (banMembers.error.length !== 0) resp += `Could not softban the following: ${banMembers.error.join(', ')}\n`
+                resp += `Reason provided by user: ${reason}`
+                m.edit(resp)
+              }
+            })
+          }).catch(() => {
+            banMembers.error.push(`\`${member.username}#${member.discriminator}\``)
+            if (banMembers.success.length + banMembers.error.length === idArray.length) {
+              let resp = ''
+              if (banMembers.success.length !== 0) resp += `Softbanned the following: ${banMembers.success.join(', ')}\n`
+              if (banMembers.error.length !== 0) resp += `Could not softban the following: ${banMembers.error.join(', ')}\n`
+              resp += `Reason provided by user: ${reason}`
+              m.edit(resp)
+            }
+          })
+        })
+      })
     }
   }
 }
