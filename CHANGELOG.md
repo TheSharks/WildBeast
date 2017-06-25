@@ -1,5 +1,12 @@
 # 4.0.0
 ## Release phase
+### 4.2.2
+Improvements to errors and other debug information.  
+Added 3 new role related commands: `addrole`, `takerole` and `colorrole`. Refer to http://docs.thesharks.xyz/commands for more information.  
+Added dogfact command.  
+Handle attempts to delete messages older than 2 weeks due to changes to the message delete API endpoint.  
+And as per usual, miscellaneous bug fixes and issue resolves.  
+
 ### 4.2.1
 Reworked sestatus command, particular improvements:   
 - Allow for more status options to be passed. (Online, idle, DND, invisible)   
