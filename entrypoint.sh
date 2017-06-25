@@ -35,7 +35,6 @@ data.elasticsearch.client = '${ELASTICSEARCH_CLIENT}';
 data.api_keys.imgflip.username = '${API_KEYS_IMGFLIP_USERNAME}';
 data.api_keys.imgflip.password = '${API_KEYS_IMGFLIP_PASSWORD}';
 data.api_keys.google = '${API_KEYS_GOOGLE}';
-data.api_keys.mashape = '${API_KEYS_MASHAPE}';
 data.api_keys.twitchId = '${API_KEYS_TWITCH_ID}';
 data.api_keys.bugsnag = '${API_KEYS_BUGSNAG}';
 data.api_keys.cleverbot_user = '${API_KEYS_CLEVERBOT_USER}';
