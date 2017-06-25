@@ -250,29 +250,37 @@ Commands.urbandictionary = {
   level: 0,
   fn: function (msg, suffix) {
     if (!suffix) {
-      msg.reply('Yes, let\'s just look up absolutly nothing.')
-      return
+      msg.reply('Yes, let\'s just look up absolutely nothing.')
+    } else {
+      request.get('http://api.urbandictionary.com/v0/define')
+        .query({ term: suffix })
+        .end((err, res) => {
+          if (!err && res.status === 200) {
+            var uD = res.body
+            if (uD.result_type !== 'no_results') {
+              msg.channel.sendMessage('', false, {
+                  color: 0x6832e3,
+                  author: {name: 'UrbanDictionary'},
+                  title: `The internet's definition of ${uD.list[0].word}`,
+                  url: uD.list[0].permalink,
+                  timestamp: new Date(),
+                  fields: [
+                    {name: 'Word', value: `\`\`\`${uD.list[0].word}\`\`\``},
+                    {name: 'Definition', value: `\`\`\`${uD.list[0].definition}\`\`\``},
+                    {name: 'Example', value: `\`\`\`${uD.list[0].example}\`\`\``},
+                    {name: 'Thumbs up', value: `\`\`\`${uD.list[0].thumbs_up}\`\`\``, inline: true},
+                    {name: 'Thumbs down', value: `\`\`\`${uD.list[0].thumbs_down}\`\`\``, inline: true}
+                  ]
+                }
+              )
+            } else {
+              msg.reply(suffix + ": This word is so screwed up, even Urban Dictionary doesn't have it in its database")
+            }
+          } else {
+            Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+          }
+        })
     }
-    request.get('http://api.urbandictionary.com/v0/define')
-    .query({ term: suffix })
-    .end((err, res) => {
-      if (!err && res.status === 200) {
-        var uD = res.body
-        if (uD.result_type !== 'no_results') {
-          var msgArray = []
-          msgArray.push('**' + uD.list[0].word + '**')
-          msgArray.push(uD.list[0].definition)
-          msgArray.push('\n```')
-          msgArray.push(uD.list[0].example)
-          msgArray.push('```')
-          msg.channel.sendMessage(msgArray.join('\n'))
-        } else {
-          msg.reply(suffix + ": This word is so screwed up, even Urban Dictionary doesn't have it in its database")
-        }
-      } else {
-        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
-      }
-    })
   }
 }
 
