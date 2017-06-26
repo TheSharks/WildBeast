@@ -259,20 +259,19 @@ Commands.urbandictionary = {
             var uD = res.body
             if (uD.result_type !== 'no_results') {
               msg.channel.sendMessage('', false, {
-                  color: 0x6832e3,
-                  author: {name: 'UrbanDictionary'},
-                  title: `The internet's definition of ${uD.list[0].word}`,
-                  url: uD.list[0].permalink,
-                  timestamp: new Date(),
-                  fields: [
-                    {name: 'Word', value: `\`\`\`${uD.list[0].word}\`\`\``},
-                    {name: 'Definition', value: `\`\`\`${uD.list[0].definition}\`\`\``},
-                    {name: 'Example', value: `\`\`\`${uD.list[0].example}\`\`\``},
-                    {name: 'Thumbs up', value: `\`\`\`${uD.list[0].thumbs_up}\`\`\``, inline: true},
-                    {name: 'Thumbs down', value: `\`\`\`${uD.list[0].thumbs_down}\`\`\``, inline: true}
-                  ]
-                }
-              )
+                color: 0x6832e3,
+                author: {name: 'UrbanDictionary'},
+                title: `The internet's definition of ${uD.list[0].word}`,
+                url: uD.list[0].permalink,
+                timestamp: new Date(),
+                fields: [
+                  {name: 'Word', value: `\`\`\`${uD.list[0].word}\`\`\``},
+                  {name: 'Definition', value: `\`\`\`${uD.list[0].definition}\`\`\``},
+                  {name: 'Example', value: `\`\`\`${uD.list[0].example}\`\`\``},
+                  {name: 'Thumbs up', value: `\`\`\`${uD.list[0].thumbs_up}\`\`\``, inline: true},
+                  {name: 'Thumbs down', value: `\`\`\`${uD.list[0].thumbs_down}\`\`\``, inline: true}
+                ]
+              })
             } else {
               msg.reply(suffix + ": This word is so screwed up, even Urban Dictionary doesn't have it in its database")
             }
