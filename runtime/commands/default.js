@@ -898,7 +898,7 @@ Commands.softban = {
             m.edit('A provided ID isn\'t a member of this guild!')
             return
           }
-          msg.guild.ban(member, 7, `${msg.author.username}#${msg.author.discriminator} used softban for: ${reason}`).then(() => {
+          msg.guild.ban(member, 1, `${msg.author.username}#${msg.author.discriminator} used softban for: ${reason}`).then(() => {
             member.unban(msg.guild).then(() => {
               banMembers.success.push(`\`${member.username}#${member.discriminator}\``)
               if (banMembers.success.length + banMembers.error.length === idArray.length) {
