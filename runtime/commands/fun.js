@@ -116,6 +116,7 @@ Commands.randomdog = {
 Commands.dogfact = {
   name: 'dogfact',
   help: "I'll give you some interesting dogfacts!",
+  aliases: ['dogfacts'],
   timeout: 10,
   level: 0,
   fn: function (msg) {
@@ -133,6 +134,7 @@ Commands.dogfact = {
 Commands.catfact = {
   name: 'catfact',
   help: "I'll give you some interesting catfacts!",
+  aliases: ['catfacts'],
   timeout: 10,
   level: 0,
   fn: function (msg) {
