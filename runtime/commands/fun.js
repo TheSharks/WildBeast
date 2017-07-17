@@ -130,6 +130,23 @@ Commands.dogfact = {
   }
 }
 
+Commands.catfact = {
+  name: 'catfact',
+  help: "I'll give you some interesting catfacts!",
+  timeout: 10,
+  level: 0,
+  fn: function (msg) {
+    request.get('https://catfact.ninja/fact')
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        msg.channel.sendMessage(res.body.fact)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
+  }
+}
+
 Commands.leetspeak = {
   name: 'leetspeak',
   help: "1'Ll 3nc0d3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
@@ -372,25 +389,6 @@ Commands.cleverbot = {
         if (e) Logger.error(e)
         msg.channel.sendMessage(r)
       })
-    })
-  }
-}
-
-Commands.catfacts = {
-  name: 'catfacts',
-  help: "I'll give you some interesting catfacts",
-  timeout: 10,
-  level: 0,
-  fn: function (msg) {
-    request.get('http://catfacts-api.appspot.com/api/facts')
-    .buffer()
-    .end((err, res) => {
-      if (err) {
-        msg.channel.sendMessage('The API returned an unconventional response, please try again later.')
-      } else {
-        var fact = JSON.parse(res.text)
-        msg.reply(fact.facts[0])
-      }
     })
   }
 }
