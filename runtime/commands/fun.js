@@ -393,25 +393,6 @@ Commands.cleverbot = {
   }
 }
 
-Commands.catfacts = {
-  name: 'catfacts',
-  help: "I'll give you some interesting catfacts",
-  timeout: 10,
-  level: 0,
-  fn: function (msg) {
-    request.get('http://catfacts-api.appspot.com/api/facts')
-    .buffer()
-    .end((err, res) => {
-      if (err) {
-        msg.channel.sendMessage('The API returned an unconventional response, please try again later.')
-      } else {
-        var fact = JSON.parse(res.text)
-        msg.reply(fact.facts[0])
-      }
-    })
-  }
-}
-
 Commands.e621 = {
   name: 'e621',
   help: 'e621, the definition of *Stop taking the Internet so seriously.*',
