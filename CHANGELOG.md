@@ -1,5 +1,12 @@
 # 4.0.0
 ## Release phase
+
+### 4.4.0
+Improvements to help handler.    
+Added aliases to `dogfact` and `catfact`.    
+Changed API of `catfact` to a working version.    
+Change urbandictionary format to embed style.    
+
 ### 4.3.0
 Added Contributor Covenant Code of Conduct as per GitHub's new standards.    
 Reworked Docker container: Changed the way the database creation works (Migrated from Dockerfile to entrypoint.sh).    

@@ -4,7 +4,7 @@
 <p align="center">
 <a href="http://nodejs.org"><img src="https://img.shields.io/badge/Node.js-6.9.1-blue.svg" alt="Node JS"></a>
 <a href="http://npmjs.com"><img src="https://img.shields.io/badge/npm-4.0.5-blue.svg" alt="npm"></a>
-<a><img src="https://img.shields.io/badge/Version-4.3.0-blue.svg" alt="Version"></a>
+<a><img src="https://img.shields.io/badge/Version-4.4.0-blue.svg" alt="Version"></a>
 <a href="https://discord.gg/wildbot"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png" alt="Discord server"></a>
 </p>
 
