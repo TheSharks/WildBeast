@@ -90,7 +90,14 @@ Commands.purge = {
               deleteMe.push(result.messages[x])
             }
           }
-          msg.channel.sendMessage(`${deleteMe.length} message(s) have been purged. ${cantDelete} were omitted due to them being over two weeks old.`)
+          msg.channel.sendMessage(`${deleteMe.length} message(s) have been purged. ${cantDelete} were omitted due to them being over two weeks old.`).then((m) => {
+            if (config.settings.autodeletemsg) {
+              setTimeout(() => {
+                m.delete().catch((e) => Logger.error(e))
+              }, config.settings.deleteTimeout)
+            } else {
+            }
+          })
           bot.Messages.deleteMessages(deleteMe)
         }).catch((error) => {
           msg.channel.sendMessage('I could not fetch messages to delete, try again later.')
