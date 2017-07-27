@@ -198,30 +198,30 @@ Commands.twitch = {
     }
     var url = 'https://api.twitch.tv/kraken/streams/' + suffix
     request.get(url)
-    .set({'Accept': 'application/vnd.twitchtv.v3+json', 'Client-ID': config.api_keys.twitchId})
-    .end((error, response) => {
-      if (error) {
-        bugsnag.notify(error)
-      }
-      if (!error && response.statusCode === 200) {
-        var resp
-        try {
-          resp = response.body
-        } catch (e) {
-          msg.channel.sendMessage('The API returned an unconventional response.')
+      .set({'Accept': 'application/vnd.twitchtv.v3+json', 'Client-ID': config.api_keys.twitchId})
+      .end((error, response) => {
+        if (error) {
+          bugsnag.notify(error)
         }
-        if (resp.stream !== null) {
-          msg.channel.sendMessage(suffix + ' is currently live at https://www.twitch.tv/' + suffix)
-          return
-        } else if (resp.stream === null) {
-          msg.channel.sendMessage(suffix + ' is not currently streaming')
+        if (!error && response.statusCode === 200) {
+          var resp
+          try {
+            resp = response.body
+          } catch (e) {
+            msg.channel.sendMessage('The API returned an unconventional response.')
+          }
+          if (resp.stream !== null) {
+            msg.channel.sendMessage(suffix + ' is currently live at https://www.twitch.tv/' + suffix)
+            return
+          } else if (resp.stream === null) {
+            msg.channel.sendMessage(suffix + ' is not currently streaming')
+            return
+          }
+        } else if (!error && response.statusCode === 404) {
+          msg.channel.sendMessage('Channel does not exist!')
           return
         }
-      } else if (!error && response.statusCode === 404) {
-        msg.channel.sendMessage('Channel does not exist!')
-        return
-      }
-    })
+      })
   }
 }
 
@@ -264,12 +264,12 @@ Commands.info = {
       owner = `'ID: ${config.permissions.master[0]}`
     }
     var field = [{name: 'Servers Connected', value: '```\n' + bot.Guilds.length + '```', inline: true},
-        {name: 'Users Known', value: '```\n' + bot.Users.length + '```', inline: true},
-        {name: 'Channels Connected', value: '```\n' + bot.Channels.length + '```', inline: true},
-        {name: 'Private Channels', value: '```\n' + bot.DirectMessageChannels.length + '```', inline: true},
-        {name: 'Messages Received', value: '```\n' + bot.Messages.length + '```', inline: true},
-        {name: 'Owner', value: '```\n' + owner + '```', inline: true},
-        {name: 'Sharded?', value: '```\n' + `${argv.shardmode ? 'Yes' : 'No'}` + '```', inline: true}]
+      {name: 'Users Known', value: '```\n' + bot.Users.length + '```', inline: true},
+      {name: 'Channels Connected', value: '```\n' + bot.Channels.length + '```', inline: true},
+      {name: 'Private Channels', value: '```\n' + bot.DirectMessageChannels.length + '```', inline: true},
+      {name: 'Messages Received', value: '```\n' + bot.Messages.length + '```', inline: true},
+      {name: 'Owner', value: '```\n' + owner + '```', inline: true},
+      {name: 'Sharded?', value: '```\n' + `${argv.shardmode ? 'Yes' : 'No'}` + '```', inline: true}]
     if (argv.shardmode) {
       field.push({name: 'Shard ID', value: '```\n' + argv.shardid + '```', inline: true})
       field.push({name: 'Shard Count', value: '```\n' + argv.shardcount + '```', inline: true})
@@ -546,12 +546,12 @@ Commands['server-info'] = {
     // if we're not in a PM, return some info about the channel
     if (msg.guild) {
       var field = [{name: 'Server name', value: `${msg.guild.name} [${msg.guild.acronym}] (${msg.guild.id})`},
-      {name: 'Owned by', value: '```\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
-      {name: 'Current Region', value: '```\n' + msg.guild.region + '```', inline: true},
-      {name: 'Members', value: '```\n' + msg.guild.members.length + '```', inline: true},
-      {name: 'Text Channels', value: '```\n' + msg.guild.textChannels.length + '```', inline: true},
-      {name: 'Voice Channels', value: '```\n' + msg.guild.voiceChannels.length + '```', inline: true},
-      {name: 'Total Roles', value: '```\n' + msg.guild.roles.length + '```', inline: true}]
+        {name: 'Owned by', value: '```\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
+        {name: 'Current Region', value: '```\n' + msg.guild.region + '```', inline: true},
+        {name: 'Members', value: '```\n' + msg.guild.members.length + '```', inline: true},
+        {name: 'Text Channels', value: '```\n' + msg.guild.textChannels.length + '```', inline: true},
+        {name: 'Voice Channels', value: '```\n' + msg.guild.voiceChannels.length + '```', inline: true},
+        {name: 'Total Roles', value: '```\n' + msg.guild.roles.length + '```', inline: true}]
 
       if (msg.guild.afk_channel === null) {
         field.push({name: 'AFK-Channel', value: '```\nNone```'})
