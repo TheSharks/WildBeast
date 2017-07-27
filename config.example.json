@@ -16,6 +16,9 @@
     "deleteTimeoutLong": 6000,
     "maxvcslots": 10
   },
+  "voice":{
+    "leaveAfterEndOfPlaylist": false
+  },
   "bezerk": {
     "use": false,
     "uri": "ws://localhost:1337"

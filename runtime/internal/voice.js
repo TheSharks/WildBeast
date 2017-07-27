@@ -182,9 +182,20 @@ function next (msg, suffix, bot) {
       if (connection.voiceConnection.guild.id === msg.guild.id) {
         if (list[msg.guild.id].link.length === 0) {
           delete list[msg.guild.id]
-          msg.channel.sendMessage('Playlist has ended, leaving voice.')
-          connection.voiceConnection.disconnect()
-          return
+          if (Config.voice.leaveAfterEndOfPlaylist) {
+            msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
+              if (Config.settings.autodeletemsg) {
+                setTimeout(() => {
+                  m.delete().catch((e) => Logger.error(e))
+                }, Config.settings.deleteTimeout)
+              }
+            })
+            connection.voiceConnection.disconnect()
+            return
+          } else {
+            msg.channel.sendMessage('Playlist has ended! Use `' + Config.settings.prefix + 'request` to add more songs!')
+            return
+          }
         }
         if (list[msg.guild.id].link[0] === 'INVALID') {
           list[msg.guild.id].link.shift()
@@ -230,14 +241,18 @@ function next (msg, suffix, bot) {
             })
             next(msg, suffix, bot)
           } else {
-            msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
-              if (Config.settings.autodeletemsg) {
-                setTimeout(() => {
-                  m.delete().catch((e) => Logger.error(e))
-                }, Config.settings.deleteTimeout)
-              }
-            })
-            connection.voiceConnection.disconnect()
+            if (Config.voice.leaveAfterEndOfPlaylist) {
+              msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
+                if (Config.settings.autodeletemsg) {
+                  setTimeout(() => {
+                    m.delete().catch((e) => Logger.error(e))
+                  }, Config.settings.deleteTimeout)
+                }
+              })
+              connection.voiceConnection.disconnect()
+            } else {
+              msg.channel.sendMessage('Playlist has ended! Use `' + Config.settings.prefix + 'request` to add more songs!')
+            }
           }
         })
       }
