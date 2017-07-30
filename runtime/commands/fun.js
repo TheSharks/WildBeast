@@ -63,15 +63,15 @@ Commands.fortunecow = {
   level: 0,
   fn: function (msg) {
     request.get('https://fortunecow.dougley.com/random')
-      .end((err, result) => {
-        if (!err && result.status === 200) {
-          msg.reply('```' + result.text + '```')
-        } else if (result.status === 429) {
-          msg.channel.sendMessage('Too many requests, please try again later.')
-        } else {
-          Logger.warn(err)
-        }
-      })
+    .end((err, result) => {
+      if (!err && result.status === 200) {
+        msg.reply('```' + result.text + '```')
+      } else if (result.status === 429) {
+        msg.channel.sendMessage('Too many requests, please try again later.')
+      } else {
+        Logger.warn(err)
+      }
+    })
   }
 }
 
@@ -84,13 +84,13 @@ Commands.randomcat = {
   level: 0,
   fn: function (msg) {
     request.get('http://random.cat/meow')
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          msg.channel.sendMessage(res.body.file)
-        } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
-        }
-      })
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        msg.channel.sendMessage(res.body.file)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -103,13 +103,13 @@ Commands.randomdog = {
   level: 0,
   fn: function (msg) {
     request.get('https://random.dog/woof.json')
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          msg.channel.sendMessage(res.body.url)
-        } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
-        }
-      })
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        msg.channel.sendMessage(res.body.url)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -121,13 +121,13 @@ Commands.dogfact = {
   level: 0,
   fn: function (msg) {
     request.get('https://dog-api.kinduff.com/api/facts')
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          msg.channel.sendMessage(res.body.facts[0])
-        } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
-        }
-      })
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        msg.channel.sendMessage(res.body.facts[0])
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -139,13 +139,13 @@ Commands.catfact = {
   level: 0,
   fn: function (msg) {
     request.get('https://catfact.ninja/fact')
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          msg.channel.sendMessage(res.body.fact)
-        } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
-        }
-      })
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        msg.channel.sendMessage(res.body.fact)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -181,16 +181,16 @@ Commands.stroke = {
       name = ['Andrei', 'Zbikowski'] // I'm not sorry b1nzy <3
     }
     request.get('http://api.icndb.com/jokes/random')
-      .query({ escape: 'javascript' })
-      .query({ firstName: name[0] })
-      .query({ lastName: name[1] })
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          msg.channel.sendMessage(res.body.value.joke)
-        } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
-        }
-      })
+    .query({ escape: 'javascript' })
+    .query({ firstName: name[0] })
+    .query({ lastName: name[1] })
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        msg.channel.sendMessage(res.body.value.joke)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -201,20 +201,20 @@ Commands.yomomma = {
   level: 0,
   fn: function (msg) {
     request.get('http://api.yomomma.info/')
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          try {
-            JSON.parse(res.text)
-          } catch (e) {
-            msg.channel.sendMessage('The API returned an unconventional response.')
-            return
-          }
-          var joke = JSON.parse(res.text)
-          msg.channel.sendMessage(joke.joke)
-        } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        try {
+          JSON.parse(res.text)
+        } catch (e) {
+          msg.channel.sendMessage('The API returned an unconventional response.')
+          return
         }
-      })
+        var joke = JSON.parse(res.text)
+        msg.channel.sendMessage(joke.joke)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -226,20 +226,20 @@ Commands.advice = {
   level: 0,
   fn: function (msg) {
     request.get('http://api.adviceslip.com/advice')
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          try {
-            JSON.parse(res.text)
-          } catch (e) {
-            msg.channel.sendMessage('The API returned an unconventional response.')
-            return
-          }
-          var advice = JSON.parse(res.text)
-          msg.channel.sendMessage(advice.slip.advice)
-        } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        try {
+          JSON.parse(res.text)
+        } catch (e) {
+          msg.channel.sendMessage('The API returned an unconventional response.')
+          return
         }
-      })
+        var advice = JSON.parse(res.text)
+        msg.channel.sendMessage(advice.slip.advice)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -250,14 +250,14 @@ Commands.yesno = {
   level: 0,
   fn: function (msg, suffix) {
     request.get('http://yesno.wtf/api/')
-      .query({ force: suffix })
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          msg.reply(res.body.image)
-        } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
-        }
-      })
+    .query({ force: suffix })
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        msg.reply(res.body.image)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -272,32 +272,32 @@ Commands.urbandictionary = {
       msg.reply('Yes, let\'s just look up absolutely nothing.')
     } else {
       request.get('http://api.urbandictionary.com/v0/define')
-        .query({ term: suffix })
-        .end((err, res) => {
-          if (!err && res.status === 200) {
-            var uD = res.body
-            if (uD.result_type !== 'no_results') {
-              msg.channel.sendMessage('', false, {
-                color: 0x6832e3,
-                author: {name: 'UrbanDictionary'},
-                title: `The internet's definition of ${uD.list[0].word}`,
-                url: uD.list[0].permalink,
-                timestamp: new Date(),
-                fields: [
-                  {name: 'Word', value: `\`\`\`${uD.list[0].word}\`\`\``},
-                  {name: 'Definition', value: `\`\`\`${uD.list[0].definition}\`\`\``},
-                  {name: 'Example', value: `\`\`\`${uD.list[0].example}\`\`\``},
-                  {name: 'Thumbs up', value: `\`\`\`${uD.list[0].thumbs_up}\`\`\``, inline: true},
-                  {name: 'Thumbs down', value: `\`\`\`${uD.list[0].thumbs_down}\`\`\``, inline: true}
-                ]
-              })
-            } else {
-              msg.reply(suffix + ": This word is so screwed up, even Urban Dictionary doesn't have it in its database")
-            }
+      .query({ term: suffix })
+      .end((err, res) => {
+        if (!err && res.status === 200) {
+          var uD = res.body
+          if (uD.result_type !== 'no_results') {
+            msg.channel.sendMessage('', false, {
+              color: 0x6832e3,
+              author: {name: 'UrbanDictionary'},
+              title: `The internet's definition of ${uD.list[0].word}`,
+              url: uD.list[0].permalink,
+              timestamp: new Date(),
+              fields: [
+                {name: 'Word', value: `\`\`\`${uD.list[0].word}\`\`\``},
+                {name: 'Definition', value: `\`\`\`${uD.list[0].definition}\`\`\``},
+                {name: 'Example', value: `\`\`\`${uD.list[0].example}\`\`\``},
+                {name: 'Thumbs up', value: `\`\`\`${uD.list[0].thumbs_up}\`\`\``, inline: true},
+                {name: 'Thumbs down', value: `\`\`\`${uD.list[0].thumbs_down}\`\`\``, inline: true}
+              ]
+            })
           } else {
-            Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+            msg.reply(suffix + ": This word is so screwed up, even Urban Dictionary doesn't have it in its database")
           }
-        })
+        } else {
+          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+        }
+      })
     }
   }
 }
@@ -310,23 +310,23 @@ Commands.fact = {
   fn: function (msg) {
     var xml2js = require('xml2js')
     request.get('http://www.fayd.org/api/fact.xml')
-      .end((err, res) => {
-        if (err) {
-          Logger.error(err)
-        }
-        if (!err && res.status === 200) {
-          xml2js.parseString(res.text, function (err, result) {
-            if (err) {
-              Logger.error(err)
-            }
-            try {
-              msg.reply(result.facts.fact[0])
-            } catch (e) {
-              msg.channel.sendMessage('The API returned an unconventional response.')
-            }
-          })
-        }
-      })
+    .end((err, res) => {
+      if (err) {
+        Logger.error(err)
+      }
+      if (!err && res.status === 200) {
+        xml2js.parseString(res.text, function (err, result) {
+          if (err) {
+            Logger.error(err)
+          }
+          try {
+            msg.reply(result.facts.fact[0])
+          } catch (e) {
+            msg.channel.sendMessage('The API returned an unconventional response.')
+          }
+        })
+      }
+    })
   }
 }
 
@@ -343,14 +343,14 @@ Commands.dice = {
       dice = 'd6'
     }
     request.get('https://rolz.org/api/?' + dice + '.json')
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          var roll = res.body
-          msg.reply('Your ' + roll.input + ' resulted in ' + roll.result + ' ' + roll.details)
-        } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
-        }
-      })
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        var roll = res.body
+        msg.reply('Your ' + roll.input + ' resulted in ' + roll.result + ' ' + roll.details)
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -362,18 +362,18 @@ Commands.fancyinsult = {
   level: 0,
   fn: function (msg, suffix) {
     request.get('http://quandyfactory.com/insult/json/')
-      .end((err, res) => {
-        if (!err && res.status === 200) {
-          var fancyinsult = res.body
-          if (suffix === '') {
-            msg.channel.sendMessage(fancyinsult.insult)
-          } else {
-            msg.channel.sendMessage(suffix + ', ' + fancyinsult.insult)
-          }
+    .end((err, res) => {
+      if (!err && res.status === 200) {
+        var fancyinsult = res.body
+        if (suffix === '') {
+          msg.channel.sendMessage(fancyinsult.insult)
         } else {
-          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+          msg.channel.sendMessage(suffix + ', ' + fancyinsult.insult)
         }
-      })
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+      }
+    })
   }
 }
 
@@ -404,28 +404,28 @@ Commands.e621 = {
   fn: function (msg, suffix) {
     msg.channel.sendTyping()
     request.post(`https://e621.net/post/index.json`)
-      .query({ limit: '30', tags: suffix })
-      .set({'Accept': 'application/json', 'User-Agent': 'Superagent Node.js'})
-      // Fetching 30 posts from E621 with the given tags
-      .end(function (err, result) {
-        if (!err && result.status === 200) {
-          if (result.body.length < 1) {
-            msg.reply('Sorry, nothing found.') // Correct me if it's wrong.
-          } else {
-            var count = Math.floor((Math.random() * result.body.length))
-            var FurryArray = []
-            if (suffix) {
-              FurryArray.push(`${msg.author.mention}, you've searched for ` + '`' + suffix + '`')
-            } else {
-              FurryArray.push(`${msg.author.mention}, you've searched for ` + '`random`')
-            } // hehe no privacy if you do the nsfw commands now.
-            FurryArray.push(result.body[count].file_url)
-            msg.channel.sendMessage(FurryArray.join('\n'))
-          }
+    .query({ limit: '30', tags: suffix })
+    .set({'Accept': 'application/json', 'User-Agent': 'Superagent Node.js'})
+    // Fetching 30 posts from E621 with the given tags
+    .end(function (err, result) {
+      if (!err && result.status === 200) {
+        if (result.body.length < 1) {
+          msg.reply('Sorry, nothing found.') // Correct me if it's wrong.
         } else {
-          Logger.error(`Got an error: ${err}, status code: ${result.status}`)
+          var count = Math.floor((Math.random() * result.body.length))
+          var FurryArray = []
+          if (suffix) {
+            FurryArray.push(`${msg.author.mention}, you've searched for ` + '`' + suffix + '`')
+          } else {
+            FurryArray.push(`${msg.author.mention}, you've searched for ` + '`random`')
+          } // hehe no privacy if you do the nsfw commands now.
+          FurryArray.push(result.body[count].file_url)
+          msg.channel.sendMessage(FurryArray.join('\n'))
         }
-      })
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${result.status}`)
+      }
+    })
   }
 }
 
@@ -437,33 +437,33 @@ Commands.rule34 = {
   fn: function (msg, suffix) {
     msg.channel.sendTyping()
     request.post('http://rule34.xxx/index.php') // Fetching 100 rule34 pics
-      .query({ page: 'dapi', s: 'post', q: 'index', tags: suffix })
-      .end((err, result) => {
-        if (err || result.status !== 200) {
-          Logger.error(`${err}, status code ${result.status}`)
-          msg.channel.sendMessage('The API returned an unconventional response.')
-        }
-        var xml2js = require('xml2js')
-        if (result.text.length < 75) {
-          msg.reply('sorry, nothing found.') // Correct me if it's wrong.
-        } else {
-          xml2js.parseString(result.text, (err, reply) => {
-            if (err) {
-              msg.channel.sendMessage('The API returned an unconventional response.')
+    .query({ page: 'dapi', s: 'post', q: 'index', tags: suffix })
+    .end((err, result) => {
+      if (err || result.status !== 200) {
+        Logger.error(`${err}, status code ${result.status}`)
+        msg.channel.sendMessage('The API returned an unconventional response.')
+      }
+      var xml2js = require('xml2js')
+      if (result.text.length < 75) {
+        msg.reply('sorry, nothing found.') // Correct me if it's wrong.
+      } else {
+        xml2js.parseString(result.text, (err, reply) => {
+          if (err) {
+            msg.channel.sendMessage('The API returned an unconventional response.')
+          } else {
+            var count = Math.floor((Math.random() * reply.posts.post.length))
+            var FurryArray = []
+            if (!suffix) {
+              FurryArray.push(msg.author.mention + ", you've searched for `random`")
             } else {
-              var count = Math.floor((Math.random() * reply.posts.post.length))
-              var FurryArray = []
-              if (!suffix) {
-                FurryArray.push(msg.author.mention + ", you've searched for `random`")
-              } else {
-                FurryArray.push(msg.author.mention + ", you've searched for `" + suffix + '`')
-              }
-              FurryArray.push('http:' + reply.posts.post[count].$.file_url)
-              msg.channel.sendMessage(FurryArray.join('\n'))
+              FurryArray.push(msg.author.mention + ", you've searched for `" + suffix + '`')
             }
-          })
-        }
-      })
+            FurryArray.push('http:' + reply.posts.post[count].$.file_url)
+            msg.channel.sendMessage(FurryArray.join('\n'))
+          }
+        })
+      }
+    })
   }
 }
 
@@ -507,42 +507,42 @@ Commands.xkcd = {
   fn: function (msg, suffix) {
     var xkcdInfo
     request.get('http://xkcd.com/info.0.json')
-      .end((error, response) => {
-        if (!error && response.status === 200) {
-          xkcdInfo = response.body
-          if (suffix.toLowerCase() === 'current') {
-            msg.reply(`**Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
-          } else if (!suffix) {
-            var xkcdRandom = Math.floor(Math.random() * (xkcdInfo.num - 1)) + 1
-            request.get(`http://xkcd.com/${xkcdRandom}/info.0.json`)
-              .end((error, response) => {
-                if (!error && response.status === 200) {
-                  xkcdInfo = response.body
-                  msg.reply(`**Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
-                } else {
-                  msg.reply('Please try again later.')
-                  Logger.error(`Got an error: ${error}, status code: ${response.status}`)
-                }
-              })
-          } else if (!isNaN(parseInt(suffix, 10)) && parseInt(suffix, 10) > 0 && (parseInt(suffix, 10) <= xkcdInfo.num)) {
-            request(`http://xkcd.com/${suffix}/info.0.json`)
-              .end((error, response) => {
-                if (!error && response.status === 200) {
-                  xkcdInfo = response.body
-                  msg.reply(`**Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
-                } else {
-                  msg.reply('Please try again later.')
-                  Logger.error(`Got an error: ${error}, status code: ${response.status}`)
-                }
-              })
-          } else {
-            msg.reply(`There are only ${xkcdInfo.num} xkcd comics!`)
-          }
+    .end((error, response) => {
+      if (!error && response.status === 200) {
+        xkcdInfo = response.body
+        if (suffix.toLowerCase() === 'current') {
+          msg.reply(`**Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
+        } else if (!suffix) {
+          var xkcdRandom = Math.floor(Math.random() * (xkcdInfo.num - 1)) + 1
+          request.get(`http://xkcd.com/${xkcdRandom}/info.0.json`)
+          .end((error, response) => {
+            if (!error && response.status === 200) {
+              xkcdInfo = response.body
+              msg.reply(`**Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
+            } else {
+              msg.reply('Please try again later.')
+              Logger.error(`Got an error: ${error}, status code: ${response.status}`)
+            }
+          })
+        } else if (!isNaN(parseInt(suffix, 10)) && parseInt(suffix, 10) > 0 && (parseInt(suffix, 10) <= xkcdInfo.num)) {
+          request(`http://xkcd.com/${suffix}/info.0.json`)
+          .end((error, response) => {
+            if (!error && response.status === 200) {
+              xkcdInfo = response.body
+              msg.reply(`**Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
+            } else {
+              msg.reply('Please try again later.')
+              Logger.error(`Got an error: ${error}, status code: ${response.status}`)
+            }
+          })
         } else {
-          msg.reply('Please try again later.')
-          Logger.error(`Got an error: ${error}, status code: ${response.status}`)
+          msg.reply(`There are only ${xkcdInfo.num} xkcd comics!`)
         }
-      })
+      } else {
+        msg.reply('Please try again later.')
+        Logger.error(`Got an error: ${error}, status code: ${response.status}`)
+      }
+    })
   }
 }
 
@@ -595,14 +595,14 @@ Commands.randommeme = {
   nsfw: true,
   fn: function (msg) {
     request.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`) // 20 Memes per page, 160 Memes
-      .set('Authorization', 'Client-ID ' + config.api_keys.imgur)
-      .end(function (err, result) {
-        if (!err && !result.body.data.error) {
-          msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
-        } else {
-          Logger.error(result.body.data.error)
-        }
-      })
+    .set('Authorization', 'Client-ID ' + config.api_keys.imgur)
+    .end(function (err, result) {
+      if (!err && !result.body.data.error) {
+        msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
+      } else {
+        Logger.error(result.body.data.error)
+      }
+    })
   }
 }
 
@@ -619,16 +619,16 @@ Commands.shorten = {
     }
     if (url.parse(suffix).hostname) {
       request.post(`https://www.googleapis.com/urlshortener/v1/url`)
-        .query({ key: config.api_keys.google })
-        .send({ longUrl: suffix })
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (!err) {
-            msg.channel.sendMessage(`:link: Shortened URL: **${res.body.id}**`)
-          } else {
-            Logger.debug(`Got an error: ${err}, status code: ${res.status}`)
-          }
-        })
+      .query({ key: config.api_keys.google })
+      .send({ longUrl: suffix })
+      .set('Content-Type', 'application/json')
+      .end(function (err, res) {
+        if (!err) {
+          msg.channel.sendMessage(`:link: Shortened URL: **${res.body.id}**`)
+        } else {
+          Logger.debug(`Got an error: ${err}, status code: ${res.status}`)
+        }
+      })
     } else {
       msg.reply('This is not a valid url.')
     }

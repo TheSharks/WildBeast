@@ -181,8 +181,8 @@ function next (msg, suffix, bot) {
     .map((connection) => {
       if (connection.voiceConnection.guild.id === msg.guild.id) {
         if (list[msg.guild.id].link.length === 0) {
-          delete list[msg.guild.id]
-          if (Config.voice.leaveAfterEndOfPlaylist) {
+          if (Config.settings.leaveAfterEndOfPlaylist) {
+            delete list[msg.guild.id]
             msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
               if (Config.settings.autodeletemsg) {
                 setTimeout(() => {
@@ -241,7 +241,7 @@ function next (msg, suffix, bot) {
             })
             next(msg, suffix, bot)
           } else {
-            if (Config.voice.leaveAfterEndOfPlaylist) {
+            if (Config.settings.leaveAfterEndOfPlaylist) {
               msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
                 if (Config.settings.autodeletemsg) {
                   setTimeout(() => {

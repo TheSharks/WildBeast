@@ -14,10 +14,8 @@
     "autodeletemsg": true,
     "deleteTimeout": 3000,
     "deleteTimeoutLong": 6000,
-    "maxvcslots": 10
-  },
-  "voice":{
-    "leaveAfterEndOfPlaylist": false
+    "maxvcslots": 10,
+    "leaveAfterEndOfPlaylist": true
   },
   "bezerk": {
     "use": false,

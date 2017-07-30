@@ -94,8 +94,7 @@ Commands.purge = {
             if (config.settings.autodeletemsg) {
               setTimeout(() => {
                 m.delete().catch((e) => Logger.error(e))
-              }, config.settings.deleteTimeout)
-            } else {
+              }, config.settings.deleteTimeoutLong)
             }
           })
           bot.Messages.deleteMessages(deleteMe)
@@ -205,30 +204,30 @@ Commands.twitch = {
     }
     var url = 'https://api.twitch.tv/kraken/streams/' + suffix
     request.get(url)
-      .set({'Accept': 'application/vnd.twitchtv.v3+json', 'Client-ID': config.api_keys.twitchId})
-      .end((error, response) => {
-        if (error) {
-          bugsnag.notify(error)
+    .set({'Accept': 'application/vnd.twitchtv.v3+json', 'Client-ID': config.api_keys.twitchId})
+    .end((error, response) => {
+      if (error) {
+        bugsnag.notify(error)
+      }
+      if (!error && response.statusCode === 200) {
+        var resp
+        try {
+          resp = response.body
+        } catch (e) {
+          msg.channel.sendMessage('The API returned an unconventional response.')
         }
-        if (!error && response.statusCode === 200) {
-          var resp
-          try {
-            resp = response.body
-          } catch (e) {
-            msg.channel.sendMessage('The API returned an unconventional response.')
-          }
-          if (resp.stream !== null) {
-            msg.channel.sendMessage(suffix + ' is currently live at https://www.twitch.tv/' + suffix)
-            return
-          } else if (resp.stream === null) {
-            msg.channel.sendMessage(suffix + ' is not currently streaming')
-            return
-          }
-        } else if (!error && response.statusCode === 404) {
-          msg.channel.sendMessage('Channel does not exist!')
+        if (resp.stream !== null) {
+          msg.channel.sendMessage(suffix + ' is currently live at https://www.twitch.tv/' + suffix)
+          return
+        } else if (resp.stream === null) {
+          msg.channel.sendMessage(suffix + ' is not currently streaming')
           return
         }
-      })
+      } else if (!error && response.statusCode === 404) {
+        msg.channel.sendMessage('Channel does not exist!')
+        return
+      }
+    })
   }
 }
 
