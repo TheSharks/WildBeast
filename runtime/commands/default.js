@@ -90,7 +90,13 @@ Commands.purge = {
               deleteMe.push(result.messages[x])
             }
           }
-          msg.channel.sendMessage(`${deleteMe.length} message(s) have been purged. ${cantDelete} were omitted due to them being over two weeks old.`)
+          msg.channel.sendMessage(`${deleteMe.length} message(s) have been purged. ${cantDelete} were omitted due to them being over two weeks old.`).then((m) => {
+            if (config.settings.autodeletemsg) {
+              setTimeout(() => {
+                m.delete().catch((e) => Logger.error(e))
+              }, config.settings.deleteTimeoutLong)
+            }
+          })
           bot.Messages.deleteMessages(deleteMe)
         }).catch((error) => {
           msg.channel.sendMessage('I could not fetch messages to delete, try again later.')
@@ -264,12 +270,12 @@ Commands.info = {
       owner = `'ID: ${config.permissions.master[0]}`
     }
     var field = [{name: 'Servers Connected', value: '```\n' + bot.Guilds.length + '```', inline: true},
-        {name: 'Users Known', value: '```\n' + bot.Users.length + '```', inline: true},
-        {name: 'Channels Connected', value: '```\n' + bot.Channels.length + '```', inline: true},
-        {name: 'Private Channels', value: '```\n' + bot.DirectMessageChannels.length + '```', inline: true},
-        {name: 'Messages Received', value: '```\n' + bot.Messages.length + '```', inline: true},
-        {name: 'Owner', value: '```\n' + owner + '```', inline: true},
-        {name: 'Sharded?', value: '```\n' + `${argv.shardmode ? 'Yes' : 'No'}` + '```', inline: true}]
+      {name: 'Users Known', value: '```\n' + bot.Users.length + '```', inline: true},
+      {name: 'Channels Connected', value: '```\n' + bot.Channels.length + '```', inline: true},
+      {name: 'Private Channels', value: '```\n' + bot.DirectMessageChannels.length + '```', inline: true},
+      {name: 'Messages Received', value: '```\n' + bot.Messages.length + '```', inline: true},
+      {name: 'Owner', value: '```\n' + owner + '```', inline: true},
+      {name: 'Sharded?', value: '```\n' + `${argv.shardmode ? 'Yes' : 'No'}` + '```', inline: true}]
     if (argv.shardmode) {
       field.push({name: 'Shard ID', value: '```\n' + argv.shardid + '```', inline: true})
       field.push({name: 'Shard Count', value: '```\n' + argv.shardcount + '```', inline: true})
@@ -546,12 +552,12 @@ Commands['server-info'] = {
     // if we're not in a PM, return some info about the channel
     if (msg.guild) {
       var field = [{name: 'Server name', value: `${msg.guild.name} [${msg.guild.acronym}] (${msg.guild.id})`},
-      {name: 'Owned by', value: '```\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
-      {name: 'Current Region', value: '```\n' + msg.guild.region + '```', inline: true},
-      {name: 'Members', value: '```\n' + msg.guild.members.length + '```', inline: true},
-      {name: 'Text Channels', value: '```\n' + msg.guild.textChannels.length + '```', inline: true},
-      {name: 'Voice Channels', value: '```\n' + msg.guild.voiceChannels.length + '```', inline: true},
-      {name: 'Total Roles', value: '```\n' + msg.guild.roles.length + '```', inline: true}]
+        {name: 'Owned by', value: '```\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
+        {name: 'Current Region', value: '```\n' + msg.guild.region + '```', inline: true},
+        {name: 'Members', value: '```\n' + msg.guild.members.length + '```', inline: true},
+        {name: 'Text Channels', value: '```\n' + msg.guild.textChannels.length + '```', inline: true},
+        {name: 'Voice Channels', value: '```\n' + msg.guild.voiceChannels.length + '```', inline: true},
+        {name: 'Total Roles', value: '```\n' + msg.guild.roles.length + '```', inline: true}]
 
       if (msg.guild.afk_channel === null) {
         field.push({name: 'AFK-Channel', value: '```\nNone```'})

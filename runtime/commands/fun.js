@@ -272,32 +272,32 @@ Commands.urbandictionary = {
       msg.reply('Yes, let\'s just look up absolutely nothing.')
     } else {
       request.get('http://api.urbandictionary.com/v0/define')
-        .query({ term: suffix })
-        .end((err, res) => {
-          if (!err && res.status === 200) {
-            var uD = res.body
-            if (uD.result_type !== 'no_results') {
-              msg.channel.sendMessage('', false, {
-                color: 0x6832e3,
-                author: {name: 'UrbanDictionary'},
-                title: `The internet's definition of ${uD.list[0].word}`,
-                url: uD.list[0].permalink,
-                timestamp: new Date(),
-                fields: [
-                  {name: 'Word', value: `\`\`\`${uD.list[0].word}\`\`\``},
-                  {name: 'Definition', value: `\`\`\`${uD.list[0].definition}\`\`\``},
-                  {name: 'Example', value: `\`\`\`${uD.list[0].example}\`\`\``},
-                  {name: 'Thumbs up', value: `\`\`\`${uD.list[0].thumbs_up}\`\`\``, inline: true},
-                  {name: 'Thumbs down', value: `\`\`\`${uD.list[0].thumbs_down}\`\`\``, inline: true}
-                ]
-              })
-            } else {
-              msg.reply(suffix + ": This word is so screwed up, even Urban Dictionary doesn't have it in its database")
-            }
+      .query({ term: suffix })
+      .end((err, res) => {
+        if (!err && res.status === 200) {
+          var uD = res.body
+          if (uD.result_type !== 'no_results') {
+            msg.channel.sendMessage('', false, {
+              color: 0x6832e3,
+              author: {name: 'UrbanDictionary'},
+              title: `The internet's definition of ${uD.list[0].word}`,
+              url: uD.list[0].permalink,
+              timestamp: new Date(),
+              fields: [
+                {name: 'Word', value: `\`\`\`${uD.list[0].word}\`\`\``},
+                {name: 'Definition', value: `\`\`\`${uD.list[0].definition}\`\`\``},
+                {name: 'Example', value: `\`\`\`${uD.list[0].example}\`\`\``},
+                {name: 'Thumbs up', value: `\`\`\`${uD.list[0].thumbs_up}\`\`\``, inline: true},
+                {name: 'Thumbs down', value: `\`\`\`${uD.list[0].thumbs_down}\`\`\``, inline: true}
+              ]
+            })
           } else {
-            Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+            msg.reply(suffix + ": This word is so screwed up, even Urban Dictionary doesn't have it in its database")
           }
-        })
+        } else {
+          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+        }
+      })
     }
   }
 }
@@ -404,28 +404,28 @@ Commands.e621 = {
   fn: function (msg, suffix) {
     msg.channel.sendTyping()
     request.post(`https://e621.net/post/index.json`)
-      .query({ limit: '30', tags: suffix })
-      .set({'Accept': 'application/json', 'User-Agent': 'Superagent Node.js'})
-      // Fetching 30 posts from E621 with the given tags
-      .end(function (err, result) {
-        if (!err && result.status === 200) {
-          if (result.body.length < 1) {
-            msg.reply('Sorry, nothing found.') // Correct me if it's wrong.
-          } else {
-            var count = Math.floor((Math.random() * result.body.length))
-            var FurryArray = []
-            if (suffix) {
-              FurryArray.push(`${msg.author.mention}, you've searched for ` + '`' + suffix + '`')
-            } else {
-              FurryArray.push(`${msg.author.mention}, you've searched for ` + '`random`')
-            } // hehe no privacy if you do the nsfw commands now.
-            FurryArray.push(result.body[count].file_url)
-            msg.channel.sendMessage(FurryArray.join('\n'))
-          }
+    .query({ limit: '30', tags: suffix })
+    .set({'Accept': 'application/json', 'User-Agent': 'Superagent Node.js'})
+    // Fetching 30 posts from E621 with the given tags
+    .end(function (err, result) {
+      if (!err && result.status === 200) {
+        if (result.body.length < 1) {
+          msg.reply('Sorry, nothing found.') // Correct me if it's wrong.
         } else {
-          Logger.error(`Got an error: ${err}, status code: ${result.status}`)
+          var count = Math.floor((Math.random() * result.body.length))
+          var FurryArray = []
+          if (suffix) {
+            FurryArray.push(`${msg.author.mention}, you've searched for ` + '`' + suffix + '`')
+          } else {
+            FurryArray.push(`${msg.author.mention}, you've searched for ` + '`random`')
+          } // hehe no privacy if you do the nsfw commands now.
+          FurryArray.push(result.body[count].file_url)
+          msg.channel.sendMessage(FurryArray.join('\n'))
         }
-      })
+      } else {
+        Logger.error(`Got an error: ${err}, status code: ${result.status}`)
+      }
+    })
   }
 }
 
@@ -595,14 +595,14 @@ Commands.randommeme = {
   nsfw: true,
   fn: function (msg) {
     request.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`) // 20 Memes per page, 160 Memes
-      .set('Authorization', 'Client-ID ' + config.api_keys.imgur)
-      .end(function (err, result) {
-        if (!err && !result.body.data.error) {
-          msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
-        } else {
-          Logger.error(result.body.data.error)
-        }
-      })
+    .set('Authorization', 'Client-ID ' + config.api_keys.imgur)
+    .end(function (err, result) {
+      if (!err && !result.body.data.error) {
+        msg.channel.sendMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
+      } else {
+        Logger.error(result.body.data.error)
+      }
+    })
   }
 }
 
