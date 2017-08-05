@@ -24,6 +24,8 @@ exports.unregisterVanity = function (msg) {
 }
 
 exports.join = function (msg, suffix, bot) {
+  const regex = /([*_~])/g;
+  const subst = `\\$1`;
   if (bot.VoiceConnections.length > Config.settings.maxvcslots) {
     msg.channel.sendMessage('Sorry pal, all the voice connections are currently being used! Please wait until one is set free.')
   } else {
@@ -35,9 +37,9 @@ exports.join = function (msg, suffix, bot) {
       var VC = msg.member.getVoiceChannel()
       if (VC) {
         VC.join().then((vc) => {
-          var prefix = Config.settings.prefix
+          var prefix = Config.settings.prefix.replace(regex, subst);
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
-            if (r !== false) prefix = r
+            if (r !== false) prefix = r.replace(regex, subst);
             var joinmsg = []
             joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** which you're currently connected to.`)
             joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -62,9 +64,9 @@ exports.join = function (msg, suffix, bot) {
         })
       } else if (!VC) {
         msg.guild.voiceChannels[0].join().then((vc) => {
-          var prefix = Config.settings.prefix
+          var prefix = Config.settings.prefix.replace(regex, subst);
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
-            if (r !== false) prefix = r
+            if (r !== false) prefix = r.replace(regex, subst);
             var joinmsg = []
             joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** because you didn't specify a voice channel for me to join.`)
             joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -84,7 +86,7 @@ exports.join = function (msg, suffix, bot) {
           })
         }).catch((err) => {
           if (err.message === 'Missing permission') {
-            msg.reply("I could not the first voice channel in my list because I don't have `Connect` permissions :cry:")
+            msg.reply("I could not join the first voice channel on the server because I don't have `Connect` permissions :cry:")
           }
         })
       }
@@ -96,9 +98,9 @@ exports.join = function (msg, suffix, bot) {
         msg.reply('That is not a valid voice channel.')
       } else {
         channel.join().then((vc) => {
-          var prefix = Config.settings.prefix
+          var prefix = Config.settings.prefix.replace(regex, subst);
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
-            if (r !== false) prefix = r
+            if (r !== false) prefix = r.replace(regex, subst);
             var joinmsg = []
             joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
             joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -178,77 +180,77 @@ function waiting (vc, msg, bot) {
 function next (msg, suffix, bot) {
   status[msg.guild.id] = false
   bot.VoiceConnections
-    .map((connection) => {
-      if (connection.voiceConnection.guild.id === msg.guild.id) {
-        if (list[msg.guild.id].link.length === 0) {
-          delete list[msg.guild.id]
-          msg.channel.sendMessage('Playlist has ended, leaving voice.')
-          connection.voiceConnection.disconnect()
-          return
-        }
-        if (list[msg.guild.id].link[0] === 'INVALID') {
-          list[msg.guild.id].link.shift()
-          list[msg.guild.id].info.shift()
-          list[msg.guild.id].requester.shift()
-          list[msg.guild.id].skips.count = 0
-          list[msg.guild.id].skips.users = []
-        }
-        var encoder = connection.voiceConnection.createExternalEncoder({
-          type: 'ffmpeg',
-          format: 'pcm',
-          source: list[msg.guild.id].link[0]
+  .map((connection) => {
+    if (connection.voiceConnection.guild.id === msg.guild.id) {
+      if (list[msg.guild.id].link.length === 0) {
+        delete list[msg.guild.id]
+        msg.channel.sendMessage('Playlist has ended, leaving voice.')
+        connection.voiceConnection.disconnect()
+        return
+      }
+      if (list[msg.guild.id].link[0] === 'INVALID') {
+        list[msg.guild.id].link.shift()
+        list[msg.guild.id].info.shift()
+        list[msg.guild.id].requester.shift()
+        list[msg.guild.id].skips.count = 0
+        list[msg.guild.id].skips.users = []
+      }
+      var encoder = connection.voiceConnection.createExternalEncoder({
+        type: 'ffmpeg',
+        format: 'pcm',
+        source: list[msg.guild.id].link[0]
+      })
+      encoder.play()
+      if (list[msg.guild.id].volume !== undefined) {
+        connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
+      } else {
+        require('../datacontrol.js').customize.volume(msg).then((v) => {
+          connection.voiceConnection.getEncoder().setVolume(v)
         })
-        encoder.play()
-        if (list[msg.guild.id].volume !== undefined) {
-          connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
-        } else {
-          require('../datacontrol.js').customize.volume(msg).then((v) => {
-            connection.voiceConnection.getEncoder().setVolume(v)
+      }
+      encoder.once('end', () => {
+        if (list[msg.guild.id].info.length === 0) return
+        msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
+          if (Config.settings.autodeletemsg) {
+            setTimeout(() => {
+              m.delete().catch((e) => Logger.error(e))
+            }, Config.settings.deleteTimeout)
+          }
+        })
+        list[msg.guild.id].link.shift()
+        list[msg.guild.id].info.shift()
+        list[msg.guild.id].requester.shift()
+        list[msg.guild.id].skips.count = 0
+        list[msg.guild.id].skips.users = []
+        if (list[msg.guild.id].link.length > 0) {
+          msg.channel.sendMessage('Next up is **' + list[msg.guild.id].info[0] + '** requested by _' + list[msg.guild.id].requester[0] + '_').then((m) => {
+            if (Config.settings.autodeletemsg) {
+              setTimeout(() => {
+                m.delete().catch((e) => Logger.error(e))
+              }, Config.settings.deleteTimeoutLong)
+            }
           })
-        }
-        encoder.once('end', () => {
-          if (list[msg.guild.id].info.length === 0) return
-          msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
+          next(msg, suffix, bot)
+        } else {
+          msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
             if (Config.settings.autodeletemsg) {
               setTimeout(() => {
                 m.delete().catch((e) => Logger.error(e))
               }, Config.settings.deleteTimeout)
             }
           })
-          list[msg.guild.id].link.shift()
-          list[msg.guild.id].info.shift()
-          list[msg.guild.id].requester.shift()
-          list[msg.guild.id].skips.count = 0
-          list[msg.guild.id].skips.users = []
-          if (list[msg.guild.id].link.length > 0) {
-            msg.channel.sendMessage('Next up is **' + list[msg.guild.id].info[0] + '** requested by _' + list[msg.guild.id].requester[0] + '_').then((m) => {
-              if (Config.settings.autodeletemsg) {
-                setTimeout(() => {
-                  m.delete().catch((e) => Logger.error(e))
-                }, Config.settings.deleteTimeoutLong)
-              }
-            })
-            next(msg, suffix, bot)
-          } else {
-            msg.channel.sendMessage('Playlist has ended, leaving voice.').then((m) => {
-              if (Config.settings.autodeletemsg) {
-                setTimeout(() => {
-                  m.delete().catch((e) => Logger.error(e))
-                }, Config.settings.deleteTimeout)
-              }
-            })
-            connection.voiceConnection.disconnect()
-          }
-        })
-      }
-    })
+          connection.voiceConnection.disconnect()
+        }
+      })
+    }
+  })
 }
 
 exports.shuffle = function (msg, bot) {
   var connect = bot.VoiceConnections
-    .filter(function (connection) {
-      return connection.voiceConnection.guild.id === msg.guild.id
-    })
+  .filter(function (connection) {
+    return connection.voiceConnection.guild.id === msg.guild.id
+  })
   if (connect.length < 1) {
     msg.reply('I am not currently in any voice channel.')
   } else if (list[msg.guild.id].link === undefined) {
@@ -280,9 +282,9 @@ exports.shuffle = function (msg, bot) {
 
 exports.voteSkip = function (msg, bot) {
   var connect = bot.VoiceConnections
-    .filter(function (connection) {
-      return connection.voiceConnection.guild.id === msg.guild.id
-    })
+  .filter(function (connection) {
+    return connection.voiceConnection.guild.id === msg.guild.id
+  })
   if (connect.length < 1) {
     msg.reply('No connection.')
   } else if (list[msg.guild.id].link === undefined) {
@@ -331,9 +333,9 @@ exports.volume = function (msg, suffix, bot) {
 
 exports.skip = function (msg, suffix, bot) {
   var connect = bot.VoiceConnections
-    .filter(function (connection) {
-      return connection.voiceConnection.guild.id === msg.guild.id
-    })
+  .filter(function (connection) {
+    return connection.voiceConnection.guild.id === msg.guild.id
+  })
   if (connect.length < 1) {
     msg.reply('No connection.')
     return
@@ -351,17 +353,17 @@ exports.skip = function (msg, suffix, bot) {
 
 exports.music = function (msg, suffix, bot) {
   bot.VoiceConnections
-    .map((connection) => {
-      if (connection.voiceConnection.guild.id === msg.guild.id) {
-        if (suffix.toLowerCase() === 'pause') {
-          connection.voiceConnection.getEncoderStream().cork()
-        } else if (suffix.toLowerCase() === 'play') {
-          connection.voiceConnection.getEncoderStream().uncork()
-        } else {
-          msg.channel.sendMessage('Use either pause or play after the command.')
-        }
+  .map((connection) => {
+    if (connection.voiceConnection.guild.id === msg.guild.id) {
+      if (suffix.toLowerCase() === 'pause') {
+        connection.voiceConnection.getEncoderStream().cork()
+      } else if (suffix.toLowerCase() === 'play') {
+        connection.voiceConnection.getEncoderStream().uncork()
+      } else {
+        msg.channel.sendMessage('Use either pause or play after the command.')
       }
-    })
+    }
+  })
 }
 
 exports.fetchList = function (msg) {
@@ -402,9 +404,9 @@ exports.deleteFromPlaylist = function (msg, what) {
 
 exports.request = function (msg, suffix, bot) {
   var connect = bot.VoiceConnections
-    .filter(function (connection) {
-      return connection.voiceConnection.guild.id === msg.guild.id
-    })
+  .filter(function (connection) {
+    return connection.voiceConnection.guild.id === msg.guild.id
+  })
   if (connect.length < 1) {
     msg.channel.sendMessage("I'm not connected to any voice channel in this server, try initializing me with the command `voice` first!")
   } else if (list[msg.guild.id].vanity) {
@@ -483,9 +485,9 @@ exports.request = function (msg, suffix, bot) {
 
 exports.leaveRequired = function (bot, guild) {
   var connect = bot.VoiceConnections
-    .find(function (connection) {
-      connection.voiceConnection.guild.id === guild
-    })
+  .find(function (connection) {
+    connection.voiceConnection.guild.id === guild
+  })
   if (connect) {
     if (connect.voiceConnection.channel.members.length <= 1) {
       delete list[guild.id]
