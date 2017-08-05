@@ -24,8 +24,8 @@ exports.unregisterVanity = function (msg) {
 }
 
 exports.join = function (msg, suffix, bot) {
-  const regex = /([*_~])/g;
-  const subst = `\\$1`;
+  const regex = /([*_~])/g
+  const subst = `\\$1`
   if (bot.VoiceConnections.length > Config.settings.maxvcslots) {
     msg.channel.sendMessage('Sorry pal, all the voice connections are currently being used! Please wait until one is set free.')
   } else {
@@ -37,9 +37,9 @@ exports.join = function (msg, suffix, bot) {
       var VC = msg.member.getVoiceChannel()
       if (VC) {
         VC.join().then((vc) => {
-          var prefix = Config.settings.prefix.replace(regex, subst);
+          var prefix = Config.settings.prefix.replace(regex, subst)
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
-            if (r !== false) prefix = r.replace(regex, subst);
+            if (r !== false) prefix = r.replace(regex, subst)
             var joinmsg = []
             joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** which you're currently connected to.`)
             joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -64,9 +64,9 @@ exports.join = function (msg, suffix, bot) {
         })
       } else if (!VC) {
         msg.guild.voiceChannels[0].join().then((vc) => {
-          var prefix = Config.settings.prefix.replace(regex, subst);
+          var prefix = Config.settings.prefix.replace(regex, subst)
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
-            if (r !== false) prefix = r.replace(regex, subst);
+            if (r !== false) prefix = r.replace(regex, subst)
             var joinmsg = []
             joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** because you didn't specify a voice channel for me to join.`)
             joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -98,9 +98,9 @@ exports.join = function (msg, suffix, bot) {
         msg.reply('That is not a valid voice channel.')
       } else {
         channel.join().then((vc) => {
-          var prefix = Config.settings.prefix.replace(regex, subst);
+          var prefix = Config.settings.prefix.replace(regex, subst)
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
-            if (r !== false) prefix = r.replace(regex, subst);
+            if (r !== false) prefix = r.replace(regex, subst)
             var joinmsg = []
             joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
             joinmsg.push(`You have until the end of the wait music to request something.`)
