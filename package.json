@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "eslint": "^4.1.0",
-    "standard": "^8.1.0"
+    "standard": "^10.0.3"
   },
   "snyk": true
 }
