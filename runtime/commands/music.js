@@ -8,7 +8,7 @@ Commands.music = {
   help: "I'll pause or play the music, just tell me what after the command!",
   aliases: ['pauseplay', 'playpause'],
   noDM: true,
-  level: 1,
+  level: 0,
   fn: function (msg, suffix, bot) {
     v.music(msg, suffix, bot)
   }
@@ -20,7 +20,7 @@ Commands.volume = {
   usage: '<nothing/number>',
   aliases: ['vol'],
   noDM: true,
-  level: 1,
+  level: 0,
   fn: function (msg, suffix, bot) {
     v.volume(msg, suffix, bot).then(v => {
       msg.channel.sendMessage(v)
@@ -34,7 +34,7 @@ Commands.voteskip = {
   name: 'voteskip',
   help: 'Vote to skip the current playing song.',
   noDM: true,
-  level: 1,
+  level: 0,
   fn: function (msg, suffix, bot) {
     v.voteSkip(msg, bot)
   }
@@ -44,7 +44,7 @@ Commands.shuffle = {
   name: 'shuffle',
   help: 'Shuffle the current playlist.',
   noDM: true,
-  level: 2,
+  level: 0,
   fn: function (msg, suffix, bot) {
     v.shuffle(msg, bot)
   }
@@ -54,7 +54,7 @@ Commands['leave-voice'] = {
   name: 'leave-voice',
   help: "I'll leave the current voice channel.",
   noDM: true,
-  level: 1,
+  level: 0,
   fn: function (msg, suffix, bot) {
     v.leave(msg, suffix, bot)
   }
@@ -64,7 +64,7 @@ Commands.skip = {
   name: 'skip',
   help: "I'll skip this song if you don't like it.",
   noDM: true,
-  level: 2,
+  level: 0,
   fn: function (msg, suffix, bot) {
     v.skip(msg, suffix, bot)
   }
@@ -134,7 +134,7 @@ Commands.voice = {
   aliases: ['join-voice'],
   noDM: true,
   timeout: 10,
-  level: 1,
+  level: 0,
   fn: function (msg, suffix, bot) {
     v.join(msg, suffix, bot)
   }
@@ -147,7 +147,7 @@ Commands.request = {
   noDM: true,
   usage: 'link',
   timeout: 10,
-  level: 1,
+  level: 0,
   fn: function (msg, suffix, bot) {
     if (!suffix) {
       msg.reply('Please enter something to search for!')
