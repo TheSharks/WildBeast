@@ -271,9 +271,9 @@ function next (msg, suffix, bot) {
               msg.channel.sendMessage('Playlist has ended! Use `' + Config.settings.prefix + 'request` to add more songs!')
             }
           }
-        })
-      }
-    })
+        }
+      })
+    }) 
 }
 
 exports.shuffle = function (msg, bot) {
