@@ -528,7 +528,8 @@ Commands.setstatus = {
         msg.channel.sendMessage(`Set status to streaming with message ${suffix.substring(first[0].length + 1)}`)
       } else if (['online', 'idle', 'dnd', 'invisible'].indexOf(first[0]) > -1) {
         bot.User.setStatus(first[0], {
-          name: (first[1] ? suffix.substring(first[0].length + 1) : null)
+          name: (first[1] ? suffix.substring(first[0].length + 1) : null),
+          type: 1
         })
         msg.channel.sendMessage(`Set status to ${first[0]} with message ${suffix.substring(first[0].length + 1)}`)
       } else if (suffix.substring(first[0].length + 1).length < 1) {
