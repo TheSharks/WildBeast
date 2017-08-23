@@ -273,7 +273,7 @@ function next (msg, suffix, bot) {
           }
         }
       })
-    }) 
+    })
 }
 
 exports.shuffle = function (msg, bot) {
