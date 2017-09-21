@@ -1,5 +1,6 @@
 'use strict'
 var Config = require('../../../config.json')
+var Logger = require('../../internal/logger.js').Logger
 var Dash = require('rethinkdbdash')
 var r = new Dash({
   user: Config.database.user,
@@ -10,104 +11,107 @@ var r = new Dash({
     port: Config.database.port
   }]
 })
-var Logger = require('../../internal/logger.js').Logger
-var bugsnag = require('bugsnag')
-bugsnag.register(Config.api_keys.bugsnag)
 
-exports.getGuildData = function (msg) {
+exports.checkLevel = function (msg, user, roles) {
   return new Promise(function (resolve, reject) {
-    r.db('Discord').table('Guilds').get(msg.guild.id).then(guild => {
-      if (guild !== null) {
-        return resolve(guild)
-      } else {
-        initialize(msg.guild)
-        return resolve({customize: {
-          nsfw: null,
-          perms: null,
-          prefix: null,
-          volume: 25,
-          timeout: null,
-          welcome: false,
-          welcomeMessage: null
-        }})
-      }
-    }).catch(err => {
-      Logger.error(`REQL Error: ${err}`)
-      return reject(err)
-    })
+    if (Config.permissions.master.indexOf(user) > -1) {
+      return resolve(Infinity) // lol
+    } else if (Config.permissions.level1.indexOf(user) > -1) {
+      return resolve(1)
+    } else if (Config.permissions.level2.indexOf(user) > -1) {
+      return resolve(2)
+    } else if (Config.permissions.level3.indexOf(user) > -1) {
+      return resolve(3)
+    } else {
+      r.db('Discord').table('Users').get(user).then(u => {
+        if (u !== null) {
+          if (u.banned) {
+            return resolve(-1)
+          } else if (msg.isPrivate || !msg.guild) {
+            return resolve(0)
+          } else {
+            getDatabaseDocument(msg.guild).then((d) => {
+              if (user === d.superUser) {
+                return resolve(4)
+              }
+              var level = d.perms.standard.everyone
+              if (roles) {
+                for (var r of roles) {
+                  if (d.perms.roles.level1.indexOf(r.id) > -1) {
+                    level = (level > 1) ? level : (level !== -1) ? 1 : -1
+                  } else if (d.perms.roles.level2.indexOf(r.id) > -1) {
+                    level = (level > 1) ? level : (level !== -1) ? 2 : -1
+                  } else if (d.perms.roles.level3.indexOf(r.id) > -1) {
+                    level = (level > 1) ? level : (level !== -1) ? 3 : -1
+                  } else if (d.perms.roles.negative.indexOf(r.id) > -1) {
+                    level = -1
+                  }
+                }
+              }
+              if (d.perms.standard.level1.indexOf(user) > -1) {
+                level = (level > 1) ? level : (level !== -1) ? 1 : -1
+              } else if (d.perms.standard.level2.indexOf(user) > -1) {
+                level = (level > 1) ? level : (level !== -1) ? 2 : -1
+              } else if (d.perms.standard.level3.indexOf(user) > -1) {
+                level = (level > 1) ? level : (level !== -1) ? 3 : -1
+              } else if (d.perms.standard.negative.indexOf(user) > -1) {
+                level = -1
+              }
+              return resolve(level)
+            }).catch((e) => {
+              initialize(msg.guild)
+              reject(e)
+            })
+          }
+        } else {
+          return resolve(0)
+        }
+      })
+    }
   })
 }
 
-exports.volume = function (msg) {
+exports.adjustLevel = function (msg, users, level, roles) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(msg.guild).then((i) => {
-      resolve((i.customize.volume === (null || undefined)) ? 25 : i.customize.volume)
+    getDatabaseDocument(msg.guild).then((d) => {
+      var roleIds = roles.map((x) => x.id)
+      var userIds = users.map((x) => x.id)
+
+      if (msg.mention_everyone) {
+        d.perms.standard.everyone = level
+      }
+
+      d.perms.roles.level1 = d.perms.roles.level1.filter((el) => roleIds.indexOf(el) < 0)
+      d.perms.roles.level2 = d.perms.roles.level2.filter((el) => roleIds.indexOf(el) < 0)
+      d.perms.roles.level3 = d.perms.roles.level3.filter((el) => roleIds.indexOf(el) < 0)
+      d.perms.roles.negative = d.perms.roles.negative.filter((el) => roleIds.indexOf(el) < 0)
+
+      if (d.perms.roles.hasOwnProperty('level' + level)) {
+        d.perms.roles['level' + level].push.apply(d.perms.roles['level' + level], roleIds)
+      } else if (level < 0) {
+        d.perms.roles.negative.push.apply(d.perms.roles.negative, roleIds)
+      }
+
+      d.perms.standard.level1 = d.perms.standard.level1.filter((el) => userIds.indexOf(el) < 0)
+      d.perms.standard.level2 = d.perms.standard.level2.filter((el) => userIds.indexOf(el) < 0)
+      d.perms.standard.level3 = d.perms.standard.level3.filter((el) => userIds.indexOf(el) < 0)
+      d.perms.standard.negative = d.perms.standard.negative.filter((el) => userIds.indexOf(el) < 0)
+
+      if (d.perms.standard.hasOwnProperty('level' + level)) {
+        d.perms.standard['level' + level].push.apply(d.perms.standard['level' + level], userIds)
+      } else if (level < 0) {
+        d.perms.standard.negative.push.apply(d.perms.standard.negative, userIds)
+      }
+
+      r.db('Discord').table('Guilds').get(msg.guild.id).update(d).run().then(() => {
+        resolve('Done!')
+      }).catch((e) => {
+        reject(e)
+      })
     }).catch(() => {
       initialize(msg.guild)
-      reject('No database')
+      reject()
     })
-  })
-}
-
-exports.check = function (guild) {
-  return new Promise(function (resolve, reject) {
-    getDatabaseDocument(guild).then((i) => {
-      resolve(i.customize.welcome)
-    }).catch(() => {
-      initialize(guild)
-      reject('No database')
-    })
-  })
-}
-
-exports.reply = function (msg, what) {
-  return new Promise(function (resolve, reject) {
-    getDatabaseDocument(msg.guild).then((t) => {
-      if (!t.customize.hasOwnProperty(what)) {
-        return reject('Unsupported reply method')
-      } else {
-        return resolve(t.customize[what])
-      }
-    }).catch((e) => {
-      initialize(msg.guild)
-      reject(e)
-    })
-  })
-}
-
-exports.helpHandle = function (msg) {
-  // You will just have to deal with the fact that this is static
-  var arr = []
-  arr.push('`customize` enables you to adjust various settings about my behaviour in your server.')
-  arr.push('Currently, I support the following.')
-  arr.push('\n')
-  arr.push('`nsfw`: Changes my reply when someones uses a NSFW command while I disallow that.')
-  arr.push('`permissions`: Changes my reply when someone tries to use a command they do not have access to')
-  arr.push('`welcome`: Changes my welcoming message.')
-  arr.push('`welcoming`: Changes wether I should welcome new people.')
-  arr.push('`timeout`: Changes my reply when someones uses a command that is still in cooldown')
-  arr.push('`prefix`: Changes the prefix I listen to on this server, mentions will still count as a global prefix')
-  arr.push('`volume`: Changes the default volume the bot will assume when joining a voice channel.')
-  arr.push('\n')
-  arr.push('Some customize methods support special words, here is what they are and how to use them.')
-  arr.push('**Note the following:**')
-  arr.push('```')
-  arr.push('You cannot use special words with welcoming or prefix.')
-  arr.push('All special words start with %.')
-  arr.push('You can use multiple special words within one message.')
-  arr.push('```')
-  arr.push('`%user`: Refers to the username of the user who triggered this response.')
-  arr.push('`%channel`: Refers to the channel wherein this response is triggered, does not work with welcome.')
-  arr.push('`%server`: Refers to the server name')
-  arr.push('`%timeout`: Refers to the amount of seconds the used command cools down for, __can only be used with timeout__.')
-  arr.push('`%nlevel`: Short for NeedLevel. Refers to the access level an user needs to execute this command, __can only be used with permissions__.')
-  arr.push('`%ulevel`: Short for UserLevel. Refers to the access level an user has right now, __can only be used with permissions__.')
-  arr.push('For more information, check https://docs.thesharks.xyz/commands/#customize-command.')
-  msg.author.openDM().then((y) => {
-    y.sendMessage(arr.join('\n'))
-  }).catch((e) => {
-    Logger.error(e)
-    msg.channel.sendMessage('Whoops, try again.')
   })
 }
 
@@ -129,106 +133,67 @@ exports.restore = function (guild) {
   })
 }
 
-exports.adjust = function (msg, what, how) {
-  /* eslint indent: 0 */
+exports.checkNSFW = function (msg) {
   return new Promise(function (resolve, reject) {
-    getDatabaseDocument(msg.guild).then(() => {
-      switch (what) {
-        case 'nsfw':
-          r.db('Discord').table('Guilds').get(msg.guild.id).update({
-            customize: {
-              nsfw: how
-            }
-          }).run().then(() => {
-            resolve(how)
-          }).catch((e) => {
-            reject(e)
-          })
-          break
-        case 'permissions':
-          r.db('Discord').table('Guilds').get(msg.guild.id).update({
-            customize: {
-              perms: how
-            }
-          }).run().then(() => {
-            resolve(how)
-          }).catch((e) => {
-            reject(e)
-          })
-          break
-        case 'prefix':
-          if (how.indexOf('"') === -1) {
-            return reject('`Put new prefixes between double quotes please.`')
-          }
-          r.db('Discord').table('Guilds').get(msg.guild.id).update({
-            customize: {
-              prefix: how.split('"')[1]
-            }
-          }).run().then(() => {
-            resolve(how.split('"')[1])
-          }).catch((e) => {
-            reject(e)
-          })
-          break
-        case 'timeout':
-          r.db('Discord').table('Guilds').get(msg.guild.id).update({
-            customize: {
-              timeout: how
-            }
-          }).run().then(() => {
-            resolve(how)
-          }).catch((e) => {
-            reject(e)
-          })
-          break
-        case 'welcoming':
-          if (how !== 'on' && how !== 'off' && how !== 'private' && how !== 'channel') {
-            return reject('`Invalid target.`')
-          }
-          r.db('Discord').table('Guilds').get(msg.guild.id).update({
-            customize: {
-              welcome: how
-            }
-          }).run().then(() => {
-            resolve(how)
-          }).catch((e) => {
-            reject(e)
-          })
-          break
-        case 'welcome':
-          r.db('Discord').table('Guilds').get(msg.guild.id).update({
-            customize: {
-              welcomeMessage: how
-            }
-          }).run().then(() => {
-            resolve(how)
-          }).catch((e) => {
-            reject(e)
-          })
-          break
-        case 'volume':
-          if (isNaN(how) || how < 0 || how > 100) {
-            reject('this must be a number between 0 and 100.')
+    getDatabaseDocument(msg.guild).then((d) => {
+      if (d.perms.nsfw.indexOf(msg.channel.id) > -1) {
+        resolve(true)
+      } else {
+        resolve(false)
+      }
+    }).catch((e) => reject(e))
+  })
+}
+
+exports.adjustNSFW = function (msg, what) {
+  return new Promise(function (resolve, reject) {
+    /* eslint indent: 0 */
+    switch (what) {
+      case 'on':
+        getDatabaseDocument(msg.guild).then((d) => {
+          if (d.perms.nsfw.indexOf(msg.channel.id) > -1) {
+            resolve(1)
           } else {
-            r.db('Discord').table('Guilds').get(msg.guild.id).update({
-              customize: {
-                volume: how
-              }
-            }).run().then(() => {
-              resolve(how)
-            }).catch(e => {
+            d.perms.nsfw.push(msg.channel.id.toString())
+            r.db('Discord').table('Guilds').get(msg.guild.id).update(d).run().then(() => {
+              resolve(1)
+            }).catch((e) => {
+              Logger.error(e)
               reject(e)
             })
           }
-          break
-        default:
-          reject('Unsupported method')
-          break
-      }
-    }).catch(() => {
-      initialize(msg.guild)
-      reject('No database')
-    })
+        }).catch((e) => reject(e))
+        break
+      case 'off':
+        getDatabaseDocument(msg.guild).then((d) => {
+          if (d.perms.nsfw.indexOf(msg.channel.id) > -1) {
+            d.perms.nsfw.splice(d.perms.nsfw.indexOf(msg.channel.id), 1)
+            r.db('Discord').table('Guilds').get(msg.guild.id).update(d).run().then(() => {
+              resolve(0)
+            }).catch((e) => {
+              Logger.error(e)
+              reject(e)
+            })
+          } else {
+            resolve(0)
+          }
+        }).catch((e) => reject(e))
+        break
+      default:
+        reject('Unknown option')
+        break
+    }
+  })
+}
+
+exports.updateGuildOwner = function (guild) {
+  return new Promise(function (resolve, reject) {
+    getDatabaseDocument(guild).then(d => {
+      d.superUser = guild.owner.id
+      r.db('Discord').table('Guilds').get(guild.id).update(d).run().then(() => {
+        resolve(true)
+      })
+    }).catch((e) => reject(e))
   })
 }
 
@@ -239,7 +204,6 @@ function initialize (guild) {
         nsfw: null,
         perms: null,
         prefix: null,
-        volume: 25,
         timeout: null,
         welcome: false,
         welcomeMessage: null
