@@ -134,11 +134,11 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
           if (r !== -1) {
             timeout.check(commands[cmd], c.message.guild.id, c.message.author.id).then(t => {
               if (t !== true) {
-                  if (g.customize.timeout === null || g.customize.timeout === 'default') {
-                    c.message.channel.sendMessage(`Wait ${Math.round(t)} more seconds before using that again.`)
-                  } else {
-                    c.message.channel.sendMessage(g.customize.timeout.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%timeout/, Math.round(t)))
-                  }
+                if (g.customize.timeout === null || g.customize.timeout === 'default') {
+                  c.message.channel.sendMessage(`Wait ${Math.round(t)} more seconds before using that again.`)
+                } else {
+                  c.message.channel.sendMessage(g.customize.timeout.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%timeout/, Math.round(t)))
+                }
               } else {
                 if (r >= commands[cmd].level) {
                   if (!commands[cmd].hasOwnProperty('nsfw')) {
@@ -170,11 +170,11 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                           })
                         }
                       } else {
-                          if (g.customize.nsfw === null || g.customize.nsfw === 'default') {
-                            c.message.channel.sendMessage('This channel does not allow NSFW commands, enable them first with `setnsfw`')
-                          } else {
-                            c.message.channel.sendMessage(g.customize.nsfw.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name))
-                          }
+                        if (g.customize.nsfw === null || g.customize.nsfw === 'default') {
+                          c.message.channel.sendMessage('This channel does not allow NSFW commands, enable them first with `setnsfw`')
+                        } else {
+                          c.message.channel.sendMessage(g.customize.nsfw.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name))
+                        }
                       }
                     }).catch(function (e) {
                       Logger.error('Permission error: ' + e, {
@@ -186,14 +186,14 @@ bot.Dispatcher.on(Event.MESSAGE_CREATE, function (c) {
                     })
                   }
                 } else {
-                    if (g.customize.perms === null || g.customize.perms === 'default') {
-                      if (r > -1 && !commands[cmd].hidden) {
-                        var reason = (r > 4) ? '**This is a master user only command**, ask the bot owner to add you as a master user if you really think you should be able to use this command.' : 'Ask the server owner to modify your level with `setlevel`.'
-                        c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\n' + reason)
-                      }
-                    } else {
-                      c.message.channel.sendMessage(g.customize.perms.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%nlevel/, commands[cmd].level).replace(/%ulevel/, r))
+                  if (g.customize.perms === null || g.customize.perms === 'default') {
+                    if (r > -1 && !commands[cmd].hidden) {
+                      var reason = (r > 4) ? '**This is a master user only command**, ask the bot owner to add you as a master user if you really think you should be able to use this command.' : 'Ask the server owner to modify your level with `setlevel`.'
+                      c.message.channel.sendMessage('You have no permission to run this command!\nYou need level ' + commands[cmd].level + ', you have level ' + r + '\n' + reason)
                     }
+                  } else {
+                    c.message.channel.sendMessage(g.customize.perms.replace(/%user/g, c.message.author.mention).replace(/%server/g, c.message.guild.name).replace(/%channel/, c.message.channel.name).replace(/%nlevel/, commands[cmd].level).replace(/%ulevel/, r))
+                  }
                 }
               }
             })
