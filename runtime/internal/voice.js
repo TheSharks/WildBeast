@@ -522,7 +522,7 @@ function fetch (v, msg, stats) {
     } else {
       options = ['--skip-download', '-f bestaudio/worstvideo']
     }
-    YT.getInfo(v, options, function (err, i) {
+    YT.getInfo(v, options, {maxBuffer: Infinity}, function (err, i) {
       if (!err && i) {
         y++
         if (list[msg.guild.id] === undefined) {

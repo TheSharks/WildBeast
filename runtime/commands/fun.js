@@ -34,8 +34,8 @@ Commands.rip = {
     var qs = require('querystring')
     var resolve = []
     var skipped = false
-    if (msg.mentions.length > 0) {
-      for (var m of msg.mentions) {
+    if (msg.mentions.filter(m => m.id !== bot.User.id).length > 0) {
+      for (var m of msg.mentions.filter(m => m.id !== bot.User.id)) {
         if (m.id !== bot.User.id) {
           if (resolve[0] === undefined) {
             resolve[0] = m.username
@@ -49,7 +49,7 @@ Commands.rip = {
     } else if (suffix) {
       resolve[0] = suffix
     }
-    if (skipped === true && msg.mentions.length === 1 && suffix) {
+    if (skipped === true && msg.mentions.filter(m => m.id !== bot.User.id).length === 1 && suffix) {
       resolve[0] = suffix
     }
     msg.channel.sendMessage('http://ripme.xyz/' + qs.stringify(resolve).substr(2))
@@ -458,7 +458,7 @@ Commands.rule34 = {
             } else {
               FurryArray.push(msg.author.mention + ", you've searched for `" + suffix + '`')
             }
-            FurryArray.push(reply.posts.post[count].$.file_url)
+            FurryArray.push(`https:${reply.posts.post[count].$.file_url}`)
             msg.channel.sendMessage(FurryArray.join('\n'))
           }
         })
