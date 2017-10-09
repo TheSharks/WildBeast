@@ -26,6 +26,8 @@ exports.unregisterVanity = function (msg) {
 exports.join = function (msg, suffix, bot) {
   if (bot.VoiceConnections.length > Config.settings.maxvcslots) {
     msg.channel.sendMessage('Sorry pal, all the voice connections are currently being used! Please wait until one is set free.')
+  } else if (msg.guild.voiceChannels.length === 0) {
+    msg.channel.sendMessage(`Sorry pal, but you do not have any voice channels I can join.`)
   } else {
     list[msg.guild.id] = {
       vanity: false
@@ -57,7 +59,7 @@ exports.join = function (msg, suffix, bot) {
           })
         }).catch((err) => {
           if (err.message === 'Missing permission') {
-            msg.reply("I could not join the channel you're in because I don't have `Connect` permissions :cry:")
+            msg.reply('I could not join the channel you\'re in because I don\'t have `Connect` permissions :cry:')
           }
         })
       } else if (!VC) {
@@ -84,7 +86,7 @@ exports.join = function (msg, suffix, bot) {
           })
         }).catch((err) => {
           if (err.message === 'Missing permission') {
-            msg.reply("I could not the first voice channel in my list because I don't have `Connect` permissions :cry:")
+            msg.reply('I could not the first voice channel in my list because I don\'t have `Connect` permissions :cry:')
           }
         })
       }
@@ -267,7 +269,7 @@ exports.shuffle = function (msg, bot) {
   if (connect.length < 1) {
     msg.reply('I am not currently in any voice channel.')
   } else if (list[msg.guild.id].link === undefined) {
-    msg.reply("There's nothing in the playlist for me to shuffle!")
+    msg.reply('There\'s nothing in the playlist for me to shuffle!')
   } else if (list[msg.guild.id].link !== undefined && list[msg.guild.id].link.length <= 4) {
     msg.reply('Add more songs to the playlist before using this command again.')
   } else {
@@ -303,7 +305,7 @@ exports.voteSkip = function (msg, bot) {
   } else if (list[msg.guild.id].link === undefined) {
     msg.reply('Try requesting a song first before voting to skip.')
   } else if (!msg.member.getVoiceChannel() || (msg.member.getVoiceChannel().id !== connect[0].voiceConnection.channel.id)) {
-    msg.reply("You're not allowed to vote because you're not in the voice channel.")
+    msg.reply('You\'re not allowed to vote because you\'re not in the voice channel.')
   } else {
     var count = Math.round((connect[0].voiceConnection.channel.members.length - 2) / 2)
     if (list[msg.guild.id].skips.users.indexOf(msg.author.id) > -1) {
@@ -421,7 +423,7 @@ exports.request = function (msg, suffix, bot) {
       return connection.voiceConnection.guild.id === msg.guild.id
     })
   if (connect.length < 1) {
-    msg.channel.sendMessage("I'm not connected to any voice channel in this server, try initializing me with the command `voice` first!")
+    msg.channel.sendMessage('I\'m not connected to any voice channel in this server, try initializing me with the command `voice` first!')
   } else if (list[msg.guild.id].vanity) {
     msg.reply(`You've used a special command to get the bot into a voice channel, you cannot use regular voice commands while this is active.`)
   } else {
@@ -484,7 +486,7 @@ exports.request = function (msg, suffix, bot) {
       }).catch((e) => {
         Logger.error(e)
         var error = (e.error.split('ERROR:')[1].length !== 2) ? e.error.split('ERROR:')[1] : e.error.split('WARNING:')[1]
-        msg.channel.sendMessage("I couldn't add that to the playlist, error returned:" + error.replace(Config.api_keys.google, '👀').split('Traceback')[0].split('please report')[0]).then((m) => {
+        msg.channel.sendMessage('I couldn\'t add that to the playlist, error returned:' + error.replace(Config.api_keys.google, '👀').split('Traceback')[0].split('please report')[0]).then((m) => {
           if (Config.settings.autodeletemsg) {
             setTimeout(() => {
               m.delete().catch((e) => Logger.error(e))
