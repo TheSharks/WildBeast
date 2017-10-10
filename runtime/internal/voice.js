@@ -9,6 +9,8 @@ var fs = require('fs')
 var Logger = require('./logger.js').Logger
 var Config = require('../../config.json')
 var bugsnag = require('bugsnag')
+var stream = require('stream')
+var superagent = require('superagent')
 bugsnag.register(Config.api_keys.bugsnag)
 
 exports.registerVanity = function (msg) {
@@ -206,17 +208,17 @@ function next (msg, suffix, bot) {
           list[msg.guild.id].skips.count = 0
           list[msg.guild.id].skips.users = []
         }
-        let buffer = new require('stream').PassThrough()
+        let buffer = new stream.PassThrough()
         var encoder = connection.voiceConnection.createExternalEncoder({
           type: 'ffmpeg',
           format: 'pcm',
           source: '-'
         })
-        require('superagent').get(list[msg.guild.id].link[0]).pipe(buffer)
-        setTimeout(function (){
+        superagent.get(list[msg.guild.id].link[0]).pipe(buffer)
+        setTimeout(function () {
           buffer.pipe(encoder.stdin)
           encoder.play()
-        },2500)
+        }, 2500)
         if (list[msg.guild.id].volume !== undefined) {
           connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
         } else {
