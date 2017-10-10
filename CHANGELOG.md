@@ -1,6 +1,13 @@
 # 4.0.0
 ## Release phase
 
+### 4.5.0
+Improvements to command handler.    
+Improvement to permissions database controller.    
+Improvement to customize database controller.
+Improvement to join-voice command.    
+Improvement to songs playing.
+
 ### 4.4.0
 Improvements to help handler.    
 Added aliases to `dogfact` and `catfact`.    

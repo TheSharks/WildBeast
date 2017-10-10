@@ -50,6 +50,17 @@ exports.getGuildData = function (msg) {
   })
 }
 
+exports.prefix = function (msg) {
+  return new Promise(function (resolve) {
+    getDatabaseDocument(msg.guild).then((i) => {
+      return resolve(i.customize.prefix)
+    }).catch(() => {
+      initialize(msg.guild)
+      return resolve(false)
+    })
+  })
+}
+
 exports.volume = function (msg) {
   return new Promise(function (resolve, reject) {
     getDatabaseDocument(msg.guild).then((i) => {

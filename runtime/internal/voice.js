@@ -206,12 +206,17 @@ function next (msg, suffix, bot) {
           list[msg.guild.id].skips.count = 0
           list[msg.guild.id].skips.users = []
         }
+        let buffer = new require('stream').PassThrough()
         var encoder = connection.voiceConnection.createExternalEncoder({
           type: 'ffmpeg',
           format: 'pcm',
-          source: list[msg.guild.id].link[0]
+          source: '-'
         })
-        encoder.play()
+        require('superagent').get(list[msg.guild.id].link[0]).pipe(buffer)
+        setTimeout(function (){
+          buffer.pipe(encoder.stdin)
+          encoder.play()
+        },2500)
         if (list[msg.guild.id].volume !== undefined) {
           connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
         } else {
