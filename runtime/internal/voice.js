@@ -283,7 +283,7 @@ function next (msg, suffix, bot) {
         })
       }
     })
-  buffer.on('error', () => {/* Lol */})
+  buffer.on('error', () => { /* Lol */ })
 }
 
 exports.shuffle = function (msg, bot) {
