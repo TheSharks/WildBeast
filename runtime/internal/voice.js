@@ -11,6 +11,7 @@ var Config = require('../../config.json')
 var bugsnag = require('bugsnag')
 var stream = require('stream')
 var superagent = require('superagent')
+var regex = /([~*_])/g
 bugsnag.register(Config.api_keys.bugsnag)
 
 exports.registerVanity = function (msg) {
@@ -34,7 +35,6 @@ exports.join = function (msg, suffix, bot) {
     list[msg.guild.id] = {
       vanity: false
     }
-    var regex = /([~*_])/g
     var voiceCheck = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
     if (!voiceCheck && !suffix) {
       var VC = msg.member.getVoiceChannel()
@@ -202,8 +202,12 @@ function next (msg, suffix, bot) {
             connection.voiceConnection.disconnect()
             return
           } else {
-            msg.channel.sendMessage('Playlist has ended! Use `' + Config.settings.prefix + 'request` to add more songs!')
-            return
+            var prefix = Config.settings.prefix
+            require('../datacontrol.js').customize.prefix(msg).then((r) => {
+              if (r !== null) prefix = r
+              prefix = prefix.replace(regex, '\\$1')
+              msg.channel.sendMessage('Playlist has ended! Use `' + prefix + 'request` to add more songs!')
+            })
           }
         }
         if (list[msg.guild.id].link[0] === 'INVALID') {
@@ -277,13 +281,20 @@ function next (msg, suffix, bot) {
               })
               connection.voiceConnection.disconnect()
             } else {
-              msg.channel.sendMessage('Playlist has ended! Use `' + Config.settings.prefix + 'request` to add more songs!')
+              var prefix = Config.settings.prefix
+              require('../datacontrol.js').customize.prefix(msg).then((r) => {
+                if (r !== null) prefix = r
+                prefix = prefix.replace(regex, '\\$1')
+                msg.channel.sendMessage('Playlist has ended! Use `' + prefix + 'request` to add more songs!')
+              })
             }
           }
         })
       }
     })
-  buffer.on('error', () => { /* Lol */ })
+  buffer.on('error', () => {
+    // To the abyss with your error.
+  })
 }
 
 exports.shuffle = function (msg, bot) {
