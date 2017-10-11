@@ -227,20 +227,17 @@ function next (msg, suffix, bot) {
               Logger.error(err)
               next(msg, suffix, bot)
             } else {
-              console.log(res.request.url)
               res.on('data', chunk => {
                 buffer.push(chunk)
               })
               res.on('end', () => {
                 buffer.push(null)
-                console.log('we buffered the whole thing')
               })
             }
           })
         setTimeout(function () {
           buffer.pipe(encoder.stdin)
           encoder.play()
-          console.log('we are playing something')
         }, 2500)
         if (list[msg.guild.id].volume !== undefined) {
           connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
