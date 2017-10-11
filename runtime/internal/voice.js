@@ -3,7 +3,6 @@ var status = {}
 var requestLink = {}
 var splitLink = {}
 var temp
-var DL = require('ytdl-core')
 var YT = require('youtube-dl')
 var fs = require('fs')
 var Logger = require('./logger.js').Logger
@@ -228,17 +227,20 @@ function next (msg, suffix, bot) {
               Logger.error(err)
               next(msg, suffix, bot)
             } else {
+              console.log(res.request.url)
               res.on('data', chunk => {
                 buffer.push(chunk)
               })
               res.on('end', () => {
                 buffer.push(null)
+                console.log('we buffered the whole thing')
               })
             }
           })
         setTimeout(function () {
           buffer.pipe(encoder.stdin)
           encoder.play()
+          console.log('we are playing something')
         }, 2500)
         if (list[msg.guild.id].volume !== undefined) {
           connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
@@ -631,7 +633,7 @@ function safeLoop (msg, suffix, bot) {
   if (temp.length === 0) {
     msg.channel.sendMessage('Done fetching that playlist')
   } else {
-    DLFetch(temp[0], msg, suffix, bot).then((f) => {
+    YTFetch(temp[0], msg, suffix, bot).then((f) => {
       if (f) {
         msg.channel.sendMessage(`Autoplaying ${list[msg.guild.id].info[0]}`)
         next(msg, suffix, bot)
@@ -645,13 +647,10 @@ function safeLoop (msg, suffix, bot) {
   }
 }
 
-function DLFetch (video, msg) {
+function YTFetch (video, msg) {
   return new Promise(function (resolve, reject) {
     var first = false
-    DL.getInfo('https://youtube.com/watch?v=' + video.snippet.resourceId.videoId, {
-      quality: 140,
-      filter: 'audio'
-    }, (err, i) => {
+    YT.getInfo('https://youtube.com/watch?v=' + video.snippet.resourceId.videoId, ['--skip-download', '-f bestaudio/worstvideo', '--add-header', 'Authorization:' + Config.api_keys.google], {maxBuffer: Infinity}, (err, i) => {
       if (!err && i) {
         if (list[msg.guild.id] === undefined) {
           temp = null
@@ -670,7 +669,7 @@ function DLFetch (video, msg) {
           }
           first = true
         }
-        list[msg.guild.id].link.push(i.formats[0].url)
+        list[msg.guild.id].link.push(i.url)
         list[msg.guild.id].info.push(i.title)
         list[msg.guild.id].requester.push(msg.author.username)
         return resolve(first)
