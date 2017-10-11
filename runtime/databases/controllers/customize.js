@@ -56,7 +56,7 @@ exports.prefix = function (msg) {
       return resolve(i.customize.prefix)
     }).catch(() => {
       initialize(msg.guild)
-      return resolve(false)
+      return resolve(null)
     })
   })
 }

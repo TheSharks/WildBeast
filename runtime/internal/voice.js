@@ -34,6 +34,7 @@ exports.join = function (msg, suffix, bot) {
     list[msg.guild.id] = {
       vanity: false
     }
+    var regex = /([~*_])/g
     var voiceCheck = bot.VoiceConnections.find((r) => r.voiceConnection.guild.id === msg.guild.id)
     if (!voiceCheck && !suffix) {
       var VC = msg.member.getVoiceChannel()
@@ -41,7 +42,8 @@ exports.join = function (msg, suffix, bot) {
         VC.join().then((vc) => {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
-            if (r !== false) prefix = r
+            if (r !== null) prefix = r
+            prefix = prefix.replace(regex, '\\$1')
             var joinmsg = []
             joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** which you're currently connected to.`)
             joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -68,7 +70,8 @@ exports.join = function (msg, suffix, bot) {
         msg.guild.voiceChannels[0].join().then((vc) => {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
-            if (r !== false) prefix = r
+            if (r !== null) prefix = r
+            prefix = prefix.replace(regex, '\\$1')
             var joinmsg = []
             joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}** because you didn't specify a voice channel for me to join.`)
             joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -102,7 +105,8 @@ exports.join = function (msg, suffix, bot) {
         channel.join().then((vc) => {
           var prefix = Config.settings.prefix
           require('../datacontrol.js').customize.prefix(msg).then((r) => {
-            if (r !== false) prefix = r
+            if (r !== null) prefix = r
+            prefix = prefix.replace(regex, '\\$1')
             var joinmsg = []
             joinmsg.push(`I've joined voice channel **${vc.voiceConnection.channel.name}**.`)
             joinmsg.push(`You have until the end of the wait music to request something.`)
@@ -181,6 +185,7 @@ function waiting (vc, msg, bot) {
 
 function next (msg, suffix, bot) {
   status[msg.guild.id] = false
+  let buffer = new stream.Readable()
   bot.VoiceConnections
     .map((connection) => {
       if (connection.voiceConnection.guild.id === msg.guild.id) {
@@ -208,13 +213,25 @@ function next (msg, suffix, bot) {
           list[msg.guild.id].skips.count = 0
           list[msg.guild.id].skips.users = []
         }
-        let buffer = new stream.PassThrough()
         var encoder = connection.voiceConnection.createExternalEncoder({
           type: 'ffmpeg',
           format: 'pcm',
           source: '-'
         })
-        superagent.get(list[msg.guild.id].link[0]).pipe(buffer)
+        superagent.get(list[msg.guild.id].link[0])
+          .end((err, res) => {
+            if (err) {
+              Logger.error(err)
+              next(msg, suffix, bot)
+            } else {
+              res.on('data', chunk => {
+                buffer.push(chunk)
+              })
+              res.on('end', () => {
+                buffer.push(null)
+              })
+            }
+          })
         setTimeout(function () {
           buffer.pipe(encoder.stdin)
           encoder.play()
@@ -266,6 +283,7 @@ function next (msg, suffix, bot) {
         })
       }
     })
+  buffer.on('error', () => {/* Lol */})
 }
 
 exports.shuffle = function (msg, bot) {
