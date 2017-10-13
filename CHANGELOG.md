@@ -1,5 +1,29 @@
 # 4.0.0
 ## Release phase
+
+### 4.5.0
+Improvements to command handler.    
+Improvement to permissions database controller.    
+Improvement to customize database controller.
+Improvement to join-voice command.    
+Improvement to songs playing.
+
+### 4.4.0
+Improvements to help handler.    
+Added aliases to `dogfact` and `catfact`.    
+Changed API of `catfact` to a working version.    
+Change urbandictionary format to embed style.    
+
+### 4.3.0
+Added Contributor Covenant Code of Conduct as per GitHub's new standards.    
+Reworked Docker container: Changed the way the database creation works (Migrated from Dockerfile to entrypoint.sh).    
+Dropped user account support and Mashape integration.    
+The bot now uses the `dev` version of `discordie`.    
+Removed `request` and `unirest` in favor of `superagent`.    
+Added `hackban`, `softban`, `randomdog`, `dogfact`, `shorten` commands.    
+Updated `kick` and `ban` commands to allow for reason submitting to audit logs.    
+Lots of other miscellaneous bug fixes, backend changes and under-the-hood improvements.    
+
 ### 4.2.2
 Improvements to errors and other debug information.  
 Added 3 new role related commands: `addrole`, `takerole` and `colorrole`. Refer to http://docs.thesharks.xyz/commands for more information.  

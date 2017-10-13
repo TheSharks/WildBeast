@@ -25,7 +25,7 @@ function getUptime () {
 
 Commands.ping = {
   name: 'ping',
-  help: "I'll reply to you with pong!",
+  help: 'I\'ll reply to you with pong!',
   timeout: 10,
   level: 0,
   fn: function (msg) {
@@ -42,13 +42,13 @@ Commands.say = {
   aliases: ['echo', 'repeat'],
   timeout: 10,
   level: 0,
-  fn: function (msg, suffix) {
+  fn: function (msg, suffix, bot) {
     if (!suffix) {
       msg.reply('Cannot send an empty message, ya doof.')
       return
     }
     var re = /(discord(\.gg|app\.com\/invite)\/([\w]{16}|([\w]+-?){3}))/
-    if (msg.mentions.length >= 5) {
+    if (msg.mentions.filter(m => m.id !== bot.User.id).length >= 5) {
       msg.reply('No more than five mentions at a time please.')
     } else if (re.test(msg.content)) {
       msg.reply('Lol no thanks, not sending that.')
@@ -90,7 +90,13 @@ Commands.purge = {
               deleteMe.push(result.messages[x])
             }
           }
-          msg.channel.sendMessage(`${deleteMe.length} message(s) have been purged. ${cantDelete} were omitted due to them being over two weeks old.`)
+          msg.channel.sendMessage(`${deleteMe.length} message(s) have been purged. ${cantDelete} were omitted due to them being over two weeks old.`).then((m) => {
+            if (config.settings.autodeletemsg) {
+              setTimeout(() => {
+                m.delete().catch((e) => Logger.error(e))
+              }, config.settings.deleteTimeoutLong)
+            }
+          })
           bot.Messages.deleteMessages(deleteMe)
         }).catch((error) => {
           msg.channel.sendMessage('I could not fetch messages to delete, try again later.')
@@ -198,30 +204,27 @@ Commands.twitch = {
     }
     var url = 'https://api.twitch.tv/kraken/streams/' + suffix
     request.get(url)
-    .set({'Accept': 'application/vnd.twitchtv.v3+json', 'Client-ID': config.api_keys.twitchId})
-    .end((error, response) => {
-      if (error) {
-        bugsnag.notify(error)
-      }
-      if (!error && response.statusCode === 200) {
-        var resp
-        try {
-          resp = response.body
-        } catch (e) {
-          msg.channel.sendMessage('The API returned an unconventional response.')
+      .set({'Accept': 'application/vnd.twitchtv.v3+json', 'Client-ID': config.api_keys.twitchId})
+      .end((error, response) => {
+        if (error) {
+          bugsnag.notify(error)
         }
-        if (resp.stream !== null) {
-          msg.channel.sendMessage(suffix + ' is currently live at https://www.twitch.tv/' + suffix)
-          return
-        } else if (resp.stream === null) {
-          msg.channel.sendMessage(suffix + ' is not currently streaming')
-          return
+        if (!error && response.statusCode === 200) {
+          var resp
+          try {
+            resp = response.body
+          } catch (e) {
+            msg.channel.sendMessage('The API returned an unconventional response.')
+          }
+          if (resp.stream !== null) {
+            msg.channel.sendMessage(suffix + ' is currently live at https://www.twitch.tv/' + suffix)
+          } else if (resp.stream === null) {
+            msg.channel.sendMessage(suffix + ' is not currently streaming')
+          }
+        } else if (!error && response.statusCode === 404) {
+          msg.channel.sendMessage('Channel does not exist!')
         }
-      } else if (!error && response.statusCode === 404) {
-        msg.channel.sendMessage('Channel does not exist!')
-        return
-      }
-    })
+      })
   }
 }
 
@@ -236,8 +239,8 @@ Commands.customize = {
     var x = suffix.slice(1, suffix.length).join(' ')
     if (suffix[0].length === 0) {
       var datacontrol = require('../datacontrol')
-      datacontrol.customize.prefix(msg).then((prefix) => {
-        msg.channel.sendMessage(`No option entered! Check ${prefix !== false ? prefix : config.settings.prefix}customize help to see the various options you can set.`)
+      datacontrol.customize.getGuildData(msg).then(g => {
+        msg.channel.sendMessage(`No option entered! Check ${g.customize.prefix !== false ? g.customize.prefix : config.settings.prefix}customize help to see the various options you can set.`)
       })
     } else if (suffix[0] === 'help') {
       c.helpHandle(msg)
@@ -253,7 +256,7 @@ Commands.customize = {
 
 Commands.info = {
   name: 'info',
-  help: "I'll print some information about me.",
+  help: 'I\'ll print some information about me.',
   timeout: 10,
   level: 0,
   fn: function (msg, suffix, bot) {
@@ -264,12 +267,12 @@ Commands.info = {
       owner = `'ID: ${config.permissions.master[0]}`
     }
     var field = [{name: 'Servers Connected', value: '```\n' + bot.Guilds.length + '```', inline: true},
-        {name: 'Users Known', value: '```\n' + bot.Users.length + '```', inline: true},
-        {name: 'Channels Connected', value: '```\n' + bot.Channels.length + '```', inline: true},
-        {name: 'Private Channels', value: '```\n' + bot.DirectMessageChannels.length + '```', inline: true},
-        {name: 'Messages Received', value: '```\n' + bot.Messages.length + '```', inline: true},
-        {name: 'Owner', value: '```\n' + owner + '```', inline: true},
-        {name: 'Sharded?', value: '```\n' + `${argv.shardmode ? 'Yes' : 'No'}` + '```', inline: true}]
+      {name: 'Users Known', value: '```\n' + bot.Users.length + '```', inline: true},
+      {name: 'Channels Connected', value: '```\n' + bot.Channels.length + '```', inline: true},
+      {name: 'Private Channels', value: '```\n' + bot.DirectMessageChannels.length + '```', inline: true},
+      {name: 'Messages Received', value: '```\n' + bot.Messages.length + '```', inline: true},
+      {name: 'Owner', value: '```\n' + owner + '```', inline: true},
+      {name: 'Sharded?', value: '```\n' + `${argv.shardmode ? 'Yes' : 'No'}` + '```', inline: true}]
     if (argv.shardmode) {
       field.push({name: 'Shard ID', value: '```\n' + argv.shardid + '```', inline: true})
       field.push({name: 'Shard Count', value: '```\n' + argv.shardcount + '```', inline: true})
@@ -289,7 +292,7 @@ Commands.info = {
 
 Commands['leave-server'] = {
   name: 'leave-server',
-  help: "I'll leave this server if I am not welcome here.",
+  help: 'I\'ll leave this server if I am not welcome here.',
   noDM: true,
   level: 3,
   fn: function (msg) {
@@ -318,13 +321,13 @@ Commands.namechanges = {
   help: 'I will tell you the name changes for the user you mention.',
   noDM: true,
   level: 0,
-  fn: function (msg) {
+  fn: function (msg, suffix, bot) {
     const n = require('../databases/controllers/users.js')
-    if (msg.mentions.length === 0) {
+    if (msg.mentions.filter(m => m.id !== bot.User.id).length === 0) {
       msg.channel.sendMessage('Please mention the user you want the name changes of.')
       return
     }
-    msg.mentions.map((u) => {
+    msg.mentions.filter(m => m.id !== bot.User.id).map((u) => {
       n.names(u).then((n) => {
         msg.channel.sendMessage(n.join(', '))
       })
@@ -344,12 +347,12 @@ Commands.setlevel = {
       msg.reply('Your first parameter is not a number!')
     } else if (suffix[0] > 3) {
       msg.channel.sendMessage('Setting a level higher than 3 is not allowed.')
-    } else if (msg.mentions.length === 0 && msg.mention_roles.length === 0 && !msg.mention_everyone) {
+    } else if (msg.mentions.filter(m => m.id !== bot.User.id).length === 0 && msg.mention_roles.length === 0 && !msg.mention_everyone) {
       msg.reply('Please @mention the user(s)/role(s) you want to set the permission level of.')
-    } else if (msg.mentions.length === 1 && msg.mentions[0].id === msg.guild.owner.id) {
-      msg.reply("You cannot set the server owner's level.")
-    } else if (msg.mentions.length === 1 && msg.mentions[0].id === bot.User.id) {
-      msg.reply("I don't need any level set, I can do anything regardless of access levels.")
+    } else if (msg.mentions.filter(m => m.id !== bot.User.id).length === 1 && msg.mentions.filter(m => m.id !== bot.User.id)[0].id === msg.guild.owner.id) {
+      msg.reply('You cannot set the server owner\'s level.')
+    } else if (msg.mentions.filter(m => m.id !== bot.User.id).length === 1 && msg.mentions.filter(m => m.id !== bot.User.id)[0].id === bot.User.id) {
+      msg.reply('I don\'t need any level set, I can do anything regardless of access levels.')
     } else {
       Permissions.adjustLevel(msg, msg.mentions, parseFloat(suffix[0]), msg.mention_roles).then(function () {
         msg.channel.sendMessage('Alright! The permission levels have been set successfully!')
@@ -372,18 +375,18 @@ Commands.addrole = {
     var guildPerms = msg.author.permissionsFor(msg.guild)
     var botPerms = bot.User.permissionsFor(msg.guild)
 
-    let roleToAdd = suffix.split(' ').splice(msg.mentions.length).join(' ')
+    let roleToAdd = suffix.split(' ').splice(msg.mentions.filter(m => m.id !== bot.User.id).length).join(' ')
     let role = msg.guild.roles.find(r => r.name === roleToAdd)
     if (!guildPerms.General.MANAGE_ROLES) {
       msg.reply('You don\'t have Manage Roles permission here.')
     } else if (!botPerms.General.MANAGE_ROLES) {
       msg.channel.sendMessage('I don\'t have Manage Roles permission here, sorry!')
-    } else if (msg.mentions.length === 0 && !msg.mention_everyone) {
+    } else if (msg.mentions.filter(m => m.id !== bot.User.id).length === 0 && !msg.mention_everyone) {
       msg.reply('Please @mention the user(s) you want to give the role to.')
     } else if (typeof role !== 'object') {
       msg.reply('The role does not seem to exist. Check your spelling and remember that this command is case sensitive.')
     } else {
-      msg.mentions.map(u => {
+      msg.mentions.filter(m => m.id !== bot.User.id).map(u => {
         let guildMember = msg.guild.members.find(a => a.id === u.id)
         guildMember.assignRole(role).then(() => {
           msg.channel.sendMessage('Role `' + roleToAdd + '` successfully assigned to **' + guildMember.username + '**!')
@@ -405,18 +408,18 @@ Commands.takerole = {
     var guildPerms = msg.author.permissionsFor(msg.guild)
     var botPerms = bot.User.permissionsFor(msg.guild)
 
-    let roleToRemove = suffix.split(' ').splice(msg.mentions.length).join(' ')
+    let roleToRemove = suffix.split(' ').splice(msg.mentions.filter(m => m.id !== bot.User.id).length).join(' ')
     let role = msg.guild.roles.find(r => r.name === roleToRemove)
     if (!guildPerms.General.MANAGE_ROLES) {
       msg.reply('You don\'t have Manage Roles permission here.')
     } else if (!botPerms.General.MANAGE_ROLES) {
       msg.channel.sendMessage('I don\'t have Manage Roles permission here, sorry!')
-    } else if (msg.mentions.length === 0 && !msg.mention_everyone) {
+    } else if (msg.mentions.filter(m => m.id !== bot.User.id).length === 0 && !msg.mention_everyone) {
       msg.reply('Please @mention the user(s) you want to give the role to.')
     } else if (typeof role !== 'object') {
       msg.reply('The role does not seem to exist. Check your spelling and remember that this command is case sensitive.')
     } else {
-      msg.mentions.map(u => {
+      msg.mentions.filter(m => m.id !== bot.User.id).map(u => {
         let guildMember = msg.guild.members.find(a => a.id === u.id)
         guildMember.unassignRole(role).then(() => {
           msg.channel.sendMessage('Role `' + roleToRemove + '` successfully taken from **' + guildMember.username + '**!')
@@ -433,11 +436,11 @@ Commands.rankup = {
   help: 'Level up somebody\'s level by one.',
   timeout: 5,
   level: 3,
-  fn: function (msg, suffix) {
+  fn: function (msg, suffix, bot) {
     var Permissions = require('../databases/controllers/permissions.js')
     var array = []
-    if (suffix && msg.mentions.length > 0) {
-      msg.mentions.map(function (user) {
+    if (suffix && msg.mentions.filter(m => m.id !== bot.User.id).length > 0) {
+      msg.mentions.filter(m => m.id !== bot.User.id).map(function (user) {
         Permissions.checkLevel(msg, msg.author.id, msg.member.roles).then((authorlevel) => {
           Permissions.checkLevel(msg, user.id, user.memberOf(msg.guild).roles).then(function (level) {
             if (authorlevel > 3 && level >= 3) {
@@ -448,7 +451,7 @@ Commands.rankup = {
               array.push(user.username)
               Permissions.adjustLevel(msg, msg.mentions, level + 1, msg.mention_roles)
             }
-            if (msg.mentions.indexOf(user) + 1 === msg.mentions.length && array.length > 0) {
+            if (msg.mentions.filter(m => m.id !== bot.User.id).indexOf(user) + 1 === msg.mentions.filter(m => m.id !== bot.User.id).length && array.length > 0) {
               msg.reply('**' + array.join(', ') + '** have been leveled up!')
             }
           }).catch(function (err) {
@@ -481,24 +484,24 @@ Commands.setnsfw = {
             msg.channel.sendMessage('NSFW commands are now disallowed for ' + msg.channel.mention)
           }
         }).catch(() => {
-          msg.reply("I've failed to set NSFW flag!")
+          msg.reply('I\'ve failed to set NSFW flag!')
         })
       } else {
         msg.channel.sendMessage('Use either `on` or `off` as suffix!')
       }
     } else {
-      msg.channel.sendMessage("NSFW commands are always allowed in DM's.")
+      msg.channel.sendMessage('NSFW commands are always allowed in DM\'s.')
     }
   }
 }
 
 Commands.hello = {
   name: 'hello',
-  help: "I'll respond to you with hello along with a GitHub link!",
+  help: 'I\'ll respond to you with hello along with a GitHub link!',
   timeout: 20,
   level: 0,
   fn: function (msg, suffix, bot) {
-    msg.channel.sendMessage('Hi ' + msg.author.username + ", I'm " + bot.User.username + ' and I was developed by the team over at TheSharks! Improve me by contributing to my source code on GitHub: https://github.com/TheSharks/WildBeast')
+    msg.channel.sendMessage('Hi ' + msg.author.username + ', I\'m ' + bot.User.username + ' and I was developed by the team over at TheSharks! Improve me by contributing to my source code on GitHub: https://github.com/TheSharks/WildBeast')
   }
 }
 
@@ -522,7 +525,8 @@ Commands.setstatus = {
         msg.channel.sendMessage(`Set status to streaming with message ${suffix.substring(first[0].length + 1)}`)
       } else if (['online', 'idle', 'dnd', 'invisible'].indexOf(first[0]) > -1) {
         bot.User.setStatus(first[0], {
-          name: (first[1] ? suffix.substring(first[0].length + 1) : null)
+          name: (first[1] ? suffix.substring(first[0].length + 1) : null),
+          type: 0
         })
         msg.channel.sendMessage(`Set status to ${first[0]} with message ${suffix.substring(first[0].length + 1)}`)
       } else if (suffix.substring(first[0].length + 1).length < 1) {
@@ -537,7 +541,7 @@ Commands.setstatus = {
 
 Commands['server-info'] = {
   name: 'server-info',
-  help: "I'll tell you some information about the server you're currently in.",
+  help: 'I\'ll tell you some information about the server you\'re currently in.',
   aliases: ['serverinfo'],
   noDM: true,
   timeout: 20,
@@ -546,17 +550,24 @@ Commands['server-info'] = {
     // if we're not in a PM, return some info about the channel
     if (msg.guild) {
       var field = [{name: 'Server name', value: `${msg.guild.name} [${msg.guild.acronym}] (${msg.guild.id})`},
-      {name: 'Owned by', value: '```\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```', inline: true},
-      {name: 'Current Region', value: '```\n' + msg.guild.region + '```', inline: true},
-      {name: 'Members', value: '```\n' + msg.guild.members.length + '```', inline: true},
-      {name: 'Text Channels', value: '```\n' + msg.guild.textChannels.length + '```', inline: true},
-      {name: 'Voice Channels', value: '```\n' + msg.guild.voiceChannels.length + '```', inline: true},
-      {name: 'Total Roles', value: '```\n' + msg.guild.roles.length + '```', inline: true}]
+        {
+          name: 'Owned by',
+          value: '```\n' + `${msg.guild.owner.username}#${msg.guild.owner.discriminator} (${msg.guild.owner.id})` + '```',
+          inline: true
+        },
+        {name: 'Current Region', value: '```\n' + msg.guild.region + '```', inline: true},
+        {name: 'Members', value: '```\n' + msg.guild.members.length + '```', inline: true},
+        {name: 'Text Channels', value: '```\n' + msg.guild.textChannels.length + '```', inline: true},
+        {name: 'Voice Channels', value: '```\n' + msg.guild.voiceChannels.length + '```', inline: true},
+        {name: 'Total Roles', value: '```\n' + msg.guild.roles.length + '```', inline: true}]
 
       if (msg.guild.afk_channel === null) {
         field.push({name: 'AFK-Channel', value: '```\nNone```'})
       } else {
-        field.push({name: 'AFK-channel', value: '```\n' + `${msg.guild.afk_channel.name} (${msg.guild.afk_channel.id})` + '```'})
+        field.push({
+          name: 'AFK-channel',
+          value: '```\n' + `${msg.guild.afk_channel.name} (${msg.guild.afk_channel.id})` + '```'
+        })
       }
       var embed = {
         author: {name: `Information requested by ${msg.author.username}`},
@@ -571,24 +582,26 @@ Commands['server-info'] = {
       }
       msg.channel.sendMessage('', false, embed)
     } else {
-      msg.channel.sendMessage("You can't do that in a DM, dummy!")
+      msg.channel.sendMessage('You can\'t do that in a DM, dummy!')
     }
   }
 }
 
 Commands.userinfo = {
   name: 'userinfo',
-  help: "I'll get some information about the user you've mentioned.",
+  help: 'I\'ll get some information about the user you\'ve mentioned.',
   noDM: true,
   level: 0,
   fn: function (msg, suffix, bot) {
     var Permissions = require('../databases/controllers/permissions.js')
     if (msg.isPrivate) {
-      msg.channel.sendMessage("Sorry you can't use this in DMs")
+      msg.channel.sendMessage('Sorry you can\'t use this in DMs')
     }
-    if (msg.mentions.length === 0) {
+    if (msg.mentions.filter(m => m.id !== bot.User.id).length === 0) {
       Permissions.checkLevel(msg, msg.author.id, msg.member.roles).then((level) => {
-        var tempRoles = msg.member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
+        var tempRoles = msg.member.roles.sort(function (a, b) {
+          return a.position - b.position
+        }).reverse()
         var roles = []
         for (var i in tempRoles) {
           roles.push(tempRoles[i].name)
@@ -620,11 +633,13 @@ Commands.userinfo = {
       })
       return
     }
-    msg.mentions.map(function (user) {
+    msg.mentions.filter(m => m.id !== bot.User.id).map(function (user) {
       Permissions.checkLevel(msg, user.id, user.memberOf(msg.guild).roles).then(function (level) {
         var guild = msg.guild
         var member = guild.members.find((m) => m.id === user.id)
-        var tempRoles = member.roles.sort(function (a, b) { return a.position - b.position }).reverse()
+        var tempRoles = member.roles.sort(function (a, b) {
+          return a.position - b.position
+        }).reverse()
         var roles = []
         for (var i in tempRoles) {
           roles.push(tempRoles[i].name)
@@ -660,14 +675,13 @@ Commands.userinfo = {
 
 Commands['join-server'] = {
   name: 'join-server',
-  help: "I'll join the server you've requested me to join, as long as the invite is valid and I'm not banned of already in the requested server.",
+  help: 'I\'ll join the server you\'ve requested me to join, as long as the invite is valid and I\'m not banned of already in the requested server.',
   aliases: ['join', 'joinserver', 'invite'],
   usage: '<bot-mention> <instant-invite>',
   level: 0,
   fn: function (msg, suffix, bot) {
     if (bot.User.bot) {
-      msg.channel.sendMessage("Sorry, bot accounts can't accept instant invites, instead, use my OAuth URL: <" + config.bot.oauth + '>')
-      return
+      msg.channel.sendMessage('Sorry, bot accounts can\'t accept instant invites, instead, use my OAuth URL: <' + config.bot.oauth + '>')
     } else {
       Logger.warn('Using user accounts is deprecated!')
     }
@@ -841,7 +855,8 @@ Commands.softban = {
         let banMembers = {success: [], error: []}
         let reasonWords = []
         suffix.split(' ').map((id) => {
-          if (id.startsWith('<@')) {} else {
+          if (id.startsWith('<@')) {
+          } else {
             reasonWords.push(id)
           }
         })
@@ -936,14 +951,14 @@ Commands.softban = {
 
 Commands.prefix = {
   name: 'prefix',
-  help: "If you, despite reading this have no clue what my prefix is, I'll tell you!",
+  help: 'If you, despite reading this have no clue what my prefix is, I\'ll tell you!',
   timeout: 5,
   level: 0,
   fn: function (msg) {
     var datacontrol = require('../datacontrol')
-    datacontrol.customize.prefix(msg).then((prefix) => {
-      if (prefix) {
-        msg.channel.sendMessage(`My prefix on this server is ${prefix}`)
+    datacontrol.customize.getGuildData(msg).then(g => {
+      if (g.customize.prefix) {
+        msg.channel.sendMessage(`My prefix on this server is ${g.customize.prefix}`)
       } else {
         msg.channel.sendMessage(`My prefix is ${config.settings.prefix}`) // Default prefix, if none is set in customize
       }
@@ -983,7 +998,9 @@ Commands.colorrole = {
       msg.reply('I do not have Manage Roles permission here, sorry!')
       return
     }
-    var botRole = bot.User.memberOf(msg.guild).roles.sort(function (a, b) { return a.position < b.position })[0]
+    var botRole = bot.User.memberOf(msg.guild).roles.sort(function (a, b) {
+      return a.position < b.position
+    })[0]
     if (role.position >= botRole.position) {
       msg.reply('This role is higher or equal to my highest role, I cannot color it!')
       return

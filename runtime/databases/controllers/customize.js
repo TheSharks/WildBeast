@@ -14,16 +14,49 @@ var Logger = require('../../internal/logger.js').Logger
 var bugsnag = require('bugsnag')
 bugsnag.register(Config.api_keys.bugsnag)
 
-exports.prefix = function (msg) {
+exports.getGuildData = function (msg) {
   return new Promise(function (resolve, reject) {
     if (msg.isPrivate) {
-      return resolve(false)
+      return resolve({customize: {
+        nsfw: null,
+        perms: null,
+        prefix: null,
+        volume: 25,
+        timeout: null,
+        welcome: false,
+        welcomeMessage: null
+      }})
+    } else {
+      r.db('Discord').table('Guilds').get(msg.guild.id).then(guild => {
+        if (guild !== null) {
+          return resolve(guild)
+        } else {
+          initialize(msg.guild)
+          return resolve({customize: {
+            nsfw: null,
+            perms: null,
+            prefix: null,
+            volume: 25,
+            timeout: null,
+            welcome: false,
+            welcomeMessage: null
+          }})
+        }
+      }).catch(err => {
+        Logger.error(`REQL Error: ${err}`)
+        return reject(err)
+      })
     }
+  })
+}
+
+exports.prefix = function (msg) {
+  return new Promise(function (resolve) {
     getDatabaseDocument(msg.guild).then((i) => {
-      resolve((i.customize.prefix === null) ? false : i.customize.prefix)
+      return resolve(i.customize.prefix)
     }).catch(() => {
       initialize(msg.guild)
-      reject('No database')
+      return resolve(null)
     })
   })
 }

@@ -8,7 +8,7 @@ var cleverbot = new Cleverbot(config.api_keys.cleverbot_user, config.api_keys.cl
 
 Commands.gif = {
   name: 'gif',
-  help: "I'll search Giphy for a gif matching your tags.",
+  help: 'I\'ll search Giphy for a gif matching your tags.',
   aliases: ['giphy'],
   timeout: 10,
   level: 0,
@@ -34,8 +34,8 @@ Commands.rip = {
     var qs = require('querystring')
     var resolve = []
     var skipped = false
-    if (msg.mentions.length > 0) {
-      for (var m of msg.mentions) {
+    if (msg.mentions.filter(m => m.id !== bot.User.id).length > 0) {
+      for (var m of msg.mentions.filter(m => m.id !== bot.User.id)) {
         if (m.id !== bot.User.id) {
           if (resolve[0] === undefined) {
             resolve[0] = m.username
@@ -49,7 +49,7 @@ Commands.rip = {
     } else if (suffix) {
       resolve[0] = suffix
     }
-    if (skipped === true && msg.mentions.length === 1 && suffix) {
+    if (skipped === true && msg.mentions.filter(m => m.id !== bot.User.id).length === 1 && suffix) {
       resolve[0] = suffix
     }
     msg.channel.sendMessage('http://ripme.xyz/' + qs.stringify(resolve).substr(2))
@@ -58,7 +58,7 @@ Commands.rip = {
 
 Commands.fortunecow = {
   name: 'fortunecow',
-  help: "I'll get a random fortunecow!",
+  help: 'I\'ll get a random fortunecow!',
   timeout: 20,
   level: 0,
   fn: function (msg) {
@@ -77,7 +77,7 @@ Commands.fortunecow = {
 
 Commands.randomcat = {
   name: 'randomcat',
-  help: "I'll get a random cat image for you!",
+  help: 'I\'ll get a random cat image for you!',
   aliases: ['cat'],
   module: 'fun',
   timeout: 10,
@@ -96,7 +96,7 @@ Commands.randomcat = {
 
 Commands.randomdog = {
   name: 'randomdog',
-  help: "I'll get a random doggo image for you!",
+  help: 'I\'ll get a random doggo image for you!',
   aliases: ['doggo'],
   module: 'fun',
   timeout: 10,
@@ -115,7 +115,8 @@ Commands.randomdog = {
 
 Commands.dogfact = {
   name: 'dogfact',
-  help: "I'll give you some interesting dogfacts!",
+  help: 'I\'ll give you some interesting dogfacts!',
+  aliases: ['dogfacts'],
   aliases: ['dogfacts'],
   timeout: 10,
   level: 0,
@@ -133,25 +134,25 @@ Commands.dogfact = {
 
 Commands.catfact = {
   name: 'catfact',
-  help: "I'll give you some interesting catfacts!",
+  help: 'I\'ll give you some interesting catfacts!',
   aliases: ['catfacts'],
   timeout: 10,
   level: 0,
   fn: function (msg) {
     request.get('https://catfact.ninja/fact')
-    .end((err, res) => {
-      if (!err && res.status === 200) {
-        msg.channel.sendMessage(res.body.fact)
-      } else {
-        Logger.error(`Got an error: ${err}, status code: ${res.status}`)
-      }
-    })
+      .end((err, res) => {
+        if (!err && res.status === 200) {
+          msg.channel.sendMessage(res.body.fact)
+        } else {
+          Logger.error(`Got an error: ${err}, status code: ${res.status}`)
+        }
+      })
   }
 }
 
 Commands.leetspeak = {
   name: 'leetspeak',
-  help: "1'Ll 3nc0d3 Y0uR Me5s@g3 1Nt0 l337sp3@K!",
+  help: '1\'Ll 3nc0d3 Y0uR Me5s@g3 1Nt0 l337sp3@K!',
   aliases: ['leetspeek', 'leetspeach'],
   level: 0,
   fn: function (msg, suffix) {
@@ -167,7 +168,7 @@ Commands.leetspeak = {
 
 Commands.stroke = {
   name: 'stroke',
-  help: "I'll stroke someones ego!",
+  help: 'I\'ll stroke someones ego!',
   timeout: 5,
   level: 0,
   fn: function (msg, suffix) {
@@ -181,9 +182,9 @@ Commands.stroke = {
       name = ['Andrei', 'Zbikowski'] // I'm not sorry b1nzy <3
     }
     request.get('http://api.icndb.com/jokes/random')
-    .query({ escape: 'javascript' })
-    .query({ firstName: name[0] })
-    .query({ lastName: name[1] })
+      .query({escape: 'javascript'})
+      .query({firstName: name[0]})
+      .query({lastName: name[1]})
     .end((err, res) => {
       if (!err && res.status === 200) {
         msg.channel.sendMessage(res.body.value.joke)
@@ -196,7 +197,7 @@ Commands.stroke = {
 
 Commands.yomomma = {
   name: 'yomomma',
-  help: "I'll get a random yomomma joke for you!",
+  help: 'I\'ll get a random yomomma joke for you!',
   timeout: 5,
   level: 0,
   fn: function (msg) {
@@ -220,7 +221,7 @@ Commands.yomomma = {
 
 Commands.advice = {
   name: 'advice',
-  help: "I'll give you some fantastic advice!",
+  help: 'I\'ll give you some fantastic advice!',
   noDM: true, // Ratelimits Ratelimits Ratelimits Ratelimits
   timeout: 5,
   level: 0,
@@ -250,7 +251,7 @@ Commands.yesno = {
   level: 0,
   fn: function (msg, suffix) {
     request.get('http://yesno.wtf/api/')
-    .query({ force: suffix })
+      .query({force: suffix})
     .end((err, res) => {
       if (!err && res.status === 200) {
         msg.reply(res.body.image)
@@ -263,7 +264,7 @@ Commands.yesno = {
 
 Commands.urbandictionary = {
   name: 'urbandictionary',
-  help: "I'll fetch what idiots on the internet think something means",
+  help: 'I\'ll fetch what idiots on the internet think something means',
   aliases: ['ud', 'urban'],
   timeout: 10,
   level: 0,
@@ -272,7 +273,7 @@ Commands.urbandictionary = {
       msg.reply('Yes, let\'s just look up absolutely nothing.')
     } else {
       request.get('http://api.urbandictionary.com/v0/define')
-        .query({ term: suffix })
+        .query({term: suffix})
         .end((err, res) => {
           if (!err && res.status === 200) {
             var uD = res.body
@@ -292,7 +293,7 @@ Commands.urbandictionary = {
                 ]
               })
             } else {
-              msg.reply(suffix + ": This word is so screwed up, even Urban Dictionary doesn't have it in its database")
+              msg.reply(suffix + ': This word is so screwed up, even Urban Dictionary doesn\'t have it in its database')
             }
           } else {
             Logger.error(`Got an error: ${err}, status code: ${res.status}`)
@@ -304,7 +305,7 @@ Commands.urbandictionary = {
 
 Commands.fact = {
   name: 'fact',
-  help: "I'll give you some interesting facts!",
+  help: 'I\'ll give you some interesting facts!',
   timeout: 5,
   level: 0,
   fn: function (msg) {
@@ -332,7 +333,7 @@ Commands.fact = {
 
 Commands.dice = {
   name: 'dice',
-  help: "I'll roll some dice!",
+  help: 'I\'ll roll some dice!',
   timeout: 5,
   level: 0,
   fn: function (msg, suffix) {
@@ -356,7 +357,7 @@ Commands.dice = {
 
 Commands.fancyinsult = {
   name: 'fancyinsult',
-  help: "I'll insult your friends!",
+  help: 'I\'ll insult your friends!',
   aliases: ['insult'],
   timeout: 5,
   level: 0,
@@ -404,7 +405,7 @@ Commands.e621 = {
   fn: function (msg, suffix) {
     msg.channel.sendTyping()
     request.post(`https://e621.net/post/index.json`)
-      .query({ limit: '30', tags: suffix })
+      .query({limit: '30', tags: suffix})
       .set({'Accept': 'application/json', 'User-Agent': 'Superagent Node.js'})
       // Fetching 30 posts from E621 with the given tags
       .end(function (err, result) {
@@ -437,7 +438,7 @@ Commands.rule34 = {
   fn: function (msg, suffix) {
     msg.channel.sendTyping()
     request.post('http://rule34.xxx/index.php') // Fetching 100 rule34 pics
-    .query({ page: 'dapi', s: 'post', q: 'index', tags: suffix })
+      .query({page: 'dapi', s: 'post', q: 'index', tags: suffix})
     .end((err, result) => {
       if (err || result.status !== 200) {
         Logger.error(`${err}, status code ${result.status}`)
@@ -454,11 +455,11 @@ Commands.rule34 = {
             var count = Math.floor((Math.random() * reply.posts.post.length))
             var FurryArray = []
             if (!suffix) {
-              FurryArray.push(msg.author.mention + ", you've searched for `random`")
+                FurryArray.push(msg.author.mention + ', you\'ve searched for `random`')
             } else {
-              FurryArray.push(msg.author.mention + ", you've searched for `" + suffix + '`')
+                FurryArray.push(msg.author.mention + ', you\'ve searched for `' + suffix + '`')
             }
-            FurryArray.push('http:' + reply.posts.post[count].$.file_url)
+              FurryArray.push(`https:${reply.posts.post[count].$.file_url}`)
             msg.channel.sendMessage(FurryArray.join('\n'))
           }
         })
@@ -469,7 +470,7 @@ Commands.rule34 = {
 
 Commands.meme = {
   name: 'meme',
-  help: "I'll create a meme with your suffixes!",
+  help: 'I\'ll create a meme with your suffixes!',
   timeout: 10,
   usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
   level: 0,
@@ -500,7 +501,7 @@ Commands.meme = {
 
 Commands.xkcd = {
   name: 'xkcd',
-  help: "I'll get a XKCD comic for you, you can define a comic number and I'll fetch that one.",
+  help: 'I\'ll get a XKCD comic for you, you can define a comic number and I\'ll fetch that one.',
   timeout: 10,
   usage: 'Nothing for a random comic, current for latest, number to get that comic.',
   level: 0,
@@ -548,7 +549,7 @@ Commands.xkcd = {
 
 Commands.magic8ball = {
   name: 'magic8ball',
-  help: "I'll make a prediction using a Magic 8 Ball",
+  help: 'I\'ll make a prediction using a Magic 8 Ball',
   aliases: ['8ball'],
   timeout: 5,
   level: 0,
@@ -590,7 +591,7 @@ Commands.magic8ball = {
 
 Commands.randommeme = {
   name: 'randommeme',
-  help: "I'll get a random meme for you!",
+  help: 'I\'ll get a random meme for you!',
   level: '0',
   nsfw: true,
   fn: function (msg) {
@@ -619,8 +620,8 @@ Commands.shorten = {
     }
     if (url.parse(suffix).hostname) {
       request.post(`https://www.googleapis.com/urlshortener/v1/url`)
-      .query({ key: config.api_keys.google })
-      .send({ longUrl: suffix })
+        .query({key: config.api_keys.google})
+        .send({longUrl: suffix})
       .set('Content-Type', 'application/json')
       .end(function (err, res) {
         if (!err) {

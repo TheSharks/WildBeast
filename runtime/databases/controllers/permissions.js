@@ -24,16 +24,14 @@ exports.checkLevel = function (msg, user, roles) {
       return resolve(3)
     } else {
       r.db('Discord').table('Users').get(user).then(u => {
-        if (u !== null) {
-          if (u.banned) {
+          if (u !== null && u.banned) {
             return resolve(-1)
           } else if (msg.isPrivate || !msg.guild) {
             return resolve(0)
+          } else if (user === msg.guild.owner_id) {
+            return resolve(4)
           } else {
             getDatabaseDocument(msg.guild).then((d) => {
-              if (user === d.superUser) {
-                return resolve(4)
-              }
               var level = d.perms.standard.everyone
               if (roles) {
                 for (var r of roles) {
@@ -63,9 +61,6 @@ exports.checkLevel = function (msg, user, roles) {
               reject(e)
             })
           }
-        } else {
-          return resolve(0)
-        }
       })
     }
   })
