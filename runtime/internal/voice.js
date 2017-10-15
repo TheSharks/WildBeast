@@ -246,6 +246,9 @@ function next (msg, suffix, bot) {
             connection.voiceConnection.getEncoder().setVolume(v)
           })
         }
+        encoder.stdin.on('error', () => {
+          // We can ignore this safely.
+        })
         encoder.once('end', () => {
           if (list[msg.guild.id].info.length === 0) return
           msg.channel.sendMessage('**' + list[msg.guild.id].info[0] + '** has ended!').then((m) => {
