@@ -56,25 +56,6 @@ Commands.rip = {
   }
 }
 
-Commands.fortunecow = {
-  name: 'fortunecow',
-  help: 'I\'ll get a random fortunecow!',
-  timeout: 20,
-  level: 0,
-  fn: function (msg) {
-    request.get('https://fortunecow.dougley.com/random')
-      .end((err, result) => {
-        if (!err && result.status === 200) {
-          msg.reply('```' + result.text + '```')
-        } else if (result.status === 429) {
-          msg.channel.sendMessage('Too many requests, please try again later.')
-        } else {
-          Logger.warn(err)
-        }
-      })
-  }
-}
-
 Commands.randomcat = {
   name: 'randomcat',
   help: 'I\'ll get a random cat image for you!',
@@ -399,6 +380,7 @@ Commands.e621 = {
   name: 'e621',
   help: 'e621, the definition of *Stop taking the Internet so seriously.*',
   usage: '<tags> multiword tags need to be typed like: wildbeast_is_a_discord_bot',
+  timeout: 10,
   level: 0,
   nsfw: true,
   fn: function (msg, suffix) {
@@ -432,6 +414,7 @@ Commands.e621 = {
 Commands.rule34 = {
   name: 'rule34',
   help: 'Rule#34 : If it exists there is porn of it. If not, start uploading.',
+  timeout: 10,
   level: 0,
   nsfw: true,
   fn: function (msg, suffix) {
