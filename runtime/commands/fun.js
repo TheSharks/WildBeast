@@ -358,7 +358,7 @@ Commands.fancyinsult = {
   }
 }
 
-Commands.cleverbot = {
+/*Commands.cleverbot = {
   name: 'cleverbot',
   help: 'Talk to cleverbot!',
   aliases: ['chat', 'cb', 'talk'],
@@ -374,7 +374,7 @@ Commands.cleverbot = {
       })
     })
   }
-}
+}*/
 
 Commands.e621 = {
   name: 'e621',
