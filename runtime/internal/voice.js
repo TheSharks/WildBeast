@@ -238,14 +238,14 @@ function next (msg, suffix, bot) {
         setTimeout(function () {
           buffer.pipe(encoder.stdin)
           encoder.play()
+          if (list[msg.guild.id].volume !== undefined) {
+            connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
+          } else {
+            require('../datacontrol.js').customize.volume(msg).then((v) => {
+              connection.voiceConnection.getEncoder().setVolume(v)
+            })
+          }
         }, 2500)
-        if (list[msg.guild.id].volume !== undefined) {
-          connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
-        } else {
-          require('../datacontrol.js').customize.volume(msg).then((v) => {
-            connection.voiceConnection.getEncoder().setVolume(v)
-          })
-        }
         encoder.stdin.on('error', () => {
           // We can ignore this safely.
         })
