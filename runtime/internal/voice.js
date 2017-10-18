@@ -238,7 +238,7 @@ function next (msg, suffix, bot) {
         setTimeout(function () {
           buffer.pipe(encoder.stdin)
           encoder.play()
-          if (list[msg.guild.id].volume !== undefined) {
+          if (list[msg.guild.id] && list[msg.guild.id].volume !== undefined) {
             connection.voiceConnection.getEncoder().setVolume(list[msg.guild.id].volume)
           } else {
             require('../datacontrol.js').customize.volume(msg).then((v) => {
