@@ -249,7 +249,9 @@ function next (msg, suffix, bot) {
           }, 2500)
           encoder.stdin.on('error', () => {
             // Set the buffer to null to hopefully avoid uhh stuff
-            list[msg.guild.id].buffer = null
+            if (list[msg.guild.id]) {
+              list[msg.guild.id].buffer = null
+            }
           })
           encoder.once('end', () => {
             list[msg.guild.id].buffer = null
