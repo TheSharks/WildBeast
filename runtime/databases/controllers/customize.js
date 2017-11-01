@@ -179,6 +179,17 @@ exports.adjust = function (msg, what, how) {
             reject(e)
           })
           break
+        case 'welcomeChannel':
+          r.db('Discord').table('Guilds').get(msg.guild.id).update({
+            customize: {
+              welcomeChannel: how
+            }
+          }).run().then(() => {
+            resolve(how)
+          }).catch((e) => {
+            reject(e)
+          })
+          break
         case 'prefix':
           if (how.indexOf('"') === -1) {
             return reject('`Put new prefixes between double quotes please.`')
