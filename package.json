@@ -47,7 +47,7 @@
     "semver": "^5.1.0",
     "snyk": "^1.24.5",
     "superagent": "^3.5.2",
-    "tagscript": "github:guscaplan/tagscript",
+    "tagscript": "github:devsnek/tagscript",
     "winston": "2.4.0",
     "winston-daily-rotate-file": "^1.0.1",
     "winston-elasticsearch": "^0.5.0",
