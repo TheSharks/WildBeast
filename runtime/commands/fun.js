@@ -443,7 +443,7 @@ Commands.rule34 = {
               } else {
                 FurryArray.push(msg.author.mention + ', you\'ve searched for `' + suffix + '`')
               }
-              FurryArray.push(`https:${reply.posts.post[count].$.file_url}`)
+              FurryArray.push(`${reply.posts.post[count].$.file_url}`)
               msg.channel.sendMessage(FurryArray.join('\n'))
             }
           })
