@@ -35,7 +35,7 @@
   },
   "license": "GPL-3.0",
   "dependencies": {
-    "bugsnag": "^1.9.0",
+    "bugsnag": "^2.1.0",
     "cleverbot.io": "^1.0.4",
     "discordie": "qeled/discordie#dev",
     "imgflipper": "^1.0.1",
