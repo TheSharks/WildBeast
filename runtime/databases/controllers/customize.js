@@ -50,6 +50,17 @@ exports.getGuildData = function (msg) {
   })
 }
 
+exports.prefix = function (msg) {
+  return new Promise(function (resolve) {
+    getDatabaseDocument(msg.guild).then((i) => {
+      return resolve(i.customize.prefix)
+    }).catch(() => {
+      initialize(msg.guild)
+      return resolve(null)
+    })
+  })
+}
+
 exports.volume = function (msg) {
   return new Promise(function (resolve, reject) {
     getDatabaseDocument(msg.guild).then((i) => {
@@ -161,6 +172,17 @@ exports.adjust = function (msg, what, how) {
           r.db('Discord').table('Guilds').get(msg.guild.id).update({
             customize: {
               perms: how
+            }
+          }).run().then(() => {
+            resolve(how)
+          }).catch((e) => {
+            reject(e)
+          })
+          break
+        case 'welcomeChannel':
+          r.db('Discord').table('Guilds').get(msg.guild.id).update({
+            customize: {
+              welcomeChannel: how
             }
           }).run().then(() => {
             resolve(how)

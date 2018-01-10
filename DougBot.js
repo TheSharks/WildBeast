@@ -257,14 +257,21 @@ bot.Dispatcher.on(Event.GUILD_MEMBER_ADD, function (s) {
   datacontrol.customize.isKnown(s.guild)
   datacontrol.customize.check(s.guild).then((r) => {
     if (r === 'on' || r === 'channel') {
-      datacontrol.customize.reply(s, 'welcomeMessage').then((x) => {
-        if (x === null || x === 'default') {
-          s.guild.generalChannel.sendMessage(`Welcome ${s.member.username} to ${s.guild.name}!`)
-        } else {
-          s.guild.generalChannel.sendMessage(x.replace(/%user/g, s.member.mention).replace(/%server/g, s.guild.name))
-        }
-      }).catch((e) => {
-        Logger.error(e)
+      datacontrol.customize.reply(s, 'welcomeChannel').then(rep => {
+        datacontrol.customize.reply(s, 'welcomeMessage').then((x) => {
+          var channel = s.guild.channels.find(g => g.id === rep)
+          if (!channel) return
+          if (x === null || x === 'default') {
+            channel.sendMessage(`Welcome ${s.member.username} to ${s.guild.name}!`)
+          } else {
+            channel.sendMessage(x.replace(/%user/g, s.member.mention).replace(/%server/g, s.guild.name))
+          }
+        }).catch((e) => {
+          Logger.error(e)
+        })
+      }).catch(e => {
+        if (e === 'Unsupported reply method') return // oh well
+        else Logger.error(e)
       })
     } else if (r === 'private') {
       datacontrol.customize.reply(s, 'welcomeMessage').then((x) => {
@@ -333,7 +340,8 @@ bot.Dispatcher.onAny((type, data) => {
 
 process.on('unhandledRejection', (reason, p) => {
   if (p !== null && reason !== null) {
-    bugsnag.notify(new Error(`Unhandled promise: ${require('util').inspect(p, {depth: 3})}: ${reason}`))
+    if (reason instanceof Error) bugsnag.notify(reason)
+    else bugsnag.notify(new Error(`Unhandlled promise: ${require('util').inspect(p, {depth: 3})}: ${reason}`))
   }
 })
 

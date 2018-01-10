@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "WildBeast",
-  "version": "4.4.0",
+  "version": "4.5.0",
   "description": "A Discord Bot",
   "main": "DougBot.js",
   "maintainers": [
@@ -37,7 +37,7 @@
   "dependencies": {
     "bugsnag": "^1.9.0",
     "cleverbot.io": "^1.0.4",
-    "discordie": "qeled/discordie#dev",
+    "discordie": "github:qeled/discordie#dev",
     "imgflipper": "^1.0.1",
     "leetspeak": "0.0.1",
     "minimist": "^1.2.0",
@@ -53,8 +53,7 @@
     "winston-elasticsearch": "^0.5.0",
     "xml2js": "^0.4.16",
     "youtube-api": "^2.0.2",
-    "youtube-dl": "^1.11.1",
-    "ytdl-core": "^0.17.0"
+    "youtube-dl": "^1.11.1"
   },
   "devDependencies": {
     "eslint": "^4.1.0",
