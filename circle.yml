@@ -4,7 +4,7 @@ general:
       - gh-pages # Cirlcle pls
 machine:
   node:
-    version: 6.9.5
+    version: 9
 test:
   override:
-    - standard
+    - npm test

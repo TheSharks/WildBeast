@@ -2,9 +2,6 @@
 <img src="http://i.imgur.com/3wB8dIH.png"></p>
 
 <p align="center">
-<a href="http://nodejs.org"><img src="https://img.shields.io/badge/Node.js-6.9.1-blue.svg" alt="Node JS"></a>
-<a href="http://npmjs.com"><img src="https://img.shields.io/badge/npm-4.0.5-blue.svg" alt="npm"></a>
-<a><img src="https://img.shields.io/badge/Version-4.4.0-blue.svg" alt="Version"></a>
 <a href="https://discord.gg/wildbot"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png" alt="Discord server"></a>
 </p>
 
@@ -14,21 +11,14 @@
 
 ---
 
-WildBeast is a multifunction Discord bot intended to be able to perform various tasks, ranging from easy server moderation (Kick, ban etc.) to having fun (Cleverbot etc.) in your Discord server. Written in JavaScript [Node.JS](https://nodejs.org), using the [discordie](https://qeled.github.io/discordie) library.
+WildBeast is a multifunctional Discord bot, intended to provide a framework thats both easy to use and run, and easy to extend and modify.
 
 ## Main features
 
-- Music streaming from YouTube, SoundCloud etc.
-- Classy insults
-- Dank meme generation system with your own parameters
-- Useful advice
-- Moderation commands (Ban, kick)
-- NSFW images via e621 and rule34 (If you choose to allow them)
-- Search for comics via XKCD
-- Extended server functionality (Welcome messages, server and user info)
-- Role management commands (Manage roles of users, change role color)
-- High level of customization (Changing messages on a per-server basis, permission level system)
-- And more, check the [full command reference](http://docs.thesharks.xyz/commands/) for all the commands!
+- Full extendability
+- Easy to modify
+- Built-in command system with permissions and server-unique configurations
+
 
 Visit our [documentation](http://docs.thesharks.xyz) for more information.
 
