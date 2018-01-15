@@ -33,5 +33,8 @@
     "dotenv": "^4.0.0",
     "eris": "^0.8.2",
     "ws": "^4.0.0"
+  },
+  "optionalDependencies": {
+    "arangojs": "^6.0.0"
   }
 }
