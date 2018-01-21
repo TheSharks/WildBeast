@@ -1,5 +1,5 @@
 const drivers = require('./directory-loader')('./src/drivers')
-const preferred = process.env['PREFERRED_DATABASE']
+const preferred = process.env['PREFERRED_DATABASE'] || 'arangodb'
 const available = Object.getOwnPropertyNames(drivers)
 
 if (available.indexOf(preferred) === -1) {

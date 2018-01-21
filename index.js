@@ -18,7 +18,7 @@ bot.onAny = function onAny (func) {
 bot.onAny((ctx) => {
   if (Events[ctx[0]]) {
     Logger.debug(`Found listener for event '${ctx[0]}'`)
-    Events[ctx[0]](ctx) // FIXME: event handlers dont really need ctx[0] since thats the event name
+    Events[ctx[0]](Array.from(ctx).slice(1))
   } // else Logger.debug(`No listener for '${ctx[0]}' found`)
 })
 
