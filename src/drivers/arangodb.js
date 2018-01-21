@@ -5,8 +5,7 @@ db.useBasicAuth(process.env['ARANGO_USERNAME'], process.env['ARANGO_PASSWORD'])
 
 module.exports = {
   getGuildData: (guild) => {
-    let collection = db.collection('guild_data')
-    return collection.document(guild.id)
+    return ensure(guild)
   },
   getPerms: (guild) => {
     return getSelection(guild, 'perms')
@@ -18,8 +17,24 @@ module.exports = {
 
 function getSelection (guild, select) {
   return new Promise(async (resolve, reject) => {
-    let collection = db.collection('guild_data')
-    let data = await collection.document(guild.id).catch(reject)
+    let data = await ensure(guild)
     return resolve(data[select])
   })
+}
+
+async function ensure (guild) {
+  let collection = db.collection('guild_data')
+  try {
+    let doc = await collection.document(guild.id)
+    return doc
+  } catch (e) {
+    let newdoc = await collection.save({
+      _id: guild.id,
+      perms: {},
+      settings: {}
+    }, {
+      returnNew: true
+    })
+    return newdoc.new
+  }
 }
