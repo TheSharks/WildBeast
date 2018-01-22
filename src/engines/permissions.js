@@ -4,12 +4,14 @@ const masters = process.env['WILDBEAST_MASTERS'].split('|')
 module.exports = {
   calculate: (guild, member) => {
     return new Promise((resolve, reject) => {
-      if (masters.indexOf(member.id) > -1) return resolve(Infinity)
+      if (masters.includes(member.id)) return resolve(Infinity)
       driver.getPerms(guild).then(data => {
-        let result = data[member.id] || 0
+        let result = data.users[member.id] || 0
         for (let role in data.roles) {
-          result = (result > 0 && data.roles[role] > result || data.roles[role] < 0) ? data.roles[role] : result // eslint-disable-line
-        } // FIXME: trash
+          if (result < 0) break
+          if (data.roles[role] > result) result = data.roles[role]
+          if (data.roles[role] < 0) result = data.roles[role]
+        }
         return resolve(result)
       })
     })

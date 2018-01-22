@@ -29,8 +29,11 @@ async function ensure (guild) {
     return doc
   } catch (e) {
     let newdoc = await collection.save({
-      _id: guild.id,
-      perms: {},
+      _key: guild.id,
+      perms: {
+        users: {},
+        roles: {}
+      },
       settings: {}
     }, {
       returnNew: true
