@@ -13,10 +13,13 @@ module.exports = {
   getSettings: (guild) => {
     return getSelection(guild, 'settings')
   },
-  edit: (handle, data) => {
+  edit: (handle, data, opts = {
+    keepNull: false // values set to null will be deleted instead of being saved
+  }) => {
     let collection = db.collection('guild_data')
-    return collection.update(handle, data)
-  }
+    return collection.update(handle, data, opts)
+  },
+  _driver: db
 }
 
 function getSelection (guild, select) {
