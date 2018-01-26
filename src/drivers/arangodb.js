@@ -12,6 +12,10 @@ module.exports = {
   },
   getSettings: (guild) => {
     return getSelection(guild, 'settings')
+  },
+  edit: (handle, data) => {
+    let collection = db.collection('guild_data')
+    return collection.update(handle, data)
   }
 }
 
