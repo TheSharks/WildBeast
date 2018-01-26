@@ -16,5 +16,15 @@ module.exports = {
         return resolve(result)
       })
     })
+  },
+  modify: (guild, target, value, type = 'users') => {
+    value = (value === '0' ? null : value) // setting values to null deletes them, saving data
+    return driver.edit(guild.id, {
+      perms: {
+        [type]: {
+          [target]: value
+        }
+      }
+    })
   }
 }
