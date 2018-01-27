@@ -6,7 +6,6 @@ module.exports = {
     help: 'Evaluate arbitrary Javascript code.'
   },
   fn: (msg, suffix) => {
-    const bot = msg.channel.guild.shard.client // eslint-disable-line
     const util = require('util')
     try {
       const returned = eval(suffix) // eslint-disable-line no-eval

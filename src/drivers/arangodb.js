@@ -33,6 +33,7 @@ async function ensure (guild) {
   let collection = db.collection('guild_data')
   try {
     let doc = await collection.document(guild.id)
+    global.logger.trace(doc)
     return doc
   } catch (e) {
     let newdoc = await collection.save({
@@ -45,6 +46,7 @@ async function ensure (guild) {
     }, {
       returnNew: true
     })
+    global.logger.trace(newdoc.new)
     return newdoc.new
   }
 }

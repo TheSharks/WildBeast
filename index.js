@@ -1,7 +1,8 @@
 require('dotenv').config()
 
+global.logger = require('./src/internal/logger')
+
 const Eris = require('eris')
-const Logger = require('./src/internal/logger')
 const Events = require('./src/internal/directory-loader')('./src/events')
 const bot = new Eris(process.env['BOT_TOKEN'])
 
@@ -17,11 +18,20 @@ bot.onAny = function onAny (func) {
 
 bot.onAny((ctx) => {
   if (Events[ctx[0]]) {
-    Logger.debug(`Found listener for event '${ctx[0]}'`)
+    global.logger.debug(`Found listener for event '${ctx[0]}'`)
     Events[ctx[0]](Array.from(ctx).slice(1))
   } // else Logger.debug(`No listener for '${ctx[0]}' found`)
 })
 
-bot.on('debug', Logger.debug)
+process.on('unhandledRejection', (err) => {
+  global.logger.error(err)
+})
 
-bot.connect()
+process.on('uncaughtException', (err) => {
+  // probably not the most stylish way to handle this, but it works
+  global.logger.error(err, true) // we're exiting here, uncaughts are scary
+})
+
+bot.connect().then(() => {
+  global.bot = bot
+})

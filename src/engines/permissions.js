@@ -5,6 +5,7 @@ module.exports = {
   calculate: (guild, member) => {
     return new Promise((resolve, reject) => {
       if (masters.includes(member.id)) return resolve(Infinity)
+      if (guild === false) return resolve(0)
       if (guild.ownerID === member.id) return resolve(10)
       driver.getPerms(guild).then(data => {
         let result = data.users[member.id] || 0
