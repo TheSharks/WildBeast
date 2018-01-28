@@ -26,7 +26,6 @@ All event handlers live in separate files instead of all being defined in the ma
 | `ARANGO_DATABASE` | Optional | If set, override the default database used, defaults to `wildbeast` |
 | `NODE_ENV` | Optional | If set to `debug`, enable verbose logging |
 
-
 # 5.0.0
 Skipped, this was developed internally but never released or finished.
 
