@@ -20,6 +20,7 @@ module.exports = async (ctx) => {
       if (res >= commands[cmd].meta.level) {
         global.logger.command({
           cmd: cmd,
+          opts: suffix,
           m: msg
         })
         commands[cmd].fn(msg, suffix)

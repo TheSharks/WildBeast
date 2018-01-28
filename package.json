@@ -32,7 +32,9 @@
   "dependencies": {
     "chalk": "^2.3.0",
     "dotenv": "^4.0.0",
+    "elasticsearch": "^14.0.0",
     "eris": "^0.8.2",
+    "moment": "^2.20.1",
     "raven": "^2.4.0",
     "ws": "^4.0.0"
   },
