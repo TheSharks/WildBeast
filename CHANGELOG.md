@@ -1,3 +1,35 @@
+# 6.0.0
+## Release phase
+### 6.0.0
+**This is a breaking release, nothing is backwards compatible.**
+
+Entire internal structure changed.   
+We no longer officially support RethinkDB as a database, the official database is ArangoDB.   
+Command indexing changed, each command lives in its own file now.   
+Changed Discord library from Discordie to Eris (rip)   
+All event handlers live in separate files instead of all being defined in the main script.   
+**BREAKING CHANGE**: All configuration is now declared in the environment, `.env` files are supported. env vars are explained below:
+
+| Variable | Required | Function |
+|----------|----------|----------|
+| `BOT_TOKEN` | **Mandatory** | The token to use |
+| `BOT_PREFIX` | **Mandatory** | The prefix to use |
+| `WILDBEAST_MASTERS` | **Mandatory** | String of user IDs separated by pipe characters that should be considered master users |
+| `WILDBEAST_SUPPRESS_COMMANDLOG` | Optional | If set, suppresses loglevel `CMD` |
+| `WILDBEAST_PREFERRED_DATABASE` | Optional | Override the database driver used, defaults to `arangodb` |
+| `ELASTICSEARCH_URI` | Optional | If set, configure logging to log to Elasticsearch |
+| `ELASTICSEARCH_INDEX` | Optional | Override default index of `wildbeast` for Elasticsearch logging |
+| `SENTRY_DSN` | Optional | If set, configure error logging to report to Sentry as well |
+| `ARANGO_URI` | Optional | If set, override the default Arango URI of `http://localhost:8529` |
+| `ARANGO_USERNAME` | Required if running default | Set the username used for authenticating with Arango |
+| `ARANGO_PASSWORD` | Required if running default | Set the password used for authenticating with Arango |
+| `ARANGO_DATABASE` | Optional | If set, override the default database used, defaults to `wildbeast` |
+| `NODE_ENV` | Optional | If set to `debug`, enable verbose logging |
+
+
+# 5.0.0
+Skipped, this was developed internally but never released or finished.
+
 # 4.0.0
 ## Release phase
 
