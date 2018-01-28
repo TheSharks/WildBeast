@@ -5,7 +5,8 @@
   "description": "Discord bot",
   "main": "index.js",
   "scripts": {
-    "test": "eslint ."
+    "test": "eslint .",
+    "dbcreate": "node src/internal/db-init.js"
   },
   "repository": {
     "type": "git",
