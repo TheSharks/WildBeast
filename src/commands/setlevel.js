@@ -9,16 +9,26 @@ module.exports = {
   },
   fn: async (msg, suffix) => {
     let mentions = mapMentions(suffix)
+    let roles = mapMentions(suffix, /<@&([0-9]*)>/g)
     let to = suffix.split(' ')[suffix.split(' ').length - 1]
-    for (var user of mentions) { // TODO: map role mentions and change edit mode accordingly
-      await perms.modify(msg.channel.guild, user, to)
-      msg.channel.createMessage(`Permissions for ${msg.channel.guild.members.get(user).username} updated to ${to}.`)
+    if (to === 0) to = null
+    let data = {
+      users: {},
+      roles: {}
     }
+    for (let user of mentions) {
+      data.users[user] = to
+    }
+    for (let role of roles) {
+      data.roles[role] = to
+    }
+    await perms.modifyBulk(msg.channel.guild, data)
+    msg.channel.createMessage('Permissions updated')
   }
 }
 
-function mapMentions (string) {
-  let regex = /<@!?([0-9]*)>/g
+function mapMentions (string, reg = /<@!?([0-9]*)>/g) {
+  let regex = reg
   let res = []
   let x
   while ((x = regex.exec(string)) !== null) {

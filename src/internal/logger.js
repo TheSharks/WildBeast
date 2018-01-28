@@ -35,12 +35,16 @@ module.exports = {
       if (exit) process.exit(1)
     }
   },
+  warn: (msg) => {
+    log(chalk`{bold.rgb(255,140,0) WARN}: ${msg}`)
+  },
   trace: (msg) => {
     if (process.env.NODE_ENV === 'debug') log(chalk`{bold.cyan TRACE}: ${inspect(msg)}`) // trace is the only logging route that inspects automatically
   },
   command: (opts) => { // specifically to log commands being ran
     if (process.env.WILDBEAST_SUPPRESS_COMMANDLOG) return
     log(chalk`{bold.yellow CMD}: ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
+    opts.m.channel.lastPinTimestamp = undefined
     sendToES({
       cmd: opts.cmd,
       full: opts.cmd + ' ' + opts.opts,

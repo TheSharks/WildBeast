@@ -8,8 +8,7 @@ module.exports = {
     if (settings.prefix) return settings.prefix
     else {
       if (process.env['BOT_PREFIX']) return process.env['BOT_PREFIX']
-      console.error('FATAL: No prefix defined! WildBeast will now exit...')
-      process.exit(1)
+      global.logger.error('No prefix defined! WildBeast will now exit...', true)
     }
   }
 }
