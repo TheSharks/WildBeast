@@ -1,6 +1,7 @@
 require('dotenv').config()
 
 global.logger = require('./src/internal/logger')
+global.logger.log('Beginning startup sequence...')
 
 const Eris = require('eris')
 const Events = require('./src/internal/directory-loader')('./src/events')
@@ -34,4 +35,5 @@ process.on('uncaughtException', (err) => {
 
 bot.connect().then(() => {
   global.bot = bot
+  if (!bot.bot) global.logger.warn("You're not using a bot account to run WildBeast, this is unsupported and could cause problems.")
 })
