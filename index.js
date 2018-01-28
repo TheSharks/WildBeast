@@ -4,6 +4,7 @@ global.logger = require('./src/internal/logger')
 global.logger.log('Beginning startup sequence...')
 
 require('./src/internal/check-env')
+require('./src/internal/version-check')
 
 const Eris = require('eris')
 const Events = require('./src/internal/directory-loader')('./src/events')

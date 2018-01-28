@@ -37,6 +37,7 @@
     "eris": "^0.8.2",
     "moment": "^2.20.1",
     "raven": "^2.4.0",
+    "superagent": "^3.8.2",
     "ws": "^4.0.0"
   },
   "optionalDependencies": {
