@@ -1,63 +1,44 @@
 {
   "private": true,
-  "name": "WildBeast",
-  "version": "4.5.0",
-  "description": "A Discord Bot",
-  "main": "DougBot.js",
-  "maintainers": [
-    {
-      "name": "Anthony Zaza",
-      "email": "tony@lemonmc.com"
-    }
-  ],
+  "name": "wildbeast",
+  "version": "6.0.0",
+  "description": "Discord bot",
+  "main": "index.js",
   "scripts": {
-    "prestart": "npm update",
-    "test": "standard & eslint **",
-    "start": "node DougBot.js",
-    "dbcreate": "node runtime/internal/dbcreate.js",
-    "snyk-protect": "snyk protect"
-  },
-  "author": {
-    "name": "Remco Jongschaap",
-    "email": "Hello@dougley.com",
-    "url": "https://dougley.com"
-  },
-  "bugs": {
-    "url": "https://github.com/TheSharks/WildBeast/issues"
+    "test": "eslint ."
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TheSharks/WildBeast.git"
   },
-  "engines": {
-    "node": "4.x.x - 6.x.x",
-    "npm": ">=3.x.x"
-  },
+  "author": "Remco Jongschaap <hello@dougley.com>",
+  "contributors": [
+    "Anthony Zaza <tony@lemonmc.com>"
+  ],
   "license": "GPL-3.0",
-  "dependencies": {
-    "bugsnag": "^1.9.0",
-    "cleverbot.io": "^1.0.4",
-    "discordie": "github:qeled/discordie#dev",
-    "imgflipper": "^1.0.1",
-    "leetspeak": "0.0.1",
-    "minimist": "^1.2.0",
-    "prompt": "^1.0.0",
-    "require-directory": "^2.1.1",
-    "rethinkdbdash": "^2.3.23",
-    "semver": "^5.1.0",
-    "snyk": "^1.24.5",
-    "superagent": "^3.5.2",
-    "tagscript": "github:devsnek/tagscript",
-    "winston": "2.4.0",
-    "winston-daily-rotate-file": "^1.0.1",
-    "winston-elasticsearch": "^0.5.0",
-    "xml2js": "^0.4.16",
-    "youtube-api": "^2.0.2",
-    "youtube-dl": "^1.11.1"
+  "bugs": {
+    "url": "https://github.com/TheSharks/WildBeast/issues"
   },
+  "homepage": "https://docs.thesharks.xyz/",
   "devDependencies": {
-    "eslint": "^4.1.0",
-    "standard": "^8.1.0"
+    "eslint": "^4.15.0",
+    "eslint-config-standard": "^11.0.0-beta.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "standard": "^10.0.3"
   },
-  "snyk": true
+  "dependencies": {
+    "chalk": "^2.3.0",
+    "dotenv": "^4.0.0",
+    "elasticsearch": "^14.0.0",
+    "eris": "^0.8.2",
+    "moment": "^2.20.1",
+    "raven": "^2.4.0",
+    "ws": "^4.0.0"
+  },
+  "optionalDependencies": {
+    "arangojs": "^6.0.0"
+  }
 }
