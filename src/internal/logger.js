@@ -1,17 +1,18 @@
 const chalk = require('chalk')
 const log = console.log
-const raven = require('raven')
 const inspect = require('util').inspect
-const es = require('elasticsearch')
+let raven
 let ES
 
 if (process.env.ELASTICSEARCH_URI) {
+  const es = require('elasticsearch')
   ES = new es.Client({
     host: process.env.ELASTICSEARCH_URI
   })
 }
 
 if (process.env.SENTRY_DSN) {
+  raven = require('raven')
   raven.config(process.env.SENTRY_DSN, {
     parseUser: false
   }).install()
@@ -30,7 +31,7 @@ module.exports = {
       exit ? log(chalk`{bold.black.bgRed FATAL}: ${e}`) : log(chalk`{bold.red ERROR}: ${e}`)
       if (exit) process.exit(1)
     } else {
-      if (raven.installed) raven.captureException(e)
+      if (raven && raven.installed) raven.captureException(e)
       exit ? log(chalk`{bold.black.bgRed FATAL}: ${e.stack ? e.stack : e.message}`) : log(chalk`{bold.red ERROR}: ${e.stack ? e.stack : e.message}`)
       if (exit) process.exit(1)
     }

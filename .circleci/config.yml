@@ -26,11 +26,11 @@ jobs:
           docker_layer_caching: true
       - run:
           name: Docker building
-          command: docker build -t dougley/wildbeast:$CIRCLE_BRANCH .
+          command: if [ "$CIRCLE_BRANCH" = "master" ]; then docker build -t dougley/wildbeast:latest .; else docker build -t dougley/wildbeast:$CIRCLE_BRANCH .; fi
       - run: docker login -u $DOCKER_USER -p $DOCKER_PASS
       - run:
           name: Docker pushing
-          command: docker push dougley/wildbeast:$CIRCLE_BRANCH
+          command: if [ "$CIRCLE_BRANCH" = "master" ]; then docker push dougley/wildbeast:latest; else docker push dougley/wildbeast:$CIRCLE_BRANCH; fi
 workflows:
   version: 2
   test_n_build:

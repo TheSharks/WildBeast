@@ -5,6 +5,7 @@
   "description": "Discord bot",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "eslint .",
     "dbcreate": "node src/internal/db-init.js"
   },
@@ -14,7 +15,8 @@
   },
   "author": "Remco Jongschaap <hello@dougley.com>",
   "contributors": [
-    "Anthony Zaza <tony@lemonmc.com>"
+    "Anthony Zaza <tony@lemonmc.com>",
+    "Curtis Fowler <caf203@gmail.com>"
   ],
   "license": "GPL-3.0",
   "bugs": {
@@ -33,14 +35,13 @@
   "dependencies": {
     "chalk": "^2.3.0",
     "dotenv": "^4.0.0",
-    "elasticsearch": "^14.0.0",
     "eris": "^0.8.2",
     "moment": "^2.20.1",
-    "raven": "^2.4.0",
-    "superagent": "^3.8.2",
-    "ws": "^4.0.0"
+    "superagent": "^3.8.2"
   },
   "optionalDependencies": {
-    "arangojs": "^6.0.0"
+    "arangojs": "^6.0.0",
+    "elasticsearch": "^14.0.0",
+    "raven": "^2.4.0"
   }
 }
