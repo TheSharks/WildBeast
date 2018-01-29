@@ -26,10 +26,10 @@ jobs:
           docker_layer_caching: true
       - run:
           name: Docker building
-          command: |
-            docker build -t dougley/wildbeast:$CIRCLE_BRANCH
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker push dougley/wildbeast:$CIRCLE_BRANCH
+          command:
+            - docker build -t dougley/wildbeast:$CIRCLE_BRANCH
+            - docker login -u $DOCKER_USER -p $DOCKER_PASS
+            - docker push dougley/wildbeast:$CIRCLE_BRANCH
 workflows:
   version: 2
   test_n_build:
