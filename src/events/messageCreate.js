@@ -1,4 +1,5 @@
-const commands = require('../internal/command-indexer')
+const commands = require('../internal/command-indexer').commands
+const aliases = require('../internal/command-indexer').alias
 const engines = {
   perms: require('../engines/permissions'),
   settings: require('../engines/settings')
@@ -10,7 +11,8 @@ module.exports = async (ctx) => {
   if (msg.author.bot) return
   const prefix = (msg.channel.guild) ? await engines.settings.prefix(msg.channel.guild, msg) : process.env.BOT_PREFIX
   if (msg.content.indexOf(prefix) === 0) {
-    const cmd = msg.content.substr(prefix.length).split(' ')[0].toLowerCase()
+    let cmd = msg.content.substr(prefix.length).split(' ')[0].toLowerCase()
+    if (aliases.has(cmd)) cmd = aliases.get(cmd)
     const suffix = msg.content.substr(prefix.length).split(' ').slice(1).join(' ')
     if (commands[cmd]) {
       if (commands[cmd].meta.level === Infinity && !masters.includes(msg.author.id)) {
