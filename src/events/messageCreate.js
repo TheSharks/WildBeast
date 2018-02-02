@@ -1,5 +1,6 @@
 const commands = require('../internal/command-indexer').commands
 const aliases = require('../internal/command-indexer').alias
+const help = require('../internal/command-indexer').help
 const engines = {
   perms: require('../engines/permissions'),
   settings: require('../engines/settings'),
@@ -15,6 +16,7 @@ module.exports = async (ctx) => {
     let cmd = msg.content.substr(prefix.length).split(' ')[0].toLowerCase()
     if (aliases.has(cmd)) cmd = aliases.get(cmd)
     const suffix = msg.content.substr(prefix.length).split(' ').slice(1).join(' ')
+    if (cmd === 'help') return help(msg.author.id, msg.channel, suffix) // help is special, its not a 'real' command
     if (commands[cmd]) {
       if (commands[cmd].meta.level === Infinity && !masters.includes(msg.author.id)) {
         return msg.channel.createMessage('This command is only for the bot owner.')
