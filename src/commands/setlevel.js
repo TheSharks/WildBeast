@@ -28,10 +28,9 @@ module.exports = {
 }
 
 function mapMentions (string, reg = /<@!?([0-9]*)>/g) {
-  let regex = reg
   let res = []
   let x
-  while ((x = regex.exec(string)) !== null) {
+  while ((x = reg.exec(string)) !== null) {
     res.push(x[1])
   }
   return res

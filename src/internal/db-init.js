@@ -1,5 +1,11 @@
 require('dotenv').config()
 
+const tables = [
+  'guild_data', // saves guild configurations
+  'tags', // saves tags
+  'system' // misc things
+]
+
 const driver = require('arangojs')(process.env['ARANGO_URI'] || 'http://localhost:8529')
 const logger = require('./logger')
 
@@ -13,25 +19,25 @@ driver.listDatabases().then(async databases => {
   if (databases.includes(process.env.ARANGO_DATABASE || 'wildbeast')) {
     logger.log('Database exists, checking for collections.')
     driver.useDatabase(process.env.ARANGO_DATABASE || 'wildbeast')
-    return driver.collections()
+    return driver.listCollections()
   } else {
     logger.log('Database does not exist, creating...')
     await driver.createDatabase(process.env.ARANGO_DATABASE || 'wildbeast')
     logger.log('Database created, moving on to creating collections.')
     driver.useDatabase(process.env.ARANGO_DATABASE || 'wildbeast')
-    return driver.collections()
+    return driver.listCollections()
   }
 }).then(collections => {
-  collections.map(coll => {
-    if (coll.name === 'guild_data') {
-      logger.log('Collection exists, exiting.')
-      process.exit()
+  let names = []
+  collections.map(c => names.push(c.name))
+  tables.map(x => {
+    if (names.includes(x)) logger.log(`Collection ${x} already exists.`)
+    else {
+      const coll = driver.collection(x)
+      coll.create().then(() => {
+        logger.log(`Collection ${x} has been created.`)
+      })
     }
   })
-  logger.log('Collection does not exist, creating...')
-  const coll = driver.collection('guild_data')
-  coll.create().then(() => {
-    logger.log('Collection created, exiting.')
-    process.exit()
-  })
+  // the event loop is done, no need to process.exit
 })
