@@ -1,6 +1,7 @@
 require('dotenv').config()
 
 global.logger = require('./src/internal/logger')
+global.i18n = require('./src/internal/i18n')
 global.logger.log('Beginning startup sequence...')
 
 require('./src/internal/check-env')

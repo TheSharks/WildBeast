@@ -18,16 +18,17 @@ module.exports = async (ctx) => {
     const suffix = msg.content.substr(prefix.length).split(' ').slice(1).join(' ')
     if (cmd === 'help') return help(msg.author.id, msg.channel, suffix) // help is special, its not a 'real' command
     if (commands[cmd]) {
+      if (commands[cmd].meta.nsfw && !msg.channel.nsfw) return global.i18n.send('NSFW_NOT_MARKED', msg.channel)
       if (commands[cmd].meta.level === Infinity && !masters.includes(msg.author.id)) {
-        return msg.channel.createMessage('This command is only for the bot owner.')
+        return global.i18n.send('BOT_OWNER_ONLY', msg.channel)
       }
       if (!msg.channel.guild && commands[cmd].meta.noDM) {
-        return msg.channel.createMessage('This command cannot be used in Direct Messages.')
+        return global.i18n.send('NO_DM', msg.channel)
       }
       let time = true
       if (commands[cmd].meta.timeout) time = engines.timeout.calculate((msg.channel.guild ? msg.channel.guild.id : msg.author.id), cmd, commands[cmd].meta.timeout)
       if (time !== true) {
-        return msg.channel.createMessage(`This command is on cooldown for another ${Math.floor(time)} seconds.`)
+        return global.i18n.send('COOLDOWN', msg.channel, {time: Math.floor(time)})
       }
       const res = (msg.channel.guild) ? await engines.perms.calculate(msg.channel.guild, msg.member) : await engines.perms.calculate(false, msg.author)
       if (res >= commands[cmd].meta.level) {
@@ -37,7 +38,7 @@ module.exports = async (ctx) => {
           m: msg
         })
         commands[cmd].fn(msg, suffix)
-      } else if (res > 0) msg.channel.createMessage('You have no permission to run this command.')
+      } else if (res > 0) return global.i18n.send('NO_PERMS', msg.channel)
     }
   }
 }
