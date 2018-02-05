@@ -27,7 +27,7 @@ module.exports = {
               str = str.substr(0, 1897)
               str = str + '...'
             }
-            ms.edit('```xl\n' + str + '\n```')
+            ms.edit('```js\n' + str + '\n```')
           }, (e) => {
             let str = util.inspect(e, {
               depth: 1

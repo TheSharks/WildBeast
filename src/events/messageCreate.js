@@ -37,7 +37,14 @@ module.exports = async (ctx) => {
           opts: suffix,
           m: msg
         })
-        commands[cmd].fn(msg, suffix)
+        try {
+          commands[cmd].fn(msg, suffix)
+        } catch (e) {
+          global.logger.error(e)
+          global.i18n.send('COMMAND_ERROR', msg.channel, {
+            message: e.message
+          })
+        }
       } else if (res > 0) return global.i18n.send('NO_PERMS', msg.channel)
     }
   }
