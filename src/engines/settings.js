@@ -10,5 +10,17 @@ module.exports = {
       if (process.env['BOT_PREFIX']) return process.env['BOT_PREFIX']
       global.logger.error('No prefix defined! WildBeast will now exit...', true)
     }
+  },
+  modify: (guild, target, value) => {
+    return driver.edit(guild.id, {
+      settings: {
+        [target]: value
+      }
+    })
+  },
+  modifyBulk: (guild, data) => {
+    return driver.edit(guild.id, {
+      settings: data
+    })
   }
 }
