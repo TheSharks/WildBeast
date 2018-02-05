@@ -3,8 +3,10 @@ const log = console.log
 const inspect = require('util').inspect
 let raven
 let ES
+let store = []
 
 if (process.env.ELASTICSEARCH_URI) {
+  setInterval(flushES, 10000) // every 10 seconds, bulk flush data to ES
   const es = require('elasticsearch')
   ES = new es.Client({
     host: process.env.ELASTICSEARCH_URI
@@ -12,8 +14,10 @@ if (process.env.ELASTICSEARCH_URI) {
 }
 
 if (process.env.SENTRY_DSN) {
+  const revision = require('child_process').execSync('git rev-parse HEAD').toString().trim()
   raven = require('raven')
   raven.config(process.env.SENTRY_DSN, {
+    release: revision,
     parseUser: false
   }).install()
 }
@@ -70,11 +74,17 @@ function sendToES (opts, type = 'log') {
   if (ES) {
     const moment = require('moment')
     opts['@timestamp'] = new Date().toISOString()
-    // TODO: bulk requests to ES
-    ES.index({
-      index: (process.env.ELASTICSEARCH_INDEX || 'wildbeast') + `-${moment().format('YYYY.MM.DD')}`,
-      type: type,
-      body: opts
-    }).then(global.logger.trace)
+    store.push({index: {
+      _index: (process.env.ELASTICSEARCH_INDEX || 'wildbeast') + `-${moment().format('YYYY.MM.DD')}`, _type: type
+    }})
+    store.push(opts)
   }
+}
+
+function flushES () {
+  if (store.length === 0) return
+  ES.bulk({
+    body: store
+  }).then(module.exports.trace)
+  store = []
 }
