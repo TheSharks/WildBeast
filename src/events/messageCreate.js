@@ -32,17 +32,18 @@ module.exports = async (ctx) => {
       }
       const res = (msg.channel.guild) ? await engines.perms.calculate(msg.channel.guild, msg.member) : await engines.perms.calculate(false, msg.author)
       if (res >= commands[cmd].meta.level) {
-        global.logger.command({
-          cmd: cmd,
-          opts: suffix,
-          m: msg
-        })
         try {
           commands[cmd].fn(msg, suffix)
         } catch (e) {
           global.logger.error(e)
           global.i18n.send('COMMAND_ERROR', msg.channel, {
             message: e.message
+          })
+        } finally {
+          global.logger.command({
+            cmd: cmd,
+            opts: suffix,
+            m: msg
           })
         }
       } else if (res > 0) return global.i18n.send('NO_PERMS', msg.channel)
