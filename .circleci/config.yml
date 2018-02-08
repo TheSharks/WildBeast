@@ -4,9 +4,6 @@ jobs:
     docker:
       - image: node:latest
     steps:
-      - run: 
-          name: Git
-          command: apk add --update git
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
