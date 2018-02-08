@@ -27,6 +27,7 @@ jobs:
       - run:
           name: Docker building
           command: |
+            git submodule update --init --remote
             if [ "$CIRCLE_BRANCH" = "master" ]; then docker build -t dougley/wildbeast:latest .; else docker build -t dougley/wildbeast:$CIRCLE_BRANCH .; fi
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             if [ "$CIRCLE_BRANCH" = "master" ]; then docker push dougley/wildbeast:latest; else docker push dougley/wildbeast:$CIRCLE_BRANCH; fi
