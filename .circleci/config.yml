@@ -4,6 +4,7 @@ jobs:
     docker:
       - image: node:latest
     steps:
+      - "apk add git"
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
@@ -21,6 +22,7 @@ jobs:
     docker:
       - image: docker:latest
     steps:
+      - "apk add git"
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
