@@ -11,12 +11,12 @@ module.exports = {
     request.get('http://www.fayd.org/api/fact.xml')
       .end((err, res) => {
         if (err) {
-          console.error(err)
+          logger.error(err)
         }
         if (!err && res.status === 200) {
           xml2js.parseString(res.text, function (err, result) {
             if (err) {
-              console.error(err)
+              logger.error(err)
             }
             try {
               msg.channel.createMessage(`<@${msg.author.id}>, ${result.facts.fact[0]}`)

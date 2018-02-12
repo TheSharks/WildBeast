@@ -18,7 +18,7 @@ module.exports = {
             msg.channel.createMessage(suffix + ', ' + fancyinsult.insult)
           }
         } else {
-          console.error(`Got an error: ${err}, status code: ${res.status}`)
+          logger.error(`Got an error: ${err}, status code: ${res.status}`)
         }
       })
   }

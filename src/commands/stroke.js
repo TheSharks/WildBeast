@@ -24,7 +24,7 @@ module.exports = {
         if (!err && res.status === 200) {
           msg.channel.createMessage(res.body.value.joke)
         } else {
-          console.error(`Got an error: ${err}, status code: ${res.status}`)
+          logger.error(`Got an error: ${err}, status code: ${res.status}`)
         }
       })
   }

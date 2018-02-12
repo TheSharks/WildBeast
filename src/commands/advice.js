@@ -20,7 +20,7 @@ module.exports = {
           var advice = JSON.parse(res.text)
           msg.channel.createMessage(advice.slip.advice)
         } else {
-          console.error(`Got an error: ${err}, status code: ${res.status}`)
+          logger.error(`Got an error: ${err}, status code: ${res.status}`)
         }
       })
   }

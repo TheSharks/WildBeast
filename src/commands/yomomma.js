@@ -19,7 +19,7 @@ module.exports = {
           var joke = JSON.parse(res.text)
           msg.channel.createMessage(joke.joke)
         } else {
-          console.error(`Got an error: ${err}, status code: ${res.status}`)
+          logger.error(`Got an error: ${err}, status code: ${res.status}`)
         }
       })
   }

@@ -23,7 +23,7 @@ module.exports = {
                   msg.channel.createMessage(`<@${msg.author.id}>, **Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
                 } else {
                   msg.channel.createMessage(`<@${msg.author.id}>, Please try again later.`)
-                  console.error(`Got an error: ${error}, status code: ${response.status}`)
+                  logger.error(`Got an error: ${error}, status code: ${response.status}`)
                 }
               })
           } else if (!isNaN(parseInt(suffix, 10)) && parseInt(suffix, 10) > 0 && (parseInt(suffix, 10) <= xkcdInfo.num)) {
@@ -34,7 +34,7 @@ module.exports = {
                   msg.channel.createMessage(`<@${msg.author.id}>, **Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
                 } else {
                   msg.channel.createMessage(`<@${msg.author.id}>, Please try again later.`)
-                  console.error(`Got an error: ${error}, status code: ${response.status}`)
+                  logger.error(`Got an error: ${error}, status code: ${response.status}`)
                 }
               })
           } else {
@@ -42,7 +42,7 @@ module.exports = {
           }
         } else {
           msg.channel.createMessage(`<@${msg.author.id}>, Please try again later.`)
-          console.error(`Got an error: ${error}, status code: ${response.status}`)
+          logger.error(`Got an error: ${error}, status code: ${response.status}`)
         }
       })
   }
