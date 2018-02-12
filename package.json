@@ -38,6 +38,8 @@
     "chalk": "^2.3.0",
     "dotenv": "^4.0.0",
     "eris": "^0.8.3",
+    "imgflipper": "^1.0.1",
+    "leetspeak": "0.0.1",
     "moment": "^2.20.1",
     "superagent": "^3.8.2"
   },

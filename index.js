@@ -9,7 +9,7 @@ require('./src/internal/version-check')
 
 const Eris = require('eris')
 const Events = require('./src/internal/directory-loader')('./src/events')
-const bot = new Eris(process.env['BOT_TOKEN'])
+const bot = new Eris(process.env['BOT_TOKEN'], {restMode: true})
 
 bot._ogEmit = bot.emit
 bot.emit = function emit () {
