@@ -6,11 +6,11 @@ module.exports = {
     noDM: true
   },
   fn: function (msg, suffix) {
-    var guildPerms = msg.member.permission.json
-    var botPerms = msg.channel.guild.members.get(msg.channel.guild.shard.client.user.id).permission.json
-    let roleToRemove = suffix.split(' ').splice(msg.mentions.filter(m => m.id !== msg.channel.guild.shard.client.user.id).length).join(' ')
-    let regExp = new RegExp(roleToRemove, 'i')
-    let role = msg.channel.guild.roles.find(r => r.name === roleToRemove)
+    const guildPerms = msg.member.permission.json
+    const botPerms = msg.channel.guild.members.get(msg.channel.guild.shard.client.user.id).permission.json
+    const roleToRemove = suffix.split(' ').splice(msg.mentions.filter(m => m.id !== msg.channel.guild.shard.client.user.id).length).join(' ')
+    const regExp = new RegExp(roleToRemove, 'i')
+    const role = msg.channel.guild.roles.find(r => r.name === roleToRemove)
     if (!role) msg.channel.guild.roles.find(r => r.name.match(regExp))
     if (!guildPerms.manageRoles) {
       msg.channel.createMessage(`<@${msg.author.id}>, You don't have Manage Roles permission here.`)

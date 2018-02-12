@@ -8,7 +8,7 @@ module.exports = {
     level: 0
   },
   fn: function (msg, suffix) {
-    var dice
+    let dice
     if (suffix) {
       dice = suffix
     } else {
@@ -20,7 +20,7 @@ module.exports = {
           var roll = res.body
           msg.channel.createMessage(`<@${msg.author.id}>, Your ${roll.input} resulted in ${roll.result}${roll.details}`)
         } else {
-          logger.error(`Got an error: ${err}, status code: ${res.status}`)
+          global.logger.error(`REST call failed: ${err}`)
         }
       })
   }

@@ -5,9 +5,9 @@ module.exports = {
     alias: ['kill'],
     help: 'Instantly terminates the bot process.'
   },
-  fn: (msg) => {
-    msg.channel.createMessage('Bye.')
-    msg.channel.guild.shard.client.disconnect()
+  fn: async (msg) => {
+    await msg.channel.createMessage('Bye.')
+    global.bot.disconnect()
     process.exit(0)
   }
 }

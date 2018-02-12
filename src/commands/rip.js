@@ -5,9 +5,9 @@ module.exports = {
     timeout: 10
   },
   fn: function (msg, suffix) {
-    var qs = require('querystring')
-    var resolve = []
-    var skipped = false
+    const qs = require('querystring')
+    let resolve = []
+    let skipped = false
     if (msg.mentions.length > 0) {
       for (var m of msg.mentions) {
         if (m.id !== msg.channel.guild.shard.client.user.id) {

@@ -11,14 +11,14 @@ module.exports = {
     request.get('http://quandyfactory.com/insult/json/')
       .end((err, res) => {
         if (!err && res.status === 200) {
-          var fancyinsult = res.body
+          const fancyinsult = res.body
           if (suffix === '') {
             msg.channel.createMessage(fancyinsult.insult)
           } else {
             msg.channel.createMessage(suffix + ', ' + fancyinsult.insult)
           }
         } else {
-          logger.error(`Got an error: ${err}, status code: ${res.status}`)
+          global.logger.error(`REST call failed: ${err}`)
         }
       })
   }

@@ -13,7 +13,7 @@ module.exports = {
         if (!err && res.status === 200) {
           msg.channel.createMessage(res.body.file)
         } else {
-          logger.error(`Got an error: ${err}, status code: ${res.status}`)
+          global.logger.error(`REST call failed: ${err}`)
         }
       })
   }

@@ -2,7 +2,7 @@ module.exports = {
   meta: {
     level: 0,
     timeout: 0,
-    alias: ['pong'],
+    alias: [],
     help: "I'll reply with pong to test my responsiveness."
   },
   fn: (msg) => {

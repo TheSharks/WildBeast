@@ -8,7 +8,7 @@ module.exports = {
     help: 'I\'ll respond with info about me!'
   },
   fn: (msg) => {
-    let bot = msg.channel.guild.shard.client
+    let bot = global.bot
     let owner
     if (process.env.WILDBEAST_MASTERS) {
       let userObj = bot.users.get(process.env.WILDBEAST_MASTERS.split('|')[0])
@@ -28,7 +28,6 @@ module.exports = {
       title: `Running on WildBeast version ${require('../../package.json').version}`,
       timestamp: new Date(),
       fields: fields,
-      description: `*My developer is Dougley#6666*`,
       url: 'https://github.com/TheSharks/WildBeast',
       footer: {text: `Online since ${new Date(Date.now() - bot.uptime).toString()} (${(bot.uptime / 1000 / 60).toFixed(2)} minutes)`}
     }})

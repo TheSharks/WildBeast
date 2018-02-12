@@ -1,11 +1,12 @@
 module.exports = {
   meta: {
     level: 0,
-    help: 'I\'ll ban someone you mention! ban @user reason',
+    help: 'I\'ll ban someone you mention!',
+    usage: 'ban @user reason',
     noDM: true
   },
   fn: function (msg, suffix) {
-    let bot = msg.channel.guild.client.user
+    let bot = global.bot
     function safeLoop (msg, days, members, reason, list) {
       if (members.length === 0) {
         let resp = ``

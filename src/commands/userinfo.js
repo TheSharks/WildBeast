@@ -1,4 +1,4 @@
-let notablePermissions = [
+const notablePermissions = [
   'kickMembers',
   'banMembers',
   'administrator',

@@ -15,7 +15,7 @@ module.exports = {
         .query({term: suffix})
         .end((err, res) => {
           if (!err && res.status === 200) {
-            var uD = res.body
+            const uD = res.body
             if (uD.result_type !== 'no_results') {
               msg.channel.createMessage({
                 embed: {

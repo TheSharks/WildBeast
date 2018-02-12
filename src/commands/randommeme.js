@@ -13,7 +13,7 @@ module.exports = {
         if (!err && !result.body.data.error) {
           msg.channel.createMessage(result.body.data[Math.floor((Math.random() * 20) + 1)].link)
         } else {
-          logger.error(result.body.data.error)
+          global.logger.error(`REST call failed: ${err}`)
         }
       })
   }

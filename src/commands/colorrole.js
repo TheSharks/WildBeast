@@ -1,17 +1,18 @@
 module.exports = {
   meta: {
     level: 0,
-    help: 'I\'ll color a role you have! colorrole <rolename> <hexadecimal value ("#FFFFFF" or "FFFFFF")>',
+    help: 'I\'ll color a role you have!',
+    usage: '<rolename> <hexadecimal value ("#FFFFFF" or "FFFFFF")>',
     timeout: 5
   },
   fn: function (msg, suffix) {
     let bot = msg.channel.guild.shard.client
-    var split = suffix.split(' ')
-    var hex = split[split.length - 1]
+    const split = suffix.split(' ')
+    const hex = split[split.length - 1]
     split.pop()
-    var role = msg.channel.guild.roles.find(r => r.name === split.join(' '))
-    var Reg = /^#?([\da-fA-F]{6})$/
-    var botPerms = msg.channel.guild.members.get(bot.user.id).permission.json
+    const role = msg.channel.guild.roles.find(r => r.name === split.join(' '))
+    const Reg = /^#?([\da-fA-F]{6})$/
+    const botPerms = msg.channel.guild.members.get(bot.user.id).permission.json
     if (typeof role !== 'object' || hex.length === 0) {
       msg.channel.createMessage(`<@${msg.author.id}>, Input a valid role name and an hexadecimal value!`)
       return
@@ -28,7 +29,7 @@ module.exports = {
       msg.channel.createMessage(`<@${msg.author.id}>, I do not have Manage Roles permission here, sorry!`)
       return
     }
-    var botRole = msg.channel.guild.members.get(bot.user.id).roles.map(r => msg.channel.guild.roles.get(r)).sort(function (a, b) {
+    const botRole = msg.channel.guild.members.get(bot.user.id).roles.map(r => msg.channel.guild.roles.get(r)).sort(function (a, b) {
       return a.position < b.position
     })[0]
     if (role.position >= botRole.position) {

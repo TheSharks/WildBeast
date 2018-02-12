@@ -7,16 +7,16 @@ module.exports = {
     level: 0
   },
   fn: function (msg) {
-    var xml2js = require('xml2js')
+    const xml2js = require('xml2js')
     request.get('http://www.fayd.org/api/fact.xml')
       .end((err, res) => {
         if (err) {
-          logger.error(err)
+          global.logger.error(err)
         }
         if (!err && res.status === 200) {
           xml2js.parseString(res.text, function (err, result) {
             if (err) {
-              logger.error(err)
+              global.logger.error(err)
             }
             try {
               msg.channel.createMessage(`<@${msg.author.id}>, ${result.facts.fact[0]}`)

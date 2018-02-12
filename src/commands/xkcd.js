@@ -7,7 +7,7 @@ module.exports = {
     level: 0
   },
   fn: function (msg, suffix) {
-    var xkcdInfo
+    let xkcdInfo
     request.get('http://xkcd.com/info.0.json')
       .end((error, response) => {
         if (!error && response.status === 200) {
@@ -15,7 +15,7 @@ module.exports = {
           if (suffix.toLowerCase() === 'current') {
             msg.channel.createMessage(`<@${msg.author.id}>, **Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
           } else if (!suffix) {
-            var xkcdRandom = Math.floor(Math.random() * (xkcdInfo.num - 1)) + 1
+            let xkcdRandom = Math.floor(Math.random() * (xkcdInfo.num - 1)) + 1
             request.get(`http://xkcd.com/${xkcdRandom}/info.0.json`)
               .end((error, response) => {
                 if (!error && response.status === 200) {
@@ -23,7 +23,7 @@ module.exports = {
                   msg.channel.createMessage(`<@${msg.author.id}>, **Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
                 } else {
                   msg.channel.createMessage(`<@${msg.author.id}>, Please try again later.`)
-                  logger.error(`Got an error: ${error}, status code: ${response.status}`)
+                  global.logger.error(`REST call failed: ${error}`)
                 }
               })
           } else if (!isNaN(parseInt(suffix, 10)) && parseInt(suffix, 10) > 0 && (parseInt(suffix, 10) <= xkcdInfo.num)) {
@@ -34,7 +34,7 @@ module.exports = {
                   msg.channel.createMessage(`<@${msg.author.id}>, **Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
                 } else {
                   msg.channel.createMessage(`<@${msg.author.id}>, Please try again later.`)
-                  logger.error(`Got an error: ${error}, status code: ${response.status}`)
+                  global.logger.error(`REST call failed: ${error}`)
                 }
               })
           } else {
@@ -42,7 +42,7 @@ module.exports = {
           }
         } else {
           msg.channel.createMessage(`<@${msg.author.id}>, Please try again later.`)
-          logger.error(`Got an error: ${error}, status code: ${response.status}`)
+          global.logger.error(`REST call failed: ${error}`)
         }
       })
   }

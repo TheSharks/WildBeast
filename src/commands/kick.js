@@ -6,7 +6,7 @@ module.exports = {
     noDM: true
   },
   fn: function (msg, suffix) {
-    let bot = msg.channel.guild.shard.client
+    let bot = global.bot
     if (!msg.member.permission.json.kickMembers) {
       msg.channel.createMessage(`<@${msg.author.id}>, Sorry but you do not have permission to kick members.`)
     } else if (!msg.channel.guild.members.get(bot.user.id).permission.json.kickMembers) {

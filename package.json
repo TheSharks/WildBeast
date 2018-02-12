@@ -41,7 +41,9 @@
     "imgflipper": "^1.0.1",
     "leetspeak": "0.0.1",
     "moment": "^2.20.1",
-    "superagent": "^3.8.2"
+    "superagent": "^3.8.2",
+    "tag-replacer": "^1.2.2",
+    "xml2js": "^0.4.19"
   },
   "optionalDependencies": {
     "arangojs": "^6.0.0",

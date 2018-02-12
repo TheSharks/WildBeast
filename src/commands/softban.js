@@ -6,7 +6,7 @@ module.exports = {
     noDM: true
   },
   fn: function (msg, suffix) {
-    let bot = msg.channel.guild.client
+    let bot = global.bot
     if (!msg.member.permission.json.banMembers) {
       msg.channel.createMessage(`<@${msg.author.id}>, Sorry but you do not have permission to ban members.`)
     } else if (!msg.channel.guild.members.get(bot.user.id).permission.json.banMembers) {

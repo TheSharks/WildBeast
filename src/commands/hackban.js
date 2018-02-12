@@ -2,11 +2,12 @@ module.exports = {
   meta: {
     level: 0,
     alias: ['banbyid', 'idban'],
-    help: 'I\'ll ban someone you give me the id of! hackban 12345678 reason',
+    help: 'I\'ll ban someone you give me the id of!',
+    usage: '12345678 reason',
     noDM: true
   },
   fn: function (msg, suffix) {
-    let bot = msg.channel.guild.shard.client
+    let bot = global.bot
     if (!msg.member.permission.json.banMembers) {
       msg.channel.createMessage(`<@${msg.author.id}>, Sorry but you do not have permission to ban members.`)
     } else if (!msg.channel.guild.members.get(bot.user.id).permission.json.banMembers) {
