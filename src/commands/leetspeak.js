@@ -6,8 +6,8 @@ module.exports = {
   },
   fn: function (msg, suffix) {
     if (suffix.length > 0) {
-      var leetspeak = require('leetspeak')
-      var thing = leetspeak(suffix)
+      const leetspeak = require('leetspeak')
+      const thing = leetspeak(suffix)
       msg.channel.createMessage(`<@${msg.author.id}>, ${thing}`)
     } else {
       msg.channel.createMessage(`<@${msg.author.id}>, *You need to type something to encode your message into l337sp3@K!*`)

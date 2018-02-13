@@ -9,7 +9,7 @@ module.exports = {
     let resolve = []
     let skipped = false
     if (msg.mentions.length > 0) {
-      for (var m of msg.mentions) {
+      for (const m of msg.mentions) {
         if (m.id !== msg.channel.guild.shard.client.user.id) {
           if (resolve[0] === undefined) {
             resolve[0] = m.username

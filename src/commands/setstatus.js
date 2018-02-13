@@ -5,8 +5,8 @@ module.exports = {
     help: 'Change my playing status on Discord to something else or pass nothing to clear the status!'
   },
   fn: function (msg, suffix) {
-    let bot = msg.channel.guild.shard.client
-    var first = suffix.split(' ')
+    const bot = global.bot
+    const first = suffix.split(' ')
     if (!suffix) {
       bot.editStatus('online', null)
       msg.channel.createMessage(`Cleared status.`)

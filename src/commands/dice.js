@@ -17,7 +17,7 @@ module.exports = {
     request.get('https://rolz.org/api/?' + dice + '.json')
       .end((err, res) => {
         if (!err && res.status === 200) {
-          var roll = res.body
+          const roll = res.body
           msg.channel.createMessage(`<@${msg.author.id}>, Your ${roll.input} resulted in ${roll.result}${roll.details}`)
         } else {
           global.logger.error(`REST call failed: ${err}`)

@@ -6,7 +6,7 @@ module.exports = {
     noDM: true
   },
   fn: function (msg, suffix) {
-    let bot = global.bot
+    const bot = global.bot
     function safeLoop (msg, days, members, reason, list) {
       if (members.length === 0) {
         let resp = ``
@@ -37,8 +37,8 @@ module.exports = {
       let chunks = suffix.split(' ')
       let days = isNaN(parseInt(chunks[0], 10)) ? 1 : parseInt(chunks[0], 10)
       if ([0, 1, 7].includes(days)) {
-        let members = msg.mentions.filter(u => u.id !== bot.user.id).map((user) => msg.channel.guild.members.find(m => m.id === user.id))
-        let reason = isNaN(chunks[0]) ? chunks.slice(members.length).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length).join(' ') : chunks.slice(members.length + 1).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length + 1).join(' ')
+        const members = msg.mentions.filter(u => u.id !== bot.user.id).map((user) => msg.channel.guild.members.find(m => m.id === user.id))
+        const reason = isNaN(chunks[0]) ? chunks.slice(members.length).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length).join(' ') : chunks.slice(members.length + 1).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length + 1).join(' ')
         let list = {success: [], error: []}
 
         safeLoop(msg, days, members, reason, list)

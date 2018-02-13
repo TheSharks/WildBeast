@@ -17,7 +17,7 @@ module.exports = {
             msg.channel.createMessage('The API returned an unconventional response.')
             return
           }
-          var advice = JSON.parse(res.text)
+          const advice = JSON.parse(res.text)
           msg.channel.createMessage(advice.slip.advice)
         } else {
           global.logger.error(`REST call failed: ${err}, status code: ${res.status}`)

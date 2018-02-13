@@ -6,7 +6,7 @@ module.exports = {
     noDM: true
   },
   fn: function (msg, suffix) {
-    let bot = global.bot
+    const bot = global.bot
     if (!msg.member.permission.json.banMembers) {
       msg.channel.createMessage(`<@${msg.author.id}>, Sorry but you do not have permission to ban members.`)
     } else if (!msg.channel.guild.members.get(bot.user.id).permission.json.banMembers) {
@@ -15,8 +15,8 @@ module.exports = {
       msg.channel.createMessage('You need to provide an ID to ban!')
     } else if (msg.mentions.filter(m => m.id !== bot.user.id).length > 0) {
       msg.channel.createMessage('Please wait...').then((m) => {
-        let membersToBan = msg.mentions.filter(m => m.id !== bot.user.id)
-        let banMembers = {success: [], error: []}
+        const membersToBan = msg.mentions.filter(m => m.id !== bot.user.id)
+        const banMembers = {success: [], error: []}
         let reasonWords = []
         suffix.split(' ').map((id) => {
           if (id.startsWith('<@')) {
@@ -24,7 +24,7 @@ module.exports = {
             reasonWords.push(id)
           }
         })
-        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'No reason provided.'
+        const reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'No reason provided.'
         membersToBan.map((user) => {
           msg.channel.guild.banMember(user.id, 1, `${msg.author.username}#${msg.author.discriminator} used softban for: ${reason}`).then(() => {
             msg.channel.guild.unbanMember(user.id, 'Automatic unban from softban.').then(() => {
