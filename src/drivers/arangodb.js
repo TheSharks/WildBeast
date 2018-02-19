@@ -13,10 +13,32 @@ module.exports = {
   getSettings: (guild) => {
     return getSelection(guild, 'settings')
   },
-  edit: (handle, data, opts = {
+  getTag: (key) => {
+    return module.exports.getArbitrary(key, 'tags')
+  },
+  getArbitrary (key, coll) {
+    const collection = db.collection(coll)
+    try {
+      return collection.document(key)
+    } catch (e) {
+      return null
+    }
+  },
+  create: async (coll, data) => {
+    const collection = db.collection(coll)
+    let newdoc = await collection.save(data, {
+      returnNew: true
+    })
+    return newdoc.new
+  },
+  delete: (coll, key) => {
+    const collection = db.collection(coll)
+    return collection.remove(key)
+  },
+  edit: (handle, data, coll = 'guild_data', opts = {
     keepNull: false // values set to null will be deleted instead of being saved
   }) => {
-    let collection = db.collection('guild_data')
+    let collection = db.collection(coll)
     return collection.update(handle, data, opts)
   },
   _driver: db
@@ -36,17 +58,15 @@ async function ensure (guild) {
     global.logger.trace(doc)
     return doc
   } catch (e) {
-    let newdoc = await collection.save({
+    let newdoc = await module.exports.create('guild_data', {
       _key: guild.id,
       perms: {
         users: {},
         roles: {}
       },
       settings: {}
-    }, {
-      returnNew: true
     })
-    global.logger.trace(newdoc.new)
-    return newdoc.new
+    global.logger.trace(newdoc)
+    return newdoc
   }
 }

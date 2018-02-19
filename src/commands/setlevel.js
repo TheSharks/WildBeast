@@ -8,8 +8,8 @@ module.exports = {
     help: "Change someone's access level."
   },
   fn: async (msg, suffix) => {
-    let mentions = mapMentions(suffix)
-    let roles = mapMentions(suffix, /<@&([0-9]*)>/g)
+    const mentions = mapMentions(suffix)
+    const roles = mapMentions(suffix, /<@&([0-9]*)>/g)
     let to = suffix.split(' ')[suffix.split(' ').length - 1]
     if (to === 0) to = null
     let data = {

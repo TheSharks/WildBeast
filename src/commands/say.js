@@ -2,7 +2,7 @@ module.exports = {
   meta: {
     level: 0,
     timeout: 0,
-    alias: ['speak'],
+    alias: [],
     help: 'Repeat after me.'
   },
   fn: (msg, suffix) => {
