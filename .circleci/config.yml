@@ -34,9 +34,33 @@ jobs:
             if [ "$CIRCLE_BRANCH" = "master" ]; then docker build -t dougley/wildbeast:latest .; else docker build -t dougley/wildbeast:$CIRCLE_BRANCH .; fi
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             if [ "$CIRCLE_BRANCH" = "master" ]; then docker push dougley/wildbeast:latest; else docker push dougley/wildbeast:$CIRCLE_BRANCH; fi
+  tagged-build:
+    docker:
+      - image: docker:latest
+    steps:
+      - run:
+          name: Git
+          command: apk add --update git
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Docker building
+          command: |
+            git submodule update --init --remote
+            docker build -t dougley/wildbeast:$(git describe --abbrev=0 --tags) .
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push dougley/wildbeast:$(git describe --abbrev=0 --tags)
 workflows:
   version: 2
   test_n_build:
     jobs:
       - test
-      - build
+      - build:
+          filters:
+            tags:
+              only: /master|experimental/
+      - tagged-build:
+          filters:
+            tags:
+              only: /v.+/

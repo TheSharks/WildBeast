@@ -1,12 +1,12 @@
-<p style="text-align:center;">
-<img src="http://i.imgur.com/3wB8dIH.png"></p>
 
 <p align="center">
-<a href="https://discord.gg/wildbot"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png" alt="Discord server"></a>
+    <img src="http://i.imgur.com/3wB8dIH.png">
+    <a href="https://discord.gg/wildbot"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png" alt="Discord server"></a>
+    <a title="Crowdin" target="_blank" href="https://i18n.thesharks.xyz/project/wildbeast"><img src="https://d322cqt584bo4o.cloudfront.net/wildbeast/localized.svg"></a>
 </p>
 
 | **`Stable`** | **`Experimental`** | **`Documentation`**
-|--------------|--------------------|--------------------|
+|:------------:|:------------------:|:------------------:|
 |[![CircleCI](https://circleci.com/gh/TheSharks/WildBeast/tree/master.svg?style=svg)](https://circleci.com/gh/TheSharks/WildBeast/tree/master) | [![CircleCI](https://circleci.com/gh/TheSharks/WildBeast/tree/experimental.svg?style=svg)](https://circleci.com/gh/TheSharks/WildBeast/tree/experimental) | [![CircleCI](https://circleci.com/gh/TheSharks/WildBeastDocs.svg?style=svg)](https://circleci.com/gh/TheSharks/WildBeastDocs)
 
 ---
@@ -51,4 +51,4 @@ If you are not into hosting the bot yourself, you can always invite WildBot to y
 
 ---
 
-"Discord", "Discord App", and any associated logos are registered trademarks of Hammer & Chisel, inc.
+"Discord", "Discord App", and any associated logos are registered trademarks of Discord, inc.
