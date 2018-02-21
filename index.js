@@ -6,10 +6,13 @@ global.logger.log('Beginning startup sequence...')
 
 require('./src/internal/check-env')
 require('./src/internal/version-check')
+require('./src/internal/bezerk')
 
 const Eris = require('eris')
 const Events = require('./src/internal/directory-loader')('./src/events')
-const bot = new Eris(process.env['BOT_TOKEN'], {restMode: true})
+const bot = new Eris(process.env['BOT_TOKEN'], {
+  restMode: true
+})
 
 bot._ogEmit = bot.emit
 bot.emit = function emit () {
@@ -39,5 +42,4 @@ process.on('uncaughtException', (err) => {
 
 bot.connect().then(() => {
   global.bot = bot
-  if (!bot.bot) global.logger.warn("You're not using a bot account to run WildBeast, this is unsupported and could cause problems.")
 })
