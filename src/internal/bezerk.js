@@ -20,15 +20,15 @@ function start () {
       msg = JSON.parse(m)
       global.logger.trace(msg)
     } catch (e) {
-      return global.logger.warn('Failed to decrypt Bezerk payload, ' + e.message)
+      return global.logger.error('Failed to decrypt Bezerk payload, ' + e.message)
     }
     switch (msg.op) {
       case '1001': { // IDENTIFY
         return send({
           op: '1003', // IDENTIFY_SUPPLY
           c: {
-            secret: secret
-            /* shard: shardid */
+            secret: secret,
+            shard: global.bot.options.firstShardID.toString() || '0'
           }
         })
       }
