@@ -7,6 +7,9 @@ let socket
 function start () {
   global.logger.debug(`Bezerk connection started to ${uri}`)
   socket = new WS(uri)
+  socket.on('error', e => {
+    global.logger.error(`Bezerk socket error, ${e.message}`)
+  })
   socket.on('close', () => {
     global.logger.warn('Bezerk socket got destroyed, reconnecting...')
     setTimeout(start, 500)
@@ -32,7 +35,7 @@ function start () {
       case '1002': { // IDENTIFY_REPLY
         if (msg.c.success === true) {
           global.logger.debug(`Bezerk connection fully open.`)
-          global.logger.info('Successfully connected to Bezerk.')
+          global.logger.log('Successfully connected to Bezerk.')
         } else {
           global.logger.warn('Bezerk rejected authentication! Not reconnecting.')
         }
