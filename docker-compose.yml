@@ -1,0 +1,19 @@
+version: '2'
+services:
+  wildbeast:
+    image: dougley/wildbeast
+    environment:
+      BOT_TOKEN:
+      BOT_PREFIX:
+      WILDBEAST_MASTERS:
+      ARANGO_URI: http://arango:8529
+    stdin_open: true
+    tty: true
+    links:
+    - arango:arango
+  arango:
+    image: arangodb:3.3.3
+    environment:
+      ARANGO_NO_AUTH: '1'
+    stdin_open: true
+    tty: true
