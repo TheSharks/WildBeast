@@ -44,7 +44,7 @@
     "superagent": "^3.8.2",
     "tag-replacer": "^1.2.2",
     "ws": "^4.0.0",
-    "xml2js": "^0.4.19"
+    "xml-js": "^1.6.2"
   },
   "optionalDependencies": {
     "arangojs": "^6.0.0",
