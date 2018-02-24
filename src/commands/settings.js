@@ -26,7 +26,8 @@ module.exports = {
         await engine.modify(msg.channel.guild, parts[0], parts[1])
         return global.i18n.send('SETTINGS_MODIFIED', msg.channel, {
           setting: parts[0],
-          value: parts[1]
+          value: parts[1],
+          disclaim: ((parts[0] === 'language') ? `\n${global.i18n.raw('LANGUAGE_DISCLAIMER')}` : '')
         })
       }
     } else {

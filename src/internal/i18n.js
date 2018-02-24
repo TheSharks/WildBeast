@@ -3,7 +3,11 @@ const available = require('./directory-loader')('./src/languages', /\.json$/)
 const driver = require('./database-selector')
 
 if (!available[standard]) {
-  global.logger.error(`Unable to load language file ${standard}. It does not exist.`, true)
+  if (standard === 'en') {
+    global.logger.error('The language file is missing, did you forget to run "git submodule update --init --remote"?', true)
+  } else {
+    global.logger.error(`Unable to load language file ${standard}. It does not exist.`, true)
+  }
 }
 
 module.exports = {
