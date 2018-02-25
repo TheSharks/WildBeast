@@ -24,6 +24,7 @@ module.exports = {
   },
   fn: function (msg, suffix) {
     const parts = suffix.split(' ')
+    const query = parts.slice(1).join(' ')
     if (!sites[parts[0]]) {
       return global.i18n.send('BOORU_SITE_UNKNOWN', msg.channel, {
         site: parts[0]
@@ -33,18 +34,18 @@ module.exports = {
     switch (sites[parts[0]].apiStyle) {
       case 'gelbooru': { // Gelbooru interpretation has xml conversion to provide full support, although we do prefer JSON
         SA(sites[parts[0]].baseURL)
-          .query({page: 'dapi', s: 'post', q: 'index', tags: parts.slice(1).join(' ')})
+          .query({page: 'dapi', s: 'post', q: 'index', tags: query})
           .set({'User-Agent': 'Superagent Node.js'})
           .then(res => {
             const result = require('xml-js').xml2js(res.text, {compact: true})
             if (result.posts.post.length < 1) {
               return global.i18n.send('BOORU_NO_RESULTS', msg.channel, {
-                query: parts.slice(1).join(' ')
+                query: (query.length > 0) ? query : 'random'
               })
             }
             const count = Math.floor((Math.random() * result.posts.post.length))
             global.i18n.send('BOORU_SUCCESS', msg.channel, {
-              query: parts.slice(1).join(' '),
+              query: (query.length > 0) ? query : 'random',
               url: result.posts.post[count]._attributes.file_url
             })
           })
@@ -58,12 +59,12 @@ module.exports = {
           .then(res => {
             if (res.body.length < 1) {
               return global.i18n.send('BOORU_NO_RESULTS', msg.channel, {
-                query: parts.slice(1).join(' ')
+                query: (query.length > 0) ? query : 'random'
               })
             }
             const count = Math.floor((Math.random() * res.body.length))
             global.i18n.send('BOORU_SUCCESS', msg.channel, {
-              query: parts.slice(1).join(' '),
+              query: (query.length > 0) ? query : 'random',
               url: res.body[count].file_url
             })
           })
