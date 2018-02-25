@@ -7,24 +7,11 @@ module.exports = {
     level: 0
   },
   fn: function (msg) {
-    const xml2js = require('xml2js')
     request.get('http://www.fayd.org/api/fact.xml')
-      .end((err, res) => {
-        if (err) {
-          global.logger.error(err)
-        }
-        if (!err && res.status === 200) {
-          xml2js.parseString(res.text, function (err, result) {
-            if (err) {
-              global.logger.error(err)
-            }
-            try {
-              msg.channel.createMessage(`<@${msg.author.id}>, ${result.facts.fact[0]}`)
-            } catch (e) {
-              msg.channel.createMessage('The API returned an unconventional response.')
-            }
-          })
-        }
+      .then(res => {
+        if (res.statusCode !== 200) return msg.channel.createMessage('The API returned a malformed response')
+        const x = require('xml-js').xml2js(res.text, {compact: true})
+        return msg.channel.createMessage(x.facts.fact._text)
       })
   }
 }

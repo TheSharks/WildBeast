@@ -16,10 +16,11 @@ module.exports = {
   getTag: (key) => {
     return module.exports.getArbitrary(key, 'tags')
   },
-  getArbitrary (key, coll) {
+  getArbitrary: async (key, coll) => {
     const collection = db.collection(coll)
     try {
-      return collection.document(key)
+      const doc = await collection.document(key)
+      return doc
     } catch (e) {
       return null
     }

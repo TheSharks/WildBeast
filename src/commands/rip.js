@@ -10,7 +10,7 @@ module.exports = {
     let skipped = false
     if (msg.mentions.length > 0) {
       for (const m of msg.mentions) {
-        if (m.id !== msg.channel.guild.shard.client.user.id) {
+        if (m.id !== global.bot.user.id) {
           if (resolve[0] === undefined) {
             resolve[0] = m.username
           } else {
