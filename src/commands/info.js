@@ -7,14 +7,15 @@ module.exports = {
     alias: ['botinfo'],
     help: 'I\'ll respond with info about me!'
   },
-  fn: (msg) => {
+  fn: async (msg) => {
     let bot = global.bot
     let owner
     if (process.env.WILDBEAST_MASTERS) {
-      let userObj = bot.users.get(process.env.WILDBEAST_MASTERS.split('|')[0])
+      let userObj = bot.users.getRESTUser(process.env.WILDBEAST_MASTERS.split('|')[0])
       owner = `${userObj.username}#${userObj.discriminator}`
     } else {
-      owner = 'Dougley#6666'
+      let user = bot.users.getRESTUser('107904023901777920')
+      owner = `${user.username}#${user.discriminator}`
     }
     let fields = [{name: 'Servers Connected', value: '```\n' + bot.guilds.size + '```', inline: true},
       {name: 'Users Known', value: '```\n' + bot.users.size + '```', inline: true},

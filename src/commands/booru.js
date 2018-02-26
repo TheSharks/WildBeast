@@ -20,7 +20,10 @@ module.exports = {
     help: 'Query various booru sites for images.',
     nsfw: true,
     timeout: 1, // somewhat of an external ratelimit compliance
-    level: 0
+    level: 0,
+    addons: [
+      `Available sites: ${Object.keys(sites).join(', ')}`
+    ]
   },
   fn: function (msg, suffix) {
     const parts = suffix.split(' ')

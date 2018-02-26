@@ -14,7 +14,7 @@ module.exports = {
           try {
             JSON.parse(res.text)
           } catch (e) {
-            msg.channel.createMessage('The API returned an unconventional response.')
+            global.i18n.send('API_ERROR', msg.channel)
             return
           }
           const advice = JSON.parse(res.text)

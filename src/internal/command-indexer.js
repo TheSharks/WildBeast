@@ -34,11 +34,13 @@ async function helpingHand (user, context, cmd) {
       '```',
       c.meta.usage ? process.env.BOT_PREFIX + name + ' ' + c.meta.usage : process.env.BOT_PREFIX + name,
       '```',
-      `Minimum access level required: ${c.meta.level}`
+      `Minimum access level required: ${c.meta.level}`,
+      ''
     ]
     if (c.meta.aliases && c.meta.aliases.length > 0) result.push(`**Aliases for this command:** ${c.meta.aliases.join(', ')}`)
     if (c.meta.timeout) result.push(`**This command has a timeout of ${c.meta.timeout} seconds**`)
     if (c.meta.nsfw) result.push('**This command is NSFW**')
+    if (c.meta.addons) result.push(c.meta.addons)
     if (context.guild) {
       context.createMessage(`Please check your DMs!`)
       context = await global.bot.users.get(user).getDMChannel() // reassign context to be a dm channel

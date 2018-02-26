@@ -11,6 +11,9 @@ module.exports = {
     const mentions = mapMentions(suffix)
     const roles = mapMentions(suffix, /<@&([0-9]*)>/g)
     let to = suffix.split(' ')[suffix.split(' ').length - 1]
+    if (to > 10) { // haha no
+      return global.i18n.send('PERMISSIONS_OVERFLOW', msg.channel)
+    }
     if (to === 0) to = null
     let data = {
       users: {},
@@ -23,7 +26,7 @@ module.exports = {
       data.roles[role] = to
     }
     await perms.modifyBulk(msg.channel.guild, data)
-    msg.channel.createMessage('Permissions updated')
+    global.i18n.send('PERMISSIONS_UPDATED', msg.channel)
   }
 }
 
