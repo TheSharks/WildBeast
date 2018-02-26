@@ -1,5 +1,12 @@
 FROM node:9
-MAINTAINER hello@dougley.com
+
+ARG buildno
+ARG commitsha
+
+LABEL maintainer="hello@dougley.com" \
+      repository="https://github.com/TheSharks/WildBeast" \
+      buildno=$buildno \
+      commit=$commitsha
 
 WORKDIR /app
 

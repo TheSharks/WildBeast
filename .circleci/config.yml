@@ -31,7 +31,7 @@ jobs:
           name: Docker building
           command: |
             git submodule update --init --remote
-            if [ "$CIRCLE_BRANCH" = "master" ]; then docker build -t dougley/wildbeast:latest .; else docker build -t dougley/wildbeast:$CIRCLE_BRANCH .; fi
+            if [ "$CIRCLE_BRANCH" = "master" ]; then docker build -t dougley/wildbeast:latest --build-arg buildno=$CIRCLE_BUILD_NUM --build-arg commitsha=$CIRCLE_SHA1 .; else docker build -t dougley/wildbeast:$CIRCLE_BRANCH --build-arg buildno=$CIRCLE_BUILD_NUM --build-arg commitsha=$CIRCLE_SHA1 .; fi
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             if [ "$CIRCLE_BRANCH" = "master" ]; then docker push dougley/wildbeast:latest; else docker push dougley/wildbeast:$CIRCLE_BRANCH; fi
   tagged-build:
@@ -48,7 +48,7 @@ jobs:
           name: Docker building
           command: |
             git submodule update --init --remote
-            docker build -t dougley/wildbeast:$(git describe --abbrev=0 --tags) .
+            docker build -t dougley/wildbeast:$(git describe --abbrev=0 --tags) --build-arg buildno=$CIRCLE_BUILD_NUM --build-arg commitsha=$CIRCLE_SHA1 .
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push dougley/wildbeast:$(git describe --abbrev=0 --tags)
 workflows:
