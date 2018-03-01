@@ -34,16 +34,15 @@ module.exports = async (ctx) => {
       if (res >= commands[cmd].meta.level) {
         try {
           commands[cmd].fn(msg, suffix)
-        } catch (e) {
-          global.logger.error(e)
-          global.i18n.send('COMMAND_ERROR', msg.channel, {
-            message: e.message
-          })
-        } finally {
           global.logger.command({
             cmd: cmd,
             opts: suffix,
             m: msg
+          })
+        } catch (e) {
+          global.logger.error(e)
+          global.i18n.send('COMMAND_ERROR', msg.channel, {
+            message: e.message
           })
         }
       } else if (res > 0) return global.i18n.send('NO_PERMS', msg.channel)
