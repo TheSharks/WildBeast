@@ -2,7 +2,9 @@ const engine = require('../engines/settings')
 const driver = require('../internal/database-selector')
 const whitelist = [
   'prefix',
-  'language'
+  'language',
+  'welcome',
+  'welcomeMessage'
 ]
 
 module.exports = {
@@ -23,10 +25,16 @@ module.exports = {
           value: current[parts[0]]
         })
       } else {
-        await engine.modify(msg.channel.guild, parts[0], parts[1])
+        if (parts[0] === 'welcome') {
+          const match = /<#([0-9]*)>/g.exec(parts[1])
+          if (parts[1].toLowerCase() !== 'dm' && !match) return global.i18n.send('SETTINGS_WELCOMING_MALFORMED', msg.channel)
+          if (match) parts[1] = match[1]
+          else parts[1] = parts[1].toLowerCase()
+        }
+        await engine.modify(msg.channel.guild, parts[0], parts.slice(1).join(' '))
         return global.i18n.send('SETTINGS_MODIFIED', msg.channel, {
           setting: parts[0],
-          value: parts[1],
+          value: parts.slice(1).join(' '),
           disclaim: ((parts[0] === 'language') ? `\n${global.i18n.raw('LANGUAGE_DISCLAIMER')}` : '')
         })
       }
