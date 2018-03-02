@@ -1,4 +1,5 @@
 require('dotenv').config()
+require('./src/internal/secrets-loader')
 
 global.logger = require('./src/internal/logger')
 global.i18n = require('./src/internal/i18n')
