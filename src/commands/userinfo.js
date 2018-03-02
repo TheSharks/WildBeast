@@ -14,6 +14,7 @@ module.exports = {
   meta: {
     level: 0,
     timeout: 5,
+    noDM: true,
     alias: ['user-info'],
     help: 'I\'ll return information about the given userid, mention, or username.'
   },
