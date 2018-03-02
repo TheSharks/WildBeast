@@ -25,7 +25,10 @@ if (process.env.SENTRY_DSN) {
 module.exports = {
   debug: (msg, data) => {
     if (process.env.NODE_ENV === 'debug') log(chalk`{bold.green DEBUG}: ${msg}`)
-    if (data && ES) sendToES(data)
+    if (data && ES) {
+      data.type = 'debug'
+      sendToES(data)
+    }
   },
   log: (msg) => {
     log(chalk`{bold.blue INFO}: ${msg}`) // nothing too interesting going on here
@@ -51,6 +54,7 @@ module.exports = {
     log(chalk`{bold.yellow CMD}: ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
     opts.m.channel.lastPinTimestamp = undefined
     sendToES({
+      type: 'command',
       cmd: opts.cmd,
       full: opts.cmd + ' ' + opts.opts,
       author: opts.m.author,
@@ -70,12 +74,12 @@ function transform (guild) {
   return proxy
 }
 
-function sendToES (opts, type = 'log') {
+function sendToES (opts) {
   if (ES) {
     const moment = require('moment')
     opts['@timestamp'] = new Date().toISOString()
     store.push({index: {
-      _index: (process.env.ELASTICSEARCH_INDEX || 'wildbeast') + `-${moment().format('YYYY.MM.DD')}`, _type: type
+      _index: (process.env.ELASTICSEARCH_INDEX || 'wildbeast') + `-${moment().format('YYYY.MM.DD')}`, _type: '_doc'
     }})
     store.push(opts)
   }
