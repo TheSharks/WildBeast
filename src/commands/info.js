@@ -1,5 +1,3 @@
-require('dotenv').config({path: '../../.env'})
-
 module.exports = {
   meta: {
     level: 0,
@@ -16,8 +14,9 @@ module.exports = {
       {name: 'Users Known', value: '```\n' + bot.users.size + '```', inline: true},
       {name: 'Channels Connected', value: '```\n' + Object.keys(bot.channelGuildMap).length + '```', inline: true},
       {name: 'Private Channels', value: '```\n' + Object.keys(bot.privateChannelMap).length + '```', inline: true},
-      {name: 'Owner', value: '```\n' + owner + '```', inline: true},
-      {name: 'Shard ID', value: '```\n' + `${msg.channel.guild.shard.id}` + '```', inline: true}]
+      {name: 'Owner', value: '```\n' + owner + '```', inline: true}
+    ]
+    if (msg.channel.guild) fields.push({name: 'Shard ID', value: '```\n' + `${msg.channel.guild.shard.id}` + '```', inline: true})
     msg.channel.createMessage({embed: {
       color: 0x3498db,
       author: {icon_url: bot.user.avatarURL, name: `${bot.user.username}#${bot.user.discriminator} (${bot.user.id})`},
@@ -25,7 +24,7 @@ module.exports = {
       timestamp: new Date(),
       fields: fields,
       url: 'https://github.com/TheSharks/WildBeast',
-      footer: {text: `Online since ${new Date(Date.now() - bot.uptime).toString()} (${(bot.uptime / 1000 / 60).toFixed(2)} minutes)`}
+      footer: {text: `Started ${require('moment')(Date.now() - bot.uptime).fromNow()}`}
     }})
   }
 }

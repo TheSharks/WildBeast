@@ -18,7 +18,7 @@ module.exports = async (ctx) => {
     const suffix = msg.content.substr(prefix.length).split(' ').slice(1).join(' ')
     if (cmd === 'help') return help(msg.author.id, msg.channel, suffix) // help is special, its not a 'real' command
     if (commands[cmd]) {
-      if (commands[cmd].meta.nsfw && !msg.channel.nsfw) return global.i18n.send('NSFW_NOT_MARKED', msg.channel)
+      if (msg.channel.guild && commands[cmd].meta.nsfw && !msg.channel.nsfw) return global.i18n.send('NSFW_NOT_ENABLED', msg.channel)
       if (commands[cmd].meta.level === Infinity && !masters.includes(msg.author.id)) {
         return global.i18n.send('BOT_OWNER_ONLY', msg.channel)
       }
