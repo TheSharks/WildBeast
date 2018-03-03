@@ -24,8 +24,9 @@ module.exports = {
     let user = msg.channel.guild.members.filter(m => m.nick).filter(m => m.nick.toLowerCase().includes(suffix.toLowerCase()))[0]
     if (!user) user = msg.channel.guild.members.find(m => m.username.toLowerCase().includes(suffix.toLowerCase()))
     if (!user) user = msg.channel.guild.members.filter(u => u.id === suffix)[0]
-    if (msg.mentions.length !== 0) {
-      user = msg.channel.guild.members.get(msg.mentions[0].id)
+    const mentions = mapMentions(suffix)
+    if (mentions.length !== 0) {
+      user = msg.channel.guild.members.get(mentions[0])
     }
     if (!suffix) {
       user = msg.member
@@ -79,4 +80,13 @@ module.exports = {
       }}).catch(() => {})
     }
   }
+}
+
+function mapMentions (string, reg = /<@!?([0-9]*)>/g) {
+  let res = []
+  let x
+  while ((x = reg.exec(string)) !== null) {
+    res.push(x[1])
+  }
+  return res
 }
