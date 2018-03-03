@@ -19,6 +19,7 @@ module.exports = {
     help: 'I\'ll return information about the given userid, mention, or username.'
   },
   fn: (msg, suffix) => {
+    const moment = require('moment')
     let fields = []
     let user = msg.channel.guild.members.filter(m => m.nick).filter(m => m.nick.toLowerCase().includes(suffix.toLowerCase()))[0]
     if (!user) user = msg.channel.guild.members.find(m => m.username.toLowerCase().includes(suffix.toLowerCase()))
@@ -49,13 +50,13 @@ module.exports = {
       }
       fields.push({
         name: 'Name',
-        value: `**${user.username}#${user.discriminator}** ${user.nick ? `(**${user.nick}**)` : ''} (${user.id})\n${user.avatar.startsWith('a_') ? 'Animated PFP' : ''}`
+        value: `**${user.username}#${user.discriminator}** ${user.nick ? `(**${user.nick}**)` : ''} (${user.id})\n${user.avatar && user.avatar.startsWith('a_') ? 'Animated PFP' : ''}`
       }, {
         name: 'Join Date',
-        value: `${new Date(user.joinedAt)}`
+        value: `${moment(user.joinedAt).fromNow()} (${moment(user.joinedAt).format('MMMM Do YYYY')})`
       }, {
         name: 'Creation Date',
-        value: `${new Date(user.createdAt).toString().substr(0, 21)}`
+        value: `${moment(user.createdAt).fromNow()} (${moment(user.createdAt).format('MMMM Do YYYY')})`
       }, {
         name: 'Roles',
         value: `${user.roles.length !== 0 ? `\`\`\`${user.roles.map(r => msg.channel.guild.roles.get(r).name).join(', ')}\`\`\`` : '```None```'}`
