@@ -28,7 +28,7 @@ module.exports = {
   },
   getPlayer: async (channel) => {
     if (!channel || !channel.guild) {
-      throw('Not a guild channel.')
+      throw new Error('Not a guild channel.')
     }
 
     let player = global.bot.voiceConnections.get(channel.guild.id)
@@ -49,11 +49,11 @@ module.exports = {
         .set('Authorization', nodes[0].password)
         .set('Accept', 'application/json')
     } catch (err) {
-      throw(err)
+      throw new Error(err)
     }
 
     if (!result) {
-      throw('Unable play that video.')
+      throw new Error('Unable play that video.')
     }
 
     return (result.body)
@@ -74,12 +74,12 @@ module.exports = {
       let minutes = (Math.floor(time / (60)) % 60)
       let seconds = (Math.floor(time) % 60)
       let parsedTime = []
-      hours >= 1 ? parsedTime.push(hours) : null
+      if (hours >= 1) parsedTime.push(hours)
       minutes >= 10 ? parsedTime.push(minutes) : parsedTime.push(`0${minutes}`)
       seconds >= 10 ? parsedTime.push(seconds) : parsedTime.push(`0${seconds}`)
       return parsedTime.join(':')
     } else {
-      throw '00:00:00'
+      throw new Error('00:00:00')
     }
   },
   createPlayer: async (msg, tracks) => {
@@ -98,21 +98,25 @@ module.exports = {
       player.on('stuck', msg => global.logger.error(msg))
       player.on('disconnect', wat => global.logger.error(wat))
       player.on('end', async data => {
-        if (data.reason && data.reason !== "REPLACED") {
+        if (data.reason && data.reason !== 'REPLACED') {
           if (guildInfo[data.guildId].tracks.length > 1) {
-            global.i18n.send('NEXT_TRACK', global.bot.guilds.get(data.guildId).channels.find(c => c.id === guildInfo[data.guildId].textChan), {current: guildInfo[data.guildId].tracks[0].info.title, next: guildInfo[data.guildId].tracks[1].info.title, duration: await module.exports.hhMMss(guildInfo[data.guildId].tracks[1].info.length / 1000), user: global.bot.users.get(guildInfo[data.guildId].tracks[1].requester).username})
+            global.i18n.send('NEXT_TRACK', global.bot.guilds.get(data.guildId).channels.find(c => c.id === guildInfo[data.guildId].textChan), {
+              current: guildInfo[data.guildId].tracks[0].info.title,
+              next: guildInfo[data.guildId].tracks[1].info.title,
+              duration: await module.exports.hhMMss(guildInfo[data.guildId].tracks[1].info.length / 1000),
+              user: global.bot.users.get(guildInfo[data.guildId].tracks[1].requester).username
+            })
             guildInfo[data.guildId].tracks.shift()
             guildInfo[data.guildId].skips = []
             module.exports.getPlayer(global.bot.guilds.get(data.guildId).channels.find(c => c.id === global.bot.voiceConnections.get(data.guildId).channelId)).then(player => {
               player.play(guildInfo[data.guildId].tracks[0].track)
             })
           } else {
-            //TODO: check if stay is set because selfhost otherwise leave and delete the guild info object and destroy the player
+            // TODO: check if stay is set because selfhost otherwise leave and delete the guild info object and destroy the player
             guildInfo[data.guildId].tracks.shift()
             global.bot.createMessage(guildInfo[data.guildId].textChan, 'Playlist has ended.')
           }
         }
-
       })
     })
   }
