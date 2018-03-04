@@ -29,13 +29,13 @@ module.exports = {
               })
             } else {
               createPlayer(msg, tracks)
-              global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length})
+              global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length, user: msg.author.username})
             }
           }).catch(console.error)
         } else {
           resolveTracks(encodeURI(`ytsearch:${suffix}`)).then(tracks => {
             if (tracks.length === 0) {
-              global.i18n.send('NO_TRACK_FOUND', msg.channel, {author: msg.author.mention})
+              global.i18n.send('NO_TRACK_FOUND', msg.channel, {user: msg.author.mention})
             } else {
               hhMMss(tracks[0].info.length / 1000).then(time => {
                 createPlayer(msg, [tracks[0]])

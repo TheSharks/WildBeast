@@ -11,12 +11,12 @@ module.exports = {
     // TODO: Change level to 0, add check for is user in same VC as bot.
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
       if (!suffix) {
-        global.i18n.send('NO_SEARCH_SUFFIX', msg.channel, {author: msg.author.mention})
+        global.i18n.send('NO_SEARCH_SUFFIX', msg.channel, {user: msg.author.mention})
       } else {
         if (url.parse(suffix).host === null) {
           resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(tracks => {
             if (tracks.length === 0) {
-              global.i18n.send('NO_TRACK_FOUND', msg.channel, {author: msg.author.mention})
+              global.i18n.send('NO_TRACK_FOUND', msg.channel, {user: msg.author.mention})
             } else {
               hhMMss(tracks[0].info.length / 1000).then(time => {
                 addTracks(msg, [tracks[0]])
@@ -34,7 +34,7 @@ module.exports = {
           // TODO: Maybe fix youtube watch?v=ID&list=smth or throw an error, probably throw.
           resolveTracks(suffix).then(tracks => {
             if (tracks.length === 0) {
-              global.i18n.send('LINK_NO_TRACK', msg.channel, {url: suffix})
+              global.i18n.send('LINK_NO_TRACK', msg.channel, {url: suffix, user: msg.author.mention})
             } else {
               if (tracks.length === 1) {
                 hhMMss(tracks[0].info.length / 1000).then(time => {
@@ -47,7 +47,7 @@ module.exports = {
                 })
               } else {
                 addTracks(msg, tracks)
-                global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length})
+                global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length, user: msg.author.username})
               }
             }
           }).catch(err => {
