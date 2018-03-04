@@ -1,5 +1,5 @@
 const superagent = require('superagent')
-const nodes = process.env['LAVA_NODES'] ? process.env['LAVA_NODES'] : [{
+const nodes = process.env['LAVA_NODES'] ? JSON.parse(process.env['LAVA_NODES']) : [{
   host: 'localhost',
   port: 9090,
   region: 'us',
