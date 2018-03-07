@@ -43,7 +43,7 @@ module.exports = {
   meta: {
     name: 'meme',
     help: 'Create dumb memes from the comfort of your Discord server.',
-    usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**'
+    usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
     alias: ['makeameme'],
     timeout: 10,
     level: 0,
