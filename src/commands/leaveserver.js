@@ -3,6 +3,7 @@ module.exports = {
     level: 10,
     timeout: 0,
     alias: ['leave-server', 'bye', 'leave'],
+    noDM: true,
     help: 'I\'ll leave the server that this is sent in.'
   },
   fn: async (msg) => {

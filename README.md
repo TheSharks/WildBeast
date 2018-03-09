@@ -1,6 +1,6 @@
 
 <p align="center">
-    <img src="http://i.imgur.com/3wB8dIH.png">
+    <img src="https://i.imgur.com/4wYz7Y2.png">
     <a href="https://discord.gg/wildbot"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png" alt="Discord server"></a>
     <a title="Crowdin" target="_blank" href="https://i18n.thesharks.xyz/project/wildbeast"><img src="https://d322cqt584bo4o.cloudfront.net/wildbeast/localized.svg"></a>
 </p>
