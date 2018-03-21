@@ -1,13 +1,17 @@
-
-<p align="center">
-    <img src="http://i.imgur.com/3wB8dIH.png">
-    <a href="https://discord.gg/wildbot"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png" alt="Discord server"></a>
-    <a title="Crowdin" target="_blank" href="https://i18n.thesharks.xyz/project/wildbeast"><img src="https://d322cqt584bo4o.cloudfront.net/wildbeast/localized.svg"></a>
-</p>
-
-| **`Stable`** | **`Experimental`** | **`Documentation`**
-|:------------:|:------------------:|:------------------:|
-|[![CircleCI](https://circleci.com/gh/TheSharks/WildBeast/tree/master.svg?style=svg)](https://circleci.com/gh/TheSharks/WildBeast/tree/master) | [![CircleCI](https://circleci.com/gh/TheSharks/WildBeast/tree/experimental.svg?style=svg)](https://circleci.com/gh/TheSharks/WildBeast/tree/experimental) | [![CircleCI](https://circleci.com/gh/TheSharks/WildBeastDocs.svg?style=svg)](https://circleci.com/gh/TheSharks/WildBeastDocs)
+<div>
+  <div style="margin-left:auto;margin-right:auto;">
+    <img src="https://i.imgur.com/4wYz7Y2.png"><br><br>
+    <p align="center" style="margin:0;">
+      <img src="https://img.shields.io/github/license/thesharks/wildbeast.svg?style=for-the-badge" alt="License">
+      <img src="https://img.shields.io/github/package-json/v/thesharks/wildbeast.svg?label=version&style=for-the-badge" alt="Version">
+      <a href="https://discord.gg/wildbot"><img src="https://img.shields.io/discord/110462143152803840.svg?logo=discord&style=for-the-badge" alt="Discord server"></a>
+    </p>
+    <p align="center" style="margin:0;">
+      <img src="https://img.shields.io/circleci/project/github/TheSharks/WildBeast/master.svg?label=stable&style=for-the-badge" alt="CircleCI">
+      <img src="https://img.shields.io/circleci/project/github/TheSharks/WildBeast/experimental.svg?label=experimental&style=for-the-badge" alt="CircleCI">
+    </p>
+  </div>
+</div>
 
 ---
 
@@ -20,7 +24,7 @@ WildBeast is a multifunctional Discord bot, intended to provide a framework that
 - Built-in command system with permissions and server-unique configurations
 
 
-Visit our [documentation](http://docs.thesharks.xyz) for more information.
+Visit our [documentation](https://docs.thesharks.xyz) for more information.
 
 ## Want to use WildBeast but don't want to host it yourself?
 
@@ -32,15 +36,11 @@ The advantages of selfhosting WildBeast are numerous. A few core freedoms that a
 
 There is extensive support and resources for users wishing to run WildBeast on their own. We currently support installation on Linux (Ubuntu, Debian) and Windows (Native or Docker) machines.
 
-- [Linux installation guide](http://docs.thesharks.xyz/install_linux/)
-- [Windows installation guide](http://docs.thesharks.xyz/install_windows/)
-- [Docker installation guide](http://docs.thesharks.xyz/install_docker/)
+- [Linux installation guide](https://docs.thesharks.xyz/install_linux/)
+- [Windows installation guide](https://docs.thesharks.xyz/install_windows/)
+- [Docker installation guide](https://docs.thesharks.xyz/install_docker/)
 
 If you are not into hosting the bot yourself, you can always invite WildBot to your server [from here](http://invite.wildbot.dougley.com).
-
-## Music Credits
-
-[Whispers Invoke Paranoia](http://freemusicarchive.org/music/Nihilore/The_Hermeneutic_Circle/Nihilore_-_The_Hermeneutic_Circle_-_02_Whispers_Invoke_Paranoia) by [Nihilore](http://freemusicarchive.org/music/Nihilore/)
 
 ---
 

@@ -4,6 +4,7 @@ module.exports = {
     level: 1,
     timeout: 0,
     alias: ['stop'],
+    noDM: true,
     help: 'succ'
   },
   fn: async (msg) => {

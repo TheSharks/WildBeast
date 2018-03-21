@@ -4,13 +4,14 @@ const whitelist = [
   'prefix',
   'language',
   'welcome',
-  'welcomeMessage'
+  'welcomeMessage',
+  'reset'
 ]
 
 module.exports = {
   meta: {
     help: 'View/change settings about your server.',
-    alias: [],
+    alias: ['config'],
     noDM: true,
     level: 5
   },
@@ -20,11 +21,25 @@ module.exports = {
       if (!whitelist.includes(parts[0])) return global.i18n.send('SETTINGS_NOT_WHITELISTED', msg.channel)
       const current = await driver.getSettings(msg.channel.guild)
       if (!parts[1]) {
-        global.i18n.send('SETTINGS_SINGLE_REPLY', msg.channel, {
-          setting: parts[0],
-          value: current[parts[0]]
-        })
+        if (current[parts[0]] === undefined) {
+          global.i18n.send('SETTINGS_SINGLE_NOT_SET', msg.channel, {
+            setting: parts[0]
+          })
+        } else {
+          global.i18n.send('SETTINGS_SINGLE_REPLY', msg.channel, {
+            setting: parts[0],
+            value: current[parts[0]]
+          })
+        }
       } else {
+        if (parts[0] === 'reset') {
+          if (whitelist.includes(parts[1]) && parts[1] !== 'reset') {
+            await engine.modify(msg.channel.guild, parts[1], null)
+            return global.i18n.send('SETTINGS_RESET', msg.channel, {
+              setting: parts[1]
+            })
+          } else return global.i18n.send('SETTINGS_NOT_WHITELISTED', msg.channel)
+        }
         if (parts[0] === 'welcome') {
           const match = /<#([0-9]*)>/g.exec(parts[1])
           if (parts[1].toLowerCase() !== 'dm' && !match) return global.i18n.send('SETTINGS_WELCOMING_MALFORMED', msg.channel)

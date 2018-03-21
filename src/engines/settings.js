@@ -2,8 +2,8 @@ const driver = require('../internal/database-selector')
 
 module.exports = {
   prefix: async (guild, msg) => {
-    let tag = global.bot.user.mention
-    if (msg.content.startsWith(tag)) return tag + ' '
+    const tag = new RegExp(`<@!?${global.bot.user.id}>`)
+    if (msg.content.search(tag) === 0) return tag.exec(msg.content) + ' '
     let settings = await driver.getSettings(guild)
     if (settings.prefix) return settings.prefix
     else {

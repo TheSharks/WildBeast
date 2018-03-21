@@ -5,6 +5,7 @@ module.exports = {
     level: 1,
     timeout: 0,
     alias: ['play'],
+    noDM: true,
     help: 'succ'
   },
   fn: async (msg, suffix) => {
