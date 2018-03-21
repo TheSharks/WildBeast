@@ -10,12 +10,12 @@ module.exports = {
   nodes: nodes,
   guildInfo: guildInfo,
   init: () => {
+    global.logger.log('Initializing LavaLink.')
     const {PlayerManager} = require('eris-lavalink')
     let regions = {
       eu: ['eu', 'amsterdam', 'frankfurt', 'russia', 'hongkong', 'singapore', 'sydney'],
       us: ['us', 'brazil']
     }
-
     if (!(global.bot.voiceConnections instanceof PlayerManager)) {
       global.bot.voiceConnections = new PlayerManager(global.bot, nodes, {
         numShards: process.env['SHARD_COUNT'] ? process.env['SHARD_COUNT'] : 1,
@@ -24,7 +24,6 @@ module.exports = {
         defaultRegion: 'us'
       })
     }
-    global.logger.log('LavaLink has been initiated.')
   },
   getPlayer: async (channel) => {
     if (!channel || !channel.guild) {
@@ -49,6 +48,7 @@ module.exports = {
         .set('Authorization', nodes[0].password)
         .set('Accept', 'application/json')
     } catch (err) {
+      console.log(err)
       throw new Error(err)
     }
 
@@ -67,6 +67,12 @@ module.exports = {
       track.requester = msg.author.id
       guildInfo[msg.channel.guild.id].tracks.push(track)
     }
+  },
+  skip: async (msg) => {
+    guildInfo[msg.channel.guild.id].tracks.shift()
+    module.exports.getPlayer(msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID)).then(player => {
+      player.play(guildInfo[msg.channel.guild.id].tracks[0].track)
+    })
   },
   hhMMss: async (time) => {
     if (time || isNaN(time)) {

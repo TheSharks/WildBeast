@@ -1,5 +1,6 @@
 const {createPlayer, resolveTracks, hhMMss} = require('../internal/encoder-selector.js')
 const url = require('url')
+const querystring = require('querystring')
 module.exports = {
   meta: {
     level: 1,
@@ -16,22 +17,38 @@ module.exports = {
       global.i18n.send('VOICE_CONNECTED', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === global.bot.voiceConnections.get(msg.channel.guild.id).channelId).name})
     } else {
       if (suffix) {
-        if (url.parse(suffix).hostname) {
-          resolveTracks(suffix).then(tracks => {
-            if (tracks.length === 1) {
-              hhMMss(tracks[0].info.length / 1000).then(time => {
-                createPlayer(msg, tracks)
-                global.i18n.send('TRACK_ADDED', msg.channel, {
-                  title: tracks[0].info.title,
-                  duration: time,
-                  user: msg.author.username
-                })
-              })
+        let link = url.parse(suffix)
+        let splitLink
+        if (link.hostname) {
+          if (suffix.includes('list=') !== suffix.includes('playlist?')) {
+            if (suffix.includes('youtu.be')) { // If the link is shortened with youtu.be
+              splitLink = suffix.split('?list=') // Check for this instead of &list
+              msg.channel.createMessage(`Try that again with either a link to the video or the playlist.
+**Video:** <${splitLink[msg.guild.id][0]}>
+**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[1]}>`)
             } else {
-              createPlayer(msg, tracks)
-              global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length, user: msg.author.username})
+              splitLink = suffix.split('&list=')
+              msg.channel.createMessage(`Try that again with either a link to the video or the playlist.
+**Video:** <${splitLink[0]}>
+**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[1]}>`)
             }
-          }).catch(console.error)
+          } else {
+            resolveTracks(suffix).then(tracks => {
+              if (tracks.length === 1) {
+                hhMMss(tracks[0].info.length / 1000).then(time => {
+                  createPlayer(msg, tracks)
+                  global.i18n.send('TRACK_ADDED', msg.channel, {
+                    title: tracks[0].info.title,
+                    duration: time,
+                    user: msg.author.username
+                  })
+                })
+              } else {
+                createPlayer(msg, tracks)
+                global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length, user: msg.author.username})
+              }
+            }).catch(console.error)
+          }
         } else {
           resolveTracks(encodeURI(`ytsearch:${suffix}`)).then(tracks => {
             if (tracks.length === 0) {
