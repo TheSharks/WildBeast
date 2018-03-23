@@ -9,7 +9,7 @@ require('./src/internal/check-env')
 require('./src/internal/version-check')
 
 const Eris = require('eris')
-const Events = require('./src/internal/directory-loader')('./src/events')
+const Events = require('./src/internal/directory-loader')('../events')
 const bot = new Eris(process.env['BOT_TOKEN'], {
   restMode: true
 })
