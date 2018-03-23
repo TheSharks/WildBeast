@@ -1,6 +1,5 @@
 const {createPlayer, resolveTracks, hhMMss} = require('../internal/encoder-selector.js')
 const url = require('url')
-const querystring = require('querystring')
 module.exports = {
   meta: {
     level: 1,
@@ -22,16 +21,12 @@ module.exports = {
         let splitLink
         if (link.hostname) {
           if (suffix.includes('list=') !== suffix.includes('playlist?')) {
-            if (suffix.includes('youtu.be')) { // If the link is shortened with youtu.be
-              splitLink = suffix.split('?list=') // Check for this instead of &list
-              msg.channel.createMessage(`Try that again with either a link to the video or the playlist.
-**Video:** <${splitLink[msg.guild.id][0]}>
-**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[1]}>`)
+            if (suffix.includes('youtu.be')) {
+              splitLink = suffix.split('?list=')
+              global.i18n.send('YOUTUBE_PLAYLIST_MALFORMED_LINK', msg.channel, {video: splitLink[0], playlist: splitLink[1]})
             } else {
               splitLink = suffix.split('&list=')
-              msg.channel.createMessage(`Try that again with either a link to the video or the playlist.
-**Video:** <${splitLink[0]}>
-**Playlist:** <https://www.youtube.com/playlist?list=${splitLink[1]}>`)
+              global.i18n.send('YOUTUBE_PLAYLIST_MALFORMED_LINK', msg.channel, {video: splitLink[0], playlist: splitLink[1]})
             }
           } else {
             resolveTracks(suffix).then(tracks => {
@@ -53,7 +48,7 @@ module.exports = {
         } else {
           resolveTracks(encodeURI(`ytsearch:${suffix}`)).then(tracks => {
             if (tracks.length === 0) {
-              global.i18n.send('NO_TRACK_FOUND', msg.channel, {user: msg.author.mention})
+              global.i18n.send('SEARCH_NO_TRACKS', msg.channel, {user: msg.author.mention})
             } else {
               hhMMss(tracks[0].info.length / 1000).then(time => {
                 createPlayer(msg, [tracks[0]])

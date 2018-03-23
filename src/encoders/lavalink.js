@@ -70,9 +70,9 @@ module.exports = {
   },
   skip: async (msg) => {
     guildInfo[msg.channel.guild.id].tracks.shift()
-    module.exports.getPlayer(msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID)).then(player => {
-      player.play(guildInfo[msg.channel.guild.id].tracks[0].track)
-    })
+    guildInfo[msg.channel.guild.id].skips = []
+    let player = await global.bot.voiceConnections.get(msg.channel.guild.id)
+    player.play(guildInfo[msg.channel.guild.id].tracks[0].track)
   },
   hhMMss: async (time) => {
     if (time || isNaN(time)) {
@@ -93,7 +93,6 @@ module.exports = {
       guildInfo[msg.channel.guild.id] = {
         tracks: [],
         volume: 100,
-        playing: undefined,
         skips: [],
         textChan: msg.channel.id
       }
@@ -118,9 +117,15 @@ module.exports = {
               player.play(guildInfo[data.guildId].tracks[0].track)
             })
           } else {
-            // TODO: check if stay is set because selfhost otherwise leave and delete the guild info object and destroy the player
-            guildInfo[data.guildId].tracks.shift()
-            global.bot.createMessage(guildInfo[data.guildId].textChan, 'Playlist has ended.')
+            if (!process.env.WILDBEAST_VOICE_PERSIST) {
+              global.i18n.send('QUEUE_END', global.bot.guilds.get(data.guildId).channels.find(c => c.id === guildInfo[data.guildId].textChan))
+              let player = await global.bot.voiceConnections.get(data.guildId)
+              global.bot.leaveVoiceChannel(player.channelId)
+              delete guildInfo[data.guildId]
+            } else {
+              guildInfo[data.guildId].tracks.shift()
+              global.i18n.send('VOICE_PERSIST', global.bot.guilds.get(data.guildId).channels.find(c => c.id === guildInfo[data.guildId].textChan))
+            }
           }
         }
       })
