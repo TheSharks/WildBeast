@@ -1,4 +1,4 @@
-const drivers = require('./directory-loader')('./src/drivers')
+const drivers = require('./directory-loader')('../drivers')
 const preferred = process.env['WILDBEAST_PREFERRED_DATABASE'] || 'arangodb'
 const available = Object.getOwnPropertyNames(drivers)
 

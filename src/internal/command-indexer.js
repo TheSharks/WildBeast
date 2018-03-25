@@ -1,4 +1,4 @@
-const commands = require('./directory-loader')('./src/commands')
+const commands = require('./directory-loader')('../commands')
 
 const misc = [
   'If you want more information on the commands, check the command reference at http://docs.thesharks.xyz/commands.',
