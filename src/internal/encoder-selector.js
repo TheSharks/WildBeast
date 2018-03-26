@@ -1,4 +1,4 @@
-const drivers = require('./directory-loader')('./src/encoders')
+const drivers = require('./directory-loader')('../encoders')
 const preferred = process.env['WILDBEAST_PREFERRED_ENCODER'] || 'lavalink'
 const available = Object.getOwnPropertyNames(drivers)
 
