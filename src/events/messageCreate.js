@@ -4,7 +4,8 @@ const help = require('../internal/command-indexer').help
 const engines = {
   perms: require('../engines/permissions'),
   settings: require('../engines/settings'),
-  timeout: require('../engines/timeouts')
+  timeout: require('../engines/timeouts'),
+  blockade: require('../engines/blockade')
 }
 const masters = process.env['WILDBEAST_MASTERS'].split('|')
 
@@ -18,6 +19,15 @@ module.exports = async (ctx) => {
     const suffix = msg.content.substr(prefix.length).split(' ').slice(1).join(' ')
     if (cmd === 'help') return help(msg.author.id, msg.channel, suffix) // help is special, its not a 'real' command
     if (commands[cmd]) {
+      const blocks = await engines.blockade.blacklist(ctx[0].channel)
+      if (blocks.deny.includes(cmd) || (blocks.deny.includes('all') && !blocks.allow.includes(cmd))) return global.i18n.send('CMD_DISABLED_CHANNEL', msg.channel)
+      if (commands[cmd].meta.module !== undefined) {
+        let mod = commands[cmd].meta.module.toLowerCase()
+        if ((blocks.deny.includes(mod) && !blocks.allow.includes(cmd)) || (blocks.deny.includes('all') && !blocks.allow.includes(cmd) && !blocks.allow.includes(mod))) return global.i18n.send('CMD_DISABLED_CHANNEL', msg.channel)
+        // IF deny includes module BUT allow includes command, pass
+        // IF deny includes all BUT allow includes module or cmd, pass
+        // ELSE, block
+      }
       if (msg.channel.guild && commands[cmd].meta.nsfw && !msg.channel.nsfw) return global.i18n.send('NSFW_NOT_ENABLED', msg.channel)
       if (commands[cmd].meta.level === Infinity && !masters.includes(msg.author.id)) {
         return global.i18n.send('BOT_OWNER_ONLY', msg.channel)
