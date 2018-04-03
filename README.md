@@ -2,13 +2,13 @@
   <div style="margin-left:auto;margin-right:auto;">
     <img src="https://i.imgur.com/4wYz7Y2.png"><br><br>
     <p align="center" style="margin:0;">
-      <img src="https://img.shields.io/github/license/thesharks/wildbeast.svg?style=for-the-badge" alt="License">
-      <img src="https://img.shields.io/github/package-json/v/thesharks/wildbeast.svg?label=version&style=for-the-badge" alt="Version">
-      <a href="https://discord.gg/wildbot"><img src="https://img.shields.io/discord/110462143152803840.svg?logo=discord&style=for-the-badge" alt="Discord server"></a>
+      <a href="https://github.com/TheSharks/WildBeast/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/thesharks/wildbeast.svg?style=for-the-badge&longCache=true" alt="License"></a>
+      <a href="https://github.com/TheSharks/WildBeast/releases"><img src="https://img.shields.io/github/package-json/v/thesharks/wildbeast.svg?label=version&style=for-the-badge&maxAge=3600" alt="Version"></a>
+      <a href="https://discord.gg/wildbot"><img src="https://img.shields.io/discord/110462143152803840.svg?logo=discord&style=for-the-badge&maxAge=3600" alt="Discord server"></a>
     </p>
     <p align="center" style="margin:0;">
-      <img src="https://img.shields.io/circleci/project/github/TheSharks/WildBeast/master.svg?label=stable&style=for-the-badge" alt="CircleCI">
-      <img src="https://img.shields.io/circleci/project/github/TheSharks/WildBeast/experimental.svg?label=experimental&style=for-the-badge" alt="CircleCI">
+      <a href="https://circleci.com/gh/TheSharks/WildBeast"><img src="https://img.shields.io/circleci/project/github/TheSharks/WildBeast/master.svg?label=stable&style=for-the-badge&maxAge=3600" alt="CircleCI"></a>
+      <a href="https://circleci.com/gh/TheSharks/WildBeast/tree/experimental"><img src="https://img.shields.io/circleci/project/github/TheSharks/WildBeast/experimental.svg?label=experimental&style=for-the-badge&maxAge=3600" alt="CircleCI"></a>
     </p>
   </div>
 </div>
