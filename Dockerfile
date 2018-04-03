@@ -19,6 +19,6 @@ WORKDIR /opt/wildbeast
 COPY package.json /opt/wildbeast/
 COPY . /opt/wildbeast
 
-RUN npm i
+RUN npm i --production
 
 CMD ["node", "index.js"]
