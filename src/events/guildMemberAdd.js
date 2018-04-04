@@ -3,7 +3,7 @@ const driver = require('../internal/database-selector')
 module.exports = async function (ctx) {
   const data = await driver.getSettings(ctx[0])
   if (data.welcome) {
-    const message = transform(data.welcomeMessage, ctx) || global.i18n.raw('WELCOME_MESSAGE', {
+    const message = (data.welcomeMessage) ? transform(data.welcomeMessage, ctx) : global.i18n.raw('WELCOME_MESSAGE', {
       guild_name: ctx[0].name,
       user_name: ctx[1].mention
     })
