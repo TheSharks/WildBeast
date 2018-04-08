@@ -1,6 +1,6 @@
 module.exports = {
   blacklist: async (channel) => {
-    let matches = channel.topic.toLowerCase().match(/\[(\S+)]/g)
+    let matches = channel.topic ? channel.topic.toLowerCase().match(/\[(\S+)]/g) : []
     if (matches) matches = matches.map(x => x.replace('[', '').replace(']', '')) // FIXME
     return calculate(matches)
   },
