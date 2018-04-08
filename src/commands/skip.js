@@ -5,6 +5,7 @@ module.exports = {
     timeout: 0,
     alias: ['next'],
     noDM: true,
+    module: 'Music',
     help: 'succ'
   },
   fn: async (msg) => {

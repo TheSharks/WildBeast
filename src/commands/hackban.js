@@ -4,6 +4,7 @@ module.exports = {
     alias: ['banbyid', 'idban'],
     help: 'I\'ll ban someone you give me the id of!',
     usage: '12345678 reason',
+    module: 'Admin',
     noDM: true
   },
   fn: function (msg, suffix) {

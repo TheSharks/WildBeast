@@ -3,6 +3,7 @@ module.exports = {
     level: 0,
     timeout: 5,
     alias: ['botinfo'],
+    module: 'Util',
     help: 'I\'ll respond with info about me!'
   },
   fn: async (msg) => {

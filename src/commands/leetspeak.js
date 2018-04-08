@@ -2,6 +2,7 @@ module.exports = {
   meta: {
     help: '1\'Ll 3nc0d3 Y0uR Me5s@g3 1Nt0 l337sp3@K!',
     alias: ['leetspeek', 'leetspeech', 'leet'],
+    module: 'Fun',
     level: 0
   },
   fn: function (msg, suffix) {

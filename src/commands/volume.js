@@ -3,6 +3,7 @@ module.exports = {
   meta: {
     level: 1,
     timeout: 0,
+    module: 'Music',
     alias: ['vol'],
     noDM: true,
     help: ''

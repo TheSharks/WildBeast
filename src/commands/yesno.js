@@ -4,6 +4,7 @@ module.exports = {
   meta: {
     help: 'Returns a gif displaying yes or no',
     timeout: 5,
+    module: 'Fun',
     level: 0
   },
   fn: function (msg, suffix) {

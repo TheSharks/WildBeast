@@ -4,6 +4,7 @@ module.exports = {
   meta: {
     level: 0,
     timeout: 5,
+    module: 'Fun',
     alias: [],
     help: "I'll check if a streamer is live on twitch.tv"
   },

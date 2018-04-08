@@ -5,6 +5,7 @@ module.exports = {
     help: 'I\'ll give you some fantastic advice!',
     noDM: true,
     timeout: 5,
+    module: 'Fun',
     level: 0
   },
   fn: function (msg) {

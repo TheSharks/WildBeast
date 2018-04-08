@@ -13,6 +13,7 @@ module.exports = {
     help: 'View/change settings about your server.',
     alias: ['config'],
     noDM: true,
+    module: 'Settings',
     level: 5
   },
   fn: async (msg, suffix) => {

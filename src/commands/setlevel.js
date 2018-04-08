@@ -5,6 +5,7 @@ module.exports = {
     level: 7,
     timeout: 0,
     alias: ['set'],
+    module: 'Settings',
     help: "Change someone's access level."
   },
   fn: async (msg, suffix) => {

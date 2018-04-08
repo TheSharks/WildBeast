@@ -4,6 +4,7 @@ module.exports = {
     timeout: 0,
     alias: ['leave-server', 'bye'],
     noDM: true,
+    module: 'Admin',
     help: 'I\'ll leave the server that this is sent in.'
   },
   fn: async (msg) => {

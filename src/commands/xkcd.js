@@ -4,7 +4,8 @@ module.exports = {
   meta: {
     help: 'I\'ll get a XKCD comic for you, you can define a comic number and I\'ll fetch that one.',
     timeout: 10,
-    level: 0
+    level: 0,
+    module: 'Fun'
   },
   fn: function (msg, suffix) {
     let xkcdInfo

@@ -4,6 +4,7 @@ module.exports = {
   meta: {
     help: 'I\'ll get a random meme for you!',
     level: 0,
+    module: 'Fun',
     nsfw: true // don't know what flag to set
   },
   fn: function (msg) {

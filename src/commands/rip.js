@@ -2,6 +2,7 @@ module.exports = {
   meta: {
     level: 0,
     help: 'Rip whoever you mention. Or you.',
+    module: 'Fun',
     timeout: 10
   },
   fn: function (msg, suffix) {

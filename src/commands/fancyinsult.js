@@ -5,6 +5,7 @@ module.exports = {
     help: 'I\'ll insult your friends!',
     alias: ['insult'],
     timeout: 5,
+    module: 'Fun',
     level: 0
   },
   fn: function (msg, suffix) {

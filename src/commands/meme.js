@@ -47,6 +47,7 @@ module.exports = {
     alias: ['makeameme'],
     timeout: 10,
     level: 0,
+    module: 'Fun',
     addons: [
       `\nAvailable meme types: ${Object.getOwnPropertyNames(meme).join(', ')}`
     ]

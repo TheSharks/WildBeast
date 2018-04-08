@@ -2,7 +2,7 @@
   <div style="margin-left:auto;margin-right:auto;">
     <img src="https://i.imgur.com/4wYz7Y2.png"><br><br>
     <p align="center" style="margin:0;">
-      <a href="https://github.com/TheSharks/WildBeast/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/thesharks/wildbeast.svg?style=for-the-badge&longCache=true" alt="License"></a>
+      <a href="https://github.com/TheSharks/WildBeast/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/thesharks/wildbeast.svg?style=for-the-badge&maxAge=3600" alt="License"></a>
       <a href="https://github.com/TheSharks/WildBeast/releases"><img src="https://img.shields.io/github/package-json/v/thesharks/wildbeast.svg?label=version&style=for-the-badge&maxAge=3600" alt="Version"></a>
       <a href="https://discord.gg/wildbot"><img src="https://img.shields.io/discord/110462143152803840.svg?logo=discord&style=for-the-badge&maxAge=3600" alt="Discord server"></a>
     </p>

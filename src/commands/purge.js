@@ -3,6 +3,7 @@ module.exports = {
     level: 0,
     timeout: 5,
     alias: ['clean', 'filter'],
+    module: 'Admin',
     help: 'I\'ll remove messages matching the specified criteria'
   },
   fn: (msg, suffix) => {

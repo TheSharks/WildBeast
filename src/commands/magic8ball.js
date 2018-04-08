@@ -30,6 +30,7 @@ module.exports = {
     help: 'I\'ll make a prediction using a Magic 8 Ball',
     alias: ['8ball'],
     timeout: 5,
+    module: 'Fun',
     level: 0
   },
   fn: function (msg, suffix) {

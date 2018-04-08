@@ -3,6 +3,7 @@ module.exports = {
     level: 0,
     timeout: 0,
     alias: [],
+    module: 'Util',
     help: 'Repeat after me.'
   },
   fn: (msg, suffix) => {

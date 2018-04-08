@@ -4,6 +4,7 @@ module.exports = {
     alias: ['boot'],
     help: 'I\'ll kick someone you mention!',
     usage: '@user reason',
+    module: 'Admin',
     noDM: true
   },
   fn: function (msg, suffix) {

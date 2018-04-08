@@ -21,6 +21,7 @@ module.exports = {
     nsfw: true,
     timeout: 1, // somewhat of an external ratelimit compliance
     level: 0,
+    module: 'Porn',
     addons: [
       `Available sites: ${Object.keys(sites).join(', ')}`
     ]

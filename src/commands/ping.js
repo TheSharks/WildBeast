@@ -3,6 +3,7 @@ module.exports = {
     level: 0,
     timeout: 0,
     alias: [],
+    module: 'Util',
     help: "I'll reply with pong to test my responsiveness."
   },
   fn: (msg) => {
