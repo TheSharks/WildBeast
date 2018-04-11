@@ -3,6 +3,7 @@ const nodes = process.env['LAVA_NODES'] ? JSON.parse(process.env['LAVA_NODES']) 
   host: 'localhost',
   port: 9090,
   region: 'us',
+  reconnectTimeout: 10000,
   password: 'password'
 }]
 const guildInfo = {}
@@ -10,7 +11,7 @@ module.exports = {
   nodes: nodes,
   guildInfo: guildInfo,
   init: () => {
-    global.logger.log('Initializing LavaLink.')
+    global.logger.debug('Using LavaLink encoder.')
     const {PlayerManager} = require('eris-lavalink')
     let regions = {
       eu: ['eu', 'amsterdam', 'frankfurt', 'russia', 'hongkong', 'singapore', 'sydney'],
@@ -22,6 +23,12 @@ module.exports = {
         userId: global.bot.user.id,
         regions: regions,
         defaultRegion: 'us'
+      })
+      global.bot.voiceConnections.nodes.forEach(x => {
+        x.on('disconnect', () => global.logger.warn(`LavaLink node ${x.address} disconnected!`))
+        x.on('error', global.logger.error)
+        x.on('message', global.logger.trace)
+        x.on('ready', () => global.logger.log(`LavaLink node ${x.address} turned ready.`))
       })
     }
   },

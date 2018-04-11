@@ -11,10 +11,12 @@ if (process.env.ELASTICSEARCH_URI) {
   ES = new es.Client({
     host: process.env.ELASTICSEARCH_URI
   })
+  log(chalk`{bold.green DEBUG}: Opening Elasticsearch connection to ${require('url').parse(process.env.ELASTICSEARCH_URI).hostname || process.env.ELASTICSEARCH_URI}`)
 }
 
 if (process.env.SENTRY_DSN) {
   const revision = require('child_process').execSync('git rev-parse HEAD').toString().trim()
+  log(chalk`{bold.green DEBUG}: Initializing Sentry, setting release to ${revision}`)
   raven = require('raven')
   raven.config(process.env.SENTRY_DSN, {
     release: revision,
@@ -44,14 +46,14 @@ module.exports = {
     }
   },
   warn: (msg) => {
-    log(chalk`{bold.rgb(255,140,0) WARN}: ${msg}`)
+    log(chalk`{bold.yellow WARN}: ${msg}`)
   },
   trace: (msg) => {
     if (process.env.NODE_ENV === 'debug') log(chalk`{bold.cyan TRACE}: ${inspect(msg)}`) // trace is the only logging route that inspects automatically
   },
   command: (opts) => { // specifically to log commands being ran
     if (process.env.WILDBEAST_SUPPRESS_COMMANDLOG) return
-    log(chalk`{bold.yellow CMD}: ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
+    log(chalk`{bold.magenta CMD}: ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
     opts.m.channel.lastPinTimestamp = undefined
     sendToES({
       type: 'command',
@@ -89,6 +91,6 @@ function flushES () {
   if (store.length === 0) return
   ES.bulk({
     body: store
-  }).then(module.exports.trace)
+  }).then(module.exports.trace).catch(module.exports.error)
   store = []
 }
