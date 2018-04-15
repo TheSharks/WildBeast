@@ -40,7 +40,6 @@
     "eris": "^0.8.5",
     "imgflipper": "^1.0.1",
     "jagtag-js": "git+https://github.com/TheSharks/JagTag-JS.git",
-    "leetspeak": "0.0.1",
     "moment": "^2.22.0",
     "superagent": "^3.8.2",
     "ws": "^4.1.0",
