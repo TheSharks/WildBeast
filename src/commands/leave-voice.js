@@ -12,7 +12,7 @@ module.exports = {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
       global.i18n.send('VOICE_DISCONNECT', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === global.bot.voiceConnections.get(msg.channel.guild.id).channelId).name})
       global.bot.leaveVoiceChannel(global.bot.voiceConnections.get(msg.channel.guild.id).channelId)
-      delete guildInfo[msg.channel.guild.id]
+      guildInfo[msg.channel.guild.id] = undefined
     } else {
       global.i18n.send('VOICE_NOT_CONNECTED', msg.channel)
     }

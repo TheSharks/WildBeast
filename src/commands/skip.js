@@ -21,6 +21,7 @@ module.exports = {
       } else if (guildInfo[msg.channel.guild.id].tracks.length <= 1) {
         if (!process.env.WILDBEAST_VOICE_PERSIST) {
           global.bot.leaveVoiceChannel(global.bot.voiceConnections.get(msg.channel.guild.id).channelId)
+          guildInfo[msg.channel.guild.id] = undefined
           global.i18n.send('QUEUE_END', msg.channel)
         } else {
           guildInfo[msg.channel.guild.id].tracks.shift()

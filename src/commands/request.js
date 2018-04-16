@@ -5,12 +5,11 @@ module.exports = {
     level: 1,
     timeout: 0,
     alias: ['play'],
-    module: 'Music',
     noDM: true,
-    help: 'succ'
+    help: 'succ',
+    module: 'Music'
   },
   fn: async (msg, suffix) => {
-    // TODO: Change level to 0, add check for is user in same VC as bot.
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
       if (!suffix) {
         global.i18n.send('NO_SEARCH_SUFFIX', msg.channel, {user: msg.author.mention})

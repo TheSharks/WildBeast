@@ -14,6 +14,8 @@ module.exports = {
       global.i18n.send('NO_VOICE_CHANNELS', msg.channel)
     } else if (!msg.member.voiceState.channelID) {
       global.i18n.send('JOIN_VOICE_CHANNEL', msg.channel)
+    } else if (!msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).permissionsOf(global.bot.user.id).has('voiceConnect') || !msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).permissionsOf(global.bot.user.id).has('voiceSpeak')) {
+      global.i18n.send('NO_VOICE_CONNECT_PERM', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).name})
     } else if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
       global.i18n.send('VOICE_CONNECTED', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === global.bot.voiceConnections.get(msg.channel.guild.id).channelId).name})
     } else {
@@ -24,10 +26,16 @@ module.exports = {
           if (suffix.includes('list=') !== suffix.includes('playlist?')) {
             if (suffix.includes('youtu.be')) {
               splitLink = suffix.split('?list=')
-              global.i18n.send('YOUTUBE_PLAYLIST_MALFORMED_LINK', msg.channel, {video: splitLink[0], playlist: splitLink[1]})
+              global.i18n.send('YOUTUBE_PLAYLIST_MALFORMED_LINK', msg.channel, {
+                video: splitLink[0],
+                playlist: splitLink[1]
+              })
             } else {
               splitLink = suffix.split('&list=')
-              global.i18n.send('YOUTUBE_PLAYLIST_MALFORMED_LINK', msg.channel, {video: splitLink[0], playlist: splitLink[1]})
+              global.i18n.send('YOUTUBE_PLAYLIST_MALFORMED_LINK', msg.channel, {
+                video: splitLink[0],
+                playlist: splitLink[1]
+              })
             }
           } else {
             resolveTracks(suffix).then(tracks => {

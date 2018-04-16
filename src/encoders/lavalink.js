@@ -81,6 +81,21 @@ module.exports = {
     let player = await global.bot.voiceConnections.get(msg.channel.guild.id)
     player.play(guildInfo[msg.channel.guild.id].tracks[0].track)
   },
+  pause: async (guild) => {
+    module.exports.getPlayer(guild).then(p => {
+      p.setPause(true)
+    })
+  },
+  resume: async (guild) => {
+    module.exports.getPlayer(guild).then(p => {
+      p.setPause(false)
+    })
+  },
+  setVolume: async (guild, volume) => {
+    module.exports.getPlayer(guild).then(p => {
+      p.setVolume(volume)
+    })
+  },
   hhMMss: async (time) => {
     if (time || isNaN(time)) {
       let hours = (Math.floor(time / ((60 * 60)) % 24))
@@ -101,6 +116,7 @@ module.exports = {
         tracks: [],
         volume: 100,
         skips: [],
+        paused: false,
         textChan: msg.channel.id
       }
       if (tracks) {
@@ -108,7 +124,7 @@ module.exports = {
       }
       player.on('error', err => global.logger.error(err))
       player.on('stuck', msg => global.logger.error(msg))
-      player.on('disconnect', wat => global.logger.error(wat))
+      player.on('disconnect', wat => global.logger.error(`lava disconnect: ${wat}`))
       player.on('end', async data => {
         if (data.reason && data.reason !== 'REPLACED') {
           if (guildInfo[data.guildId].tracks.length > 1) {
@@ -128,7 +144,7 @@ module.exports = {
               global.i18n.send('QUEUE_END', global.bot.guilds.get(data.guildId).channels.find(c => c.id === guildInfo[data.guildId].textChan))
               let player = await global.bot.voiceConnections.get(data.guildId)
               global.bot.leaveVoiceChannel(player.channelId)
-              delete guildInfo[data.guildId]
+              guildInfo[data.guildId] = undefined
             } else {
               guildInfo[data.guildId].tracks.shift()
               global.i18n.send('VOICE_PERSIST', global.bot.guilds.get(data.guildId).channels.find(c => c.id === guildInfo[data.guildId].textChan))
