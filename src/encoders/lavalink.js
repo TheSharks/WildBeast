@@ -19,7 +19,7 @@ module.exports = {
     }
     if (!(global.bot.voiceConnections instanceof PlayerManager)) {
       global.bot.voiceConnections = new PlayerManager(global.bot, nodes, {
-        numShards: process.env['SHARD_COUNT'] ? process.env['SHARD_COUNT'] : 1,
+        numShards: global.bot.options.maxShards,
         userId: global.bot.user.id,
         regions: regions,
         defaultRegion: 'us'
@@ -28,7 +28,7 @@ module.exports = {
         x.on('disconnect', () => global.logger.warn(`LavaLink node ${x.address} disconnected!`))
         x.on('error', global.logger.error)
         x.on('message', global.logger.trace)
-        x.on('ready', () => global.logger.log(`LavaLink node ${x.address} turned ready.`))
+        x.on('ready', () => global.logger.log(`LavaLink node ${x.address} ready.`))
       })
     }
   },
