@@ -4,6 +4,7 @@ module.exports = {
   meta: {
     help: 'I\'ll stroke someones ego!',
     timeout: 5,
+    module: 'Fun',
     level: 0
   },
   fn: function (msg, suffix) {

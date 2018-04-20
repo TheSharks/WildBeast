@@ -3,6 +3,7 @@ module.exports = {
     level: 0,
     alias: ['removerole'],
     help: 'Take a role from a user or users. takerole @user1 @user2 rolename',
+    module: 'Admin',
     noDM: true
   },
   fn: function (msg, suffix) {

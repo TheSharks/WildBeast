@@ -4,6 +4,7 @@ module.exports = {
     alias: ['applyrole'],
     help: 'Give a role to user or users.',
     usage: ' @user1 @user2 rolename',
+    module: 'Admin',
     noDM: true
   },
   fn: function (msg, suffix) {

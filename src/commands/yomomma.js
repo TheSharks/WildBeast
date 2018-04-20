@@ -4,7 +4,8 @@ module.exports = {
   meta: {
     help: 'I\'ll get a random yomomma joke for you!',
     timeout: 5,
-    level: 0
+    level: 0,
+    module: 'Fun'
   },
   fn: function (msg) {
     request.get('http://api.yomomma.info/')

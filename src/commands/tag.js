@@ -1,6 +1,5 @@
 const driver = require('../internal/database-selector')
-const TR = require('tag-replacer')
-const compiler = new TR()
+const compiler = require('jagtag-js')
 const blacklist = [
   'create',
   'raw',
@@ -78,7 +77,14 @@ module.exports = {
             tag: suffix
           })
         } else {
-          msg.channel.createMessage(compiler.replace(tag.content))
+          msg.channel.createMessage(compiler(tag.content, {
+            tagArgs: parts.slice(2),
+            author: msg.author,
+            channel: msg.channel,
+            guild: msg.channel.guild,
+            channels: msg.channel.guild.channels,
+            members: msg.channel.guild.members
+          }))
         }
         break
       }

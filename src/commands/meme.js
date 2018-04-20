@@ -42,10 +42,12 @@ const meme = {
 module.exports = {
   meta: {
     name: 'meme',
-    help: 'I\'ll create a meme with your suffixes! meme <memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
+    help: 'Create dumb memes from the comfort of your Discord server.',
+    usage: '<memetype> "<Upper line>" "<Bottom line>" **Quotes are important!**',
     alias: ['makeameme'],
     timeout: 10,
     level: 0,
+    module: 'Fun',
     addons: [
       `\nAvailable meme types: ${Object.getOwnPropertyNames(meme).join(', ')}`
     ]

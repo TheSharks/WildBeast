@@ -5,6 +5,7 @@ module.exports = {
     name: 'dice',
     help: 'I\'ll roll some dice!',
     timeout: 5,
+    module: 'Fun',
     level: 0
   },
   fn: function (msg, suffix) {

@@ -5,6 +5,7 @@ module.exports = {
     help: 'I\'ll fetch what idiots on the internet think something means',
     alias: ['ud', 'urban'],
     timeout: 10,
+    module: 'Fun',
     level: 0
   },
   fn: function (msg, suffix) {

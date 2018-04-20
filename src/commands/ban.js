@@ -3,6 +3,7 @@ module.exports = {
     level: 0,
     help: 'I\'ll ban someone you mention!',
     usage: 'ban @user reason',
+    module: 'Admin',
     noDM: true
   },
   fn: function (msg, suffix) {

@@ -8,14 +8,17 @@ LABEL maintainer="hello@dougley.com" \
       buildno=$buildno \
       commit=$commitsha
 
-WORKDIR /app
+# Don't run wildbeast as root (safety)
+RUN useradd -m -d /home/wildbeast -s /bin/bash wildbeast
+RUN mkdir /opt/wildbeast && chown wildbeast /opt/wildbeast -R
+USER wildbeast
+
+WORKDIR /opt/wildbeast
+
+# Copy app
+COPY package.json /opt/wildbeast/
+COPY . /opt/wildbeast
+
+RUN npm i --production
 
 CMD ["node", "index.js"]
-
-COPY package.json /app/
-
-# Create working dir
-RUN mkdir -p /app
-COPY . /app
-
-RUN npm i

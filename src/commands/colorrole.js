@@ -3,6 +3,7 @@ module.exports = {
     level: 0,
     help: 'I\'ll color a role you have!',
     usage: '<rolename> <hexadecimal value ("#FFFFFF" or "FFFFFF")>',
+    module: 'Admin',
     timeout: 5
   },
   fn: function (msg, suffix) {

@@ -2,7 +2,9 @@ module.exports = {
   meta: {
     level: 0,
     alias: ['boot'],
-    help: 'I\'ll kick someone you mention! kick @user reason',
+    help: 'I\'ll kick someone you mention!',
+    usage: '@user reason',
+    module: 'Admin',
     noDM: true
   },
   fn: function (msg, suffix) {

@@ -4,6 +4,7 @@ module.exports = {
   meta: {
     help: 'I\'ll get a random doggo image for you!',
     alias: ['doggo', 'dog'],
+    module: 'Fun',
     timeout: 10,
     level: 0
   },

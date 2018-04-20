@@ -4,7 +4,8 @@ module.exports = {
     timeout: 1,
     nsfw: true,
     alias: ['e6'],
-    help: 'e621 my dude'
+    help: 'e621 my dude',
+    module: 'Porn'
   },
   fn: (msg, suffix) => {
     // we do this for legacy reasons

@@ -5,6 +5,7 @@ module.exports = {
     help: 'I\'ll get a random cat image for you!',
     alias: ['cat'],
     timeout: 10,
+    module: 'Fun',
     level: 0
   },
   fn: function (msg) {

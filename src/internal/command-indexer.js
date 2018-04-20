@@ -25,7 +25,7 @@ async function helpingHand (user, context, cmd) {
   if (aliases.has(cmd)) cmd = aliases.get(cmd)
   if (commands[cmd]) {
     const c = commands[cmd]
-    const name = Object.getOwnPropertyNames(commands).filter(f => commands[f] === c)[0]
+    const name = Object.getOwnPropertyNames(commands).find(f => commands[f] === c)
     let result = [
       `Command name: \`${name}\``,
       `Explanation: \`${c.meta.help}\``,
@@ -37,6 +37,7 @@ async function helpingHand (user, context, cmd) {
       `Minimum access level required: ${c.meta.level}`,
       ''
     ]
+    if (c.meta.module) result.push(`*This command is part of the \`${c.meta.module}\` module*`)
     if (c.meta.aliases && c.meta.aliases.length > 0) result.push(`**Aliases for this command:** ${c.meta.aliases.join(', ')}`)
     if (c.meta.timeout) result.push(`**This command has a timeout of ${c.meta.timeout} seconds**`)
     if (c.meta.nsfw) result.push('**This command is NSFW**')
@@ -48,27 +49,28 @@ async function helpingHand (user, context, cmd) {
     context.createMessage(result.join('\n'))
   } else if (!cmd) {
     // send all registered commands in a neat list
-    let counter = 0
-    let sorts = {
-      0: [
-        '[Available commands]\n'
-      ]
-    }
-    for (const cmd in commands) {
-      if (!commands[cmd].meta.hidden && commands[cmd].meta.level !== Infinity) {
-        if (sorts[counter].join('\n').length > 1750) {
-          counter++
-          sorts[counter] = []
-        }
-        sorts[counter].push(cmd + ' = "' + commands[cmd].meta.help + '"')
-      }
+    const categories = new Set(Object.values(commands).map(x => x.meta.module).sort())
+    const names = Object.getOwnPropertyNames(commands)
+    const res = {}
+    categories.forEach(cat => {
+      const values = Object.values(commands).filter(y => y.meta.module === cat && y.meta.level !== Infinity)
+      res[cat] = values.map(x => `${names.find(f => commands[f] === x)} = "${x.meta.help}"`).sort()
+    })
+    const result = [['[[Available commands]]']]
+    for (const x in res) {
+      if (!(result[result.length - 1].join('\n').length > 1750)) result[result.length - 1].push(`\n[${(x === 'undefined') ? 'Uncategorized' : x}]`)
+      else result[result.length] = [`\n[${(x === 'undefined') ? 'Uncategorized' : x}]`]
+      res[x].forEach(rep => {
+        if (!(result[result.length - 1].join('\n').length > 1750)) result[result.length - 1].push(rep)
+        else result[result.length] = [rep]
+      })
     }
     if (context.guild) {
       context.createMessage(`Please check your DMs!`)
       context = await global.bot.users.get(user).getDMChannel() // reassign context to be a dm channel
     }
-    for (const x in sorts) {
-      context.createMessage(`\`\`\`ini\n${sorts[x].sort().join('\n')}\n\`\`\``)
+    for (const x in result) {
+      context.createMessage(`\`\`\`ini\n${result[x].join('\n')}\n\`\`\``)
     }
     context.createMessage(misc.join('\n'))
   } else {
