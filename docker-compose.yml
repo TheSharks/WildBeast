@@ -11,6 +11,9 @@ services:
     links:
     - arango:arango
     - lavalink:lavalink
+    depends_on:
+      - arango
+      - lavalink
   arango:
     image: arangodb:3.3.3
     environment:
