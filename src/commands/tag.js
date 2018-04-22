@@ -59,7 +59,7 @@ module.exports = {
         const tag = await driver.getTag(parts[1])
         if (!tag) {
           return global.i18n.send('TAG_NOT_FOUND', msg.channel, {
-            tag: suffix
+            tag: parts[0]
           })
         }
         if (tag.owner !== msg.author.id && !process.env['WILDBEAST_MASTERS'].split('|').includes(msg.author.id)) {
@@ -71,10 +71,10 @@ module.exports = {
         })
       }
       default: {
-        const tag = await driver.getTag(suffix)
+        const tag = await driver.getTag(parts[0])
         if (!tag) {
           return global.i18n.send('TAG_NOT_FOUND', msg.channel, {
-            tag: suffix
+            tag: parts[0]
           })
         } else {
           msg.channel.createMessage(compiler(tag.content, {
