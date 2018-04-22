@@ -1,4 +1,4 @@
 #!/bin/bash
 
-exec npm run-script dbcreate
+npm run-script dbcreate
 exec node ./index.js
