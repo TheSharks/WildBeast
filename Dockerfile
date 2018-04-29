@@ -19,4 +19,4 @@ RUN npm i --production
 
 # Switch to wildbeast user and run entrypoint
 USER wildbeast
-CMD ["bash", "./entrypoint.sh"]
+CMD ["node", "index.js"]

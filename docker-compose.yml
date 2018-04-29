@@ -1,7 +1,7 @@
 version: '2'
 services:
   wildbeast:
-    image: dougley/wildbeast
+    image: dougley/wildbeast:experimental
     environment:
       BOT_TOKEN:
       BOT_PREFIX:
@@ -14,10 +14,21 @@ services:
     depends_on:
       - arango
       - lavalink
+      - install
   arango:
     image: arangodb:3.3.3
     environment:
       ARANGO_NO_AUTH: '1'
+  install:
+    restart: 'no'
+    links:
+      - arango:arango
+    environment:
+      ARANGO_URI: http://arango:8529
+    image: dougley/wildbeast:experimental
+    depends_on:
+      - arango
+    command: npm run-script dbcreate
   lavalink:
     image: fredboat/lavalink:v2
     environment:
