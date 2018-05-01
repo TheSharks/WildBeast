@@ -1,3 +1,5 @@
+const driver = require('../internal/database-selector')
+
 module.exports = {
   blacklist: async (channel) => {
     let matches = channel.topic ? channel.topic.toLowerCase().match(/\[(\S+)]/g) : []
@@ -5,10 +7,15 @@ module.exports = {
     return calculate(matches)
   },
   checkDynPerm: async (cmd, guild) => {
-    // TODO
+    const overrides = await driver.getOverrides(guild)
+    return overrides[cmd]
   },
   changeDynPerm: async (cmd, guild, set) => {
-    // TODO
+    return driver.edit(guild.id, {
+      overrides: {
+        [cmd]: set
+      }
+    }, 'system')
   }
 }
 

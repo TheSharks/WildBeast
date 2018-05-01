@@ -17,6 +17,10 @@ module.exports = {
     const res = await ensureSystem(guild)
     return res.flags
   },
+  getOverrides: async (guild) => {
+    const res = await ensureSystem(guild)
+    return res.overrides
+  },
   getTag: (key) => {
     return module.exports.getArbitrary(key, 'tags')
   },
@@ -65,7 +69,8 @@ async function ensureSystem (guild) {
   } catch (e) {
     let newdoc = await module.exports.create('system', {
       _key: guild.id,
-      flags: []
+      flags: [],
+      overrides: {}
     })
     global.logger.trace(newdoc)
     return newdoc
