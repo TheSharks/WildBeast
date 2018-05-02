@@ -17,7 +17,7 @@ module.exports = {
           }
         }
         return resolve((result < 0) ? null : result >= required)
-      })
+      }).catch(reject)
     })
   },
   modify: (guild, target, value, type = 'users') => {
