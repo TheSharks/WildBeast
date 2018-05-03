@@ -7,6 +7,7 @@ module.exports = {
     return calculate(matches)
   },
   checkDynPerm: async (cmd, guild) => {
+    if (!guild) return undefined
     const overrides = await driver.getOverrides(guild)
     return overrides[cmd]
   },
