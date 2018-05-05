@@ -55,7 +55,6 @@ module.exports = {
         .set('Authorization', nodes[0].password)
         .set('Accept', 'application/json')
     } catch (err) {
-      console.log(err)
       throw new Error(err)
     }
 
@@ -80,6 +79,8 @@ module.exports = {
     guildInfo[msg.channel.guild.id].skips = []
     let player = await global.bot.voiceConnections.get(msg.channel.guild.id)
     player.play(guildInfo[msg.channel.guild.id].tracks[0].track)
+    if (player.playing === false) player.setPause(false)
+    if (guildInfo[msg.channel.guild.id].paused === true) guildInfo[msg.channel.guild.id].paused = false
   },
   pause: async (guild) => {
     module.exports.getPlayer(guild).then(p => {
@@ -107,7 +108,7 @@ module.exports = {
       seconds >= 10 ? parsedTime.push(seconds) : parsedTime.push(`0${seconds}`)
       return parsedTime.join(':')
     } else {
-      throw new Error('00:00:00')
+      return ('00:00:00')
     }
   },
   createPlayer: async (msg, tracks) => {
@@ -124,7 +125,7 @@ module.exports = {
       }
       player.on('error', err => global.logger.error(err))
       player.on('stuck', msg => global.logger.error(msg))
-      player.on('disconnect', wat => global.logger.error(`lava disconnect: ${wat}`))
+      player.on('disconnect', wat => {if (wat !== undefined) global.logger.error(`lava disconnect: ${wat}`)})
       player.on('end', async data => {
         if (data.reason && data.reason !== 'REPLACED') {
           if (guildInfo[data.guildId].tracks.length > 1) {
