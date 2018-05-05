@@ -125,7 +125,9 @@ module.exports = {
       }
       player.on('error', err => global.logger.error(err))
       player.on('stuck', msg => global.logger.error(msg))
-      player.on('disconnect', wat => {if (wat !== undefined) global.logger.error(`lava disconnect: ${wat}`)})
+      player.on('disconnect', wat => {
+        if (wat !== undefined) global.logger.error(`lava disconnect: ${wat}`)
+      })
       player.on('end', async data => {
         if (data.reason && data.reason !== 'REPLACED') {
           if (guildInfo[data.guildId].tracks.length > 1) {
