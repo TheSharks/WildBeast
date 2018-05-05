@@ -15,8 +15,14 @@ All event handlers live in separate files instead of all being defined in the ma
 | `BOT_TOKEN` | **Mandatory** | The token to use |
 | `BOT_PREFIX` | **Mandatory** | The prefix to use |
 | `WILDBEAST_MASTERS` | **Mandatory** | String of user IDs separated by pipe characters that should be considered master users |
+| `WILDBEAST_LANGUAGE` | Optional | Set default language to use |
 | `WILDBEAST_SUPPRESS_COMMANDLOG` | Optional | If set, suppresses loglevel `CMD` |
 | `WILDBEAST_PREFERRED_DATABASE` | Optional | Override the database driver used, defaults to `arangodb` |
+| `WILDBEAST_PREFERRED_ENDCODER` | Optional | Override default encoder | 
+| `WILDBEAST_VOICE_PERSIST` | Optional | Override default behaviour of leaving voice channels when playlists are done |
+| `WILDBEAST_DISABLE_MUSIC` | Optional | If set, prevent any encoder from being loaded |
+| `BEZERK_URI` | Optional | URI of Bezerk server |
+| `BEZERK_PASSWORD` | Optional | Password for Bezerk server |
 | `ELASTICSEARCH_URI` | Optional | If set, configure logging to log to Elasticsearch |
 | `ELASTICSEARCH_INDEX` | Optional | Override default index of `wildbeast` for Elasticsearch logging |
 | `SENTRY_DSN` | Optional | If set, configure error logging to report to Sentry as well |
@@ -25,7 +31,13 @@ All event handlers live in separate files instead of all being defined in the ma
 | `ARANGO_PASSWORD` | Required if running default | Set the password used for authenticating with Arango |
 | `ARANGO_DATABASE` | Optional | If set, override the default database used, defaults to `wildbeast` |
 | `NODE_ENV` | Optional | If set to `debug`, enable verbose logging |
-
+| `IMGFLIP_USERNAME` | Optional | Set username to use with Imgflip | 
+| `IMGFLIP_PASSWORD` | Optional | Set Imgflip password |
+| `IMGUR_KEY` | Optional | Set Imgur key |
+| `TWITCH_ID` | Optional | Set Twitch client ID |
+| `LAVA_NODES` | Required | JSON string containing Lavalink node information |
+| `RANCHER_AUTOSCALE` | Optional | If set, enable additional features exclusive to Rancher orchestrated environments |
+ 
 # 5.0.0
 Skipped, this was developed internally but never released or finished.
 

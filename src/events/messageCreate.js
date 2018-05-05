@@ -40,8 +40,9 @@ module.exports = async (ctx) => {
       if (time !== true) {
         return global.i18n.send('COOLDOWN', msg.channel, {time: Math.floor(time)})
       }
-      const res = (msg.channel.guild) ? await engines.perms.calculate(msg.channel.guild, msg.member) : await engines.perms.calculate(false, msg.author)
-      if (res >= commands[cmd].meta.level) {
+      const level = await engines.blockade.checkDynPerm(cmd, msg.channel.guild) || commands[cmd].meta.level
+      const res = (msg.channel.guild) ? await engines.perms.calculate(msg.channel.guild, msg.member, level) : await engines.perms.calculate(false, msg.author, level)
+      if (res === true) {
         try {
           commands[cmd].fn(msg, suffix)
           global.logger.command({
@@ -55,7 +56,7 @@ module.exports = async (ctx) => {
             message: e.message
           })
         }
-      } else if (res > 0) return global.i18n.send('NO_PERMS', msg.channel)
+      } else if (res !== null) return global.i18n.send('NO_PERMS', msg.channel)
     }
   }
 }
