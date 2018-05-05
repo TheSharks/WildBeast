@@ -24,10 +24,9 @@ module.exports = {
                   author: {name: 'UrbanDictionary'},
                   title: `The internet's definition of ${uD.list[0].word}`,
                   url: uD.list[0].permalink,
+                  description: uD.list[0].definition,
                   timestamp: new Date(),
                   fields: [
-                    {name: 'Word', value: `\`\`\`${uD.list[0].word}\`\`\``},
-                    {name: 'Definition', value: `\`\`\`${uD.list[0].definition}\`\`\``},
                     {name: 'Example', value: `\`\`\`${uD.list[0].example}\`\`\``},
                     {name: 'Thumbs up', value: `\`\`\`${uD.list[0].thumbs_up}\`\`\``, inline: true},
                     {name: 'Thumbs down', value: `\`\`\`${uD.list[0].thumbs_down}\`\`\``, inline: true}
@@ -38,7 +37,7 @@ module.exports = {
               msg.channel.createMessage(`<@${msg.author.id}>, ${suffix}: This word is so screwed up, even Urban Dictionary doesn't have it in its database`)
             }
           } else {
-            logger.error(`Got an error: ${err}, status code: ${res.status}`)
+            global.logger.error(`Got an error: ${err}, status code: ${res.status}`)
           }
         })
     }
