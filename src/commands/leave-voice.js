@@ -6,7 +6,7 @@ module.exports = {
     alias: ['stop'],
     noDM: true,
     module: 'Music',
-    help: 'succ'
+    help: 'Stop playback and disconnect'
   },
   fn: async (msg) => {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {

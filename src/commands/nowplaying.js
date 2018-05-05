@@ -4,7 +4,7 @@ module.exports = {
     level: 1,
     timeout: 0,
     alias: ['np'],
-    help: 'succ',
+    help: "Show what's being played currently",
     noDM: true,
     module: 'Music'
   },

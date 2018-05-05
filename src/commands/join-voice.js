@@ -7,7 +7,7 @@ module.exports = {
     alias: ['voice'],
     noDM: true,
     module: 'Music',
-    help: 'succ'
+    help: 'Join the bot to a voice channel'
   },
   fn: async (msg, suffix) => {
     if (msg.channel.guild.channels.filter(c => c.type === 2).length === 0) {

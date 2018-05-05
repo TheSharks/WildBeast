@@ -6,7 +6,7 @@ module.exports = {
     alias: ['next'],
     noDM: true,
     module: 'Music',
-    help: 'succ'
+    help: 'Skip currently playing song'
   },
   fn: async (msg) => {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
