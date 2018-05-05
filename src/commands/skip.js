@@ -17,7 +17,7 @@ module.exports = {
           duration: await hhMMss(guildInfo[msg.channel.guild.id].tracks[1].info.length / 1000),
           user: msg.channel.guild.members.find(m => m.id === guildInfo[msg.channel.guild.id].tracks[1].requester).username
         })
-        skip(msg)
+        await skip(msg)
       } else if (guildInfo[msg.channel.guild.id].tracks.length <= 1) {
         if (!process.env.WILDBEAST_VOICE_PERSIST) {
           global.bot.leaveVoiceChannel(global.bot.voiceConnections.get(msg.channel.guild.id).channelId)

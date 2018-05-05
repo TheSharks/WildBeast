@@ -1,5 +1,4 @@
 const driver = require('../internal/database-selector')
-
 module.exports = {
   blacklist: async (channel) => {
     let matches = channel.topic ? channel.topic.toLowerCase().match(/\[(\S+)]/g) : []

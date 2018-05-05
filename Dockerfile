@@ -11,7 +11,6 @@ LABEL maintainer="Remco Jongschaap hello@dougley.com" \
 # Don't run wildbeast as root (safety)
 RUN useradd -m -d /home/wildbeast -s /bin/bash wildbeast
 RUN mkdir /opt/wildbeast && chown wildbeast /opt/wildbeast -R
-
 # Copy files and instlal modules
 COPY . /opt/wildbeast
 WORKDIR /opt/wildbeast

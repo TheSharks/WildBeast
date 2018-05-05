@@ -33,7 +33,9 @@ module.exports = {
             }
           } else {
             resolveTracks(suffix).then(tracks => {
-              if (tracks.length === 1) {
+              if (tracks.length === 0) {
+                global.i18n.send('LINK_NO_TRACK', msg.channel, {user: msg.author.username, url: suffix})
+              } else if (tracks.length === 1) {
                 hhMMss(tracks[0].info.length / 1000).then(time => {
                   addTracks(msg, tracks)
                   global.i18n.send('TRACK_ADDED', msg.channel, {
