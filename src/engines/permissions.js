@@ -8,7 +8,7 @@ module.exports = {
       if (guild === false) return resolve(required <= 0) // no guild = probably DM
       if (guild.ownerID === member.id) return resolve(required <= 10)
       driver.getPerms(guild).then(data => {
-        let result = data.users[member.id] || 0
+        let result = data.users[member.id] || data.roles['everyone'] || 0
         for (let role in data.roles) {
           if (result < 0) break
           if (member.roles.includes(role)) {

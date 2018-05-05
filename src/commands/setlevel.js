@@ -20,8 +20,11 @@ module.exports = {
     if (to === 0) to = null
     let data = {
       users: {},
-      roles: {}
+      roles: {
+        everyone: 0
+      }
     }
+    if (suffix.match(/@everyone/)) data.roles['everyone'] = to
     for (let user of mentions) {
       data.users[user] = to
     }
