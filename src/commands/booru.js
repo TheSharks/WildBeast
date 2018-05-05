@@ -42,7 +42,7 @@ module.exports = {
           .set({'User-Agent': 'Superagent Node.js'})
           .then(res => {
             const result = require('xml-js').xml2js(res.text, {compact: true})
-            if (result.posts.post.length < 1) {
+            if (!result.posts.post || result.posts.post.length < 1) {
               return global.i18n.send('BOORU_NO_RESULTS', msg.channel, {
                 query: (query.length > 0) ? query : 'random'
               })
