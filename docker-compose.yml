@@ -16,7 +16,7 @@ services:
     environment:
       ARANGO_NO_AUTH: '1'
   lavalink:
-    image: dougley/lavalink:latest
+    image: fredboat/lavalink:v2
     environment:
       LAVALINK_SERVER_BUFFER_DURATION_MS: '400'
       LAVALINK_SERVER_PASSWORD: password

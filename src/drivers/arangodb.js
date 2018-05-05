@@ -5,13 +5,17 @@ db.useBasicAuth(process.env['ARANGO_USERNAME'], process.env['ARANGO_PASSWORD'])
 
 module.exports = {
   getGuildData: (guild) => {
-    return ensure(guild)
+    return ensureGuild(guild)
   },
   getPerms: (guild) => {
     return getSelection(guild, 'perms')
   },
   getSettings: (guild) => {
     return getSelection(guild, 'settings')
+  },
+  getFlags: async (guild) => {
+    const res = await ensureSystem(guild)
+    return res.flags
   },
   getTag: (key) => {
     return module.exports.getArbitrary(key, 'tags')
@@ -47,12 +51,28 @@ module.exports = {
 
 function getSelection (guild, select) {
   return new Promise(async (resolve, reject) => {
-    let data = await ensure(guild)
+    let data = await ensureGuild(guild)
     return resolve(data[select])
   })
 }
 
-async function ensure (guild) {
+async function ensureSystem (guild) {
+  let collection = db.collection('system')
+  try {
+    let doc = await collection.document(guild.id)
+    global.logger.trace(doc)
+    return doc
+  } catch (e) {
+    let newdoc = await module.exports.create('system', {
+      _key: guild.id,
+      flags: []
+    })
+    global.logger.trace(newdoc)
+    return newdoc
+  }
+}
+
+async function ensureGuild (guild) {
   let collection = db.collection('guild_data')
   try {
     let doc = await collection.document(guild.id)

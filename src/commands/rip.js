@@ -6,8 +6,7 @@ module.exports = {
     timeout: 10
   },
   fn: function (msg, suffix) {
-    const x = mapMentions(suffix)
-    x.forEach(y => {
+    mapMentions(suffix).forEach(y => {
       suffix = suffix.replace(new RegExp(`<@!?${y}>`, 'g'), global.bot.users.get(y).username)
     })
     msg.channel.createMessage('http://ripme.xyz/' + encodeURI(suffix))
