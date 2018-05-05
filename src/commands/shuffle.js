@@ -4,7 +4,7 @@ module.exports = {
     level: 1,
     timeout: 0,
     alias: [],
-    help: 'succ',
+    help: 'Shuffle playback queue',
     noDM: true,
     module: 'Music'
   },
