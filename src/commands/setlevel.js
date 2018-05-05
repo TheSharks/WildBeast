@@ -6,12 +6,14 @@ module.exports = {
     timeout: 0,
     alias: ['set'],
     module: 'Settings',
+    usage: '<@users/@roles> <level>',
     help: "Change someone's access level."
   },
   fn: async (msg, suffix) => {
     const mentions = mapMentions(suffix)
     const roles = mapMentions(suffix, /<@&([0-9]*)>/g)
     let to = suffix.split(' ')[suffix.split(' ').length - 1]
+    if (isNaN(parseInt(to))) return global.i18n.send('PERMISSIONS_MALFORMED', msg.channel)
     if (to > 10) { // haha no
       return global.i18n.send('PERMISSIONS_OVERFLOW', msg.channel)
     }
