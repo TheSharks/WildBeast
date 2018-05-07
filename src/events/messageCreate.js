@@ -14,6 +14,12 @@ module.exports = async (ctx) => {
   if (msg.author.bot) return
   const prefix = (msg.channel.guild) ? await engines.settings.prefix(msg.channel.guild, msg) : process.env.BOT_PREFIX
   if (msg.content.indexOf(prefix) === 0) {
+    global.logger._raven.setContext({
+      user: {
+        id: msg.author.id,
+        username: `${msg.author.username}#${msg.author.discriminator}`
+      }
+    })
     let cmd = msg.content.substr(prefix.length).split(' ')[0].toLowerCase()
     if (aliases.has(cmd)) cmd = aliases.get(cmd)
     const suffix = msg.content.substr(prefix.length).split(' ').slice(1).join(' ')
@@ -44,16 +50,25 @@ module.exports = async (ctx) => {
       const res = (msg.channel.guild) ? await engines.perms.calculate(msg.channel.guild, msg.member, level) : await engines.perms.calculate(false, msg.author, level)
       if (res === true) {
         try {
-          commands[cmd].fn(msg, suffix)
-          global.logger.command({
-            cmd: cmd,
-            opts: suffix,
-            m: msg
+          global.logger._raven.captureBreadcrumb({
+            message: 'A command is being ran.',
+            category: 'command',
+            data: {
+              cmd: cmd,
+              args: suffix
+            }
           })
+          commands[cmd].fn(msg, suffix)
         } catch (e) {
           global.logger.error(e)
           global.i18n.send('COMMAND_ERROR', msg.channel, {
             message: e.message
+          })
+        } finally {
+          global.logger.command({
+            cmd: cmd,
+            opts: suffix,
+            m: msg
           })
         }
       } else if (res !== null) return global.i18n.send('NO_PERMS', msg.channel)

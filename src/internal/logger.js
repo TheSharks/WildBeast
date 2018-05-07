@@ -40,9 +40,15 @@ module.exports = {
       exit ? log(chalk`{bold.black.bgRed FATAL}: ${e}`) : log(chalk`{bold.red ERROR}: ${e}`)
       if (exit) process.exit(1)
     } else {
-      if (raven && raven.installed) raven.captureException(e)
-      exit ? log(chalk`{bold.black.bgRed FATAL}: ${e.stack ? e.stack : e.message}`) : log(chalk`{bold.red ERROR}: ${e.stack ? e.stack : e.message}`)
-      if (exit) process.exit(1)
+      if (raven && raven.installed) {
+        exit ? log(chalk`{bold.black.bgRed FATAL}: ${e.stack ? e.stack : e.message}`) : log(chalk`{bold.red ERROR}: ${e.stack ? e.stack : e.message}`)
+        raven.captureException(e, { level: exit ? 'fatal' : 'error' }, () => { // sentry logging MUST happen before we might exit
+          if (exit) process.exit(1)
+        })
+      } else {
+        exit ? log(chalk`{bold.black.bgRed FATAL}: ${e.stack ? e.stack : e.message}`) : log(chalk`{bold.red ERROR}: ${e.stack ? e.stack : e.message}`)
+        if (exit) process.exit(1)
+      }
     }
   },
   warn: (msg) => {
@@ -63,7 +69,8 @@ module.exports = {
       channel: opts.m.channel,
       guild: transform(opts.m.channel.guild)
     })
-  }
+  },
+  _raven: raven
 }
 
 function transform (guild) {
