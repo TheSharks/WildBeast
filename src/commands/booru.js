@@ -50,7 +50,7 @@ module.exports = {
             const count = Math.floor((Math.random() * result.posts.post.length))
             global.i18n.send('BOORU_SUCCESS', msg.channel, {
               query: (query.length > 0) ? query : 'random',
-              url: result.posts.post[count]._attributes.file_url
+              url: result.posts._attributes.count > 1 ? result.posts.post[count]._attributes.file_url : result.posts.post._attributes.file_url
             })
           })
         break
