@@ -4,6 +4,7 @@ module.exports = {
     timeout: 5,
     alias: ['clean', 'filter'],
     module: 'Admin',
+    noDM: true,
     help: 'I\'ll remove messages matching the specified criteria'
   },
   fn: (msg, suffix) => {
@@ -68,6 +69,43 @@ module.exports = {
             })
           }
           break
+        default: {
+          if (!isNaN(splitSuffix[0]) && splitSuffix[0] < 100) {
+            msg.channel.getMessages(splitSuffix[0], msg.id).then((messages) => { // no b1nzy pls
+              let deletable = []
+              messages.forEach((message) => {
+                if (new Date(msg.timestamp) - new Date(message.timestamp) < 1209600000 && deletable.length < splitSuffix[0]) {
+                  deletable.push(message.id)
+                }
+              })
+              msg.delete().catch(() => {})
+              if (deletable.length !== 0) {
+                msg.channel.deleteMessages(deletable).then(() => {
+                  msg.channel.createMessage({
+                    embed: {
+                      color: 4324655,
+                      description: `<@${msg.author.id}>, I was able to remove ${deletable.length} out of ${splitSuffix[0]} messages requested.`
+                    }
+                  }).then((m) => setTimeout(() => m.delete(), 7000))
+                })
+              } else {
+                msg.channel.createMessage({
+                  embed: {
+                    color: 16711680,
+                    description: `<@${msg.author.id}>, I was not able to find any messages for purging that are under two weeks old.`
+                  }
+                }).then((m) => setTimeout(() => m.delete(), 7000))
+              }
+            })
+          } else {
+            msg.channel.createMessage({
+              embed: {
+                color: 16711680,
+                description: `<@${msg.author.id}>, invalid usage. Try reading help.`
+              }
+            })
+          }
+        }
       }
     } else {
       msg.channel.createMessage({
