@@ -11,5 +11,14 @@ module.exports = {
   set: async (shardid, data) => {
     global.logger.debug(`Setting Hyperscale for ${shardid}`)
     return redis.set(`hyperscale-${shardid}`, JSON.stringify(data)).then(global.logger.trace)
+  },
+  init: () => {
+    setInterval(() => {
+      const bot = global.bot
+      module.exports.set(bot.options.firstShardID, {
+        session: bot.shards.get(bot.options.firstShardID).sessionID,
+        seq: bot.shards.get(bot.options.firstShardID).seq
+      })
+    }, 1000)
   }
 }

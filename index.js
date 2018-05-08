@@ -38,14 +38,9 @@ require('./src/internal/rancher-autoscale').then(x => {
     this._anyListeners.push(func)
   }
 
+  bot.on('debug', global.logger.debug)
+
   bot.onAny((ctx) => {
-    if (process.env.HYPERSCALE_ENABLE && bot.shards.get(bot.options.firstShardID)) {
-      const HS = require('./src/internal/hyperscale')
-      HS.set(bot.options.firstShardID, {
-        session: bot.shards.get(bot.options.firstShardID).sessionID,
-        seq: bot.shards.get(bot.options.firstShardID).seq
-      })
-    }
     if (Events[ctx[0]]) {
       Events[ctx[0]](Array.from(ctx).slice(1))
     }
