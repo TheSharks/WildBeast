@@ -71,6 +71,10 @@ module.exports = {
               query: (query.length > 0) ? query : 'random',
               url: res.body[count].file_url
             })
+          }).catch(e => {
+            if (e.status) { // is this error thrown by the e621 server or by the module?
+              if (e.response.body.reason) msg.channel.createMessage(e.response.body.reason) // TODO: use i18n
+            } else throw e
           })
         break
       }
