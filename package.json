@@ -49,6 +49,7 @@
     "arangojs": "^6.0.0",
     "elasticsearch": "^14.0.0",
     "eris-lavalink": "^1.0.0",
+    "ioredis": "^3.2.2",
     "raven": "^2.4.0"
   }
 }

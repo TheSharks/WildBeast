@@ -19,6 +19,14 @@ require('./src/internal/rancher-autoscale').then(x => {
     firstShardID: x.mine,
     lastShardID: x.mine
   })
+  global.bot = bot
+
+  if (x.hyperscale) {
+    global.logger.log('Hyperscale enabled, reinstating previous state and trying to resume.')
+    bot.shards.add(new Eris.Shard(x.mine, bot))
+    bot.shards.get(x.mine).sessionID = x.hyperscale.state
+    bot.shards.get(x.mine).seq = x.hyperscale.seq
+  }
 
   bot._ogEmit = bot.emit
   bot.emit = function emit () {
@@ -31,14 +39,19 @@ require('./src/internal/rancher-autoscale').then(x => {
   }
 
   bot.onAny((ctx) => {
+    if (process.env.HYPERSCALE_ENABLE && bot.shards.get(bot.options.firstShardID)) {
+      const HS = require('./src/internal/hyperscale')
+      HS.set(bot.options.firstShardID, {
+        session: bot.shards.get(bot.options.firstShardID).sessionID,
+        seq: bot.shards.get(bot.options.firstShardID).seq
+      })
+    }
     if (Events[ctx[0]]) {
-    // global.logger.debug(`Found listener for event '${ctx[0]}'`)
       Events[ctx[0]](Array.from(ctx).slice(1))
-    } // else Logger.debug(`No listener for '${ctx[0]}' found`)
+    }
   })
 
   bot.connect().then(() => {
-    global.bot = bot
     require('./src/internal/bezerk')
   })
 })
