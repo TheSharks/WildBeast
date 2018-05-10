@@ -21,13 +21,6 @@ require('./src/internal/rancher-autoscale').then(x => {
   })
   global.bot = bot
 
-  if (x.hyperscale) {
-    global.logger.log('Hyperscale enabled, reinstating previous state and trying to resume.')
-    bot.shards.add(new Eris.Shard(x.mine, bot))
-    bot.shards.get(x.mine).sessionID = x.hyperscale.state
-    bot.shards.get(x.mine).seq = x.hyperscale.seq
-  }
-
   bot._ogEmit = bot.emit
   bot.emit = function emit () {
     this._anyListeners.forEach(listener => listener.apply(this, [arguments]))

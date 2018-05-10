@@ -4,11 +4,6 @@ module.exports = new Promise(async (resolve, reject) => {
   if (!process.env.RANCHER_AUTOSCALE) return resolve({total: process.env.WILDBEAST_SHARDS_TOTAL || 1, mine: process.env.WILDBEAST_SHARDS_MINE || 0})
   const scale = await SA.get('http://rancher-metadata/latest/self/service/scale')
   const mine = await SA.get('http://rancher-metadata/latest/self/container/service_index')
-  if (process.env.HYPERSCALE_ENABLE) {
-    const HS = require('./hyperscale')
-    const data = await HS.get(parseInt(mine.text) - 1)
-    if (data) return resolve({total: parseInt(scale.text), mine: parseInt(mine.text) - 1, hyperscale: data})
-  }
   return resolve({total: parseInt(scale.text), mine: parseInt(mine.text) - 1})
 })
 
