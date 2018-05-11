@@ -1,5 +1,5 @@
 const driver = require('../internal/database-selector')
-const compiler = require('jagtag-js')
+const compiler = require('@thesharks/jagtag-js')
 const blacklist = [
   'create',
   'raw',
