@@ -35,11 +35,11 @@
     "standard": "^10.0.3"
   },
   "dependencies": {
+    "@thesharks/jagtag-js": "^1.0.1",
     "chalk": "^2.4.1",
     "dotenv": "^4.0.0",
     "eris": "^0.8.5",
     "imgflipper": "^1.0.1",
-    "jagtag-js": "git+https://github.com/TheSharks/JagTag-JS.git",
     "moment": "^2.22.1",
     "superagent": "^3.8.3",
     "ws": "^4.1.0",
