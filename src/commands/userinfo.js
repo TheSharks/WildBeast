@@ -64,7 +64,7 @@ module.exports = {
         value: `${user.roles.length !== 0 ? `\`\`\`${user.roles.map(r => msg.channel.guild.roles.get(r).name).join(', ')}\`\`\`` : '```None```'}`
       }, {
         name: 'Notable Permissions',
-        value: `\`\`\`${perms.join(', ')}\`\`\``
+        value: `\`\`\`${perms.sort().join(', ')}\`\`\``
       })
       msg.channel.createMessage({embed: {
         timestamp: new Date(msg.timestamp),
