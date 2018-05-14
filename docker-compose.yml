@@ -7,7 +7,7 @@ services:
       BOT_PREFIX:
       WILDBEAST_MASTERS:
       ARANGO_URI: http://arango:8529
-      LAVA_NODES: '[{"host":"lavalink","port":80,"region":"us","password":"password"}'
+      LAVA_NODES: '[{"host":"lavalink","port":80,"region":"us","password":"password"}]'
     links:
     - arango:arango
     - lavalink:lavalink

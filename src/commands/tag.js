@@ -21,6 +21,7 @@ module.exports = {
         const tag = await driver.getTag(parts[1])
         if (tag) return global.i18n.send('TAG_NAME_CONFLICT', msg.channel)
         if (blacklist.includes(parts[1])) return global.i18n.send('TAG_NAME_BLACKLISTED', msg.channel)
+        if (parts[1].length < 1) return global.i18n.send('TAG_TOO_SHORT', msg.channel)
         await driver.create('tags', {
           _key: parts[1],
           content: parts.slice(2).join(' '),
