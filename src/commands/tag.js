@@ -4,6 +4,7 @@ const blacklist = [
   'create',
   'raw',
   'owner',
+  'edit',
   'delete'
 ]
 
@@ -42,6 +43,27 @@ module.exports = {
         }
         break
       }
+      case 'edit': {
+        const tag = await driver.getTag(parts[1])
+        if (!tag) {
+          return global.i18n.send('TAG_NOT_FOUND', msg.channel, {
+            tag: parts[1]
+          })
+        } else {
+          if (tag.owner !== msg.author.id && !process.env['WILDBEAST_MASTERS'].split('|').includes(msg.author.id)) {
+            return global.i18n.send('TAG_NOT_OWNED', msg.channel)
+          }
+          const content = parts.slice(3).join(' ')
+          if (!content || content.length < 0) {
+            return global.i18n.send('TAG_TOO_SHORT', msg.channel)
+          }
+          await driver.edit(parts[1], {
+            content: content
+          })
+          global.i18n.send('TAG_EDITED', msg.channel)
+        }
+        break
+      }
       case 'owner': {
         const tag = await driver.getTag(parts[1])
         if (!tag) {
@@ -60,7 +82,7 @@ module.exports = {
         const tag = await driver.getTag(parts[1])
         if (!tag) {
           return global.i18n.send('TAG_NOT_FOUND', msg.channel, {
-            tag: parts[0]
+            tag: parts[1]
           })
         }
         if (tag.owner !== msg.author.id && !process.env['WILDBEAST_MASTERS'].split('|').includes(msg.author.id)) {
@@ -83,8 +105,8 @@ module.exports = {
             author: msg.author,
             channel: msg.channel,
             guild: msg.channel.guild,
-            channels: msg.channel.guild.channels,
-            members: msg.channel.guild.members
+            channels: msg.channel.guild ? msg.channel.guild.channels : [],
+            members: msg.channel.guild ? msg.channel.guild.members : []
           }))
         }
         break

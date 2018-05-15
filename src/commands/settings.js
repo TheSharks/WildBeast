@@ -4,8 +4,7 @@ const whitelist = [
   'prefix',
   'language',
   'welcome',
-  'welcomeMessage',
-  'reset'
+  'welcomeMessage'
 ]
 
 module.exports = {
@@ -14,12 +13,16 @@ module.exports = {
     alias: ['config'],
     noDM: true,
     module: 'Settings',
-    level: 5
+    level: 5,
+    addons: [
+      `*Available settings*: ${whitelist.join(', ')}`
+    ]
   },
   fn: async (msg, suffix) => {
     if (suffix) {
       const parts = suffix.split(' ')
-      if (!whitelist.includes(parts[0])) return global.i18n.send('SETTINGS_NOT_WHITELISTED', msg.channel)
+      parts[0] = parts[0].toLowerCase()
+      if (!whitelist.includes(parts[0]) && parts[0] !== 'reset') return global.i18n.send('SETTINGS_NOT_WHITELISTED', msg.channel)
       const current = await driver.getSettings(msg.channel.guild)
       if (!parts[1]) {
         if (current[parts[0]] === undefined) {
