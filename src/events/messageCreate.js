@@ -12,6 +12,7 @@ const masters = process.env['WILDBEAST_MASTERS'].split('|')
 module.exports = async (ctx) => {
   const msg = ctx[0]
   if (msg.author.bot) return
+  if (msg.channel.guild && !msg.channel.permissionsOf(global.bot.user.id).has('sendMessages')) return // we cant even respond to this
   const prefix = (msg.channel.guild) ? await engines.settings.prefix(msg.channel.guild, msg) : process.env.BOT_PREFIX
   if (msg.content.indexOf(prefix) === 0) {
     global.logger._raven.setContext({
