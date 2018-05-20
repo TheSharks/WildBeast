@@ -8,7 +8,7 @@ const tables = [
 ]
 
 const driver = require('arangojs')(process.env['ARANGO_URI'] || 'http://localhost:8529')
-const logger = require('./logger')
+const logger = console // dropin change
 
 driver.useBasicAuth(process.env['ARANGO_USERNAME'], process.env['ARANGO_PASSWORD'])
 

@@ -15,12 +15,14 @@ module.exports = async (ctx) => {
   if (msg.channel.guild && !msg.channel.permissionsOf(global.bot.user.id).has('sendMessages')) return // we cant even respond to this
   const prefix = (msg.channel.guild) ? await engines.settings.prefix(msg.channel.guild, msg) : process.env.BOT_PREFIX
   if (msg.content.indexOf(prefix) === 0) {
-    global.logger._raven.setContext({
-      user: {
-        id: msg.author.id,
-        username: `${msg.author.username}#${msg.author.discriminator}`
-      }
-    })
+    if (global.logger._raven) {
+      global.logger._raven.setContext({
+        user: {
+          id: msg.author.id,
+          username: `${msg.author.username}#${msg.author.discriminator}`
+        }
+      })
+    }
     let cmd = msg.content.substr(prefix.length).split(' ')[0].toLowerCase()
     if (aliases.has(cmd)) cmd = aliases.get(cmd)
     const suffix = msg.content.substr(prefix.length).split(' ').slice(1).join(' ')
@@ -51,14 +53,16 @@ module.exports = async (ctx) => {
       const res = (msg.channel.guild) ? await engines.perms.calculate(msg.channel.guild, msg.member, level) : await engines.perms.calculate(false, msg.author, level)
       if (res === true) {
         try {
-          global.logger._raven.captureBreadcrumb({
-            message: 'A command is being ran.',
-            category: 'command',
-            data: {
-              cmd: cmd,
-              args: suffix
-            }
-          })
+          if (global.logger._raven) {
+            global.logger._raven.captureBreadcrumb({
+              message: 'A command is being ran.',
+              category: 'command',
+              data: {
+                cmd: cmd,
+                args: suffix
+              }
+            })
+          }
           commands[cmd].fn(msg, suffix)
         } catch (e) {
           global.logger.error(e)
