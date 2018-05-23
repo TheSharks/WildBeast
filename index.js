@@ -23,7 +23,7 @@ require('./src/internal/rancher-autoscale').then(x => {
   global.bot = bot
 
   bot._ogEmit = bot.emit
-  bot.on('rawWS', () => stats.eventHook())
+  bot.on('rawWS', () => {}) // nnop to force eris to fire rawWS
   bot.emit = function emit () {
     this._anyListeners.forEach(listener => listener.apply(this, [arguments]))
     return this._ogEmit.apply(this, arguments)

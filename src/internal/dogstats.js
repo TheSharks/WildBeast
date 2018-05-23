@@ -7,7 +7,8 @@ const client = new StatsD({
 
 module.exports = {
   eventHook: (eventname) => {
-    client.increment('events.all')
-    if (eventname) client.increment(`events.${eventname}`)
+    client.increment('events.all', {
+      eventType: eventname
+    })
   }
 }
