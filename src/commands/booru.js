@@ -18,6 +18,7 @@ const sites = {
 module.exports = {
   meta: {
     help: 'Query various booru sites for images.',
+    usage: '<sitename> <query>',
     nsfw: true,
     timeout: 1, // somewhat of an external ratelimit compliance
     level: 0,
@@ -29,6 +30,7 @@ module.exports = {
   fn: function (msg, suffix) {
     const parts = suffix.split(' ')
     const query = parts.slice(1).join(' ')
+    if (parts[0].length < 2) return global.i18n.send('PERMISSIONS_MALFORMED', msg.channel)
     if (!sites[parts[0]]) {
       return global.i18n.send('BOORU_SITE_UNKNOWN', msg.channel, {
         site: parts[0]
