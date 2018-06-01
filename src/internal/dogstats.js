@@ -13,10 +13,10 @@ module.exports = {
     })
   },
   statsHook: (bot) => {
-    client.set('users.count', bot.users.size, {
+    client.gauge('users.count', bot.users.size, {
       shardID: bot.options.firstShardID
     })
-    client.set('guilds.count', bot.guilds.size, {
+    client.gauge('guilds.count', bot.guilds.size, {
       shardID: bot.options.firstShardID
     })
   }
