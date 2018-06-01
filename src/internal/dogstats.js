@@ -8,8 +8,7 @@ const client = new StatsD({
 module.exports = {
   eventHook: (eventname) => {
     client.increment('events.all', {
-      eventType: eventname,
-      shardID: global.bot.options.firstShardID
+      eventType: eventname
     })
   },
   statsHook: (bot) => {
