@@ -5,6 +5,10 @@ const sites = {
     apiStyle: 'gelbooru',
     baseURL: 'https://gelbooru.com/index.php'
   },
+  derpibooru: {
+    apiStyle: 'rails-booru',
+    baseURL: 'https://derpibooru.org/search.json'
+  },
   rule34: {
     apiStyle: 'gelbooru',
     baseURL: 'https://rule34.xxx/index.php'
@@ -53,6 +57,24 @@ module.exports = {
             global.i18n.send('BOORU_SUCCESS', msg.channel, {
               query: (query.length > 0) ? query : 'random',
               url: result.posts._attributes.count > 1 ? result.posts.post[count]._attributes.file_url : result.posts.post._attributes.file_url
+            })
+          })
+        break
+      }
+      case 'rails-booru': {
+        SA(sites[parts[0]].baseURL)
+          .query({q: parts.slice(1).join(' ')})
+          .set({'User-Agent': 'Superagent Node.js'})
+          .then(res => {
+            if (!res.body.search || res.body.search.length < 1) {
+              return global.i18n.send('BOORU_NO_RESULTS', msg.channel, {
+                query: (query.length > 0) ? query : 'random'
+              })
+            }
+            const count = Math.floor((Math.random() * res.body.search.length))
+            global.i18n.send('BOORU_SUCCESS', msg.channel, {
+              query: (query.length > 0) ? query : 'random',
+              url: `https:${res.body.search[count].representations.tall}` // why
             })
           })
         break
