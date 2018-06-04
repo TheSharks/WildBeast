@@ -63,7 +63,7 @@ module.exports = {
       }
       case 'rails-booru': {
         SA(sites[parts[0]].baseURL)
-          .query({q: parts.slice(1).join(' ')})
+          .query({q: parts.slice(1).join('+')})
           .set({'User-Agent': 'Superagent Node.js'})
           .then(res => {
             if (!res.body.search || res.body.search.length < 1) {
