@@ -37,6 +37,7 @@ async function helpingHand (user, context, cmd) {
       `Minimum access level required: ${c.meta.level}`,
       ''
     ]
+    if (c.meta.permAddons) result.push(`**This command requires the following extra permissions \`${c.meta.permAddons.join(', ')}\`**`)
     if (c.meta.module) result.push(`*This command is part of the \`${c.meta.module}\` module*`)
     if (c.meta.aliases && c.meta.aliases.length > 0) result.push(`**Aliases for this command:** ${c.meta.aliases.join(', ')}`)
     if (c.meta.timeout) result.push(`**This command has a timeout of ${c.meta.timeout} seconds**`)
