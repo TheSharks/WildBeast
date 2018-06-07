@@ -9,8 +9,8 @@ services:
       ARANGO_URI: http://arango:8529
       LAVA_NODES: '[{"host":"lavalink","port":80,"region":"us","password":"password"}]'
     links:
-    - arango:arango
-    - lavalink:lavalink
+    - arango
+    - lavalink
     depends_on:
       - arango
       - lavalink
@@ -22,7 +22,7 @@ services:
   install:
     restart: 'no'
     links:
-      - arango:arango
+      - arango
     environment:
       ARANGO_URI: http://arango:8529
     image: dougley/wildbeast:experimental

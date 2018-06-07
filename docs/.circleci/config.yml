@@ -1,0 +1,14 @@
+version: 2
+jobs:
+  build:
+    machine:
+        enabled: true
+    steps:
+      - run:
+          name: Do nothing
+          command: exit 0
+workflows:
+  version: 2
+  gh-pages:
+    jobs:
+      - build

@@ -33,11 +33,7 @@ No problem, we maintain a public instance called WildBot that you can invite to 
 
 ### Want to run WildBeast yourself?
 
-We strongly recommend running WildBeast with Docker instead of running it natively, however we provide docs for both methods.
-
-- [Docker installation guide](https://docs.thesharks.xyz/install_docker/)
-- [Linux installation guide](https://docs.thesharks.xyz/install_linux/)
-- [Windows installation guide](https://docs.thesharks.xyz/install_windows/)
+We've got you covered on that - we provide installation instructions for Windows and Linux. Check out the [Windows installation manual](https://docs.thesharks.xyz/install_windows) or [Linux installation manual](https://docs.thesharks.xyz/install_linux) to get started.
 
 ---
 

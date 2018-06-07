@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "start-docs": "mkdocs serve",
     "test": "eslint . && mocha",
     "dbcreate": "node src/internal/db-init.js",
     "infodump": "node src/internal/info-dump.js"
