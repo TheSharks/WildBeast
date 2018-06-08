@@ -1,0 +1,4 @@
+/* Restyle table headers to look a little prettier */
+thead {
+  background-color: #3F51B5;
+}
