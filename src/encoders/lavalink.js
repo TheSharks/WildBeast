@@ -131,11 +131,12 @@ module.exports = {
       player.on('end', async data => {
         if (data.reason && data.reason !== 'REPLACED') {
           if (guildInfo[data.guildId].tracks.length > 1) {
+            const trackRequester = global.bot.users.get(guildInfo[data.guildId].tracks[1].requester)
             global.i18n.send('NEXT_TRACK', global.bot.guilds.get(data.guildId).channels.find(c => c.id === guildInfo[data.guildId].textChan), {
               current: guildInfo[data.guildId].tracks[0].info.title,
               next: guildInfo[data.guildId].tracks[1].info.title,
               duration: await module.exports.hhMMss(guildInfo[data.guildId].tracks[1].info.length / 1000),
-              user: global.bot.users.get(guildInfo[data.guildId].tracks[1].requester).username
+              user: trackRequester ? trackRequester.username : 'Unknown user' // In case user is not in guild
             })
             guildInfo[data.guildId].tracks.shift()
             guildInfo[data.guildId].skips = []
