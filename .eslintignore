@@ -1,16 +1,1 @@
-*.json
-*.md
-*.txt
-*.log
-*.mp3
-*.exe
-*.yml
-*.sh
-customize
-perms
-users
-ffmpeg
-ffprobe
-ffplay
-ffserver
-Dockerfile
+node_modules/**

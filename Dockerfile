@@ -1,21 +1,21 @@
-FROM dougley/wildbeast-env:latest
-MAINTAINER hello@dougley.com
+FROM node:9
 
-RUN mkdir -p /usr/src/WildBeast
-WORKDIR /usr/src/WildBeast
+ARG buildno
+ARG commitsha
 
-COPY . /usr/src/WildBeast
+LABEL maintainer="Remco Jongschaap hello@dougley.com" \
+      repository="https://github.com/TheSharks/WildBeast" \
+      buildno=$buildno \
+      commit=$commitsha
 
-RUN npm install
+# Don't run wildbeast as root (safety)
+RUN useradd -m -d /home/wildbeast -s /bin/bash wildbeast
+RUN mkdir /opt/wildbeast && chown wildbeast /opt/wildbeast -R
+# Copy files and install modules
+COPY . /opt/wildbeast
+WORKDIR /opt/wildbeast
+RUN npm i --production
 
-ENV BOT_ISBOT=true BOT_TOKEN=token BOT_EMAIL=email BOT_PASSWORD=password BOT_OAUTH=oauth \
-    DATABASE_HOST=localhost DATABASE_PORT=28015 DATABASE_PASSWORD= DATABASE_USER=admin \
-    SETTINGS_PREFIX=++ SETTINGS_AUTODELETEMSG=true SETTINGS_DELETE_TIMEOUT=3000 SETTINGS_DELETE_TIMEOUT_LONG=6000 SETTINGS_MAXVCSLOTS=10 \
-    PERMISSIONS_MASTER= PERMISSIONS_LEVEL1= PERMISSIONS_LEVEL2= PERMISSIONS_LEVEL3= \
-    BEZERK_USE=false BEZERK_URI=uri \
-    ELASTICSEARCH_USE=false ELASTIC_CLIENT='{"host": "localhost:9200"}' \
-    API_KEYS_IMGFLIP_USERNAME=username API_KEYS_IMGFLIP_PASSWORD=password API_KEYS_GOOGLE=google API_KEYS_TWITCH_ID=twitch API_KEYS_IMGUR=imgur API_KEYS_BUGSNAG=bugsnag API_KEYS_CLEVERBOT_USER=user API_KEYS_CLEVERBOT_KEY=key
-
-RUN chmod 755 ./entrypoint.sh
-
-CMD [ "./entrypoint.sh" ]
+# Switch to wildbeast user and run entrypoint
+USER wildbeast
+CMD ["node", "index.js"]

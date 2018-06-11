@@ -1,44 +1,49 @@
 version: '2'
-
 services:
-  rethinkdb:
-    restart: always
-    image: rethinkdb:latest
-    container_name: wildbeast-rethink
-    volumes:
-    # replace "/home" with any path that you want to store your rethinkdb database files
-    - /home:/data
-
-  wild-beast:
-    restart: always
-    image: dougley/wildbeast:latest
-    container_name: wildbeast
-    depends_on:
-    - rethinkdb
+  wildbeast:
+    image: dougley/wildbeast:experimental
     environment:
-    - BOT_ISBOT=true
-    - BOT_TOKEN=DISCORD_BOT_TOKEN
-    - BOT_EMAIL=email
-    - BOT_PASSWORD=password
-    - BOT_OAUTH=https://discordapp.com/oauth2/authorize?&client_id=CLIENT_ID&scope=bot
-
-    - DATABASE_HOST=rethinkdb
-    - DATABASE_PORT=28015
-    - DATABASE_PASSWORD=
-    - DATABASE_USER=admin
-
-    - SETTINGS_PREFIX=++
-    - SETTINGS_AUTODELETEMSG=true
-    - SETTINGS_DELETE_TIMEOUT=3000
-    - SETTINGS_DELETE_TIMEOUT_LONG=6000
-    - SETTINGS_MAXVCSLOTS=10
-
-    - PERMISSIONS_MASTER=split,with,comma
-    - PERMISSIONS_LEVEL1=
-    - PERMISSIONS_LEVEL2=
-    - PERMISSIONS_LEVEL3=
-
-    - API_KEYS_IMGFLIP_USERNAME=IMGFLIP_USERNAME
-    - API_KEYS_IMGFLIP_PASSWORD=IMGFLIP_PASSWORD
-    - API_KEYS_GOOGLE=GOOGLE_KEY
-    - API_KEYS_TWITCH_ID=TWITCH_ID
+      BOT_TOKEN:
+      BOT_PREFIX:
+      WILDBEAST_MASTERS:
+      ARANGO_URI: http://arango:8529
+      LAVA_NODES: '[{"host":"lavalink","port":80,"region":"us","password":"password"}]'
+    links:
+    - arango
+    - lavalink
+    depends_on:
+      - arango
+      - lavalink
+      - install
+  arango:
+    image: arangodb:3.3.3
+    environment:
+      ARANGO_NO_AUTH: '1'
+  install:
+    restart: 'no'
+    links:
+      - arango
+    environment:
+      ARANGO_URI: http://arango:8529
+    image: dougley/wildbeast:experimental
+    depends_on:
+      - arango
+    command: npm run-script dbcreate
+  lavalink:
+    image: fredboat/lavalink:v2
+    environment:
+      LAVALINK_SERVER_BUFFER_DURATION_MS: '400'
+      LAVALINK_SERVER_PASSWORD: password
+      LAVALINK_SERVER_SOURCES_BANDCAMP: 'true'
+      LAVALINK_SERVER_SOURCES_HTTP: 'true'
+      LAVALINK_SERVER_SOURCES_LOCAL: 'false'
+      LAVALINK_SERVER_SOURCES_MIXER: 'true'
+      LAVALINK_SERVER_SOURCES_SOUNDCLOUD: 'true'
+      LAVALINK_SERVER_SOURCES_TWITCH: 'true'
+      LAVALINK_SERVER_SOURCES_VIMEO: 'true'
+      LAVALINK_SERVER_SOURCES_YOUTUBE: 'true'
+      LAVALINK_SERVER_WS_HOST: 0.0.0.0
+      LAVALINK_SERVER_WS_PORT: '80'
+      LAVALINK_SERVER_YOUTUBE_PLAYLIST_LOAD_LIMIT: '600'
+      SERVER_ADDRESS: 0.0.0.0
+      SERVER_PORT: '2333'

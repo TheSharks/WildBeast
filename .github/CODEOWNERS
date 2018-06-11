@@ -1,2 +1,4 @@
-*       @SteamingMutt
-*.js    @TheSharks/development
+*           @Dougley
+*.js        @TheSharks/development
+docs/*      @linuswillner
+mkdocs.yml  @linuswillner

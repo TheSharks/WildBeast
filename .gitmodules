@@ -1,0 +1,3 @@
+[submodule "src/languages"]
+	path = src/languages
+	url = https://github.com/TheSharks/WildBeast-Translations.git
