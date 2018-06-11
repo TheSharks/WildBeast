@@ -4,8 +4,8 @@ site_name: 'WildBeast Documentation'
 site_author: 'TheSharks'
 site_url: 'https://docs.thesharks.xyz'
 
-repo_name: 'TheSharks/WildBeastDocs'
-repo_url: 'https://github.com/TheSharks/WildBeastDocs'
+repo_name: 'TheSharks/WildBeast'
+repo_url: 'https://github.com/TheSharks/WildBeast'
 edit_uri: edit/master/docs/
 
 copyright: 'Copyright © 2016-2018 TheSharks. "Discord", "Discord App", and any associated logos are registered trademarks of Hammer & Chisel, inc.'
