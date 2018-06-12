@@ -597,39 +597,48 @@
 <p>It is highly recommended to use Git to retrieve WildBeast instead of downloading a ZIP package from GitHub for ease of updating later down the line.</p>
 <p>Download <a href="https://git-scm.com">Git</a> and install it with the following options:</p>
 <ul>
-<li>Features: Desktop icon, Explorer integration and TrueType console font can be omitted at will.</li>
-<li>Text editor: Matter of preference.</li>
+<li>Features: Desktop icon, Explorer integration and TrueType console font can be omitted at will</li>
+<li>Text editor: Your personal preference</li>
 <li>Use Git from the Windows Command Prompt (<strong>Important!</strong>)</li>
 <li>Use OpenSSH and OpenSSL (<strong>Important!</strong>)</li>
 <li>Checkout as-is, commit Unix-style line endings</li>
 <li>Use MinTTY (If you're installing Git Bash)</li>
-<li>Additional options: Matter of preference.</li>
+<li>Additional options: Your personal preference</li>
 </ul>
 <h3 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h3>
-<p>With that done, clone the WildBeast GitHub repository by running <code class="codehilite">git clone https://github.com/TheSharks/WildBeast.git</code> in a terminal window. After cloning, change to the <code class="codehilite">WildBeast</code> directory and open <strong>docker-compose.yml</strong> with your preferred text editor.</p>
+<p>With that done, clone the WildBeast GitHub repository by running <code class="codehilite">git clone https://github.com/TheSharks/WildBeast.git</code> in a terminal window. After cloning, change to the <code class="codehilite">WildBeast</code> directory and open <strong>.env.example</strong> with your preferred text editor.</p>
 <p>Edit the following parameters:</p>
 <ul>
 <li><strong>BOT_TOKEN</strong>: Add your Discord bot token here. (Eg. <a href="https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&amp;-getting-a-token">create a bot and add it to a server</a>)</li>
 <li><strong>BOT_PREFIX</strong>: Add your preferred command prefix here. (Eg. <strong>!</strong>, <strong>++</strong>, etc.)</li>
-<li><strong>WILDBEAST_MASTERS</strong>: Add a pipe-delimited list of user IDs you wish to set as super users here. (Eg. <strong>discorduserid1|discorduserid1|etc</strong>)</li>
+<li><strong>WILDBEAST_MASTERS</strong>: Add a pipe-delimited list of user IDs you wish to set as super users here. (Eg. <strong>152664793587777537|10790402390177792</strong> and so on)</li>
 </ul>
-<p>When done, save and close the file. Then run <code class="codehilite">docker-compose up --no-start</code> in the WildBeast directory. When the container creation is done, open Kitematic and you should have the following containers present.</p>
+<p>If you're running a custom ArangoDB instance and wish to use it, you can also edit <strong>ARANGO_USERNAME</strong>, <strong>ARANGO_PASSWORD</strong>, <strong>ARANGO_DATABASE</strong> and <strong>ARANGO_URI</strong> now. The same goes for the <strong>LAVA_NODES</strong> variable in case you're running a custom Lavalink instance.</p>
+<p>When done, save the file as <strong>.env</strong>. Then run <code class="codehilite">docker-compose up --no-start</code> in the WildBeast directory. When the container creation is done, open Kitematic and you should have the following containers present.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>It is paramount you save the file as <strong>.env</strong>. Do not leave it as <strong>.env.example</strong>, name it <strong>.env.txt</strong> or anything similar. Docker will not recognise it in this case.</p>
+</div>
 <p><img alt="Container list" src="../img/kitematic-containers.png" /></p>
-<div class="admonition danger">
-<p class="admonition-title">Danger</p>
-<p>The <strong>docker-compose.yml</strong> file is not excluded from Git due to it being necessary for the installation process. The Discord bot token you input into it is sensitive data, and it is highly recommended that you remove it after you're done with this guide. This should be done to avoid accidentally leaking your API token.</p>
+<div class="admonition bug">
+<p class="admonition-title">Couldn't connect to Docker daemon</p>
+<p>Users running Docker Toolbox may need to start the Docker daemon explicitly in order for Compose to work. Docker Toolbox should create a desktop icon called <strong>Docker Quickstart Terminal</strong> upon installation. Start it, switch back to the previous terminal window and run the compose command again.</p>
 </div>
 <h3 id="initialising">Initialising<a class="headerlink" href="#initialising" title="Permanent link">&para;</a></h3>
-<p>To initialise WildBeast, start the following containers in the following order (Wait for one to finish before proceeding):</p>
-<ul>
+<p>To initialise WildBeast, start the following containers in the following order. Wait for one to finish before proceeding.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you configured a custom ArangoDB instance previously, omit the first step.</p>
+</div>
+<ol>
 <li>wildbeast_arango_1</li>
 <li>wildbeast_install_1</li>
-</ul>
+</ol>
 <p>You may have to click back and forth between containers to see the output from one.</p>
 <p>When <strong>wildbeast_install_1</strong> finishes, you may stop it. After this you do not need to run <strong>wildbeast_install_1</strong> again, as this only initialises the database. You can run it again if you wish to repair your database, however.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
-<p>Open the settings for the <strong>wildbeast_wildbeast_1</strong> container and check the Environment Variables tab. The minimum defaults have been defined already through docker-compose.yml, but the bot will only have fairly limited functionality if left at this state.</p>
-<p>Here is a list of the environment variables that you can define. Check the footnotes for brief instructions on how to get the API keys below.</p>
+<p>Open the settings for the <strong>wildbeast_wildbeast_1</strong> container and check the Environment Variables tab. The minimum defaults were defined previously, but the bot will only have fairly limited functionality if left at this state.</p>
+<p>Here is a list of environment variables we recommend you define or at least consider defining. Check the footnotes for brief instructions on how to get the API keys below.</p>
 <table>
 <thead>
 <tr>
@@ -668,13 +677,13 @@
 <td>WILDBEAST_VOICE_PERSIST</td>
 <td>Prevent the bot from automatically leaving a voice channel after a playlist has ended.</td>
 <td>Music</td>
-<td>Boolean</td>
+<td>Number (0/1)<sup id="fnref2:4"><a class="footnote-ref" href="#fn:4" rel="footnote">4</a></sup></td>
 </tr>
 <tr>
 <td>WILDBEAT_DISABLE_MUSIC</td>
 <td>Prevent all music functionality from being used.</td>
 <td>Music</td>
-<td>Boolean</td>
+<td>Number (0/1)<sup id="fnref:4"><a class="footnote-ref" href="#fn:4" rel="footnote">4</a></sup></td>
 </tr>
 <tr>
 <td>WILDBEAST_LANGUAGE</td>
@@ -684,13 +693,16 @@
 </tr>
 </tbody>
 </table>
-<p>If you have reconfigured your ArangoDB database or use a custom instance, you can also set <strong>ARANGO_USERNAME</strong>, <strong>ARANGO_PASSWORD</strong>, <strong>ARANGO_DATABASE</strong> and <strong>ARANGO_URI</strong> to match your own database.</p>
-<p>If you have reconfigured your Lavalink instance or use a custom instance, you may edit the <strong>LAVA_NODES</strong> variable to point to your Lavalink setup.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>There are some undocumented environment variables that can be defined in addition to these. Support will not be provided for issues that stem from using undocumented or internal environment variables.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>There are more environment variables that can be defined as well. You can find the full reference in <a href="https://github.com/TheSharks/WildBeast/blob/master/.env.example">.env.example</a>.</p>
+<p>However, we do not recommend editing variables in the <strong>Internal configuration</strong> section lest you know what you're doing. These variables exist for development and/or internal purposes and can have unintended side effects if messed with.</p>
 </div>
 <h2 id="running-the-bot">Running the bot<a class="headerlink" href="#running-the-bot" title="Permanent link">&para;</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you're running custom non-Docker instances for ArangoDB and Lavalink, and have configured WildBeast to use them, omit starting the first two containers.</p>
+</div>
 <p>Your WildBeast instance should now be good to go. Start both the <strong>wildbeast_arango_1</strong> and <strong>wildbeast_lavalink_1</strong> containers, and when they're ready, start <strong>wildbeast_wildbeast_1</strong>. Wait for it to start, and if your output roughly resembles the following, you're set.</p>
 <p><img alt="Expected output" src="../img/kitematic-expected-output.png" /></p>
 <p>You can test the bot by running the <strong>ping</strong> command (With your prefix) in a text channel that the bot can see. If it answers "Pong!", then your bot is set up.</p>
@@ -711,6 +723,9 @@
 </li>
 <li id="fn:3">
 <p>Go to <a href="https://api.imgur.com/oauth2/addclient">https://api.imgur.com/oauth2/addclient</a>, register an application and input the client ID (Not secret!) you get from that here.&#160;<a class="footnote-backref" href="#fnref:3" rev="footnote" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:4">
+<p>Set to 1 to enable this behaviour, or to 0 to disable it.&#160;<a class="footnote-backref" href="#fnref:4" rev="footnote" title="Jump back to footnote 4 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:4" rev="footnote" title="Jump back to footnote 4 in the text">&#8617;</a></p>
 </li>
 </ol>
 </div>
