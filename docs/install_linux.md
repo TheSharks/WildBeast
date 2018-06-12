@@ -22,20 +22,22 @@ Complete the appropriate installation procedure and verify Docker is functional 
 
 ### Setup
 
-With that done, clone the WildBeast GitHub repository by running `#!bash git clone https://github.com/TheSharks/WildBeast.git`. After cloning, change to the `WildBeast` directory and open **docker-compose.yml** with your preferred text editor.
+With that done, clone the WildBeast GitHub repository by running `#!bash git clone https://github.com/TheSharks/WildBeast.git`. After cloning, change to the `WildBeast` directory and open **.env.example** with your preferred text editor.
 
 Edit the following parameters:
 
 - **BOT_TOKEN**: Add your Discord bot token here. (Eg. [create a bot and add it to a server](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token))
 - **BOT_PREFIX**: Add your preferred command prefix here. (Eg. **!**, **++**, etc.)
-- **WILDBEAST_MASTERS**: Add a pipe-delimited list of user IDs you wish to set as super users here. (Eg. **discorduserid1|discorduserid1|etc**)
+- **WILDBEAST_MASTERS**: Add a pipe-delimited list of user IDs you wish to set as super users here. (Eg. **152664793587777537|10790402390177792** and so on)
 
-When done, save and close the file. Then run `#!bash sudo docker-compose up --no-start` in the WildBeast directory. When the container creation is done, run `#!bash sudo docker ps -a` and make sure that you have an output that resembles the following.
+If you're running a custom ArangoDB instance and wish to use it, you can also edit **ARANGO_USERNAME**, **ARANGO_PASSWORD**, **ARANGO_DATABASE** and **ARANGO_URI** now. The same goes for the **LAVA_NODES** variable in case you're running a custom Lavalink instance.
+
+When done, save the file as **.env**. Then run `#!bash sudo docker-compose up --no-start` in the WildBeast directory. When the container creation is done, run `#!bash sudo docker ps -a` and make sure that you have an output that resembles the following.
+
+!!! warning
+    It is paramount you save the file as **.env**. Do not leave it as **.env.example**, name it **.env.txt** or anything similar. Docker will not recognise it in this case.
 
 ![Container list](img/compose-containers.png)
-
-!!! danger
-    The **docker-compose.yml** file is not excluded from Git due to it being necessary for the installation process. The Discord bot token you input into it is sensitive data, and it is highly recommended that you remove it after you're done with this guide. This should be done to avoid accidentally leaking your API token.
 
 !!! bug "Weird Docker errors"
     On certain systems Docker may refuse to run commands properly without **sudo** and will throw cryptic errors as a result. Try running the command with **sudo** before consulting help and also check your system process control to see if Docker is running.
@@ -43,6 +45,9 @@ When done, save and close the file. Then run `#!bash sudo docker-compose up --no
 ### Initialising
 
 To initialise WildBeast, run the following commands. Leave a second or two between each to account for startup times.
+
+!!! note
+    If you configured a custom ArangoDB instance previously, omit the first command.
 
 ```bash
 sudo docker start wildbeast_arango_1
@@ -58,9 +63,9 @@ After this, you will no longer need to run **wildbeast_install_1** unless you wi
 
 ## Configuration
 
-Now it's time to do some additional configuration. The minimum defaults have been defined already through docker-compose.yml, but the bot will only have fairly limited functionality if left at this state. Create a **.env** file in the WildBeast directory and open it with your preferred text editor, following the [dotenv syntax](https://www.npmjs.com/package/dotenv#usage).
+Now it's time to do some additional configuration. The minimum defaults have been defined already through docker-compose.yml, but the bot will only have fairly limited functionality if left at this state. Open **.env** again.
 
-Here is a list of the environment variables that you can define. Check the footnotes for brief instructions on how to get the API keys below.
+Here is a list of environment variables we recommend you define or at least consider defining. Check the footnotes for brief instructions on how to get the API keys below.
 
 | Variable | Description | Commands using this | Type |
 | -------- | ----------- | ------------------- | ---- |
@@ -68,20 +73,21 @@ Here is a list of the environment variables that you can define. Check the footn
 | IMGFLIP_PASSWORD | Imgflip password.[^1] | meme | String |
 | IMGUR_KEY | Imgur API key.[^2] | randommeme | String |
 | TWITCH_ID | Twitch client ID.[^3] | twitch | String |
-| WILDBEAST_VOICE_PERSIST | Prevent the bot from automatically leaving a voice channel after a playlist has ended. | Music | Boolean |
-| WILDBEAT_DISABLE_MUSIC | Prevent all music functionality from being used. | Music | Boolean |
+| WILDBEAST_VOICE_PERSIST | Prevent the bot from automatically leaving a voice channel after a playlist has ended. | Music | Number (0/1)[^4] |
+| WILDBEAT_DISABLE_MUSIC | Prevent all music functionality from being used. | Music | Number (0/1)[^4] |
 | WILDBEAST_LANGUAGE | Set the language of the bot. Currently only English is available. | All | String |
 
-If you have reconfigured your ArangoDB database or use a custom instance, you can also set **ARANGO_USERNAME**, **ARANGO_PASSWORD**, **ARANGO_DATABASE** and **ARANGO_URI** to match your own database.
+!!! tip
+    There are more environment variables that can be defined as well. You can find the full reference in [.env.example](https://github.com/TheSharks/WildBeast/blob/master/.env.example).
+    
+    However, we do not recommend editing variables in the **Internal configuration** section lest you know what you're doing. These variables exist for development and/or internal purposes and can have unintended side effects if messed with.
 
-If you have reconfigured your Lavalink instance or use a custom instance, you may edit the **LAVA_NODES** variable to point to your Lavalink setup.
-
-!!! note
-    There are some undocumented environment variables that can be defined in addition to these. Support will not be provided for issues that stem from using undocumented or internal environment variables.
-
-When you're done, save the .env file and close the editor.
+When you're done, save the file and close the editor.
 
 ## Running the bot
+
+!!! note
+    If you're running custom non-Docker instances for ArangoDB and Lavalink, and have configured WildBeast to use them, omit starting the first two containers.
 
 Your WildBeast instance should now be good to go. Run the following commands in your terminal, waiting a second or two between each:
 
@@ -114,3 +120,5 @@ If you have further questions or need help with something, we'd be happy to help
 [^2]: Go to https://www.twitch.tv/settings/connections, register an application and input the client ID you get from that here.
 
 [^3]: Go to https://api.imgur.com/oauth2/addclient, register an application and input the client ID (Not secret!) you get from that here.
+
+[^4]: Set to 1 to enable this behaviour, or to 0 to disable it.

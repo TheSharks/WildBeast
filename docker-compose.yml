@@ -1,7 +1,7 @@
 version: '2'
 services:
   wildbeast:
-    image: dougley/wildbeast:experimental
+    image: dougley/wildbeast
     env_file:
       - .env
     links:
@@ -21,7 +21,7 @@ services:
       - arango
     environment:
       ARANGO_URI: http://arango:8529
-    image: dougley/wildbeast:experimental
+    image: dougley/wildbeast
     depends_on:
       - arango
     command: npm run-script dbcreate
