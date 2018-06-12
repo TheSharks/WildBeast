@@ -2,12 +2,8 @@ version: '2'
 services:
   wildbeast:
     image: dougley/wildbeast:experimental
-    environment:
-      BOT_TOKEN:
-      BOT_PREFIX:
-      WILDBEAST_MASTERS:
-      ARANGO_URI: http://arango:8529
-      LAVA_NODES: '[{"host":"lavalink","port":80,"region":"us","password":"password"}]'
+    env_file:
+      - .env
     links:
     - arango
     - lavalink
