@@ -37,10 +37,10 @@ When done, save the file as **.env**. Then run `#!bash sudo docker-compose up --
 !!! warning
     It is paramount you save the file as **.env**. Do not leave it as **.env.example**, name it **.env.txt** or anything similar. Docker will not recognise it in this case.
 
-![Container list](img/compose-containers.png)
+!!! bug "Known docker-compose issues"
+    On certain systems or setups Docker may refuse to run commands properly without **sudo** and will throw cryptic errors as a result. Try running the command with **sudo** before consulting help and also check your system process control to see if Docker is running.
 
-!!! bug "Weird Docker errors"
-    On certain systems Docker may refuse to run commands properly without **sudo** and will throw cryptic errors as a result. Try running the command with **sudo** before consulting help and also check your system process control to see if Docker is running.
+![Container list](img/compose-containers.png)
 
 ### Initialising
 
