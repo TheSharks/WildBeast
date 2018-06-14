@@ -59,10 +59,15 @@ When done, save the file as **.env**. Then run `#!bash docker-compose up --no-st
 !!! warning
     It is paramount you save the file as **.env**. Do not leave it as **.env.example**, name it **.env.txt** or anything similar. Docker will not recognise it in this case.
 
-![Container list](img/kitematic-containers.png)
+!!! bug "Known docker-compose issues"
+    Docker Toolbox does not start automatically with Windows out of the box - it needs to be started explicitly. Thus, if you do not perform this step, you may run into cryptic errors when attempting to compose. These errors are known to arise:
 
-!!! bug "Couldn't connect to Docker daemon"
-    Users running Docker Toolbox may need to start the Docker daemon explicitly in order for Compose to work. Docker Toolbox should create a desktop icon called **Docker Quickstart Terminal** upon installation. Start it, switch back to the previous terminal window and run the compose command again.
+    **Could not connect to Docker daemon**<br>
+    **Windows named pipe error: The system cannot find the file specified**
+
+    Docker Toolbox should create a desktop icon called **Docker Quickstart Terminal** upon installation. Start it, wait for it to completely start (Until it shows **Start interactive shell**), restart your terminal and run the compose command again.
+
+![Container list](img/kitematic-containers.png)
 
 ### Initialising
 
