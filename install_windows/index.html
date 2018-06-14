@@ -619,11 +619,14 @@
 <p class="admonition-title">Warning</p>
 <p>It is paramount you save the file as <strong>.env</strong>. Do not leave it as <strong>.env.example</strong>, name it <strong>.env.txt</strong> or anything similar. Docker will not recognise it in this case.</p>
 </div>
-<p><img alt="Container list" src="../img/kitematic-containers.png" /></p>
 <div class="admonition bug">
-<p class="admonition-title">Couldn't connect to Docker daemon</p>
-<p>Users running Docker Toolbox may need to start the Docker daemon explicitly in order for Compose to work. Docker Toolbox should create a desktop icon called <strong>Docker Quickstart Terminal</strong> upon installation. Start it, switch back to the previous terminal window and run the compose command again.</p>
+<p class="admonition-title">Known docker-compose issues</p>
+<p>Docker Toolbox does not start automatically with Windows out of the box - it needs to be started explicitly. Thus, if you do not perform this step, you may run into cryptic errors when attempting to compose. These errors are known to arise:</p>
+<p><strong>Could not connect to Docker daemon</strong><br>
+<strong>Windows named pipe error: The system cannot find the file specified</strong></p>
+<p>Docker Toolbox should create a desktop icon called <strong>Docker Quickstart Terminal</strong> upon installation. Start it, wait for it to completely start (Until it shows <strong>Start interactive shell</strong>), restart your terminal and run the compose command again.</p>
 </div>
+<p><img alt="Container list" src="../img/kitematic-containers.png" /></p>
 <h3 id="initialising">Initialising<a class="headerlink" href="#initialising" title="Permanent link">&para;</a></h3>
 <p>To initialise WildBeast, start the following containers in the following order. Wait for one to finish before proceeding.</p>
 <div class="admonition note">
