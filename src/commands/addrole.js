@@ -1,11 +1,11 @@
 module.exports = {
   meta: {
-    level: 0,
-    alias: ['applyrole'],
     help: 'Give a role to user or users.',
-    usage: ' @user1 @user2 rolename',
+    usage: '@user @user2 <role name>',
     module: 'Admin',
-    noDM: true
+    level: 0,
+    noDM: true,
+    alias: ['applyrole']
   },
   fn: function (msg, suffix) {
     const guildPerms = msg.member.permission.json

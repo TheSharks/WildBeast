@@ -2,10 +2,10 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll give you some interesting facts!',
-    timeout: 5,
+    help: 'Get a random fact.',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 5
   },
   fn: function (msg) {
     request.get('http://www.fayd.org/api/fact.xml')

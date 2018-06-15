@@ -2,10 +2,11 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll get a XKCD comic for you, you can define a comic number and I\'ll fetch that one.',
-    timeout: 10,
+    help: 'Get a random XKCD comic, or supply a number to get that particular comic.',
+    usage: '[comic number]',
+    module: 'Fun',
     level: 0,
-    module: 'Fun'
+    timeout: 10
   },
   fn: function (msg, suffix) {
     let xkcdInfo

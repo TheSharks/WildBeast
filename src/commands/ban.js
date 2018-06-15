@@ -1,9 +1,9 @@
 module.exports = {
   meta: {
-    level: 0,
-    help: 'I\'ll ban someone you mention!',
-    usage: 'ban @user reason',
+    help: 'Ban a user.',
+    usage: '@user [reason]',
     module: 'Admin',
+    level: 0,
     noDM: true
   },
   fn: function (msg, suffix) {

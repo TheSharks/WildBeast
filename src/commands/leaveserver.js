@@ -1,11 +1,10 @@
 module.exports = {
   meta: {
-    level: 10,
-    timeout: 0,
-    alias: ['leave-server', 'bye'],
-    noDM: true,
+    help: 'Make the bot leave the current server.',
     module: 'Admin',
-    help: 'I\'ll leave the server that this is sent in.'
+    level: 10,
+    noDM: true,
+    alias: ['leave-server', 'bye']
   },
   fn: async (msg) => {
     await msg.channel.createMessage('Goodbye.')

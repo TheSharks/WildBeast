@@ -9,13 +9,14 @@ const whitelist = [
 
 module.exports = {
   meta: {
-    help: 'View/change settings about your server.',
-    alias: ['config'],
-    noDM: true,
+    help: 'Base command for settings. Returns current settings if no setting is specified.',
+    usage: '<setting> <parameter>',
     module: 'Settings',
     level: 5,
+    noDM: true,
+    alias: ['config'],
     addons: [
-      `*Available settings*: ${whitelist.join(', ')}`
+      `**Available settings**: ${whitelist.join(', ')}`
     ]
   },
   fn: async (msg, suffix) => {

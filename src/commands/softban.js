@@ -1,11 +1,11 @@
 module.exports = {
   meta: {
+    help: 'Softban a user.',
+    usage: '@user OR <userid> [reason]',
+    module: 'Admin',
     level: 0,
     alias: ['messageban'],
-    help: 'I\'ll ban and unban someone you give me the id of, or mention, removing their messages in the process.',
-    usage: '12345678 reason | @user reason',
-    noDM: true,
-    module: 'Admin'
+    noDM: true
   },
   fn: function (msg, suffix) {
     const bot = global.bot

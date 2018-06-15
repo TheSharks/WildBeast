@@ -10,7 +10,7 @@ This is the command reference for WildBeast. You can find more elaborative infor
 
 Some commands on this page will have an empty **Usage** field. This means that the command takes no arguments and is accepted as such.
 
-Parameters marked with **<placeholders\>** are supposed to be replaced by other values. Do not incude the actual braces in the command. Similarly, **@user** placeholders refer to mentions. Parameters surrounded by [brackets] signify parameters that may be omitted.
+Parameters marked with **<placeholders\>** are supposed to be replaced by other values. Do not incude the actual braces in the command. Similarly, **@user** placeholders refer to mentions. Parameters surrounded by **[brackets]** signify parameters that may be omitted.
 
 ## Commands
 
@@ -19,7 +19,7 @@ Parameters marked with **<placeholders\>** are supposed to be replaced by other 
 | Name | Description | Usage | Level/Required permission |
 | ---- | ----------- | ----- | ------------------------- |
 | addrole | Give a role to user or users. | addrole @user @user2 **<role name\>** | Manage Roles |
-| takerole | Take a role from a user. | takerole @user @user2 **<role name\>** | Manage Roles |
+| takerole | Take a role from a user or users. | takerole @user @user2 **<role name\>** | Manage Roles |
 | colorrole | Change the color of a role. | colorrole **<role name\>** **<hex value\>**[^1] | Manage Roles |
 | kick | Kick a user. | kick @user **[reason]** | Kick Members |
 | ban | Ban a user. | ban @user **[reason]** | Ban Members |
@@ -48,7 +48,7 @@ Parameters marked with **<placeholders\>** are supposed to be replaced by other 
 | stroke | Stroke someone's ego. | stroke **<name\>** | 0 |
 | twitch | Check if a streamer is live on Twitch. | twitch **<username\>** | 0 |
 | urbandictionary | Get the definition of a word from the Urban Dictionary. | urbandictionary **<word\>** | 0 |
-| xkcd | Get a random XKCD comic, or supply a number to get that particular comic. | xkcd **<comic number\>** | 0 |
+| xkcd | Get a random XKCD comic, or supply a number to get that particular comic. | xkcd **[comic number]** | 0 |
 | yesno | Get a GIF saying yes or no. |  | 0 |
 | yomomma | Get a random yo momma joke. |  | 0 |
 
@@ -56,10 +56,13 @@ Parameters marked with **<placeholders\>** are supposed to be replaced by other 
 
 | Name | Description | Usage | Level/Required permission |
 | ---- | ----------- | ----- | ------------------------- |
-| join-voice | Make the bot join a voice channel. | join-voice **<channel name\>** | 1 |
+| join-voice | Make the bot join a voice channel. Optionally supply a track to play on join. | join-voice **[track link]** | 1 |
 | leave-voice | Make the boit leave the current voice channel. |  | 1 |
 | nowplaying | Show the currently playing track. |  | 1 |
+| pause | Pause the playback of the current track. |  | 1 |
 | queue | Show the playback queue. |  | 1 |
+| request | Add a track to the playback queue. | request **<track link\>**[^4] | 1 |
+| resume | Resume the playback of the current track. |  | 1 |
 | shuffle | Shuffle the playback queue. |  | 1 |
 | skip | Skip the current song. |  | 1 |
 | volume | Change the playback volume. | volume **<0-100\>** | 1 |
@@ -166,3 +169,4 @@ The values in the **Name** column of the table below correspond to the relevant 
 [^1]: A hexadecimal value can be submitted in either **#FFFFFF** or **FFFFFF** format.
 [^2]: Softbanning includes banning a user and immediately unbanning them, removing their messages without barring their access in future.
 [^3]: Including the quotes in the text values is important.
+[^4]: Supported resources: YouTube, SoundCloud, Bandcamp, Twitch, Vimeo, Mixer and raw HTML audio.

@@ -27,11 +27,12 @@ const answers = [
 
 module.exports = {
   meta: {
-    help: 'I\'ll make a prediction using a Magic 8 Ball',
-    alias: ['8ball'],
-    timeout: 5,
+    help: 'Ask the magic 8-ball for advice.',
+    usage: '<question>',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 5,
+    alias: ['8ball']
   },
   fn: function (msg, suffix) {
     if (!suffix) {

@@ -10,10 +10,13 @@ const blacklist = [
 
 module.exports = {
   meta: {
+    help: 'Base command for tags. Returns a tag if specified.',
+    usage: '<subcommand/tag name>',
     level: 0,
-    timeout: 0,
     alias: ['t'],
-    help: 'Tags!'
+    addons: [
+      'For a list of available subcommands, see https://docs.thesharks.xyz/commands/#tags.'
+    ]
   },
   fn: async (msg, suffix) => {
     const parts = suffix.split(' ')

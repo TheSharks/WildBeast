@@ -2,10 +2,10 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll get a random yomomma joke for you!',
-    timeout: 5,
+    help: 'Get a random yo momma joke',
+    module: 'Fun',
     level: 0,
-    module: 'Fun'
+    timeout: 5
   },
   fn: function (msg) {
     request.get('http://api.yomomma.info/')

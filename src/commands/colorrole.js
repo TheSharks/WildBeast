@@ -1,9 +1,9 @@
 module.exports = {
   meta: {
-    level: 0,
-    help: 'I\'ll color a role you have!',
-    usage: '<rolename> <hexadecimal value ("#FFFFFF" or "FFFFFF")>',
+    help: 'Change the color of a role.',
+    usage: '<role name> <hex value>',
     module: 'Admin',
+    level: 0,
     timeout: 5
   },
   fn: function (msg, suffix) {

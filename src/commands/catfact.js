@@ -2,11 +2,11 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll give you some interesting catfacts!',
-    alias: ['catfacts'],
-    timeout: 10,
+    help: 'Get a cat fact.',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 10,
+    alias: ['catfacts']
   },
   fn: function (msg) {
     request.get('https://catfact.ninja/fact')

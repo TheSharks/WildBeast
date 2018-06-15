@@ -2,11 +2,11 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll get a random doggo image for you!',
-    alias: ['doggo', 'dog'],
+    help: 'Get a random dog picture.',
     module: 'Fun',
+    level: 0,
     timeout: 10,
-    level: 0
+    alias: ['doggo', 'dog']
   },
   fn: function (msg) {
     request.get('https://random.dog/woof.json')

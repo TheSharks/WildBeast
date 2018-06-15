@@ -1,9 +1,8 @@
 module.exports = {
   meta: {
+    help: 'Instantly terminates the bot process.',
     level: Infinity,
-    timeout: 0,
-    alias: ['kill'],
-    help: 'Instantly terminates the bot process.'
+    alias: ['kill']
   },
   fn: async (msg) => {
     await msg.channel.createMessage('Bye.')

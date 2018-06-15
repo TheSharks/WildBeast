@@ -1,10 +1,8 @@
 module.exports = {
   meta: {
-    level: 0,
-    timeout: 0,
-    alias: [],
+    help: 'Return the bot\'s pseudo-ping.',
     module: 'Util',
-    help: "I'll reply with pong to test my responsiveness."
+    level: 0
   },
   fn: (msg) => {
     let start = new Date(msg.timestamp)

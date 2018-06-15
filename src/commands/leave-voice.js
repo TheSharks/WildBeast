@@ -1,12 +1,11 @@
 const {guildInfo} = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
-    level: 1,
-    timeout: 0,
-    alias: ['stop'],
-    noDM: true,
+    help: 'Make the bot leave the current voice channel.',
     module: 'Music',
-    help: 'Stop playback and disconnect'
+    level: 1,
+    noDM: true,
+    alias: ['stop']
   },
   fn: async (msg) => {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {

@@ -1,9 +1,7 @@
 module.exports = {
   meta: {
-    level: Infinity,
-    timeout: 0,
-    alias: [],
-    help: 'Evaluate arbitrary Javascript code.'
+    help: 'Evaluate arbitrary Javascript code.',
+    level: Infinity
   },
   fn: (msg, suffix) => {
     const util = require('util')

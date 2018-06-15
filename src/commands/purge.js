@@ -1,11 +1,12 @@
 module.exports = {
   meta: {
+    help: 'Delete multiple messages at once.',
+    usage: '[author] @user <number>',
+    module: 'Admin',
     level: 0,
     timeout: 5,
-    alias: ['clean', 'filter'],
-    module: 'Admin',
     noDM: true,
-    help: 'I\'ll remove messages matching the specified criteria'
+    alias: ['clean', 'filter']
   },
   fn: (msg, suffix) => {
     msg.mentions = msg.mentions.filter(u => u.id !== msg.channel.guild.shard.client.user.id) // why eris... why

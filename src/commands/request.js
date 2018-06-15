@@ -2,12 +2,15 @@ const {resolveTracks, addTracks, hhMMss} = require('../internal/encoder-selector
 const url = require('url')
 module.exports = {
   meta: {
+    help: 'Add a track to the playback queue.',
+    usage: '<track link>',
+    module: 'Music',
     level: 1,
-    timeout: 0,
-    alias: ['play'],
     noDM: true,
-    help: 'Request tracks to play',
-    module: 'Music'
+    alias: ['play'],
+    addons: [
+      `Supported resources: YouTube, SoundCloud, Bandcamp, Twitch, Vimeo, Mixer and raw HTML audio`
+    ]
   },
   fn: async (msg, suffix) => {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {

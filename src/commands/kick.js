@@ -1,11 +1,11 @@
 module.exports = {
   meta: {
-    level: 0,
-    alias: ['boot'],
-    help: 'I\'ll kick someone you mention!',
-    usage: '@user reason',
+    help: 'Kick a user.',
+    usage: '@user [reason]',
     module: 'Admin',
-    noDM: true
+    level: 0,
+    noDM: true,
+    alias: ['boot']
   },
   fn: function (msg, suffix) {
     let bot = global.bot

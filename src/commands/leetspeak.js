@@ -12,10 +12,10 @@ const map = {
 
 module.exports = {
   meta: {
-    help: '1\'Ll 3nc0d3 Y0uR Me5s@g3 1Nt0 l337sp3@K!',
-    alias: ['leetspeek', 'leetspeech', 'leet'],
+    help: 'Encode a message into l337sp3@K.',
     module: 'Fun',
-    level: 0
+    level: 0,
+    alias: ['leetspeek', 'leetspeech', 'leet']
   },
   fn: function (msg, suffix) {
     if (suffix.length > 0) {

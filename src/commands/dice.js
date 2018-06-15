@@ -3,7 +3,7 @@ const request = require('superagent')
 module.exports = {
   meta: {
     name: 'dice',
-    help: 'I\'ll roll some dice!',
+    help: 'Roll the dice.',
     timeout: 5,
     module: 'Fun',
     level: 0

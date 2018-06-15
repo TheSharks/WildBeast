@@ -2,9 +2,9 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll get a random meme for you!',
-    level: 0,
+    help: 'Get a random meme from Imgur.',
     module: 'Fun',
+    level: 0,
     nsfw: true // don't know what flag to set
   },
   fn: function (msg) {
