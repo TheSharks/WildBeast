@@ -1,13 +1,9 @@
 version: '2'
 services:
   wildbeast:
-    image: dougley/wildbeast:experimental
-    environment:
-      BOT_TOKEN:
-      BOT_PREFIX:
-      WILDBEAST_MASTERS:
-      ARANGO_URI: http://arango:8529
-      LAVA_NODES: '[{"host":"lavalink","port":80,"region":"us","password":"password"}]'
+    image: dougley/wildbeast
+    env_file:
+      - .env
     links:
     - arango
     - lavalink
@@ -25,7 +21,7 @@ services:
       - arango
     environment:
       ARANGO_URI: http://arango:8529
-    image: dougley/wildbeast:experimental
+    image: dougley/wildbeast
     depends_on:
       - arango
     command: npm run-script dbcreate
