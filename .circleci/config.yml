@@ -84,41 +84,24 @@ jobs:
       image: circleci/classic:latest
     steps:
       - checkout
-      - restore_cache:
-          key: deps2-{{ .Branch }}-{{ checksum "requirements.txt" }}
       - run:
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
-      - save_cache:
-          key: deps2-{{ .Branch }}-{{ checksum "requirements.txt" }}
-          paths:
-            - "venv"
-      - restore_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
+          name: Install Python dependencies
+          command: python3.4 -m pip install -r --upgrade requirements.txt
       - run:
-          name: Install modules
+          name: Install NPM dependencies
           command: npm install
-      - save_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
-          paths:
-            - node_modules
       - run:
           name: Build JS
           command: npm run build
       - run:
           name: Build docs
-          command: |
-            . venv/bin/activate
-            mkdocs build
+          command: python3.4 -m mkdocs build
       - add_ssh_keys:
           fingerprints:
               - "cf:bd:5e:04:62:ce:4d:da:1e:11:87:a1:ab:3e:9f:df"
       - run:
           name: Deploy
           command: |
-            . venv/bin/activate
             git config user.email 9768134+Dougley@users.noreply.github.com
             mkdocs gh-deploy
 workflows:
