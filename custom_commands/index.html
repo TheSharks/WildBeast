@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-0.17.4, mkdocs-material-2.8.0">
+      <meta name="generator" content="mkdocs-0.17.4, mkdocs-material-2.9.1">
     
     
       
@@ -46,7 +46,8 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application.e8ff00e1.css">
+      <link rel="stylesheet" href="../assets/stylesheets/application.ba0fd1a6.css">
+      
       
     
     
@@ -546,25 +547,11 @@
 </thead>
 <tbody>
 <tr>
-<td>level</td>
-<td>The permission level required to run the command.</td>
-<td>0-10/Infinity</td>
-<td>Number</td>
-<td>Yes</td>
-</tr>
-<tr>
 <td>help</td>
 <td>A brief description of what the command does.</td>
 <td></td>
 <td>String</td>
 <td>Yes</td>
-</tr>
-<tr>
-<td>alias</td>
-<td>A list of aliases<sup id="fnref:1"><a class="footnote-ref" href="#fn:1" rel="footnote">1</a></sup> (Alternative command names) to run the command.</td>
-<td></td>
-<td>Array<String></td>
-<td>No</td>
 </tr>
 <tr>
 <td>usage</td>
@@ -581,11 +568,11 @@
 <td>No</td>
 </tr>
 <tr>
-<td>noDM</td>
-<td>Whether the command can be used in direct message context or not.</td>
-<td></td>
-<td>Boolean</td>
-<td>No</td>
+<td>level</td>
+<td>The permission level required to run the command.</td>
+<td>0-10/Infinity</td>
+<td>Number</td>
+<td>Yes</td>
 </tr>
 <tr>
 <td>timeout</td>
@@ -595,10 +582,24 @@
 <td>No</td>
 </tr>
 <tr>
+<td>noDM</td>
+<td>Whether the command can be used in direct message context or not.</td>
+<td></td>
+<td>Boolean</td>
+<td>No</td>
+</tr>
+<tr>
 <td>nsfw</td>
 <td>Whether the command is NSFW or not. If set, restricts the command usage scope to NSFW channels only.</td>
 <td></td>
 <td>Boolean</td>
+<td>No</td>
+</tr>
+<tr>
+<td>alias</td>
+<td>A list of aliases<sup id="fnref:1"><a class="footnote-ref" href="#fn:1" rel="footnote">1</a></sup> (Alternative command names) to run the command.</td>
+<td></td>
+<td>Array<String></td>
 <td>No</td>
 </tr>
 <tr>
@@ -624,16 +625,16 @@
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="codehilite"><pre><span></span><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
   <span class="nx">meta</span><span class="o">:</span> <span class="p">{</span>
-    <span class="nx">level</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
     <span class="nx">help</span><span class="o">:</span> <span class="s1">&#39;I\&#39;ll say hello to you!&#39;</span><span class="p">,</span>
-    <span class="nx">alias</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;hi&#39;</span><span class="p">,</span> <span class="s1">&#39;hey&#39;</span> <span class="p">],</span>
-    <span class="nx">usage</span><span class="o">:</span> <span class="s1">&#39;sayhello &lt;name&gt;&#39;</span><span class="p">,</span>
+    <span class="nx">usage</span><span class="o">:</span> <span class="s1">&#39;&lt;name&gt;&#39;</span><span class="p">,</span>
     <span class="nx">module</span><span class="o">:</span> <span class="s1">&#39;Fun&#39;</span><span class="p">,</span>
-    <span class="nx">noDM</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="c1">// Can be omitted</span>
-    <span class="nx">timeout</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="c1">// Can be omitted</span>
-    <span class="nx">nsfw</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="c1">// Can be omitted</span>
-    <span class="nx">addons</span><span class="o">:</span> <span class="s1">&#39;This command can also be used in Direct Messages.&#39;</span><span class="p">,</span>
-    <span class="nx">permAddons</span><span class="o">:</span> <span class="p">[]</span> <span class="c1">// Can be omitted</span>
+    <span class="nx">level</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nx">timeout</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nx">noDM</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">nsfw</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">alias</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;hi&#39;</span><span class="p">,</span> <span class="s1">&#39;hey&#39;</span><span class="p">],</span>
+    <span class="nx">addons</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;This command can also be used in Direct Messages.&#39;</span><span class="p">],</span>
+    <span class="nx">permAddons</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;Manage Messages&#39;</span><span class="p">]</span>
   <span class="p">},</span>
   <span class="nx">fn</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">msg</span><span class="p">,</span> <span class="nx">suffix</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="nx">suffix</span><span class="p">)</span> <span class="nx">msg</span><span class="p">.</span><span class="nx">channel</span><span class="p">.</span><span class="nx">createMessage</span><span class="p">(</span><span class="sb">`Hello </span><span class="si">${</span><span class="nx">suffix</span><span class="si">}</span><span class="sb">!`</span><span class="p">)</span>
@@ -748,6 +749,8 @@
       <script src="../assets/javascripts/application.a59e2a89.js"></script>
       
       <script>app.initialize({version:"0.17.4",url:{base:".."}})</script>
+      
+        <script src="../js/dist/commands.js"></script>
       
     
     
