@@ -6,7 +6,8 @@ module.exports = {
     level: 0,
     timeout: 5,
     noDM: true,
-    alias: ['clean', 'filter']
+    alias: ['clean', 'filter'],
+    permAddons: ['Manage Messages']
   },
   fn: (msg, suffix) => {
     msg.mentions = msg.mentions.filter(u => u.id !== msg.channel.guild.shard.client.user.id) // why eris... why

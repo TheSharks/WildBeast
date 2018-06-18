@@ -5,7 +5,8 @@ module.exports = {
     module: 'Admin',
     level: 0,
     noDM: true,
-    alias: ['boot']
+    alias: ['boot'],
+    permAddons: ['Kick Members']
   },
   fn: function (msg, suffix) {
     let bot = global.bot
