@@ -104,23 +104,23 @@ jobs:
           command: |
             git config user.email 9768134+Dougley@users.noreply.github.com
             python3 -m mkdocs gh-deploy
-    docs-deploy-dryrun:
-      docker:
-        - image: anthonyz/python3-node8:latest
-      steps:
-        - checkout
-        - run:
-            name: Register Python alias for compatibility
-            command: alias python='python3'
-        - run:
-            name: Install Python dependencies
-            command: python3 -m pip install --upgrade -r requirements.txt
-        - run:
-            name: Install Node dependencies
-            command: npm install
-        - run:
-            name: Build docs
-            command: npm run build
+  docs-deploy-dryrun:
+    docker:
+      - image: anthonyz/python3-node8:latest
+    steps:
+      - checkout
+      - run:
+          name: Register Python alias for compatibility
+          command: alias python='python3'
+      - run:
+          name: Install Python dependencies
+          command: python3 -m pip install --upgrade -r requirements.txt
+      - run:
+          name: Install Node dependencies
+          command: npm install
+      - run:
+          name: Build docs
+          command: npm run build
 workflows:
   version: 2
   docs:
