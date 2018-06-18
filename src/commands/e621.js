@@ -1,11 +1,12 @@
 module.exports = {
   meta: {
+    help: 'Query e621 for an image.',
+    usage: '<search query>',
+    module: 'Porn',
     level: 0,
     timeout: 1,
     nsfw: true,
-    alias: ['e6'],
-    help: 'e621 my dude',
-    module: 'Porn'
+    alias: ['e6']
   },
   fn: (msg, suffix) => {
     // we do this for legacy reasons

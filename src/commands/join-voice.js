@@ -2,12 +2,12 @@ const {createPlayer, resolveTracks, hhMMss} = require('../internal/encoder-selec
 const url = require('url')
 module.exports = {
   meta: {
-    level: 1,
-    timeout: 0,
-    alias: ['voice'],
-    noDM: true,
+    help: 'Make the bot join a voice channel. Optionally supply a track to play on join.',
+    usage: '[track link]',
     module: 'Music',
-    help: 'Join the bot to a voice channel'
+    level: 1,
+    noDM: true,
+    alias: ['voice']
   },
   fn: async (msg, suffix) => {
     if (msg.channel.guild.channels.filter(c => c.type === 2).length === 0) {

@@ -1,10 +1,10 @@
 module.exports = {
   meta: {
+    help: 'Get information about this bot.',
+    module: 'Util',
     level: 0,
     timeout: 5,
-    alias: ['botinfo'],
-    module: 'Util',
-    help: 'I\'ll respond with info about me!'
+    alias: ['botinfo']
   },
   fn: async (msg) => {
     let bot = global.bot

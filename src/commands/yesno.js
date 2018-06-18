@@ -2,10 +2,10 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'Returns a gif displaying yes or no',
-    timeout: 5,
+    help: 'Get a GIF saying yes or no.',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 5
   },
   fn: function (msg, suffix) {
     request.get('http://yesno.wtf/api/')

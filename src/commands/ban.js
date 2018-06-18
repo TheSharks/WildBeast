@@ -1,10 +1,11 @@
 module.exports = {
   meta: {
-    level: 0,
-    help: 'I\'ll ban someone you mention!',
-    usage: 'ban @user reason',
+    help: 'Ban a user.',
+    usage: '@user [reason]',
     module: 'Admin',
-    noDM: true
+    level: 0,
+    noDM: true,
+    permAddons: ['Ban Members']
   },
   fn: function (msg, suffix) {
     const bot = global.bot

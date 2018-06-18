@@ -2,11 +2,12 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll fetch what idiots on the internet think something means',
-    alias: ['ud', 'urban'],
-    timeout: 10,
+    help: 'Get the definition of a word from the Urban Dictionary.',
+    usage: '<word>',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 10,
+    alias: ['ud', 'urban']
   },
   fn: function (msg, suffix) {
     if (!suffix) {

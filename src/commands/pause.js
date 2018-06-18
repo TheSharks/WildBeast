@@ -1,12 +1,10 @@
 const {pause, guildInfo} = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
+    help: 'Pause the playback of the current track.',
+    module: 'Music',
     level: 1,
-    timeout: 0,
-    alias: [],
-    noDM: true,
-    help: 'Pause playback',
-    module: 'Music'
+    noDM: true
   },
   fn: async (msg) => {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {

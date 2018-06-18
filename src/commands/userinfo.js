@@ -12,12 +12,13 @@ const notablePermissions = [
 
 module.exports = {
   meta: {
+    help: 'Return information about a user ID, mention or name. Omit parameters to return information about yourself.',
+    usage: '<userid/mention/username>',
+    module: 'Util',
     level: 0,
     timeout: 5,
-    module: 'Util',
     noDM: true,
-    alias: ['user-info'],
-    help: 'I\'ll return information about the given userid, mention, or username.'
+    alias: ['user-info']
   },
   fn: (msg, suffix) => {
     const moment = require('moment')

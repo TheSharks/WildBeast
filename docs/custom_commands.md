@@ -29,14 +29,14 @@ A command object consists of a **meta** object and an **fn** function. The funct
 
 | Property | Description | Value | Type | Required |
 | -------- | ----------- | ----- | ---- | -------- |
-| level | The permission level required to run the command. | 0-10/Infinity | Number | Yes |
 | help | A brief description of what the command does. |  | String | Yes |
-| alias | A list of aliases[^1] (Alternative command names) to run the command. |  | Array<String> | No |
 | usage | An example of how to use the command. |  | String | No |
 | module | A category to which the command belongs. |  | String | No |
-| noDM | Whether the command can be used in direct message context or not. |  | Boolean | No |
+| level | The permission level required to run the command. | 0-10/Infinity | Number | Yes |
 | timeout | A time in milliseconds for which the command will be on cooldown between uses. |  | Number | No |
+| noDM | Whether the command can be used in direct message context or not. |  | Boolean | No |
 | nsfw | Whether the command is NSFW or not. If set, restricts the command usage scope to NSFW channels only. |  | Boolean | No |
+| alias | A list of aliases[^1] (Alternative command names) to run the command. |  | Array<String> | No |
 | addons | Addendums to the command's help message. |  | String | No |
 | permAddons | Additional Discord permissions that are required to run the command. | Discord permission name (Manage Roles etc.) | Array<String> | No |
 
@@ -49,16 +49,16 @@ A command object consists of a **meta** object and an **fn** function. The funct
 ```js
 module.exports = {
   meta: {
-    level: 0,
     help: 'I\'ll say hello to you!',
-    alias: [ 'hi', 'hey' ],
-    usage: 'sayhello <name>',
+    usage: '<name>',
     module: 'Fun',
-    noDM: false, // Can be omitted
-    timeout: 0, // Can be omitted
-    nsfw: false, // Can be omitted
-    addons: 'This command can also be used in Direct Messages.',
-    permAddons: [] // Can be omitted
+    level: 0,
+    timeout: 0,
+    noDM: false,
+    nsfw: false,
+    alias: ['hi', 'hey'],
+    addons: ['This command can also be used in Direct Messages.'],
+    permAddons: ['Manage Messages']
   },
   fn: function (msg, suffix) {
     if (suffix) msg.channel.createMessage(`Hello ${suffix}!`)

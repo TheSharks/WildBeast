@@ -1,12 +1,11 @@
 const {guildInfo, hhMMss, skip} = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
-    level: 1,
-    timeout: 0,
-    alias: ['next'],
-    noDM: true,
+    help: 'Skip the current track.',
     module: 'Music',
-    help: 'Skip currently playing song'
+    level: 1,
+    noDM: true,
+    alias: ['next']
   },
   fn: async (msg) => {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {

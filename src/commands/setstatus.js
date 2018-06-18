@@ -1,8 +1,9 @@
 module.exports = {
   meta: {
+    help: 'Change my playing status on Discord to something else or pass nothing to clear the status!',
     level: Infinity,
     alias: ['status'],
-    help: 'Change my playing status on Discord to something else or pass nothing to clear the status!'
+    doNotDocument: true
   },
   fn: function (msg, suffix) {
     const bot = global.bot

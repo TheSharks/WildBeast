@@ -2,11 +2,11 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll insult your friends!',
-    alias: ['insult'],
-    timeout: 5,
+    help: 'Insult someone in a fancy manner.',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 5,
+    alias: ['insult']
   },
   fn: function (msg, suffix) {
     request.get('http://quandyfactory.com/insult/json/')

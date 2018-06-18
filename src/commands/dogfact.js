@@ -2,11 +2,11 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll give you some interesting dogfacts!',
-    alias: ['dogfacts'],
-    timeout: 10,
+    help: 'Get a dog fact.',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 10,
+    alias: ['dogfacts']
   },
   fn: function (msg) {
     request.get('https://dog-api.kinduff.com/api/facts')

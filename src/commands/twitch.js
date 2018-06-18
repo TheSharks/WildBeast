@@ -2,11 +2,11 @@ const SA = require('superagent')
 
 module.exports = {
   meta: {
-    level: 0,
-    timeout: 5,
+    help: 'Check if a streamer is live on Twitch.',
+    usage: '<username>',
     module: 'Fun',
-    alias: [],
-    help: "I'll check if a streamer is live on twitch.tv"
+    level: 0,
+    timeout: 5
   },
   fn: (msg, suffix) => {
     if (!suffix) {

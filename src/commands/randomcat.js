@@ -2,11 +2,11 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll get a random cat image for you!',
-    alias: ['cat'],
-    timeout: 10,
+    help: 'Get a random cat picture.',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 10,
+    alias: ['cat']
   },
   fn: function (msg) {
     request.get('http://aws.random.cat/meow')

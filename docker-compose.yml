@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
   wildbeast:
     image: dougley/wildbeast
@@ -12,7 +12,7 @@ services:
       - lavalink
       - install
   arango:
-    image: arangodb:3.3.3
+    image: arangodb:3.3.10
     environment:
       ARANGO_NO_AUTH: '1'
   install:

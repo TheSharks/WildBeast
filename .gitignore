@@ -65,3 +65,7 @@ typings/
 
 # Docs build
 site
+
+# Command info dump
+commandInfo.json
+docs/js/dist/commands.js*

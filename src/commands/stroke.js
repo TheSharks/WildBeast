@@ -2,10 +2,11 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll stroke someones ego!',
-    timeout: 5,
+    help: 'Stroke someone\'s ego.',
+    usage: '<name>',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 5
   },
   fn: function (msg, suffix) {
     let name

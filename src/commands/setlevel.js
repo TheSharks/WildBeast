@@ -2,12 +2,11 @@ let perms = require('../engines/permissions')
 
 module.exports = {
   meta: {
-    level: 7,
-    timeout: 0,
-    alias: ['set'],
+    usage: 'setlevel @user/@role @user2/@role2 <0-10>',
+    help: 'Change someone\'s permission level.',
     module: 'Settings',
-    usage: '<@users/@roles> <level>',
-    help: "Change someone's access level."
+    level: 7,
+    alias: ['set']
   },
   fn: async (msg, suffix) => {
     const mentions = mapMentions(suffix)

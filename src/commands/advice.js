@@ -2,11 +2,11 @@ const request = require('superagent')
 
 module.exports = {
   meta: {
-    help: 'I\'ll give you some fantastic advice!',
-    noDM: true,
-    timeout: 5,
+    help: 'Get some clever advice.',
     module: 'Fun',
-    level: 0
+    level: 0,
+    timeout: 5,
+    noDM: true
   },
   fn: function (msg) {
     request.get('http://api.adviceslip.com/advice')

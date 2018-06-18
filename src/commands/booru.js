@@ -22,11 +22,11 @@ const sites = {
 module.exports = {
   meta: {
     help: 'Query various booru sites for images.',
-    usage: '<sitename> <query>',
-    nsfw: true,
-    timeout: 1, // somewhat of an external ratelimit compliance
-    level: 0,
+    usage: '<gelbooru/rule34/e621> <search query>',
     module: 'Porn',
+    level: 0,
+    timeout: 1, // somewhat of an external ratelimit compliance
+    nsfw: true,
     addons: [
       `Available sites: ${Object.keys(sites).join(', ')}`
     ]

@@ -1,10 +1,12 @@
 module.exports = {
   meta: {
-    level: 0,
-    alias: ['removerole'],
-    help: 'Take a role from a user or users. takerole @user1 @user2 rolename',
+    help: 'Take a role from a user.',
+    usage: '@user1 @user2 <role name>',
     module: 'Admin',
-    noDM: true
+    level: 0,
+    noDM: true,
+    alias: ['removerole'],
+    permAddons: ['Manage Roles']
   },
   fn: function (msg, suffix) {
     const guildPerms = msg.member.permission.json

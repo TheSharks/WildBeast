@@ -21,7 +21,7 @@ jobs:
     docker:
       - image: docker:latest
     steps:
-      - run: 
+      - run:
           name: Git
           command: apk add --update git
       - checkout
@@ -80,8 +80,8 @@ jobs:
             . venv/bin/activate
             mkdocs build
   docs-deploy:
-    docker:
-      - image: python:3.5
+    machine:
+      image: circleci/classic:latest
     steps:
       - checkout
       - restore_cache:
@@ -95,8 +95,20 @@ jobs:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
           paths:
             - "venv"
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
       - run:
-          name: Compile
+          name: Install modules
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: Build JS
+          command: npm run build
+      - run:
+          name: Build docs
           command: |
             . venv/bin/activate
             mkdocs build

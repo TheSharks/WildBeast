@@ -1,12 +1,11 @@
 const {guildInfo, hhMMss} = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
+    help: 'Show the playback queue.',
+    module: 'Music',
     level: 1,
-    timeout: 0,
-    alias: ['list'],
-    help: 'Show current playback queue',
     noDM: true,
-    module: 'Music'
+    alias: ['list']
   },
   fn: async (msg) => {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {

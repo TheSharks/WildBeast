@@ -1,12 +1,12 @@
 const {guildInfo, setVolume} = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
+    help: 'Change the playback volume.',
+    usage: '<0-100>',
+    module: 'Music',
     level: 1,
-    timeout: 0,
-    alias: ['vol'],
     noDM: true,
-    help: 'Change volume',
-    module: 'Music'
+    alias: ['vol']
   },
   fn: async (msg, suffix) => {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
