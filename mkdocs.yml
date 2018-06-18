@@ -39,6 +39,9 @@ extra:
     - type: 'github'
       link: 'https://github.com/TheSharks'
 
+extra_javascript:
+  - js/dist/commands.js
+
 extra_css:
   - css/style.css
 

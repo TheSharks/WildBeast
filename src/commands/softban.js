@@ -5,7 +5,8 @@ module.exports = {
     module: 'Admin',
     level: 0,
     alias: ['messageban'],
-    noDM: true
+    noDM: true,
+    permAddons: ['Ban Members']
   },
   fn: function (msg, suffix) {
     const bot = global.bot

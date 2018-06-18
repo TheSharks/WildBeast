@@ -12,6 +12,7 @@ module.exports = {
   meta: {
     help: 'Base command for tags. Returns a tag if specified.',
     usage: '<subcommand/tag name>',
+    module: 'Tags',
     level: 0,
     alias: ['t'],
     addons: [

@@ -8,4 +8,4 @@ for (const cmd in dex.commands) {
   if (dex.commands[cmd].meta.level === Infinity) final[cmd].level = 'Infinity' // lol json
 }
 
-require('fs').writeFileSync('./info.json', JSON.stringify(final))
+require('fs').writeFileSync('./commandInfo.json', JSON.stringify(final))

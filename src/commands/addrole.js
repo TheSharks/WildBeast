@@ -5,7 +5,8 @@ module.exports = {
     module: 'Admin',
     level: 0,
     noDM: true,
-    alias: ['applyrole']
+    alias: ['applyrole'],
+    permAddons: ['Manage Roles']
   },
   fn: function (msg, suffix) {
     const guildPerms = msg.member.permission.json
