@@ -85,8 +85,13 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install pip
+          command: |
+            wget https://bootstrap.pypa.io/get-pip.py
+            sudo python3.4 get-pip.py
+      - run:
           name: Install Python dependencies
-          command: python3.4 -m pip install -r --upgrade requirements.txt
+          command: sudo python3.4 -m pip install -r --upgrade requirements.txt
       - run:
           name: Install NPM dependencies
           command: npm install
