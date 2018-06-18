@@ -80,43 +80,58 @@ jobs:
             . venv/bin/activate
             mkdocs build
   docs-deploy:
-    machine:
-      image: circleci/classic:latest
+    docker:
+      - image: anthonyz/python3-node8:latest
     steps:
       - checkout
       - run:
-          name: Install pip
-          command: |
-            wget https://bootstrap.pypa.io/get-pip.py
-            sudo python3.4 get-pip.py
+          name: Register Python alias for compatibility
+          command: alias python='python3'
       - run:
           name: Install Python dependencies
-          command: sudo python3.4 -m pip install --upgrade -r requirements.txt
+          command: python3 -m pip install --upgrade -r requirements.txt
       - run:
-          name: Install NPM dependencies
+          name: Install Node dependencies
           command: npm install
       - run:
-          name: Build JS
-          command: npm run build
-      - run:
           name: Build docs
-          command: python3.4 -m mkdocs build
+          command: npm run build
       - add_ssh_keys:
           fingerprints:
               - "cf:bd:5e:04:62:ce:4d:da:1e:11:87:a1:ab:3e:9f:df"
       - run:
-          name: Deploy
+          name: Deploy docs
           command: |
             git config user.email 9768134+Dougley@users.noreply.github.com
-            python3.4 -m mkdocs gh-deploy
+            python3 -m mkdocs gh-deploy
+    docs-deploy-dryrun:
+      docker:
+        - image: anthonyz/python3-node8:latest
+      steps:
+        - checkout
+        - run:
+            name: Register Python alias for compatibility
+            command: alias python='python3'
+        - run:
+            name: Install Python dependencies
+            command: python3 -m pip install --upgrade -r requirements.txt
+        - run:
+            name: Install Node dependencies
+            command: npm install
+        - run:
+            name: Build docs
+            command: npm run build
 workflows:
   version: 2
   docs:
     jobs:
       - docs-build
-      - docs-deploy:
+      - docs-deploy-dryrun:
           requires:
             - docs-build
+      - docs-deploy:
+          requires:
+            - docs-deploy-dryrun
           filters:
             branches:
                only: master
