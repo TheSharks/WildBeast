@@ -91,7 +91,7 @@ jobs:
             sudo python3.4 get-pip.py
       - run:
           name: Install Python dependencies
-          command: sudo python3.4 -m pip install -r --upgrade requirements.txt
+          command: sudo python3.4 -m pip install --upgrade -r requirements.txt
       - run:
           name: Install NPM dependencies
           command: npm install
@@ -108,7 +108,7 @@ jobs:
           name: Deploy
           command: |
             git config user.email 9768134+Dougley@users.noreply.github.com
-            mkdocs gh-deploy
+            python3.4 -m mkdocs gh-deploy
 workflows:
   version: 2
   docs:
