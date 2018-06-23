@@ -105,6 +105,9 @@ If your output resembles the following, your bot is all set.
 !!! bug "Connect ECONNREFUSED <IP\>:80"
     An error message saying **FATAL: Error: connect ECONNREFUSED <your IP\>:80** may happen when the **wildbeast_wildbeast_1** container is started too quickly and the Lavalink server is not ready. Wait a few seconds, then run `#!bash sudo docker restart wildbeast_wildbeast_1` and check the logs again.
 
+!!! danger "Custom commands"
+    If you wish to use the custom command aspect of WildBeast, or intend to make tweaks to the source code later down the line, follow the [Decoupling from Docker](decoupling.md) guide now. Due to how Docker works, data created in the ArangoDB container created here is non-transferable.
+
 You can test the bot by running the **ping** command (With your prefix) in a text channel that the bot can see. If it answers "Pong!", then your bot is set up.
 
 If you have further questions or need help with something, we'd be happy to help. You can find a link to the official server below.

@@ -79,9 +79,9 @@ To initialise WildBeast, start the following containers in the following order. 
 1. wildbeast_arango_1
 2. wildbeast_install_1
 
-You may have to click back and forth between containers to see the output from one.
+You may have to hit Ctrl + R in order to refresh and see the container output.
 
-When **wildbeast_install_1** finishes, you may stop it. After this you do not need to run **wildbeast_install_1** again, as this only initialises the database. You can run it again if you wish to repair your database, however.
+The install container will self-exit when done. After this you do not need to run **wildbeast_install_1** again, as this only initialises the database. You can run it again if you wish to repair your database, however.
 
 ## Configuration
 
