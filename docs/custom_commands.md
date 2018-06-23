@@ -13,6 +13,9 @@ This document outlines the procedure for writing custom commands for WildBeast.
 
 ## General notes
 
+!!! note "Before you begin"
+    If your WildBeast instance has already been set up using the procedure outlined in the Windows or Linux installation guides, namely using Docker, you need to take some additional steps to enable custom commands. See [Decoupling from Docker](decoupling.md) for information on how to do this, and then come back here.
+
 - Command files are placed into **~/src/commands**.
 - Each command is declared in a separate file, preferably with the command name. (I.e if your command is named **dankmeme**, name the file **dankmeme.js**.)
 - Commands cannot share names - each must have a name of its own.
