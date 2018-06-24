@@ -10,10 +10,10 @@
       <meta name="viewport" content="width=device-width,initial-scale=1">
       <meta http-equiv="x-ua-compatible" content="ie=edge">
       
-        <meta name="description" content="The documentation site for WildBeast">
+        <meta name="description" content="Instructions on running WildBeast from source instead of from Docker">
       
       
-        <link rel="canonical" href="https://docs.thesharks.xyz/">
+        <link rel="canonical" href="https://docs.thesharks.xyz/decoupling/">
       
       
         <meta name="author" content="TheSharks">
@@ -37,21 +37,21 @@
       
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
-      <link rel="shortcut icon" href="./assets/images/favicon.png">
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-0.17.4, mkdocs-material-2.9.1">
     
     
       
-        <title>WildBeast Documentation</title>
+        <title>Decoupling WildBeast from Docker</title>
       
     
     
-      <link rel="stylesheet" href="./assets/stylesheets/application.ba0fd1a6.css">
+      <link rel="stylesheet" href="../assets/stylesheets/application.ba0fd1a6.css">
       
       
     
     
-      <script src="./assets/javascripts/modernizr.1aa3b519.js"></script>
+      <script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
     
     
       <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
@@ -60,9 +60,9 @@
         <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
       
     
-    <link rel="stylesheet" href="./assets/fonts/material-icons.css">
+    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
     
-      <link rel="stylesheet" href="./css/style.css">
+      <link rel="stylesheet" href="../css/style.css">
     
     
   </head>
@@ -98,7 +98,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#what-is-wildbeast" tabindex="1" class="md-skip">
+      <a href="#preface" tabindex="1" class="md-skip">
         Skip to content
       </a>
     
@@ -124,7 +124,7 @@
                 WildBeast Documentation
               </span>
               <span class="md-header-nav__topic">
-                Home
+                Decoupling from Docker
               </span>
             
           
@@ -239,86 +239,11 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Home
-      </label>
-    
-    <a href="." title="Home" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href=".." title="Home" class="md-nav__link">
       Home
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-    <label class="md-nav__title" for="__toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-wildbeast" title="What is WildBeast?" class="md-nav__link">
-    What is WildBeast?
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#brief-history" title="Brief history" class="md-nav__link">
-    Brief history
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#version-6" title="Version 6" class="md-nav__link">
-    Version 6
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#main-features" title="Main features" class="md-nav__link">
-    Main features
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#selfhosting" title="Selfhosting" class="md-nav__link">
-    Selfhosting
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#discord-server" title="Discord server" class="md-nav__link">
-    Discord server
-  </a>
-  
-</li>
-      
-      
-        <li class="md-nav__item">
-          <a href="#__source" title="Source" class="md-nav__link md-nav__link--active">
-            Source
-          </a>
-        </li>
-      
-      
-      
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
     
@@ -328,7 +253,7 @@
 
 
   <li class="md-nav__item">
-    <a href="migrating/" title="Migrating v4 => v6" class="md-nav__link">
+    <a href="../migrating/" title="Migrating v4 => v6" class="md-nav__link">
       Migrating v4 => v6
     </a>
   </li>
@@ -359,7 +284,7 @@
 
 
   <li class="md-nav__item">
-    <a href="commands/" title="Command reference" class="md-nav__link">
+    <a href="../commands/" title="Command reference" class="md-nav__link">
       Command reference
     </a>
   </li>
@@ -371,7 +296,7 @@
 
 
   <li class="md-nav__item">
-    <a href="custom_commands/" title="Custom commands" class="md-nav__link">
+    <a href="../custom_commands/" title="Custom commands" class="md-nav__link">
       Custom commands
     </a>
   </li>
@@ -383,7 +308,7 @@
 
 
   <li class="md-nav__item">
-    <a href="legacy_custom_commands/" title="Legacy custom commands" class="md-nav__link">
+    <a href="../legacy_custom_commands/" title="Legacy custom commands" class="md-nav__link">
       Legacy custom commands
     </a>
   </li>
@@ -398,10 +323,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
     <label class="md-nav__link" for="nav-4">
       Installation
@@ -419,7 +346,7 @@
 
 
   <li class="md-nav__item">
-    <a href="install_windows/" title="Windows installation" class="md-nav__link">
+    <a href="../install_windows/" title="Windows installation" class="md-nav__link">
       Windows installation
     </a>
   </li>
@@ -431,7 +358,7 @@
 
 
   <li class="md-nav__item">
-    <a href="install_linux/" title="Linux installation" class="md-nav__link">
+    <a href="../install_linux/" title="Linux installation" class="md-nav__link">
       Linux installation
     </a>
   </li>
@@ -441,11 +368,85 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="decoupling/" title="Decoupling from Docker" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Decoupling from Docker
+      </label>
+    
+    <a href="./" title="Decoupling from Docker" class="md-nav__link md-nav__link--active">
       Decoupling from Docker
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#preface" title="Preface" class="md-nav__link">
+    Preface
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reconfiguring-containers-and-wildbeast" title="Reconfiguring containers and WildBeast" class="md-nav__link">
+    Reconfiguring containers and WildBeast
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#windows" title="Windows" class="md-nav__link">
+    Windows
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux" title="Linux" class="md-nav__link">
+    Linux
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installing-dependencies-and-starting" title="Installing dependencies and starting" class="md-nav__link">
+    Installing dependencies and starting
+  </a>
+  
+</li>
+      
+      
+        <li class="md-nav__item">
+          <a href="#__source" title="Source" class="md-nav__link md-nav__link--active">
+            Source
+          </a>
+        </li>
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -473,43 +474,42 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-wildbeast" title="What is WildBeast?" class="md-nav__link">
-    What is WildBeast?
+  <a href="#preface" title="Preface" class="md-nav__link">
+    Preface
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#brief-history" title="Brief history" class="md-nav__link">
-    Brief history
+  <a href="#reconfiguring-containers-and-wildbeast" title="Reconfiguring containers and WildBeast" class="md-nav__link">
+    Reconfiguring containers and WildBeast
   </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#windows" title="Windows" class="md-nav__link">
+    Windows
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux" title="Linux" class="md-nav__link">
+    Linux
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#version-6" title="Version 6" class="md-nav__link">
-    Version 6
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#main-features" title="Main features" class="md-nav__link">
-    Main features
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#selfhosting" title="Selfhosting" class="md-nav__link">
-    Selfhosting
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#discord-server" title="Discord server" class="md-nav__link">
-    Discord server
+  <a href="#installing-dependencies-and-starting" title="Installing dependencies and starting" class="md-nav__link">
+    Installing dependencies and starting
   </a>
   
 </li>
@@ -536,48 +536,58 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/TheSharks/WildBeast/edit/master/docs/index.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/TheSharks/WildBeast/edit/master/docs/decoupling.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                  <h1>Home</h1>
+                  <h1>Decoupling from Docker</h1>
                 
-                <h2 id="what-is-wildbeast">What is WildBeast?<a class="headerlink" href="#what-is-wildbeast" title="Permanent link">&para;</a></h2>
-<p>WildBeast is a multifunction Discord bot system intended to be able to perform various tasks, ranging from easy server moderation (Kick, ban) to having fun (8ball, meme generation, music playback) in your Discord server. It has an extensive per-server customization system with various settings. For people interested in running a WildBeast instance themselves, there is even a sort of API for making your own commands.</p>
-<h2 id="brief-history">Brief history<a class="headerlink" href="#brief-history" title="Permanent link">&para;</a></h2>
-<p>WildBeast was originally written by 3 avid coders in 2015. Since then many devs have come and gone, years have rolled by and the bot has continuously matured. It's currently being constantly developed and improved by a multinational team of freelance and hobbyist developers.</p>
-<h2 id="version-6">Version 6<a class="headerlink" href="#version-6" title="Permanent link">&para;</a></h2>
-<p>The new version of WildBeast, version 6 (Which this documentation targets) has received considerable overhauls - most noticeably under the hood. If you are running a WB version previous to v6, <strong>do not attempt to update your existing instance.</strong> Read the <a href="migrating/">migrating</a> page to find out more.</p>
-<h2 id="main-features">Main features<a class="headerlink" href="#main-features" title="Permanent link">&para;</a></h2>
-<p>These features are available in every WildBeast instance, including our official WildBot!</p>
-<ul>
-<li>Music streaming from YouTube, SoundCloud and so forth.</li>
-<li>Classy insults and strokes.</li>
-<li>Dank meme generator.</li>
-<li>Useful advice.</li>
-<li>Moderation commands like kick, ban and so forth.</li>
-<li>Role commands like addrole, takerole and colorrole.</li>
-<li>NSFW image fetching via e621 and rule34.</li>
-<li>Server utilities like welcome messages, server and user info and so forth.</li>
-<li>High level of customization with an extensive per-server configuration engine.</li>
-<li>Extensive support and documentation of running your own WildBeast.</li>
-<li>Customisable tags, courtesy of <a href="https://thesharks.github.io/JagTag-JS">JagTag-JS</a></li>
-<li>A command framework for you to create custom commands (If you're running a custom instance).</li>
-</ul>
-<p>And much more; check out <a href="commands/">the command reference</a> and <a href="custom_commands/">the custom command page</a> for starters!</p>
-<h2 id="selfhosting">Selfhosting<a class="headerlink" href="#selfhosting" title="Permanent link">&para;</a></h2>
-<p>There is extensive support available for those wishing to run WildBeast on their own hardware.</p>
-<p><strong>Installation guides</strong></p>
-<ul>
-<li><a href="install_windows/">Windows installation</a></li>
-<li><a href="install_linux/">Linux installation</a></li>
-</ul>
-<p><strong>Other resources</strong></p>
-<ul>
-<li><a href="custom_commands/">Custom commands</a> (<a href="legacy_custom_commands/">Legacy version</a>)</li>
-</ul>
-<h2 id="discord-server">Discord server<a class="headerlink" href="#discord-server" title="Permanent link">&para;</a></h2>
-<p>We run a Discord server in which you can test WildBeast's functionality in our own sandbox. Feel free to come over to chat, meet fellow coders and users alike or just hang out with the community! Click the banner below to get started.</p>
-<p><a href="https://discord.gg/wildbot"><img src="https://discordapp.com/api/guilds/110462143152803840/widget.png?style=banner2" alt="Discord server"></a></p>
+                <p>This document outlines the procedure for decoupling WildBeast from Docker and running it from source instead, enabling custom commands and other modifications to the behaviour of it.</p>
+<h2 id="preface">Preface<a class="headerlink" href="#preface" title="Permanent link">&para;</a></h2>
+<p>If you have already set up your WildBeast instance in accordance with the available installation guides, feel free to jump to the next section. If you have not done this yet, however, please follow through with that procedure before embarking onto this guide. Most of the steps assume knowledge of what has been done previously, and as such it is highly recommended to follow proper procedure first.</p>
+<p>Additionally, be sure to shutdown all existing Docker containers pertaining to WildBeast before proceeding.</p>
+<h2 id="reconfiguring-containers-and-wildbeast">Reconfiguring containers and WildBeast<a class="headerlink" href="#reconfiguring-containers-and-wildbeast" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Port conflicts</p>
+<p>If you have other services running on ports <strong>8529</strong> or <strong>2333</strong>, select different ports for the sections below. You may encounter errors or conflicts otherwise. However, <strong>do not modify the Docker port</strong> in contradiction to the guide, or you will have trouble reaching the containers in the desired manner.</p>
+</div>
+<p>First, open the <strong>.env</strong> configuration file in the directory to which you installed the WildBeast source code, and tweak these values as follows:</p>
+<div class="codehilite"><pre><span></span><span class="nv">LAVA_NODES</span><span class="o">=[{</span><span class="s2">&quot;host&quot;</span>:<span class="s2">&quot;localhost&quot;</span>,<span class="s2">&quot;port&quot;</span>:2333,<span class="s2">&quot;region&quot;</span>:<span class="s2">&quot;us&quot;</span>,<span class="s2">&quot;password&quot;</span>:<span class="s2">&quot;password&quot;</span><span class="o">}]</span>
+<span class="nv">ARANGO_URI</span><span class="o">=</span>http://localhost:8529
+</pre></div>
+
+
+<h3 id="windows">Windows<a class="headerlink" href="#windows" title="Permanent link">&para;</a></h3>
+<p>Open Kitematic and browse to the settings of the <strong>wildbeast_arango_1</strong> container and go to the <strong>Hostname / Ports</strong> tab. Under <strong>Configure Ports</strong>, change the default value to look as follows.</p>
+<p><img alt="Arango container settings" src="../img/arango-container-settings.png" /></p>
+<p>Then hit Save. The container will now self-start. Proceed to the <strong>Hostname / Ports</strong> tab of the <strong>wildbeast_lavalink_1</strong> container and edit the same values as previously as follows.</p>
+<p><img alt="Lavalink container settings" src="../img/lava-container-settings.png" /></p>
+<p>And then hit Save as mentioned previously, which will self-start the container.</p>
+<p>You may also remove the <strong>wildbeast_install_1</strong> and <strong>wildbeast_wildbeast_1</strong> containers if you do not need them anymore. In future WildBeast will run from the source code as opposed to these images, which makes them redundant.</p>
+<h3 id="linux">Linux<a class="headerlink" href="#linux" title="Permanent link">&para;</a></h3>
+<div class="admonition danger">
+<p class="admonition-title">Risk of data loss</p>
+<p>Due to how Docker works on Linux, the containers created in the installation need to be removed and recreated before their networking can be altered. If you have substantial amounts of data in your database, consult relevant documentation on how to migrate your data - for instance <a href="https://medium.com/@gchudnov/copying-data-between-docker-containers-26890935da3f">this article</a>.</p>
+</div>
+<p>For this section, you need to browse to the WildBeast source code directory.</p>
+<p>Before you run the following commands, make sure that all WildBeast-related containers have been turned off. This can be checked by running <code class="codehilite">sudo docker ps</code>, and if the output contains no WildBeast-related containers, you're ready to go. Otherwise shut them down and then proceed.</p>
+<div class="codehilite"><pre><span></span>sudo docker rm wildbeast_arango_1
+sudo docker rm wildbeast_lavalink_1
+<span class="c1"># Check that the ArangoDB version is the correct one via &#39;docker images&#39;</span>
+sudo docker run -d --env-file arangodb.env --name wildbeast_arango_1 -p <span class="m">8529</span>:8529 arangodb:3.3.10
+sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span class="m">2333</span>:80 fredboat/lavalink:v2
+</pre></div>
+
+
+<h2 id="installing-dependencies-and-starting">Installing dependencies and starting<a class="headerlink" href="#installing-dependencies-and-starting" title="Permanent link">&para;</a></h2>
+<p>If you haven't already, browse to the WildBeast source code directory. Run <code class="codehilite">npm i</code> to install the dependencies required to run from source. If you have not yet initialised the database, do so by running <code class="codehilite">npm run dbcreate</code> after the dependency installation command finishes.</p>
+<p>When the previous step has finished, run <code class="codehilite">npm start</code> in the terminal. If the output of that command resembles the following, you're finished.</p>
+<p><img alt="Source startup" src="../img/source-startup.png" /></p>
+<div class="admonition danger">
+<p class="admonition-title">Security considerations</p>
+<p>With these steps, the ArangoDB and Lavalink instances are exposed to the local network. They are not exposed to the internet, which increases safety somewhat, but you should still take steps to secure at least your ArangoDB instance against unauthorised access. This can be accomplished by creating a non-root user in the ArangoDB web interface and enabling authentication for the database engine. Refer to relevant documentation on how to do this.</p>
+</div>
+<p>Now you can start making modifications to the code and adding custom commands which will be useable to your end users.</p>
+<p>Do bear in mind that the application process is not backgrounded unlike with Docker, so you may want to look into a process manager/orchestrator like <a href="https://pm2.keymetrics.io">PM2</a> to keep the process running even if you close your terminal session.</p>
                 
                   
                     <h2 id="__source">Source</h2>
@@ -587,8 +597,8 @@
                     
                     
                     
-                    <a href="https://github.com/TheSharks/WildBeast/tree/master/docs/index.md" title="index.md" class="md-source-file">
-                      index.md
+                    <a href="https://github.com/TheSharks/WildBeast/tree/master/docs/decoupling.md" title="decoupling.md" class="md-source-file">
+                      decoupling.md
                     </a>
                   
                 
@@ -609,20 +619,20 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-        
-          <a href="migrating/" title="Migrating v4 => v6" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../install_linux/" title="Linux installation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
-                  Next
+                  Previous
                 </span>
-                Migrating v4 => v6
+                Linux installation
               </span>
             </div>
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
-            </div>
           </a>
+        
         
       </nav>
     </div>
@@ -644,7 +654,7 @@
       
         
   <div class="md-footer-social">
-    <link rel="stylesheet" href="./assets/fonts/font-awesome.css">
+    <link rel="stylesheet" href="../assets/fonts/font-awesome.css">
     
       <a href="https://github.com/TheSharks" class="md-footer-social__link fa fa-github"></a>
     
@@ -657,11 +667,11 @@
       
     </div>
     
-      <script src="./assets/javascripts/application.a59e2a89.js"></script>
+      <script src="../assets/javascripts/application.a59e2a89.js"></script>
       
-      <script>app.initialize({version:"0.17.4",url:{base:"."}})</script>
+      <script>app.initialize({version:"0.17.4",url:{base:".."}})</script>
       
-        <script src="./js/dist/commands.js"></script>
+        <script src="../js/dist/commands.js"></script>
       
     
     

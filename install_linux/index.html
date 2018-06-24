@@ -445,6 +445,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../decoupling/" title="Decoupling from Docker" class="md-nav__link">
+      Decoupling from Docker
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -673,6 +685,10 @@ sudo docker logs wildbeast_wildbeast_1
 <p class="admonition-title">Connect ECONNREFUSED &lt;IP>:80</p>
 <p>An error message saying <strong>FATAL: Error: connect ECONNREFUSED &lt;your IP>:80</strong> may happen when the <strong>wildbeast_wildbeast_1</strong> container is started too quickly and the Lavalink server is not ready. Wait a few seconds, then run <code class="codehilite">sudo docker restart wildbeast_wildbeast_1</code> and check the logs again.</p>
 </div>
+<div class="admonition danger">
+<p class="admonition-title">Custom commands</p>
+<p>If you wish to use the custom command aspect of WildBeast, or intend to make tweaks to the source code later down the line, follow the <a href="../decoupling/">Decoupling from Docker</a> guide now. Due to how Docker works, data created in the ArangoDB container created here is non-transferable.</p>
+</div>
 <p>You can test the bot by running the <strong>ping</strong> command (With your prefix) in a text channel that the bot can see. If it answers "Pong!", then your bot is set up.</p>
 <p>If you have further questions or need help with something, we'd be happy to help. You can find a link to the official server below.</p>
 <p><strong>Enjoy your bot and have fun!</strong></p>
@@ -742,6 +758,20 @@ sudo docker logs wildbeast_wildbeast_1
             </div>
           </a>
         
+        
+          <a href="../decoupling/" title="Decoupling from Docker" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Decoupling from Docker
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
         
       </nav>
     </div>
