@@ -27,9 +27,6 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: Compile native modules
-          command: npm i zlib-sync uws https://github.com/discordapp/erlpack.git bufferutil sodium-native node-opus
-      - run:
           name: Initialize submodule
           command: git submodule update --init --remote
       - run:
