@@ -113,7 +113,10 @@ workflows:
               only: master
   test_n_build:
     jobs:
-      - test
+      - test:
+          filters:
+            tags:
+              only: /v.+/
       - build:
           requires:
             - test
