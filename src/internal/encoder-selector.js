@@ -5,5 +5,5 @@ if (!drivers.includes(preferred)) {
   global.logger.error(`No encoder available called ${preferred}, available choices: ${drivers.join(', ')}`, true)
 }
 
-global.logger.debug(`Using ${preferred} encoder`)
+if (global.logger) global.logger.debug(`Using ${preferred} encoder`) // HACK: docgen
 module.exports = require(`../encoders/${preferred}`)
