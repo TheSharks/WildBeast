@@ -1,9 +1,9 @@
-const drivers = require('./directory-loader')('../drivers')
-const preferred = process.env['WILDBEAST_PREFERRED_DATABASE'] || 'arangodb'
-const available = Object.getOwnPropertyNames(drivers)
+const drivers = require('./dirscan')('../drivers')
+const preferred = `${process.env['WILDBEAST_PREFERRED_DATABASE'] || 'arangodb'}.js`
 
-if (available.indexOf(preferred) === -1) {
-  global.logger.error(`No database driver available called ${preferred}, available choices: ${available.join(', ')}`, true)
+if (drivers.indexOf(preferred) === -1) {
+  global.logger.error(`No database driver available called ${preferred}, available choices: ${drivers.join(', ')}`, true)
 }
 
-module.exports = drivers[preferred]
+global.logger.debug(`Using ${preferred} database driver`)
+module.exports = require(`../drivers/${preferred}`)
