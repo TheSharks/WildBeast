@@ -54,7 +54,7 @@ The tag command has the following subcommands. All subcommands inherit the permi
 The following settings can be edited with this command. All settings are server-specific and all subcommands inherit the permission level of the main command.
 
 !!! note
-    Languages are still WIP. Only the "en" language is supported at the moment.
+    Translation support is in beta, please see the [translation repository](https://github.com/TheSharks/WildBeast/WildBeast-Translations) for supported languages.
 
 | Name | Description | Usage |
 | ---- | ----------- | ----- |
