@@ -57,13 +57,13 @@ module.exports = {
           if (tag.owner !== msg.author.id && !process.env['WILDBEAST_MASTERS'].split('|').includes(msg.author.id)) {
             return global.i18n.send('TAG_NOT_OWNED', msg.channel)
           }
-          const content = parts.slice(3).join(' ')
+          const content = parts.slice(2).join(' ')
           if (!content || content.length < 0) {
             return global.i18n.send('TAG_TOO_SHORT', msg.channel)
           }
           await driver.edit(parts[1], {
             content: content
-          })
+          }, 'tags')
           global.i18n.send('TAG_EDITED', msg.channel)
         }
         break
