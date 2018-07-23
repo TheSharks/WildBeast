@@ -6,7 +6,7 @@ module.exports = {
     module: 'Fun',
     timeout: 5,
     addons: [
-      `Use \`${process.env.BOT_PREFIX}meme templates\` to get all available templates`
+      'Use `meme templates` to get all available templates'
     ],
     level: 0
   },
