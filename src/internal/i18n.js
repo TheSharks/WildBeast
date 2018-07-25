@@ -11,8 +11,9 @@ if (!available[standard]) {
 }
 
 module.exports = {
-  raw: (key, opts) => {
-    return transform(available[standard][key], opts)
+  raw: (key, opts, lang) => {
+    if (available[lang]) return transform(available[lang][key], opts)
+    else return transform(available[standard][key], opts)
   },
   send: async (key, channel, opts) => {
     let settings
