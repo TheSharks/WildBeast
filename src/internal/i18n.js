@@ -1,4 +1,4 @@
-const standard = process.env.WILDBEAST_LANGUAGE || 'en'
+const standard = process.env.WILDBEAST_LANGUAGE || 'en-EN'
 const available = require('./directory-loader')('../languages', {regex: /\.json$/})
 const driver = require('./database-selector')
 

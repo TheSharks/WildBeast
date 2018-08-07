@@ -1,5 +1,21 @@
 version: 2
+
 jobs:
+  crowdin-download:
+    docker:
+    - image: dougley/crowdin
+    steps:
+      - run:
+          name: Request fresh build
+          command: crowdin download
+  crowdin-upload:
+    docker:
+    - image: dougley/crowdin
+    steps:
+      - checkout
+      - run:
+          name: Upload new strings
+          command: crowdin upload sources -b WildBeast
   test:
     docker:
       - image: node:latest
@@ -27,9 +43,6 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: Initialize submodule
-          command: git submodule update --init --remote
-      - run:
           name: Build Docker image
           command: if [ "$CIRCLE_BRANCH" = "master" ]; then docker build -t dougley/wildbeast:latest --build-arg buildno=$CIRCLE_BUILD_NUM --build-arg commitsha=$CIRCLE_SHA1 .; else docker build -t dougley/wildbeast:$CIRCLE_BRANCH --build-arg buildno=$CIRCLE_BUILD_NUM --build-arg commitsha=$CIRCLE_SHA1 .; fi
       - run:
@@ -45,11 +58,7 @@ jobs:
           name: Git
           command: apk add --update git
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Initialize submodule
-          command: git submodule update --init --remote
+      - setup_remote_docker
       - run:
           name: Build Docker image
           command: docker build -t dougley/wildbeast:$(git describe --abbrev=0 --tags) --build-arg buildno=$CIRCLE_BUILD_NUM --build-arg commitsha=$CIRCLE_SHA1 .
@@ -111,12 +120,16 @@ workflows:
           filters:
             branches:
               only: master
-  test_n_build:
+  docker-image:
     jobs:
       - test:
           filters:
             tags:
               only: /v.+/
+      - crowdin-download:
+          filters:
+            branches:
+              only: /master|experimental/
       - build:
           requires:
             - test
@@ -131,3 +144,6 @@ workflows:
               ignore: /.*/
             tags:
               only: /v.+/
+  crowdin:
+    jobs:
+        - crowdin-upload
