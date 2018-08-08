@@ -11,7 +11,7 @@
   "SETTINGS_SINGLE_NOT_SET": "There's currently nothing set for {setting}.",
   "SETTINGS_SINGLE_REPLY": "`{setting}` is currently set to `{value}`.",
   "SETTINGS_RESET": "`{setting}` has been reset.",
-  "SETTINGS_NO_DATA": "No settings have been changed.",
+  "SETTINGS_NO_DATA": "No settings have been changed in this server.",
   "SETTINGS_MODIFIED": "`{setting}` has been adjusted to `{value}`.",
   "SETTINGS_WELCOMING_MALFORMED": "`welcome` can only be a channel or `dm`.",
   "TAG_CREATED": "Tag with name {tag} successfully created.",
