@@ -13,7 +13,7 @@ jobs:
       - persist_to_workspace:
           root: /tmp/project
           paths:
-            - src
+            - src/languages
 
   crowdin-upload:
     docker:
@@ -54,7 +54,7 @@ jobs:
           at: /tmp/workspace
       - run:
           name: Merge translations
-          command: rsync -av /tmp/workspace/src $CIRCLE_WORKING_DIRECTORY
+          command: cp -rf /tmp/workspace/src/languages $CIRCLE_WORKING_DIRECTORY/languages
       - setup_remote_docker
       - run:
           name: Build Docker image
