@@ -12,7 +12,7 @@
   "SETTINGS_SINGLE_REPLY": "`{setting}` is currently set to `{value}`",
   "SETTINGS_RESET": "`{setting}` has been reset.",
   "SETTINGS_NO_DATA": "There's no data for this server.",
-  "SETTINGS_MODIFIED": "`{setting}` has been adjusted to `{value}`.\n{disclaim}",
+  "SETTINGS_MODIFIED": "`{setting}` has been adjusted to `{value}`.",
   "SETTINGS_WELCOMING_MALFORMED": "`welcome` can only be a channel or `dm`.",
   "TAG_CREATED": "Tag with name {tag} successfully created.",
   "TAG_NOT_FOUND": "There's no tag called {tag}",
