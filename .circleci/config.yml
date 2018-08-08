@@ -2,20 +2,28 @@ version: 2
 
 jobs:
   crowdin-download:
+    working_directory: /tmp
     docker:
-    - image: dougley/crowdin
+      - image: dougley/crowdin
     steps:
+      - checkout
       - run:
           name: Request fresh build
           command: crowdin download
+      - persist_to_workspace:
+          root: workspace
+          paths:
+          - crowdin-files
+
   crowdin-upload:
     docker:
-    - image: dougley/crowdin
+      - image: dougley/crowdin
     steps:
       - checkout
       - run:
           name: Upload new strings
           command: crowdin upload sources -b WildBeast
+
   test:
     docker:
       - image: node:latest
@@ -33,6 +41,7 @@ jobs:
       - run:
           name: Test
           command: npm test
+
   build:
     docker:
       - image: docker:latest
@@ -41,6 +50,11 @@ jobs:
           name: Git
           command: apk add --update git
       - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Merge translations
+          command: rsync -av /tmp/workspace/crowdin-files $CIRCLE_WORKING_DIRECTORY
       - setup_remote_docker
       - run:
           name: Build Docker image
@@ -50,6 +64,7 @@ jobs:
           command: |
             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
             if [ "$CIRCLE_BRANCH" = "master" ]; then docker push dougley/wildbeast:latest; else docker push dougley/wildbeast:$CIRCLE_BRANCH; fi
+
   tagged-build:
     docker:
       - image: docker:latest
@@ -67,6 +82,7 @@ jobs:
           command: |
             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
             docker push dougley/wildbeast:$(git describe --abbrev=0 --tags)
+
   docs-build-test:
     docker:
       - image: anthonyz/python3-node8:latest
@@ -84,6 +100,7 @@ jobs:
       - run:
           name: Build docs
           command: npm run build
+
   docs-deploy:
     docker:
       - image: anthonyz/python3-node8:latest
@@ -109,6 +126,7 @@ jobs:
           command: |
             git config user.email 9768134+Dougley@users.noreply.github.com
             python3 -m mkdocs gh-deploy
+
 workflows:
   version: 2
   docs:
@@ -133,12 +151,14 @@ workflows:
       - build:
           requires:
             - test
+            - crowdin-download
           filters:
             branches:
               only: /master|experimental/
       - tagged-build:
           requires:
             - test
+            - crowdin-download
           filters:
             branches:
               ignore: /.*/
