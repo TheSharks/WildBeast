@@ -9,7 +9,7 @@ jobs:
       - checkout
       - run:
           name: Request fresh build
-          command: crowdin download
+          command: crowdin download -b WildBeast
       - persist_to_workspace:
           root: /tmp/project
           paths:
@@ -73,6 +73,12 @@ jobs:
           name: Git
           command: apk add --update git
       - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Merge translations
+          command: cp -rf /tmp/workspace/src/languages/ ~/project/src/
+
       - setup_remote_docker
       - run:
           name: Build Docker image
