@@ -50,7 +50,7 @@
   "MUSIC_PAUSED": "Music is already paused, did you mean `resume`?",
   "MUSIC_RESUME": "Music has been resumed.",
   "MUSIC_PLAYING": "Music is already playing, did you mean `pause`?",
-  "VOICE_PERSIST": "Your queue is empty, add more using request.",
+  "VOICE_PERSIST": "Your queue is empty, add more to it using the `request` command.",
   "QUEUE_END": "There are no more tracks in the queue to play, I'll leave the voice channel now.",
   "QUEUE_EMPTY": "There are no tracks in the queue.",
   "QUEUE_LIST": "Currently playing **{current}** _[{duration}]_ by request of {user}\n{list}",
