@@ -51,7 +51,7 @@ module.exports = {
                 addTracks(msg, tracks)
                 global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length, user: msg.author.username})
               }
-            }).catch(console.error)
+            }).catch(global.logger.error)
           }
         } else {
           resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(tracks => {
@@ -68,7 +68,7 @@ module.exports = {
               })
             }
           }).catch(err => {
-            console.error(err)
+            global.logger.error(err)
           })
         }
       }

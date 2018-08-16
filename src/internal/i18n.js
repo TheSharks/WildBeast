@@ -2,13 +2,7 @@ const standard = process.env.WILDBEAST_LANGUAGE || 'en-EN'
 const available = require('./directory-loader')('../languages', {regex: /\.json$/})
 const driver = require('./database-selector')
 
-if (!available[standard]) {
-  if (standard === 'en') {
-    global.logger.error('The language file is missing, did you forget to run "git submodule update --init --remote"?', true)
-  } else {
-    global.logger.error(`Unable to load language file ${standard}. It does not exist.`, true)
-  }
-}
+if (!available[standard]) global.logger.error(`Unable to load language file ${standard}. It does not exist.`, true)
 
 module.exports = {
   raw: (key, opts, lang) => {

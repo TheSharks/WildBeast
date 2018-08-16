@@ -46,9 +46,6 @@ jobs:
     docker:
       - image: docker:latest
     steps:
-      - run:
-          name: Git
-          command: apk add --update git
       - checkout
       - attach_workspace:
           at: /tmp/workspace
@@ -69,16 +66,12 @@ jobs:
     docker:
       - image: docker:latest
     steps:
-      - run:
-          name: Git
-          command: apk add --update git
       - checkout
       - attach_workspace:
           at: /tmp/workspace
       - run:
           name: Merge translations
           command: cp -rf /tmp/workspace/src/languages/ ~/project/src/
-
       - setup_remote_docker
       - run:
           name: Build Docker image
@@ -172,4 +165,7 @@ workflows:
               only: /v.+/
   crowdin:
     jobs:
-        - crowdin-upload
+      - crowdin-upload:
+          filters:
+            branches:
+              only: /master|experimental/
