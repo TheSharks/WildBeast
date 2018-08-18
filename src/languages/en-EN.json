@@ -29,7 +29,7 @@
   "PERMISSIONS_OVERFLOW": "Access levels higher than 10 cannot be set.",
   "PERMISSIONS_UPDATED": "Permissions successfully updated.",
   "PERMISSIONS_MALFORMED": "Your syntax is incorrect. Check the help for this command for the proper syntax.",
-  "API_ERROR": "The API returned a malformed response.",
+  "API_ERROR": "The API failed to respond or returned unusable data, please try again later.",
   "WELCOME_MESSAGE": "Please welcome {user_name} to {guild_name}!",
   "CMD_DISABLED_CHANNEL": "This command cannot be used in this channel.",
   "NO_VOICE_CHANNELS": "Sorry bucko, there's no voice channels for me to join.",
@@ -62,5 +62,6 @@
   "VOLUME_SUFFIX_MALFORMED": "Only a number from 0 to 100 is allowed for this command.",
   "VOLUME_ADJUSTED": "The volume has been adjusted to **{volume}**",
   "INVITE_BOT_PRIVATE": "This bot is set to private, please ask `{owner}` if you'd like to invite this bot.",
-  "INVITE_GENERATED_RESULT": "Please use {invite} to invite this bot."
+  "INVITE_GENERATED_RESULT": "Please use {invite} to invite this bot.",
+  "LANGUAGE_UNAVAILABLE": "That language is not available, you can choose from the following languages: `{available}`"
 }

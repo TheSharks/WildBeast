@@ -12,7 +12,7 @@ module.exports = {
   send: async (key, channel, opts) => {
     let settings
     if (channel.guild) settings = await driver.getSettings(channel.guild)
-    if (settings && available[settings.language]) return channel.createMessage(transform(available[settings.language][key], opts))
+    if (settings && available[settings.language] && available[settings.language][key]) return channel.createMessage(transform(available[settings.language][key], opts))
     else if (!available[standard][key]) return global.logger.error(`Missing i18n key ${key} from standard language file!`)
     else return channel.createMessage(transform(available[standard][key], opts))
   },

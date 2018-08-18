@@ -19,6 +19,7 @@ module.exports = {
             msg.channel.createMessage(suffix + ', ' + fancyinsult.insult)
           }
         } else {
+          global.i18n.send('API_ERROR', msg.channel)
           global.logger.error(`REST call failed: ${err}`)
         }
       })

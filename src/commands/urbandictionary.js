@@ -11,7 +11,7 @@ module.exports = {
   },
   fn: function (msg, suffix) {
     if (!suffix) {
-      msg.channel.createMessage(`<@${msg.author.id}>, Yes, let's just look up absolutely nothing.`)
+      msg.channel.createMessage(`Please enter a search term.`)
     } else {
       request.get('http://api.urbandictionary.com/v0/define')
         .query({term: suffix})
@@ -35,9 +35,10 @@ module.exports = {
                 }
               })
             } else {
-              msg.channel.createMessage(`<@${msg.author.id}>, ${suffix}: This word is so screwed up, even Urban Dictionary doesn't have it in its database`)
+              msg.channel.createMessage(`<@${msg.author.id}>, ${suffix}: This word is so screwed up, even UrbanDictionary doesn't have it in its database`)
             }
           } else {
+            global.i18n.send('API_ERROR', msg.channel)
             global.logger.error(`Got an error: ${err}, status code: ${res.status}`)
           }
         })
