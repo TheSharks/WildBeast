@@ -36,7 +36,7 @@ module.exports = {
             }
           } else {
             resolveTracks(suffix).then(tracks => {
-              if (tracks.length === 0) {
+              if (tracks.tracks.length === 0) {
                 global.i18n.send('LINK_NO_TRACK', msg.channel, {user: msg.author.username, url: suffix})
               } else if (tracks.tracks.length === 1) {
                 hhMMss(tracks.tracks[0].info.length / 1000).then(time => {
@@ -49,7 +49,7 @@ module.exports = {
                 })
               } else {
                 addTracks(msg, tracks.tracks)
-                global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length, user: msg.author.username})
+                global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.tracks.length, user: msg.author.username})
               }
             }).catch(global.logger.error)
           }
