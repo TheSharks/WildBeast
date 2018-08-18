@@ -1,5 +1,18 @@
 # 6.0.0
 ## Release phase
+### 6.1.0
+Removed translation submodule, we now include the standard file by default. Translations are able to be downloaded from our crowdin project     
+CircleCI will now automatically include translations into new Docker images   
+For Docker images, uws is locked to v10.148.1    
+Commands that call external APIs will now indicate errors    
+Music command have been updated to support lavalink v3   
+Added optional embedded database powered by LokiJS   
+`++meme` will no longer use imgflip, memegen is used instead   
+`++settings` will error out if an unknown language is being set    
+Encoders and drivers are loaded on-demand instead of requiring them all   
+Elasticsearch logging will now log command arguments instead of the full message    
+Version checking will check for git commits instead of versions only, this falls back to original version check if git is not available    
+
 ### 6.0.0
 **This is a breaking release, nothing is backwards compatible.**
 
