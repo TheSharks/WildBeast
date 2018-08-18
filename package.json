@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "start-docs": "npm run generate-command-data && mkdocs serve",
+    "start-docs": "npm run build && mkdocs serve",
     "build": "npm run generate-command-data && npm run minify",
     "minify": "uglifyjs --compress --mangle --toplevel --output docs/js/dist/commands.js -- docs/js/dist/commands.js.temp",
     "test": "eslint . && mocha",
