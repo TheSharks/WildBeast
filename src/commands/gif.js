@@ -3,6 +3,7 @@ const request = require('superagent')
 module.exports = {
   meta: {
     help: 'Search Giphy for a gif.',
+    usage: '<search query>',
     module: 'Fun',
     level: 0,
     timeout: 5

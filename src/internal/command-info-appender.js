@@ -10,7 +10,7 @@ const commandInfo = require('../../commandInfo.json')
 
 const files = {
   source: './docs/js/src/commands.js',
-  dest: './docs/js/dist/commands.js.temp'
+  dest: './docs/js/dist/commands.js'
 }
 
 try {

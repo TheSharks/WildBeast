@@ -3,6 +3,7 @@ const request = require('superagent')
 module.exports = {
   meta: {
     help: 'Insult someone in a fancy manner.',
+    usage: '[name]',
     module: 'Fun',
     level: 0,
     timeout: 5,

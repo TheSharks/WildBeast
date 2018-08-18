@@ -3,6 +3,7 @@ const SA = require('superagent')
 module.exports = {
   meta: {
     help: 'Create memes and other reaction images.',
+    usage: '<meme type> "upper text" "lower text"',
     module: 'Fun',
     timeout: 5,
     addons: [

@@ -21,7 +21,6 @@ Additional command information:
 [Addendums](#addendums)<br>
 [Tag subcommands](#tag-subcommands)<br>
 [Settings subcommands](#settings-subcommands)<br>
-[Available meme types](#available-meme-types)
 
 ## Commands
 
@@ -30,8 +29,9 @@ Additional command information:
 ## Addendums
 
 1. For the **colorrole** command, a hexadecimal value can be submitted in either **#FFFFFF** or **FFFFFF** format.
-2. The **softban** command bans a user and then immediately unbans them, deleting their messages without barring future access to the server.
-3. The **request** command supports playing from the following resources: YouTube, SoundCloud, Bandcamp, Twitch, Vimeo, Mixer and raw HTML audio.
+2. You can get all the available meme types for the **meme** command by using the command **meme templates**.
+3. The **softban** command bans a user and then immediately unbans them, deleting their messages without barring future access to the server.
+4. The **request** command supports playing from the following resources: YouTube, SoundCloud, Bandcamp, Twitch, Vimeo, Mixer and raw HTML audio.
 
 ## Tag subcommands
 
@@ -63,48 +63,3 @@ The following settings can be edited with this command. All settings are server-
 | welcome | Change the welcome message target. | settings welcome **<#channel/dm\>** |
 | welcomeMessage | Change the welcome message that is sent when a new member joins. | settings welcomeMessage **<message\>** |
 | reset | Reset a setting to its default value. | settings reset **<setting\>** |
-
-## Available meme types
-
-The values in the **Name** column of the table below correspond to the relevant meme ID on https://api.imgflip.com/popular_meme_ids.
-
-| Name | ID |
-| ---- | -- |
-| brace | 61546 |
-| mostinteresting | 61532 |
-| fry | 61520 |
-| onedoesnot | 61579 |
-| yuno | 61527 |
-| success | 61544
-| allthethings | 61533 |
-| doge | 8072285 |
-| drevil | 40945639 |
-| skeptical | 101711 |
-| notime | 442575 |
-| yodawg | 101716 |
-| ermahgerd | 101462 |
-| hipsterariel | 86601 |
-| imagination | 163573 |
-| grumpycat | 405658 |
-| morpheus | 100947 |
-| 1stworldproblems | 61539 |
-| facepalm | 1509839 |
-| wtf | 245898 |
-| batmanslaprobin | 438680 |
-| takemymoney | 176908 |
-| gollum | 681831 |
-| grindmygears | 356615 |
-| consuela | 160583 |
-| ineedyouto | 89655 |
-| chucknorrisapproves | 241304 |
-| asianfather | 61559 |
-| foreveralone | 61528 |
-| grandmainternet | 61556 |
-| zoidberg | 61573 |
-| troll | 101484 |
-| familyguybrian | 674967 |
-| obama | 185239 |
-| badluckbrian | 61585 |
-| philosoraptor | 61516 |
-| 3rdworldsuccess | 101287 |
-| ancientaliens | 101470 |

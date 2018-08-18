@@ -13,6 +13,7 @@ const map = {
 module.exports = {
   meta: {
     help: 'Encode a message into l337sp3@K.',
+    usage: '<text to encode>',
     module: 'Fun',
     level: 0,
     alias: ['leetspeek', 'leetspeech', 'leet']

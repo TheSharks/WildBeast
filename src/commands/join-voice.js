@@ -3,7 +3,7 @@ const url = require('url')
 module.exports = {
   meta: {
     help: 'Make the bot join a voice channel. Optionally supply a track to play on join.',
-    usage: '[track link]',
+    usage: '[song link or YouTube search query]',
     module: 'Music',
     level: 1,
     noDM: true,
