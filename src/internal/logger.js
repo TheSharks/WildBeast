@@ -64,7 +64,6 @@ module.exports = {
     sendToES({
       type: 'command',
       cmd: opts.cmd,
-      // full: opts.cmd + ' ' + opts.opts,
       args: opts.opts.split(' '),
       author: opts.m.author,
       channel: opts.m.channel,

@@ -35,33 +35,35 @@ module.exports = {
               })
             }
           } else {
-            resolveTracks(suffix).then(tracks => {
-              if (tracks.tracks.length === 0) {
+            resolveTracks(suffix).then(result => {
+              global.logger.trace(result)
+              if (result.tracks.length === 0) {
                 global.i18n.send('LINK_NO_TRACK', msg.channel, {user: msg.author.username, url: suffix})
-              } else if (tracks.tracks.length === 1) {
-                hhMMss(tracks.tracks[0].info.length / 1000).then(time => {
-                  addTracks(msg, tracks.tracks)
+              } else if (result.tracks.length === 1) {
+                hhMMss(result.tracks[0].info.length / 1000).then(time => {
+                  addTracks(msg, result.tracks)
                   global.i18n.send('TRACK_ADDED', msg.channel, {
-                    title: tracks.tracks[0].info.title,
+                    title: result.tracks[0].info.title,
                     duration: time,
                     user: msg.author.username
                   })
                 })
               } else {
-                addTracks(msg, tracks.tracks)
-                global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.tracks.length, user: msg.author.username})
+                addTracks(msg, result.tracks)
+                global.i18n.send('TRACKS_ADDED', msg.channel, {count: result.tracks.length, user: msg.author.username})
               }
             }).catch(global.logger.error)
           }
         } else {
-          resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(tracks => {
-            if (tracks.tracks.length === 0) {
+          resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(result => {
+            global.logger.trace(result)
+            if (result.tracks.length === 0) {
               global.i18n.send('SEARCH_NO_TRACKS', msg.channel, {user: msg.author.mention})
             } else {
-              hhMMss(tracks.tracks[0].info.length / 1000).then(time => {
-                addTracks(msg, [tracks.tracks[0]])
+              hhMMss(result.tracks[0].info.length / 1000).then(time => {
+                addTracks(msg, [result.tracks[0]])
                 global.i18n.send('TRACK_ADDED', msg.channel, {
-                  title: tracks.tracks[0].info.title,
+                  title: result.tracks[0].info.title,
                   duration: time,
                   user: msg.author.username
                 })

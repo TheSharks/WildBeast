@@ -35,7 +35,7 @@ module.exports = {
                 }
               })
             } else {
-              msg.channel.createMessage(`<@${msg.author.id}>, ${suffix}: This word is so screwed up, even UrbanDictionary doesn't have it in its database`)
+              msg.channel.createMessage(`<@${msg.author.id}>, ${suffix}: This word is so screwed up, even Urban Dictionary doesn't have it in its database`)
             }
           } else {
             global.i18n.send('API_ERROR', msg.channel)
