@@ -1,6 +1,18 @@
 version: 2
 
 jobs:
+  sentry-association:
+    docker:
+      - image: getsentry/sentry-cli
+    steps:
+      - checkout
+      - run:
+          name: Assosiate commits with Sentry
+          command: |
+            VERSION=$(sentry-cli releases propose-version)
+            sentry-cli releases new -p wildbeast $VERSION
+            sentry-cli releases set-commits --auto $VERSION
+
   crowdin-download:
     working_directory: /tmp/project
     docker:
@@ -144,6 +156,12 @@ workflows:
             tags:
               only: /v.+/
       - crowdin-download:
+          filters:
+            branches:
+              only: /master|experimental/
+      - senty-association:
+          requires:
+            - test
           filters:
             branches:
               only: /master|experimental/
