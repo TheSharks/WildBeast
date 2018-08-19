@@ -159,7 +159,7 @@ workflows:
           filters:
             branches:
               only: /master|experimental/
-      - senty-association:
+      - sentry-association:
           requires:
             - test
           filters:
