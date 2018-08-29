@@ -1,76 +1,48 @@
-const meme = {
-  brace: 61546,
-  mostinteresting: 61532,
-  fry: 61520,
-  onedoesnot: 61579,
-  yuno: 61527,
-  success: 61544,
-  allthethings: 61533,
-  doge: 8072285,
-  drevil: 40945639,
-  skeptical: 101711,
-  notime: 442575,
-  yodawg: 101716,
-  ermahgerd: 101462,
-  hipsterariel: 86601,
-  imagination: 163573,
-  grumpycat: 405658,
-  morpheus: 100947,
-  '1stworldproblems': 61539,
-  facepalm: 1509839,
-  wtf: 245898,
-  batmanslaprobin: 438680,
-  takemymoney: 176908,
-  gollum: 681831,
-  grindmygears: 356615,
-  consuela: 160583,
-  ineedyouto: 89655,
-  chucknorrisapproves: 241304,
-  asianfather: 61559,
-  foreveralone: 61528,
-  grandmainternet: 61556,
-  zoidberg: 61573,
-  troll: 101484,
-  familyguybrian: 674967,
-  obama: 185239,
-  badluckbrian: 61585,
-  philosoraptor: 61516,
-  '3rdworldsuccess': 101287,
-  ancientaliens: 101470
-}
+const SA = require('superagent')
 
 module.exports = {
   meta: {
-    name: 'meme',
-    help: 'Create a meme.',
-    usage: '<meme type> "upper text" "lower text" (Important: Include the quotes)',
+    help: 'Create memes and other reaction images.',
+    usage: '<meme type> "upper text" "lower text"',
     module: 'Fun',
-    level: 0,
-    timeout: 10,
-    alias: ['makeameme'],
+    timeout: 5,
     addons: [
-      `\nAvailable meme types: ${Object.getOwnPropertyNames(meme).join(', ')}`
-    ]
+      'Use `meme templates` to get all available templates'
+    ],
+    level: 0
   },
-  fn: function (msg, suffix) {
-    const tags = suffix.split('"')
-    const memetype = tags[0].split(' ')[0]
-    const Imgflipper = require('imgflipper')
-    const imgflipper = new Imgflipper(process.env.IMGFLIP_USERNAME, process.env.IMGFLIP_PASSWORD)
-    imgflipper.generateMeme(meme[memetype], tags[1] ? tags[1] : '', tags[3] ? tags[3] : '', (err, image) => {
-      if (err) {
-        msg.channel.createMessage(`<@${msg.author.id}>, Please try again, use \`help meme\` if you do not know how to use this command.`)
+  fn: async (msg, suffix) => {
+    if (suffix.toLowerCase() === 'templates') {
+      const data = await SA.get('https://memegen.link/api/templates/')
+      const names = Object.entries(data.body).map(x => /https:\/\/memegen\.link\/api\/templates\/(.+)/.exec(x)[1])
+      msg.channel.createMessage('Sending you all available meme templates via DM')
+      const ctx = await msg.author.getDMChannel()
+      ctx.createMessage(`Available meme templates:\n\n${names.join(', ')}`)
+    } else {
+      const tags = suffix.split('"')
+      const memetype = tags[0].split(' ')[0]
+      const keywords = tags.slice(1).filter(x => x.trim().length > 0)
+      if (!memetype || keywords.length === 0) {
+        return global.i18n.send('PERMISSIONS_MALFORMED', msg.channel)
       } else {
-        const user = global.bot.user
-        if (msg.channel.guild) {
-          msg.channel.createMessage(image)
-        } else if (msg.channel.guild.members.get(user.id).permission.json.manageMessages) {
-          msg.delete()
-          msg.channel.createMessage(image)
-        } else {
-          msg.channel.createMessage(image)
-        }
+        return msg.channel.createMessage(`http://memegen.link/${memetype}/${translate(keywords[0])}/${translate(keywords[1])}.jpg`)
       }
-    })
+    }
   }
+}
+
+function translate (string) {
+  const map = {
+    ' ': '_',
+    '-': '--',
+    '%': '~p',
+    '#': '~h',
+    '/': '~s',
+    '"': "''"
+  }
+  for (const y in map) {
+    string = string.replace(new RegExp(y, 'g'), map[y])
+  }
+  string = string.replace(/\?/g, '~q')
+  return string
 }

@@ -28,30 +28,12 @@ const answers = [
 module.exports = {
   meta: {
     help: 'Ask the magic 8-ball for advice.',
-    usage: '<question>',
     module: 'Fun',
     level: 0,
     timeout: 5,
     alias: ['8ball']
   },
-  fn: function (msg, suffix) {
-    if (!suffix) {
-      msg.channel.createMessage(`<@${msg.author.id}>, I mean I can shake this 8ball all I want but without a question it's kinda dumb.`)
-      return
-    }
-    msg.channel.createMessage('The Magic 8 Ball says:\n```' + answerShuffle(answers)[0] + '```')
-
-    function answerShuffle (array) {
-      let rand
-      let index = -1
-      let length = array.length
-      let result = Array(length)
-      while (++index < length) {
-        rand = Math.floor(Math.random() * (index + 1))
-        result[index] = result[rand]
-        result[rand] = array[index]
-      }
-      return (result)
-    }
+  fn: function (msg) {
+    msg.channel.createMessage('The Magic 8 Ball says:\n```' + answers[Math.floor(Math.random() * answers.length)] + '```')
   }
 }

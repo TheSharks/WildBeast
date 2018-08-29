@@ -26,6 +26,7 @@ function cleanupJSON (parsedJSON) {
   let str = JSON.stringify(parsedJSON)
   str = str.replaceAll('\\"', '\\\\"') // Properly escape double quotes
   str = str.replaceAll('\\n', '\\\\n') // Properly escape newlines
+  str = str.replaceAll('`', '\\`') // Properly escape backticks
 
   return str
 }

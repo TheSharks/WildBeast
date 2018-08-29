@@ -51,12 +51,23 @@ module.exports = {
           if (match) parts[1] = match[1]
           else parts[1] = parts[1].toLowerCase()
         }
+        if (parts[0] === 'language') {
+          const languages = require('../internal/dirscan')('../languages')
+          if (!languages.includes(`${parts[1]}.json`)) {
+            return global.i18n.send('LANGUAGE_UNAVAILABLE', msg.channel, {
+              available: languages.map(x => x.match(/(.+).json/)[1]).join(', ')
+            })
+          }
+        }
         await engine.modify(msg.channel.guild, parts[0], parts.slice(1).join(' '))
-        return global.i18n.send('SETTINGS_MODIFIED', msg.channel, {
-          setting: parts[0],
-          value: parts.slice(1).join(' '),
-          disclaim: ((parts[0] === 'language') ? `\n${global.i18n.raw('LANGUAGE_DISCLAIMER')}` : '')
-        })
+        if (parts[0] === 'language') {
+          return global.i18n.multiSend([{_key: 'SETTINGS_MODIFIED', opts: {setting: parts[0], value: parts.slice(1).join(' ')}}, {_key: 'LANGUAGE_DISCLAIMER'}], msg.channel)
+        } else {
+          return global.i18n.send('SETTINGS_MODIFIED', msg.channel, {
+            setting: parts[0],
+            value: parts.slice(1).join(' ')
+          })
+        }
       }
     } else {
       // send current settings

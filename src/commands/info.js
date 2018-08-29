@@ -8,9 +8,8 @@ module.exports = {
   },
   fn: async (msg) => {
     let bot = global.bot
-    let owner
     let user = await bot.getRESTUser('107904023901777920')
-    owner = `${user.username}#${user.discriminator}`
+    let owner = `${user.username}#${user.discriminator}`
     let fields = [{name: 'Servers Connected', value: '```\n' + bot.guilds.size + '```', inline: true},
       {name: 'Users Known', value: '```\n' + bot.users.size + '```', inline: true},
       {name: 'Channels Connected', value: '```\n' + Object.keys(bot.channelGuildMap).length + '```', inline: true},

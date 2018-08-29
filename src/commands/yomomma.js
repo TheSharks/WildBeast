@@ -14,12 +14,13 @@ module.exports = {
           try {
             JSON.parse(res.text)
           } catch (e) {
-            msg.channel.createMessage('The API returned an unconventional response.')
+            global.i18n.send('API_ERROR', msg.channel)
             return
           }
           const joke = JSON.parse(res.text)
           msg.channel.createMessage(joke.joke)
         } else {
+          global.i18n.send('API_ERROR', msg.channel)
           global.logger.error(`REST call failed: ${err}`)
         }
       })

@@ -1,5 +1,41 @@
 version: 2
+
 jobs:
+  sentry-association:
+    docker:
+      - image: getsentry/sentry-cli
+    steps:
+      - checkout
+      - run:
+          name: Assosiate commits with Sentry
+          command: |
+            VERSION=$(sentry-cli releases propose-version)
+            sentry-cli releases new -p wildbeast $VERSION
+            sentry-cli releases set-commits --auto $VERSION
+
+  crowdin-download:
+    working_directory: /tmp/project
+    docker:
+      - image: dougley/crowdin
+    steps:
+      - checkout
+      - run:
+          name: Request fresh build
+          command: crowdin download -b WildBeast
+      - persist_to_workspace:
+          root: /tmp/project
+          paths:
+            - src/languages
+
+  crowdin-upload:
+    docker:
+      - image: dougley/crowdin
+    steps:
+      - checkout
+      - run:
+          name: Upload new strings
+          command: crowdin upload sources -b WildBeast
+
   test:
     docker:
       - image: node:latest
@@ -17,18 +53,18 @@ jobs:
       - run:
           name: Test
           command: npm test
+
   build:
     docker:
       - image: docker:latest
     steps:
-      - run:
-          name: Git
-          command: apk add --update git
       - checkout
-      - setup_remote_docker
+      - attach_workspace:
+          at: /tmp/workspace
       - run:
-          name: Initialize submodule
-          command: git submodule update --init --remote
+          name: Merge translations
+          command: cp -rf /tmp/workspace/src/languages/ ~/project/src/
+      - setup_remote_docker
       - run:
           name: Build Docker image
           command: if [ "$CIRCLE_BRANCH" = "master" ]; then docker build -t dougley/wildbeast:latest --build-arg buildno=$CIRCLE_BUILD_NUM --build-arg commitsha=$CIRCLE_SHA1 .; else docker build -t dougley/wildbeast:$CIRCLE_BRANCH --build-arg buildno=$CIRCLE_BUILD_NUM --build-arg commitsha=$CIRCLE_SHA1 .; fi
@@ -37,19 +73,18 @@ jobs:
           command: |
             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
             if [ "$CIRCLE_BRANCH" = "master" ]; then docker push dougley/wildbeast:latest; else docker push dougley/wildbeast:$CIRCLE_BRANCH; fi
+
   tagged-build:
     docker:
       - image: docker:latest
     steps:
-      - run:
-          name: Git
-          command: apk add --update git
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
+      - attach_workspace:
+          at: /tmp/workspace
       - run:
-          name: Initialize submodule
-          command: git submodule update --init --remote
+          name: Merge translations
+          command: cp -rf /tmp/workspace/src/languages/ ~/project/src/
+      - setup_remote_docker
       - run:
           name: Build Docker image
           command: docker build -t dougley/wildbeast:$(git describe --abbrev=0 --tags) --build-arg buildno=$CIRCLE_BUILD_NUM --build-arg commitsha=$CIRCLE_SHA1 .
@@ -58,6 +93,7 @@ jobs:
           command: |
             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
             docker push dougley/wildbeast:$(git describe --abbrev=0 --tags)
+
   docs-build-test:
     docker:
       - image: anthonyz/python3-node8:latest
@@ -75,6 +111,7 @@ jobs:
       - run:
           name: Build docs
           command: npm run build
+
   docs-deploy:
     docker:
       - image: anthonyz/python3-node8:latest
@@ -100,6 +137,7 @@ jobs:
           command: |
             git config user.email 9768134+Dougley@users.noreply.github.com
             python3 -m mkdocs gh-deploy
+
 workflows:
   version: 2
   docs:
@@ -111,20 +149,41 @@ workflows:
           filters:
             branches:
               only: master
-  test_n_build:
+  docker-image:
     jobs:
-      - test
+      - test:
+          filters:
+            tags:
+              only: /v.+/
+      - crowdin-download:
+          filters:
+            branches:
+              only: /master|experimental/
+      - sentry-association:
+          requires:
+            - test
+          filters:
+            branches:
+              only: /master|experimental/
       - build:
           requires:
             - test
+            - crowdin-download
           filters:
             branches:
               only: /master|experimental/
       - tagged-build:
           requires:
             - test
+            - crowdin-download
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /v.+/
+  crowdin:
+    jobs:
+      - crowdin-upload:
+          filters:
+            branches:
+              only: /master|experimental/

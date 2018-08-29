@@ -3,7 +3,7 @@ const url = require('url')
 module.exports = {
   meta: {
     help: 'Add a track to the playback queue.',
-    usage: '<track link>',
+    usage: '<song link or YouTube search query>',
     module: 'Music',
     level: 1,
     noDM: true,
@@ -35,41 +35,41 @@ module.exports = {
               })
             }
           } else {
-            resolveTracks(suffix).then(tracks => {
-              if (tracks.length === 0) {
+            resolveTracks(suffix).then(result => {
+              global.logger.trace(result)
+              if (result.length === 0) {
                 global.i18n.send('LINK_NO_TRACK', msg.channel, {user: msg.author.username, url: suffix})
-              } else if (tracks.length === 1) {
-                hhMMss(tracks[0].info.length / 1000).then(time => {
-                  addTracks(msg, tracks)
+              } else if (result.length === 1) {
+                hhMMss(result[0].info.length / 1000).then(time => {
+                  addTracks(msg, result)
                   global.i18n.send('TRACK_ADDED', msg.channel, {
-                    title: tracks[0].info.title,
+                    title: result[0].info.title,
                     duration: time,
                     user: msg.author.username
                   })
                 })
               } else {
-                addTracks(msg, tracks)
-                global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length, user: msg.author.username})
+                addTracks(msg, result)
+                global.i18n.send('TRACKS_ADDED', msg.channel, {count: result.length, user: msg.author.username})
               }
-            }).catch(console.error)
+            }).catch(global.logger.error)
           }
         } else {
-          resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(tracks => {
-            if (tracks.length === 0) {
+          resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(result => {
+            global.logger.trace(result)
+            if (result.length === 0) {
               global.i18n.send('SEARCH_NO_TRACKS', msg.channel, {user: msg.author.mention})
             } else {
-              hhMMss(tracks[0].info.length / 1000).then(time => {
-                addTracks(msg, [tracks[0]])
+              hhMMss(result[0].info.length / 1000).then(time => {
+                addTracks(msg, [result[0]])
                 global.i18n.send('TRACK_ADDED', msg.channel, {
-                  title: tracks[0].info.title,
+                  title: result[0].info.title,
                   duration: time,
                   user: msg.author.username
                 })
               })
             }
-          }).catch(err => {
-            console.error(err)
-          })
+          }).catch(global.logger.error)
         }
       }
     } else {

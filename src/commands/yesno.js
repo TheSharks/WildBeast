@@ -14,6 +14,7 @@ module.exports = {
         if (!err && res.status === 200) {
           msg.channel.createMessage(`<@${msg.author.id}>, ${res.body.image}`)
         } else {
+          global.i18n.send('API_ERROR', msg.channel)
           global.logger.error(`REST call failed: ${err}`)
         }
       })

@@ -21,6 +21,7 @@ module.exports = {
           const roll = res.body
           msg.channel.createMessage(`<@${msg.author.id}>, Your ${roll.input} resulted in ${roll.result}${roll.details}`)
         } else {
+          global.i18n.send('API_ERROR', msg.channel)
           global.logger.error(`REST call failed: ${err}`)
         }
       })

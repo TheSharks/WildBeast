@@ -21,6 +21,7 @@ module.exports = {
           const advice = JSON.parse(res.text)
           msg.channel.createMessage(advice.slip.advice)
         } else {
+          global.i18n.send('API_ERROR', msg.channel)
           global.logger.error(`REST call failed: ${err}, status code: ${res.status}`)
         }
       })

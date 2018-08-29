@@ -3,7 +3,7 @@ const url = require('url')
 module.exports = {
   meta: {
     help: 'Make the bot join a voice channel. Optionally supply a track to play on join.',
-    usage: '[track link]',
+    usage: '[song link or YouTube search query]',
     module: 'Music',
     level: 1,
     noDM: true,
@@ -17,7 +17,8 @@ module.exports = {
     } else if (!msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).permissionsOf(global.bot.user.id).has('voiceConnect') || !msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).permissionsOf(global.bot.user.id).has('voiceSpeak')) {
       global.i18n.send('NO_VOICE_CONNECT_PERM', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).name})
     } else if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
-      global.i18n.send('VOICE_CONNECTED', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === global.bot.voiceConnections.get(msg.channel.guild.id).channelId).name})
+      const channelID = global.bot.voiceConnections.get(msg.channel.guild.id).channelId === undefined ? global.bot.voiceConnections.get(msg.channel.guild.id).channelID : global.bot.voiceConnections.get(msg.channel.guild.id).channelId
+      global.i18n.send('VOICE_CONNECTED', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === channelID).name})
     } else {
       if (suffix) {
         let link = url.parse(suffix)
@@ -38,39 +39,41 @@ module.exports = {
               })
             }
           } else {
-            resolveTracks(suffix).then(tracks => {
-              if (tracks.length === 0) {
+            resolveTracks(suffix).then(result => {
+              global.logger.trace(result)
+              if (result.length === 0) {
                 global.i18n.send('LINK_NO_TRACK', msg.channel, {user: msg.author.username, url: suffix})
-              } else if (tracks.length === 1) {
-                hhMMss(tracks[0].info.length / 1000).then(time => {
-                  createPlayer(msg, tracks)
+              } else if (result.length === 1) {
+                hhMMss(result[0].info.length / 1000).then(time => {
+                  createPlayer(msg, result)
                   global.i18n.send('TRACK_ADDED', msg.channel, {
-                    title: tracks[0].info.title,
+                    title: result[0].info.title,
                     duration: time,
                     user: msg.author.username
                   })
                 })
               } else {
-                createPlayer(msg, tracks)
-                global.i18n.send('TRACKS_ADDED', msg.channel, {count: tracks.length, user: msg.author.username})
+                createPlayer(msg, result)
+                global.i18n.send('TRACKS_ADDED', msg.channel, {count: result.length, user: msg.author.username})
               }
-            }).catch(console.error)
+            }).catch(global.logger.error)
           }
         } else {
-          resolveTracks(encodeURI(`ytsearch:${suffix}`)).then(tracks => {
-            if (tracks.length === 0) {
+          resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(result => {
+            global.logger.trace(result)
+            if (result.length === 0) {
               global.i18n.send('SEARCH_NO_TRACKS', msg.channel, {user: msg.author.mention})
             } else {
-              hhMMss(tracks[0].info.length / 1000).then(time => {
-                createPlayer(msg, [tracks[0]])
+              hhMMss(result[0].info.length / 1000).then(time => {
+                createPlayer(msg, [result[0]])
                 global.i18n.send('TRACK_ADDED', msg.channel, {
-                  title: tracks[0].info.title,
+                  title: result[0].info.title,
                   duration: time,
                   user: msg.author.username
                 })
               })
             }
-          }).catch(console.error)
+          }).catch(global.logger.error)
         }
       } else {
         createPlayer(msg)

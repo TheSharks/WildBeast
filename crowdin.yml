@@ -1,0 +1,10 @@
+"project_identifier" : "wildbeast"
+"api_key_env": CROWDIN_API_KEY
+"preserve_hierarchy": true
+
+files: [
+  {
+    "source" : "/src/languages/en-EN.json",
+    "translation" : "/src/languages/%locale%.json",
+  }
+]

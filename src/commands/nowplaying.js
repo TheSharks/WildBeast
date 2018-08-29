@@ -1,4 +1,4 @@
-const {guildInfo, hhMMss, getPlayer} = require('../internal/encoder-selector.js')
+const {guildInfo, hhMMss, getTimestamp} = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Show the currently playing track.',
@@ -15,7 +15,7 @@ module.exports = {
           duration: await hhMMss(guildInfo[msg.channel.guild.id].tracks[0].info.length / 1000),
           url: guildInfo[msg.channel.guild.id].tracks[0].info.uri,
           state: guildInfo[msg.channel.guild.id].paused === false ? ':arrow_forward:' : ':pause_button:',
-          progress: await progressBar(await getPlayer(msg.channel).then(p => p.getTimestamp()) / guildInfo[msg.channel.guild.id].tracks[0].info.length)
+          progress: await progressBar(await getTimestamp(msg.channel) / guildInfo[msg.channel.guild.id].tracks[0].info.length)
         })
       } else {
         global.i18n.send('QUEUE_EMPTY', msg.channel)

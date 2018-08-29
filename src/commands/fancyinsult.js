@@ -3,6 +3,7 @@ const request = require('superagent')
 module.exports = {
   meta: {
     help: 'Insult someone in a fancy manner.',
+    usage: '[name]',
     module: 'Fun',
     level: 0,
     timeout: 5,
@@ -19,6 +20,7 @@ module.exports = {
             msg.channel.createMessage(suffix + ', ' + fancyinsult.insult)
           }
         } else {
+          global.i18n.send('API_ERROR', msg.channel)
           global.logger.error(`REST call failed: ${err}`)
         }
       })
