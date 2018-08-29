@@ -37,33 +37,33 @@ module.exports = {
           } else {
             resolveTracks(suffix).then(result => {
               global.logger.trace(result)
-              if (result.tracks.length === 0) {
+              if (result.length === 0) {
                 global.i18n.send('LINK_NO_TRACK', msg.channel, {user: msg.author.username, url: suffix})
-              } else if (result.tracks.length === 1) {
-                hhMMss(result.tracks[0].info.length / 1000).then(time => {
-                  addTracks(msg, result.tracks)
+              } else if (result.length === 1) {
+                hhMMss(result[0].info.length / 1000).then(time => {
+                  addTracks(msg, result)
                   global.i18n.send('TRACK_ADDED', msg.channel, {
-                    title: result.tracks[0].info.title,
+                    title: result[0].info.title,
                     duration: time,
                     user: msg.author.username
                   })
                 })
               } else {
-                addTracks(msg, result.tracks)
-                global.i18n.send('TRACKS_ADDED', msg.channel, {count: result.tracks.length, user: msg.author.username})
+                addTracks(msg, result)
+                global.i18n.send('TRACKS_ADDED', msg.channel, {count: result.length, user: msg.author.username})
               }
             }).catch(global.logger.error)
           }
         } else {
           resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(result => {
             global.logger.trace(result)
-            if (result.tracks.length === 0) {
+            if (result.length === 0) {
               global.i18n.send('SEARCH_NO_TRACKS', msg.channel, {user: msg.author.mention})
             } else {
-              hhMMss(result.tracks[0].info.length / 1000).then(time => {
-                addTracks(msg, [result.tracks[0]])
+              hhMMss(result[0].info.length / 1000).then(time => {
+                addTracks(msg, [result[0]])
                 global.i18n.send('TRACK_ADDED', msg.channel, {
-                  title: result.tracks[0].info.title,
+                  title: result[0].info.title,
                   duration: time,
                   user: msg.author.username
                 })

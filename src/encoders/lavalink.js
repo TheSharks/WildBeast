@@ -62,16 +62,16 @@ module.exports = {
       throw new Error('Unable play that video.')
     }
 
-    return (result.body)
+    return (result.body.tracks)
   },
   addTracks: async (msg, tracks) => {
-    if (guildInfo[msg.channel.guild.id].tracks.length <= 0) {
+    if (guildInfo[msg.channel.guild.id] !== undefined && guildInfo[msg.channel.guild.id].tracks.length <= 0) {
       let player = await global.bot.voiceConnections.get(msg.channel.guild.id)
       player.play(tracks[0].track)
-    }
-    for (let track of tracks) {
-      track.requester = msg.author.id
-      guildInfo[msg.channel.guild.id].tracks.push(track)
+      for (let track of tracks) {
+        track.requester = msg.author.id
+        guildInfo[msg.channel.guild.id].tracks.push(track)
+      }
     }
   },
   skip: async (msg) => {
@@ -81,6 +81,19 @@ module.exports = {
     player.play(guildInfo[msg.channel.guild.id].tracks[0].track)
     if (player.playing === false) player.setPause(false)
     if (guildInfo[msg.channel.guild.id].paused === true) guildInfo[msg.channel.guild.id].paused = false
+  },
+  stop: async (msg) => {
+    if (!process.env.WILDBEAST_VOICE_PERSIST) {
+      const channelID = global.bot.voiceConnections.get(msg.channel.guild.id).channelId === undefined ? global.bot.voiceConnections.get(msg.channel.guild.id).channelID : global.bot.voiceConnections.get(msg.channel.guild.id).channelId
+      global.bot.leaveVoiceChannel(channelID)
+      guildInfo[msg.channel.guild.id] = undefined
+      global.i18n.send('QUEUE_END', msg.channel)
+    } else {
+      guildInfo[msg.channel.guild.id].tracks.shift()
+      guildInfo[msg.channel.guild.id].skips = []
+      module.exports.getPlayer(msg.channel).then(p => p.stop())
+      global.i18n.send('VOICE_PERSIST', msg.channel)
+    }
   },
   pause: async (guild) => {
     module.exports.getPlayer(guild).then(p => {
@@ -97,8 +110,11 @@ module.exports = {
       p.setVolume(volume)
     })
   },
+  getTimestamp: async (guild) => {
+    return await module.exports.getPlayer(guild).then(p => p.getTimestamp())
+  },
   hhMMss: async (time) => {
-    if (time || isNaN(time)) {
+    if (time || !isNaN(time)) {
       let hours = (Math.floor(time / ((60 * 60)) % 24))
       let minutes = (Math.floor(time / (60)) % 60)
       let seconds = (Math.floor(time) % 60)
@@ -110,6 +126,13 @@ module.exports = {
     } else {
       return ('00:00:00')
     }
+  },
+  leaveVoiceChannel: async (msg) => {
+    const channelID = global.bot.voiceConnections.get(msg.channel.guild.id).channelId
+    guildInfo[msg.channel.guild.id].leave = true
+    global.i18n.send('VOICE_DISCONNECT', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === channelID).name})
+    global.bot.leaveVoiceChannel(channelID)
+    guildInfo[msg.channel.guild.id] = undefined
   },
   createPlayer: async (msg, tracks) => {
     module.exports.getPlayer(msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID)).then(player => {
@@ -129,7 +152,7 @@ module.exports = {
         if (wat !== undefined) global.logger.error(`lava disconnect: ${wat}`)
       })
       player.on('end', async data => {
-        if (data.reason && data.reason !== 'REPLACED') {
+        if (data.reason && !['STOPPED', 'REPLACED'].includes(data.reason)) {
           if (guildInfo[data.guildId].tracks.length > 1) {
             const trackRequester = global.bot.users.get(guildInfo[data.guildId].tracks[1].requester)
             global.i18n.send('NEXT_TRACK', global.bot.guilds.get(data.guildId).channels.find(c => c.id === guildInfo[data.guildId].textChan), {

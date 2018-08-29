@@ -17,7 +17,8 @@ module.exports = {
     } else if (!msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).permissionsOf(global.bot.user.id).has('voiceConnect') || !msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).permissionsOf(global.bot.user.id).has('voiceSpeak')) {
       global.i18n.send('NO_VOICE_CONNECT_PERM', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).name})
     } else if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
-      global.i18n.send('VOICE_CONNECTED', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === global.bot.voiceConnections.get(msg.channel.guild.id).channelId).name})
+      const channelID = global.bot.voiceConnections.get(msg.channel.guild.id).channelId === undefined ? global.bot.voiceConnections.get(msg.channel.guild.id).channelID : global.bot.voiceConnections.get(msg.channel.guild.id).channelId
+      global.i18n.send('VOICE_CONNECTED', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === channelID).name})
     } else {
       if (suffix) {
         let link = url.parse(suffix)
@@ -40,33 +41,33 @@ module.exports = {
           } else {
             resolveTracks(suffix).then(result => {
               global.logger.trace(result)
-              if (result.tracks.length === 0) {
+              if (result.length === 0) {
                 global.i18n.send('LINK_NO_TRACK', msg.channel, {user: msg.author.username, url: suffix})
-              } else if (result.tracks.length === 1) {
-                hhMMss(result.tracks[0].info.length / 1000).then(time => {
-                  createPlayer(msg, result.tracks)
+              } else if (result.length === 1) {
+                hhMMss(result[0].info.length / 1000).then(time => {
+                  createPlayer(msg, result)
                   global.i18n.send('TRACK_ADDED', msg.channel, {
-                    title: result.tracks[0].info.title,
+                    title: result[0].info.title,
                     duration: time,
                     user: msg.author.username
                   })
                 })
               } else {
-                createPlayer(msg, result.tracks)
-                global.i18n.send('TRACKS_ADDED', msg.channel, {count: result.tracks.length, user: msg.author.username})
+                createPlayer(msg, result)
+                global.i18n.send('TRACKS_ADDED', msg.channel, {count: result.length, user: msg.author.username})
               }
             }).catch(global.logger.error)
           }
         } else {
           resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(result => {
             global.logger.trace(result)
-            if (result.tracks.length === 0) {
+            if (result.length === 0) {
               global.i18n.send('SEARCH_NO_TRACKS', msg.channel, {user: msg.author.mention})
             } else {
-              hhMMss(result.tracks[0].info.length / 1000).then(time => {
-                createPlayer(msg, [result.tracks[0]])
+              hhMMss(result[0].info.length / 1000).then(time => {
+                createPlayer(msg, [result[0]])
                 global.i18n.send('TRACK_ADDED', msg.channel, {
-                  title: result.tracks[0].info.title,
+                  title: result[0].info.title,
                   duration: time,
                   user: msg.author.username
                 })
