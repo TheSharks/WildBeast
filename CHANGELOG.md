@@ -7,6 +7,7 @@ For Docker images, uws is locked to v10.148.1
 Commands that call external APIs will now indicate errors    
 Music command have been updated to support lavalink v3   
 Added optional embedded database powered by LokiJS   
+Added new ffmpeg based voice encoder     
 `++meme` will no longer use imgflip, memegen is used instead   
 `++settings` will error out if an unknown language is being set    
 Encoders and drivers are loaded on-demand instead of requiring them all   
