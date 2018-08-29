@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-0.17.4, mkdocs-material-2.9.2">
+      <meta name="generator" content="mkdocs-1.0.3, mkdocs-material-3.0.3">
     
     
       
@@ -46,7 +46,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application.ba0fd1a6.css">
+      <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
       
       
     
@@ -98,7 +98,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#gotchas" tabindex="1" class="md-skip">
+      <a href="../#gotchas" tabindex="1" class="md-skip">
         Skip to content
       </a>
     
@@ -203,11 +203,11 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <span class="md-nav__button md-logo">
+    <a href="https://docs.thesharks.xyz" title="WildBeast Documentation" class="md-nav__button md-logo">
       
         <i class="md-icon"></i>
       
-    </span>
+    </a>
     WildBeast Documentation
   </label>
   
@@ -339,13 +339,6 @@
         <li class="md-nav__item">
   <a href="#settings-subcommands" title="Settings subcommands" class="md-nav__link">
     Settings subcommands
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#available-meme-types" title="Available meme types" class="md-nav__link">
-    Available meme types
   </a>
   
 </li>
@@ -509,13 +502,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#available-meme-types" title="Available meme types" class="md-nav__link">
-    Available meme types
-  </a>
-  
-</li>
-      
       
         <li class="md-nav__item">
           <a href="#__source" title="Source" class="md-nav__link md-nav__link--active">
@@ -563,14 +549,14 @@
 <p>Additional command information:</p>
 <p><a href="#addendums">Addendums</a><br>
 <a href="#tag-subcommands">Tag subcommands</a><br>
-<a href="#settings-subcommands">Settings subcommands</a><br>
-<a href="#available-meme-types">Available meme types</a></p>
+<a href="#settings-subcommands">Settings subcommands</a><br></p>
 <h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
 <div id="commands-table"></div>
 
 <h2 id="addendums">Addendums<a class="headerlink" href="#addendums" title="Permanent link">&para;</a></h2>
 <ol>
 <li>For the <strong>colorrole</strong> command, a hexadecimal value can be submitted in either <strong>#FFFFFF</strong> or <strong>FFFFFF</strong> format.</li>
+<li>You can get all the available meme types for the <strong>meme</strong> command by using the command <strong>meme templates</strong>.</li>
 <li>The <strong>softban</strong> command bans a user and then immediately unbans them, deleting their messages without barring future access to the server.</li>
 <li>The <strong>request</strong> command supports playing from the following resources: YouTube, SoundCloud, Bandcamp, Twitch, Vimeo, Mixer and raw HTML audio.</li>
 </ol>
@@ -625,7 +611,7 @@
 <p>The following settings can be edited with this command. All settings are server-specific and all subcommands inherit the permission level of the main command.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Languages are still WIP. Only the "en" language is supported at the moment.</p>
+<p>Translation support is in beta, please see the <a href="https://github.com/TheSharks/WildBeast/tree/master/src/languages">translation directory</a> for supported languages.</p>
 </div>
 <table>
 <thead>
@@ -660,170 +646,6 @@
 <td>reset</td>
 <td>Reset a setting to its default value.</td>
 <td>settings reset <strong>&lt;setting></strong></td>
-</tr>
-</tbody>
-</table>
-<h2 id="available-meme-types">Available meme types<a class="headerlink" href="#available-meme-types" title="Permanent link">&para;</a></h2>
-<p>The values in the <strong>Name</strong> column of the table below correspond to the relevant meme ID on <a href="https://api.imgflip.com/popular_meme_ids">https://api.imgflip.com/popular_meme_ids</a>.</p>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>ID</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>brace</td>
-<td>61546</td>
-</tr>
-<tr>
-<td>mostinteresting</td>
-<td>61532</td>
-</tr>
-<tr>
-<td>fry</td>
-<td>61520</td>
-</tr>
-<tr>
-<td>onedoesnot</td>
-<td>61579</td>
-</tr>
-<tr>
-<td>yuno</td>
-<td>61527</td>
-</tr>
-<tr>
-<td>success</td>
-<td>61544</td>
-</tr>
-<tr>
-<td>allthethings</td>
-<td>61533</td>
-</tr>
-<tr>
-<td>doge</td>
-<td>8072285</td>
-</tr>
-<tr>
-<td>drevil</td>
-<td>40945639</td>
-</tr>
-<tr>
-<td>skeptical</td>
-<td>101711</td>
-</tr>
-<tr>
-<td>notime</td>
-<td>442575</td>
-</tr>
-<tr>
-<td>yodawg</td>
-<td>101716</td>
-</tr>
-<tr>
-<td>ermahgerd</td>
-<td>101462</td>
-</tr>
-<tr>
-<td>hipsterariel</td>
-<td>86601</td>
-</tr>
-<tr>
-<td>imagination</td>
-<td>163573</td>
-</tr>
-<tr>
-<td>grumpycat</td>
-<td>405658</td>
-</tr>
-<tr>
-<td>morpheus</td>
-<td>100947</td>
-</tr>
-<tr>
-<td>1stworldproblems</td>
-<td>61539</td>
-</tr>
-<tr>
-<td>facepalm</td>
-<td>1509839</td>
-</tr>
-<tr>
-<td>wtf</td>
-<td>245898</td>
-</tr>
-<tr>
-<td>batmanslaprobin</td>
-<td>438680</td>
-</tr>
-<tr>
-<td>takemymoney</td>
-<td>176908</td>
-</tr>
-<tr>
-<td>gollum</td>
-<td>681831</td>
-</tr>
-<tr>
-<td>grindmygears</td>
-<td>356615</td>
-</tr>
-<tr>
-<td>consuela</td>
-<td>160583</td>
-</tr>
-<tr>
-<td>ineedyouto</td>
-<td>89655</td>
-</tr>
-<tr>
-<td>chucknorrisapproves</td>
-<td>241304</td>
-</tr>
-<tr>
-<td>asianfather</td>
-<td>61559</td>
-</tr>
-<tr>
-<td>foreveralone</td>
-<td>61528</td>
-</tr>
-<tr>
-<td>grandmainternet</td>
-<td>61556</td>
-</tr>
-<tr>
-<td>zoidberg</td>
-<td>61573</td>
-</tr>
-<tr>
-<td>troll</td>
-<td>101484</td>
-</tr>
-<tr>
-<td>familyguybrian</td>
-<td>674967</td>
-</tr>
-<tr>
-<td>obama</td>
-<td>185239</td>
-</tr>
-<tr>
-<td>badluckbrian</td>
-<td>61585</td>
-</tr>
-<tr>
-<td>philosoraptor</td>
-<td>61516</td>
-</tr>
-<tr>
-<td>3rdworldsuccess</td>
-<td>101287</td>
-</tr>
-<tr>
-<td>ancientaliens</td>
-<td>101470</td>
 </tr>
 </tbody>
 </table>
@@ -920,9 +742,9 @@
       
     </div>
     
-      <script src="../assets/javascripts/application.a59e2a89.js"></script>
+      <script src="../assets/javascripts/application.583bbe55.js"></script>
       
-      <script>app.initialize({version:"0.17.4",url:{base:".."}})</script>
+      <script>app.initialize({version:"1.0.3",url:{base:".."}})</script>
       
         <script src="../js/dist/commands.js"></script>
       
