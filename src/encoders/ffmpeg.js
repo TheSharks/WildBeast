@@ -52,7 +52,7 @@ module.exports = {
   skip: async (msg) => {
     guildInfo[msg.channel.guild.id].tracks.shift()
     guildInfo[msg.channel.guild.id].skips = []
-    module.exports.getPlayer(msg.channel).then(p => {p.stopPlaying()})
+    module.exports.getPlayer(msg.channel).then(p => p.stopPlaying())
     if (guildInfo[msg.channel.guild.id].paused === true) guildInfo[msg.channel.guild.id].paused = false
   },
   stop: async (msg) => {
@@ -141,7 +141,6 @@ module.exports = {
       } else {
         if (!process.env.WILDBEAST_VOICE_PERSIST) {
           global.i18n.send('QUEUE_END', global.bot.guilds.get(player.id).channels.find(c => c.id === guildInfo[player.id].textChan))
-          let player = await global.bot.voiceConnections.get(player.id)
           global.bot.leaveVoiceChannel(player.channelID)
           guildInfo[player.id] = undefined
         } else {

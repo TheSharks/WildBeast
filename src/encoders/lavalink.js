@@ -111,7 +111,7 @@ module.exports = {
     })
   },
   getTimestamp: async (guild) => {
-    return await module.exports.getPlayer(guild).then(p => p.getTimestamp())
+    return module.exports.getPlayer(guild).then(p => p.getTimestamp())
   },
   hhMMss: async (time) => {
     if (time || !isNaN(time)) {
