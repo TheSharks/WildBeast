@@ -65,9 +65,11 @@ module.exports = {
     return (result.body.tracks)
   },
   addTracks: async (msg, tracks) => {
-    if (guildInfo[msg.channel.guild.id] !== undefined && guildInfo[msg.channel.guild.id].tracks.length <= 0) {
-      let player = await global.bot.voiceConnections.get(msg.channel.guild.id)
-      player.play(tracks[0].track)
+    if (guildInfo[msg.channel.guild.id] !== undefined) {
+      if (guildInfo[msg.channel.guild.id].tracks.length <= 0) {
+        let player = await global.bot.voiceConnections.get(msg.channel.guild.id)
+        player.play(tracks[0].track)
+      }
       for (let track of tracks) {
         track.requester = msg.author.id
         guildInfo[msg.channel.guild.id].tracks.push(track)
