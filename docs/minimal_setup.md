@@ -45,6 +45,9 @@ Uncomment[^1] the following values and edit them as follows.
 - **WILDBEAST_PREFERRED_DATABASE**: Set to "lokijs"
 - **WILDBEAST_PREFERRED_ENCODER**: Set to "ffmpeg"
 
+!!! tip
+    Check out further instructions on recommended environment settings [here](install_windows.md#configuration).
+
 When done, save the file as **.env**.
 
 !!! warning
