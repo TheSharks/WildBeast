@@ -54,7 +54,7 @@ Before you run the following commands, make sure that all WildBeast-related cont
 sudo docker rm wildbeast_arango_1
 sudo docker rm wildbeast_lavalink_1
 # Check that the image versions are correct via 'sudo docker images'
-# Also remember to ensure that the ports you're exposing (Format is DOCKER_PORT:PUBLISHED_PORT) are available
+# Also remember to ensure that the ports you're exposing (Format is DOCKER_PORT:EXPOSED_PORT) are available
 sudo docker run -d --env-file arangodb.env --name wildbeast_arango_1 -p 8529:8529 arangodb:3.3.14
 sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p 2333:2333 -p 80:80 fredboat/lavalink:v3
 ```

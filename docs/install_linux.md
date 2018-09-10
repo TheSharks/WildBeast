@@ -8,15 +8,15 @@ This guide will detail how to install and setup WildBeast on Linux.
 ## Prerequisites
 
 - Linux system
-	-  OS: Docker officially supports [these distributions](https://store.docker.com/search?type=edition&offering=community&operating_system=linux), but others may be used as well
-  -  Sudo privileges on the server
-- You will also need a text editor. For command-line you may use Nano, Vim etc. while standalone editors like Visual Studio Code, Atom and Brackets are fine for systems with a desktop environment installed.
+	  -  OS: Docker officially supports [these distributions](https://store.docker.com/search?type=edition&offering=community&operating_system=linux), but others may be used as well
+    -  Root privileges (Sudo)
+- [Git](https://git-scm.com/download/linux)
+- [Node.js version 8 or above](https://nodejs.org/en/download/current/)
+- A text editor. For command-line you may use Nano, Vim etc. while standalone editors like Visual Studio Code, Atom and Brackets are fine for systems with a desktop environment installed.
 
 ## Installation
 
 You will need to install Docker and Docker Compose to use WildBeast. Find the guide for your distribution [here (Docker)](https://store.docker.com/search?type=edition&offering=community&operating_system=linux) and [here (Compose)](https://docs.docker.com/compose/install). For other distributions, you may use your own resources.
-
-You will also need Git for downloading WildBeast. Git is available on most distribution-specific package managers. Refer to an instruction manual for your distribution for installation instructions.
 
 Complete the appropriate installation procedure and verify Docker is functional before proceeding.
 

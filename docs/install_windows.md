@@ -11,20 +11,20 @@ This guide will detail how to install and setup WildBeast on Windows.
     - Minimum: Windows 10 Home 64-bit (Additional dependencies required)
     - Recommended: Windows 10 Professional or Enterprise 64-bit
     - Administrator access
-- You will also need a text editor other than Windows Notepad. Notepad++, Visual Studio Code or any of the sort will suffice.
+- [Node.js version 8 or above](https://nodejs.org/en/download/current/)
+- A text editor other than Windows Notepad. Notepad++, Visual Studio Code or any of the sort will suffice.
 
 ## Installation
 
 !!! warning "Note about Windows 10 Home"
     Windows 10 Home lacks native virtualisation support, namely Hyper-V, which is used by Docker. Before you read on, find out your edition of Windows from either the Settings app (**Settings\System\About**) or the Control Panel (**Control Panel\System and Security\System**).
-    
 
 ### Installing Docker
 
 You will need to install Docker Community Edition and Kitematic to use WildBeast. Depending on your operating system, the procedure will slightly differ.
 
-  - If you are using W10 Professional or Enterprise, follow the instructions to install [Docker on Windows](https://docs.docker.com/docker-for-windows/install) and [Kitematic](https://github.com/docker/kitematic#installing-kitematic).
-  - If you are using W10 Home, follow the instructions to install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows).
+- If you are using W10 Professional or Enterprise, follow the instructions to install [Docker on Windows](https://docs.docker.com/docker-for-windows/install) and [Kitematic](https://github.com/docker/kitematic#installing-kitematic).
+- If you are using W10 Home, follow the instructions to install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows).
 
 Complete the appropriate installation procedure and verify Docker is functional before proceeding.
 
