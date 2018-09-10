@@ -1,7 +1,7 @@
-const db = require('arangojs')(process.env['ARANGO_URI'] || 'http://localhost:8529')
+const db = require('arangojs')(process.env.ARANGO_URI || 'http://localhost:8529')
 
-db.useDatabase(process.env['ARANGO_DATABASE'] || 'wildbeast')
-db.useBasicAuth(process.env['ARANGO_USERNAME'], process.env['ARANGO_PASSWORD'])
+db.useDatabase(process.env.ARANGO_DATABASE || 'wildbeast')
+db.useBasicAuth(process.env.ARANGO_USERNAME, process.env.ARANGO_PASSWORD)
 
 module.exports = {
   getGuildData: (guild) => {

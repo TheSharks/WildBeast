@@ -54,7 +54,7 @@ module.exports = {
             tag: parts[1]
           })
         } else {
-          if (tag.owner !== msg.author.id && !process.env['WILDBEAST_MASTERS'].split('|').includes(msg.author.id)) {
+          if (tag.owner !== msg.author.id && !process.env.WILDBEAST_MASTERS.split('|').includes(msg.author.id)) {
             return global.i18n.send('TAG_NOT_OWNED', msg.channel)
           }
           const content = parts.slice(2).join(' ')
@@ -89,7 +89,7 @@ module.exports = {
             tag: parts[1]
           })
         }
-        if (tag.owner !== msg.author.id && !process.env['WILDBEAST_MASTERS'].split('|').includes(msg.author.id)) {
+        if (tag.owner !== msg.author.id && !process.env.WILDBEAST_MASTERS.split('|').includes(msg.author.id)) {
           return global.i18n.send('TAG_NOT_OWNED', msg.channel)
         }
         await driver.delete('tags', parts.slice(1).join(' '))

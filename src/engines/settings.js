@@ -7,7 +7,7 @@ module.exports = {
     let settings = await driver.getSettings(guild)
     if (settings.prefix) return settings.prefix
     else {
-      if (process.env['BOT_PREFIX']) return process.env['BOT_PREFIX']
+      if (process.env.BOT_PREFIX) return process.env.BOT_PREFIX
       global.logger.error('No prefix defined! WildBeast will now exit...', true)
     }
   },
