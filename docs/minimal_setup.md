@@ -10,7 +10,7 @@ This document outlines the procedure for running WildBeast with as few external 
 This way of running WildBeast is intended for a very specific niche, and the program makes compromises to fill that niche. If only possible, it's preferable to use the Docker-based setup procedure instead as the gains are notable. See other documentation in this category if that is what you seek.
 
 !!! note
-    **This procedure will not enable you to run WildBeast with zero external dependencies** - FFMPEG still has to be installed separately for audio encoding. You can, however, omit installing FFMPEG and set the **WILDBEAST_DISABLE_MUSIC** environment variable to **1**. This will limit the bot's functionality, but also requires no additional dependency setup.
+    **This procedure will not allow you to run WildBeast with zero external dependencies** - FFMPEG still has to be installed separately for audio encoding. You can, however, omit installing FFMPEG and set the **WILDBEAST_DISABLE_MUSIC** environment variable to **1**. This will limit the bot's functionality, but also requires no additional dependency setup.
 
 Installing in this way has the following caveats:
 
