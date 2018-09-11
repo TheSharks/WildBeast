@@ -3,7 +3,8 @@ services:
   wildbeast:
     image: dougley/wildbeast
     volumes:
-      - .:/opt/wildbeast
+      - ./src:/opt/wildbeast/src
+      - ./index.js:/opt/wildbeast/index.js
     env_file:
       - .env
     links:
