@@ -1,5 +1,11 @@
 # 6.0.0
 ## Release phase
+### 6.1.1
+Revised documentation    
+Stylistic changes    
+`docker-compose.yml` edited to build images instead of pulling them from Docker hub    
+`docker-compose.yml` edited to update backend services    
+
 ### 6.1.0
 Removed translation submodule, we now include the standard file by default. Translations are able to be downloaded from our crowdin project     
 CircleCI will now automatically include translations into new Docker images   
