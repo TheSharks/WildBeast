@@ -159,6 +159,8 @@ workflows:
           filters:
             branches:
               only: /master|experimental/
+            tags:
+              only: /v.+/
       - sentry-association:
           requires:
             - test
