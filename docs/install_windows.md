@@ -11,20 +11,20 @@ This guide will detail how to install and setup WildBeast on Windows.
     - Minimum: Windows 10 Home 64-bit (Additional dependencies required)
     - Recommended: Windows 10 Professional or Enterprise 64-bit
     - Administrator access
-- You will also need a text editor other than Windows Notepad. Notepad++, Visual Studio Code or any of the sort will suffice.
+- [Node.js version 8 or above](https://nodejs.org/en/download/current/)
+- A text editor other than Windows Notepad. Notepad++, Visual Studio Code or any of the sort will suffice.
 
 ## Installation
 
 !!! warning "Note about Windows 10 Home"
     Windows 10 Home lacks native virtualisation support, namely Hyper-V, which is used by Docker. Before you read on, find out your edition of Windows from either the Settings app (**Settings\System\About**) or the Control Panel (**Control Panel\System and Security\System**).
-    
 
 ### Installing Docker
 
 You will need to install Docker Community Edition and Kitematic to use WildBeast. Depending on your operating system, the procedure will slightly differ.
 
-  - If you are using W10 Professional or Enterprise, follow the instructions to install [Docker on Windows](https://docs.docker.com/docker-for-windows/install) and [Kitematic](https://github.com/docker/kitematic#installing-kitematic).
-  - If you are using W10 Home, follow the instructions to install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows).
+- If you are using W10 Professional or Enterprise, follow the instructions to install [Docker on Windows](https://docs.docker.com/docker-for-windows/install) and [Kitematic](https://github.com/docker/kitematic#installing-kitematic).
+- If you are using W10 Home, follow the instructions to install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows).
 
 Complete the appropriate installation procedure and verify Docker is functional before proceeding.
 
@@ -96,13 +96,14 @@ Here is a list of environment variables we recommend you define or at least cons
 | IMGUR_KEY | Imgur API key.[^2] | randommeme | String |
 | TWITCH_ID | Twitch client ID.[^3] | twitch | String |
 | WILDBEAST_VOICE_PERSIST | Prevent the bot from automatically leaving a voice channel after a playlist has ended. | Music | Number (0/1)[^4] |
-| WILDBEAT_DISABLE_MUSIC | Prevent all music functionality from being used. | Music | Number (0/1)[^4] |
+| WILDBEAST_DISABLE_MUSIC | Prevent all music functionality from being used. | Music | Number (0/1)[^4] |
 | WILDBEAST_LANGUAGE | Set the language of the bot. Currently only English is available. | All | String |
+| WILDBEAST_SUPPRESS_COMMANDLOG | Do not log command execution traces to the console. | All | Number (0/1)[^4] |
 
 !!! tip
     There are more environment variables that can be defined as well. You can find the full reference in [.env.example](https://github.com/TheSharks/WildBeast/blob/master/.env.example).
     
-    However, we do not recommend editing variables in the **Internal configuration** section lest you know what you're doing. These variables exist for development and/or internal purposes and can have unintended side effects if messed with.
+    However, editing variables in the **Internal configuration** section is not recommended lest you know what you're doing. These variables exist for development and/or internal purposes and can have unintended side effects if tampered without a proper understanding of the software.
 
 ## Running the bot
 

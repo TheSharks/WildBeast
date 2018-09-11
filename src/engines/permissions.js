@@ -1,5 +1,5 @@
 const driver = require('../internal/database-selector')
-const masters = process.env['WILDBEAST_MASTERS'].split('|')
+const masters = process.env.WILDBEAST_MASTERS.split('|')
 
 module.exports = {
   calculate: (guild, member, required) => {

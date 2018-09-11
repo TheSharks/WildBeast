@@ -7,8 +7,8 @@ const tables = [
   'system' // misc things
 ]
 
-const driver = require('arangojs')(process.env['ARANGO_URI'] || 'http://localhost:8529')
-driver.useBasicAuth(process.env['ARANGO_USERNAME'], process.env['ARANGO_PASSWORD'])
+const driver = require('arangojs')(process.env.ARANGO_URI || 'http://localhost:8529')
+driver.useBasicAuth(process.env.ARANGO_USERNAME || 'root', process.env.ARANGO_PASSWORD, '')
 
 if (process.env.WILDBEAST_PREFERRED_DATABASE && process.env.WILDBEAST_PREFERRED_DATABASE !== 'arangodb') {
   console.error(`This script will only work on ArangoDB, not on your requested driver, ${process.env.WILDBEAST_PREFERRED_DATABASE}`)

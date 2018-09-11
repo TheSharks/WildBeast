@@ -7,7 +7,7 @@ const engines = {
   timeout: require('../engines/timeouts'),
   blockade: require('../engines/blockade')
 }
-const masters = process.env['WILDBEAST_MASTERS'].split('|')
+const masters = process.env.WILDBEAST_MASTERS.split('|')
 
 module.exports = async (ctx) => {
   const msg = ctx[0]

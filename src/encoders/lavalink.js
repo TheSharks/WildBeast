@@ -1,9 +1,8 @@
 const superagent = require('superagent')
-const nodes = process.env['LAVA_NODES'] ? JSON.parse(process.env['LAVA_NODES']) : [{
+const nodes = process.env.LAVA_NODES ? JSON.parse(process.env.LAVA_NODES) : [{
   host: 'localhost',
-  port: 9090,
+  port: 80,
   region: 'us',
-  reconnectTimeout: 10000,
   password: 'password'
 }]
 const guildInfo = {}
@@ -51,7 +50,7 @@ module.exports = {
   },
   resolveTracks: async (search) => {
     try {
-      var result = await superagent.get(`http://${nodes[0].host}:2333/loadtracks?identifier=${search}`)
+      var result = await superagent.get(`http://${nodes[0].host}:${process.env.LAVA_REST_PORT || '2333'}/loadtracks?identifier=${search}`)
         .set('Authorization', nodes[0].password)
         .set('Accept', 'application/json')
     } catch (err) {

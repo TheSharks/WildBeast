@@ -12,7 +12,7 @@ services:
       - lavalink
       - install
   arango:
-    image: arangodb:3.3.10
+    image: arangodb:3.3.14
     env_file:
       - arangodb.env
   install:
@@ -26,6 +26,6 @@ services:
       - arango
     command: npm run-script dbcreate
   lavalink:
-    image: fredboat/lavalink:v2
+    image: fredboat/lavalink:v3
     env_file:
       - lavalink.env

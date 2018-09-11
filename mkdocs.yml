@@ -21,6 +21,7 @@ pages:
     - Windows installation: 'install_windows.md'
     - Linux installation: 'install_linux.md'
     - Decoupling from Docker: 'decoupling.md'
+    - Minimal setup: 'minimal_setup.md'
 
 theme: 'material'
 

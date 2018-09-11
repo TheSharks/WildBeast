@@ -15,7 +15,7 @@ module.exports = {
         str = str.substr(0, 1897)
         str = str + '...'
       }
-      str = str.replace(new RegExp(process.env['BOT_TOKEN'], 'gi'), '( ͡° ͜ʖ ͡°)')
+      str = str.replace(new RegExp(process.env.BOT_TOKEN, 'gi'), '( ͡° ͜ʖ ͡°)')
       msg.channel.createMessage('```js\n' + str + '\n```').then((ms) => {
         if (returned !== undefined && returned !== null && typeof returned.then === 'function') {
           returned.then(() => {

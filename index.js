@@ -14,7 +14,7 @@ const Events = require('./src/internal/directory-loader')('./src/events')
 const stats = require('./src/internal/dogstats')
 require('./src/internal/rancher-autoscale').then(x => {
   global.logger.log(`Scaling known. Total: ${x.total}, mine: ${x.mine}`)
-  const bot = new Eris(process.env['BOT_TOKEN'], {
+  const bot = new Eris(process.env.BOT_TOKEN, {
     restMode: true,
     maxShards: x.total,
     firstShardID: x.mine,
