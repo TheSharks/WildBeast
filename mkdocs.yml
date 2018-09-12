@@ -10,7 +10,7 @@ edit_uri: edit/master/docs/
 
 copyright: 'Copyright © 2016-2018 TheSharks. "Discord", "Discord App", and any associated logos are registered trademarks of Hammer & Chisel, inc.'
 
-pages:
+nav:
   - Home: 'index.md'
   - Migrating v4 => v6: migrating.md
   - Commands:

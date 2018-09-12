@@ -116,6 +116,14 @@ Your WildBeast instance should now be good to go. Start both the **wildbeast_ara
 
 You can test the bot by running the **ping** command (With your prefix) in a text channel that the bot can see. If it answers "Pong!", then your bot is set up.
 
+## Making changes
+
+If you feel up for some tinkering, you're free to make modifications to the source code. When you have made your changes and want to deploy them, simply restart the **wildbeast_wildbeast_1** container in Kitematic. The changes you made will then be reflected in the public facing bot.
+
+**Note:** You make changes to the source code at your own risk and responsibility. Support will not be provided for issues that stem from modifying the source code improperly. In other words, issues that are not our responsibility cannot be remedied by us either.
+
+## Closing words
+
 If you have further questions or need help with something, we'd be happy to help. You can find a link to the official server below.
 
 **Enjoy your bot and have fun!**

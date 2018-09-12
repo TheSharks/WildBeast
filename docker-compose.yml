@@ -1,7 +1,10 @@
 version: '3'
 services:
   wildbeast:
-    build: .
+    image: dougley/wildbeast
+    volumes:
+      - ./src:/opt/wildbeast/src
+      - ./index.js:/opt/wildbeast/index.js
     env_file:
       - .env
     links:
