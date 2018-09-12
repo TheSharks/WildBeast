@@ -3,15 +3,17 @@ description: Instructions on running WildBeast from source instead of from Docke
 path: tree/master/docs
 source: decoupling.md
 
-This document outlines the procedure for decoupling WildBeast from Docker and running it from source instead, enabling custom commands and other modifications to the behaviour of it.
+This document outlines the procedure for decoupling WildBeast from Docker, allowing the entire system to be leveraged as opposed to a Docker sandbox.
 
 ## Preface
 
-If you have already set up your WildBeast instance in accordance with the available installation guides, feel free to jump to the next section. If you have not done this yet, however, please follow through with that procedure before embarking onto this guide. Most of the steps assume knowledge of what has been done previously, and as such it is highly recommended to follow proper procedure first.
+If you have already set up your WildBeast instance in accordance with the available installation guides, feel free to jump to the next section. If you have not done this yet, however, please follow through with that procedure before embarking onto this guide.
 
-Additionally, be sure to shutdown all existing Docker containers pertaining to WildBeast before proceeding.
+Additionally, consider whether you need to go through the decoupling process to begin with. The Docker container for WildBeast runs the code that is in the WildBeast directory, and when the container is restarted, the changes are mirrored. However, if you want to use something akin to live reloading (Such as Nodemon) or have other valid reasons, feel free to proceed.
 
 ## Reconfiguring containers and WildBeast
+
+Shutdown all existing Docker containers pertaining to WildBeast before starting.
 
 !!! warning "Port conflicts"
     If you have other services running on ports **8529**, **80** or **2333**, select other available ports in the sections below and update your configuration accordingly. This is to avoid port conflicts. However, **do not modify the Docker port** in contradiction to this guide, or you will have trouble reaching the containers in the desired manner.
