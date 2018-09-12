@@ -25,8 +25,7 @@ First, open the **.env** configuration file in the directory to which you instal
 
 ```bash
 ARANGO_URI=http://localhost:8529
-LAVA_NODES=[{"host":"localhost","port":80,"region":"us","password":"password"}]
-LAVA_REST_PORT=2333
+LAVA_NODES=[{"host":"localhost","port":80,"restPort":2333,"region":"us","password":"password"}]
 ```
 
 ### Windows

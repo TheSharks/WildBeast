@@ -4,7 +4,7 @@
 Stylistic changes    
 Corrected documentation on decoupling to correctly expose both ports of Lavalink. Internal changes to reduce the quirks with this process    
 Updated `docker-compose.yml` to allow updating of the WildBeast source code without decoupling
-Added non-breaking `LAVA_REST_PORT` environment variable
+Added `restPort` property to Lavalink node configuration
 Upgraded Lavalink to v3 and ArangoDB to 3.3.14
 
 ### 6.1.0
