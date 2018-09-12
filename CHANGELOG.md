@@ -1,10 +1,11 @@
 # 6.0.0
 ## Release phase
 ### 6.1.1
-Revised documentation    
 Stylistic changes    
-`docker-compose.yml` edited to build images instead of pulling them from Docker hub    
-`docker-compose.yml` edited to update backend services    
+Corrected documentation on decoupling to correctly expose both ports of Lavalink. Internal changes to reduce the quirks with this process    
+Updated `docker-compose.yml` to allow updating of the WildBeast source code without decoupling
+Added non-breaking `LAVA_REST_PORT` environment variable
+Upgraded Lavalink to v3 and ArangoDB to 3.3.14
 
 ### 6.1.0
 Removed translation submodule, we now include the standard file by default. Translations are able to be downloaded from our crowdin project     
