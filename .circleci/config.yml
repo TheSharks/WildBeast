@@ -82,6 +82,9 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - run:
+          name: Git
+          command: apk add --update git
+      - run:
           name: Merge translations
           command: cp -rf /tmp/workspace/src/languages/ ~/project/src/
       - setup_remote_docker
