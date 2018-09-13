@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.0.3, mkdocs-material-3.0.3">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-3.0.4">
     
     
       
@@ -54,8 +54,8 @@
       <script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
     
     
-      <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
       
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
         <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
       
@@ -450,6 +450,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../minimal_setup/" title="Minimal setup" class="md-nav__link">
+      Minimal setup
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -541,18 +553,23 @@
                 
                   <h1>Decoupling from Docker</h1>
                 
-                <p>This document outlines the procedure for decoupling WildBeast from Docker and running it from source instead, enabling custom commands and other modifications to the behaviour of it.</p>
+                <p>This document outlines the procedure for decoupling WildBeast from Docker, allowing the entire system to be leveraged as opposed to a Docker sandbox.</p>
 <h2 id="preface">Preface<a class="headerlink" href="#preface" title="Permanent link">&para;</a></h2>
-<p>If you have already set up your WildBeast instance in accordance with the available installation guides, feel free to jump to the next section. If you have not done this yet, however, please follow through with that procedure before embarking onto this guide. Most of the steps assume knowledge of what has been done previously, and as such it is highly recommended to follow proper procedure first.</p>
-<p>Additionally, be sure to shutdown all existing Docker containers pertaining to WildBeast before proceeding.</p>
+<p>If you have already set up your WildBeast instance in accordance with the available installation guides, feel free to jump to the next section. If you have not done this yet, however, please follow through with that procedure before embarking onto this guide.</p>
+<p>Additionally, consider whether you need to go through the decoupling process to begin with. The Docker container for WildBeast runs the code that is in the WildBeast directory, and when the container is restarted, the changes are mirrored. However, if you want to use something akin to live reloading (Such as Nodemon) or have other valid reasons, feel free to proceed.</p>
 <h2 id="reconfiguring-containers-and-wildbeast">Reconfiguring containers and WildBeast<a class="headerlink" href="#reconfiguring-containers-and-wildbeast" title="Permanent link">&para;</a></h2>
+<p>Shutdown all existing Docker containers pertaining to WildBeast before starting.</p>
 <div class="admonition warning">
 <p class="admonition-title">Port conflicts</p>
-<p>If you have other services running on ports <strong>8529</strong> or <strong>2333</strong>, select different ports for the sections below. You may encounter errors or conflicts otherwise. However, <strong>do not modify the Docker port</strong> in contradiction to the guide, or you will have trouble reaching the containers in the desired manner.</p>
+<p>If you have other services running on ports <strong>8529</strong>, <strong>80</strong> or <strong>2333</strong>, select other available ports in the sections below and update your configuration accordingly. This is to avoid port conflicts. However, <strong>do not modify the Docker port</strong> in contradiction to this guide, or you will have trouble reaching the containers in the desired manner.</p>
+</div>
+<div class="admonition bug">
+<p class="admonition-title">Exceptions for Docker Toolbox</p>
+<p>If you're using Docker Toolbox, the hostname for a service will not be <strong>localhost</strong>. Due to how Docker Toolbox handles networking, the hostname will be an IPv4 address, such as <strong>192.168.99.100</strong>. In this case, this address must be used instead. The IP can be found by going to Kitematic and checking the <strong>Hostname / Ports</strong> section of any container.</p>
 </div>
 <p>First, open the <strong>.env</strong> configuration file in the directory to which you installed the WildBeast source code, and tweak these values as follows:</p>
-<div class="codehilite"><pre><span></span><span class="nv">LAVA_NODES</span><span class="o">=[{</span><span class="s2">&quot;host&quot;</span>:<span class="s2">&quot;localhost&quot;</span>,<span class="s2">&quot;port&quot;</span>:2333,<span class="s2">&quot;region&quot;</span>:<span class="s2">&quot;us&quot;</span>,<span class="s2">&quot;password&quot;</span>:<span class="s2">&quot;password&quot;</span><span class="o">}]</span>
-<span class="nv">ARANGO_URI</span><span class="o">=</span>http://localhost:8529
+<div class="codehilite"><pre><span></span><span class="nv">ARANGO_URI</span><span class="o">=</span>http://localhost:8529
+<span class="nv">LAVA_NODES</span><span class="o">=[{</span><span class="s2">&quot;host&quot;</span>:<span class="s2">&quot;localhost&quot;</span>,<span class="s2">&quot;port&quot;</span>:80,<span class="s2">&quot;restPort&quot;</span>:2333,<span class="s2">&quot;region&quot;</span>:<span class="s2">&quot;us&quot;</span>,<span class="s2">&quot;password&quot;</span>:<span class="s2">&quot;password&quot;</span><span class="o">}]</span>
 </pre></div>
 
 
@@ -562,19 +579,20 @@
 <p>Then hit Save. The container will now self-start. Proceed to the <strong>Hostname / Ports</strong> tab of the <strong>wildbeast_lavalink_1</strong> container and edit the same values as previously as follows.</p>
 <p><img alt="Lavalink container settings" src="../img/lava-container-settings.png" /></p>
 <p>And then hit Save as mentioned previously, which will self-start the container.</p>
-<p>You may also remove the <strong>wildbeast_install_1</strong> and <strong>wildbeast_wildbeast_1</strong> containers if you do not need them anymore. In future WildBeast will run from the source code as opposed to these images, which makes them redundant.</p>
+<p>You may also remove the <strong>wildbeast_install_1</strong> and <strong>wildbeast_wildbeast_1</strong> containers at this stage. In future WildBeast will run from the source code as opposed to these images, which makes them redundant.</p>
 <h3 id="linux">Linux<a class="headerlink" href="#linux" title="Permanent link">&para;</a></h3>
 <div class="admonition danger">
 <p class="admonition-title">Risk of data loss</p>
-<p>Due to how Docker works on Linux, the containers created in the installation need to be removed and recreated before their networking can be altered. If you have substantial amounts of data in your database, consult relevant documentation on how to migrate your data - for instance <a href="https://medium.com/@gchudnov/copying-data-between-docker-containers-26890935da3f">this article</a>.</p>
+<p>Due to how Docker works on Linux, the containers created in the installation need to be removed and recreated before their networking can be altered. If you have substantial amounts of data in your database, consult relevant documentation on how to migrate your data, i.e. <a href="https://medium.com/@gchudnov/copying-data-between-docker-containers-26890935da3f">this article</a>.</p>
 </div>
 <p>For this section, you need to browse to the WildBeast source code directory.</p>
 <p>Before you run the following commands, make sure that all WildBeast-related containers have been turned off. This can be checked by running <code class="codehilite">sudo docker ps</code>, and if the output contains no WildBeast-related containers, you're ready to go. Otherwise shut them down and then proceed.</p>
 <div class="codehilite"><pre><span></span>sudo docker rm wildbeast_arango_1
 sudo docker rm wildbeast_lavalink_1
-<span class="c1"># Check that the ArangoDB version is the correct one via &#39;docker images&#39;</span>
-sudo docker run -d --env-file arangodb.env --name wildbeast_arango_1 -p <span class="m">8529</span>:8529 arangodb:3.3.10
-sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span class="m">2333</span>:80 fredboat/lavalink:v2
+<span class="c1"># Check that the image versions are correct via &#39;sudo docker images&#39;</span>
+<span class="c1"># Also remember to ensure that the ports you&#39;re exposing (Format is DOCKER_PORT:EXPOSED_PORT) are available</span>
+sudo docker run -d --env-file arangodb.env --name wildbeast_arango_1 -p <span class="m">8529</span>:8529 arangodb:3.3.14
+sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span class="m">2333</span>:2333 -p <span class="m">80</span>:80 fredboat/lavalink:v3
 </pre></div>
 
 
@@ -584,7 +602,7 @@ sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span 
 <p><img alt="Source startup" src="../img/source-startup.png" /></p>
 <div class="admonition danger">
 <p class="admonition-title">Security considerations</p>
-<p>With these steps, the ArangoDB and Lavalink instances are exposed to the local network. They are not exposed to the internet, which increases safety somewhat, but you should still take steps to secure at least your ArangoDB instance against unauthorised access. This can be accomplished by creating a non-root user in the ArangoDB web interface and enabling authentication for the database engine. Refer to relevant documentation on how to do this.</p>
+<p>With these steps, the ArangoDB and Lavalink instances are exposed to the local network. They are not exposed to the internet, which increases safety somewhat, but you should still take steps to secure at least your ArangoDB instance against unauthorised access. This can be accomplished by creating a non-root user in the ArangoDB web interface and enabling authentication for the database engine. Refer to instructions such as <a href="https://docs.arangodb.com/3.4/Manual/Security/">this document</a> for further information.</p>
 </div>
 <p>Now you can start making modifications to the code and adding custom commands which will be useable to your end users.</p>
 <p>Do bear in mind that the application process is not backgrounded unlike with Docker, so you may want to look into a process manager/orchestrator like <a href="https://pm2.keymetrics.io">PM2</a> to keep the process running even if you close your terminal session.</p>
@@ -634,6 +652,20 @@ sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span 
           </a>
         
         
+          <a href="../minimal_setup/" title="Minimal setup" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Minimal setup
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
       </nav>
     </div>
   
@@ -669,7 +701,7 @@ sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span 
     
       <script src="../assets/javascripts/application.583bbe55.js"></script>
       
-      <script>app.initialize({version:"1.0.3",url:{base:".."}})</script>
+      <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
       
         <script src="../js/dist/commands.js"></script>
       

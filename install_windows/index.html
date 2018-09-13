@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.0.3, mkdocs-material-3.0.3">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-3.0.4">
     
     
       
@@ -54,8 +54,8 @@
       <script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
     
     
-      <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
       
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
         <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
       
@@ -430,6 +430,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#making-changes" title="Making changes" class="md-nav__link">
+    Making changes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#closing-words" title="Closing words" class="md-nav__link">
+    Closing words
+  </a>
+  
+</li>
+      
       
         <li class="md-nav__item">
           <a href="#__source" title="Source" class="md-nav__link md-nav__link--active">
@@ -467,6 +481,18 @@
   <li class="md-nav__item">
     <a href="../decoupling/" title="Decoupling from Docker" class="md-nav__link">
       Decoupling from Docker
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../minimal_setup/" title="Minimal setup" class="md-nav__link">
+      Minimal setup
     </a>
   </li>
 
@@ -556,6 +582,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#making-changes" title="Making changes" class="md-nav__link">
+    Making changes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#closing-words" title="Closing words" class="md-nav__link">
+    Closing words
+  </a>
+  
+</li>
+      
       
         <li class="md-nav__item">
           <a href="#__source" title="Source" class="md-nav__link md-nav__link--active">
@@ -592,7 +632,8 @@
 <li>Administrator access</li>
 </ul>
 </li>
-<li>You will also need a text editor other than Windows Notepad. Notepad++, Visual Studio Code or any of the sort will suffice.</li>
+<li><a href="https://nodejs.org/en/download/current/">Node.js version 8 or above</a></li>
+<li>A text editor other than Windows Notepad. Notepad++, Visual Studio Code or any of the sort will suffice.</li>
 </ul>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
@@ -693,13 +734,13 @@
 <td>WILDBEAST_VOICE_PERSIST</td>
 <td>Prevent the bot from automatically leaving a voice channel after a playlist has ended.</td>
 <td>Music</td>
-<td>Number (0/1)<sup id="fnref2:4"><a class="footnote-ref" href="#fn:4" rel="footnote">4</a></sup></td>
+<td>Number (0/1)<sup id="fnref3:4"><a class="footnote-ref" href="#fn:4" rel="footnote">4</a></sup></td>
 </tr>
 <tr>
-<td>WILDBEAT_DISABLE_MUSIC</td>
+<td>WILDBEAST_DISABLE_MUSIC</td>
 <td>Prevent all music functionality from being used.</td>
 <td>Music</td>
-<td>Number (0/1)<sup id="fnref:4"><a class="footnote-ref" href="#fn:4" rel="footnote">4</a></sup></td>
+<td>Number (0/1)<sup id="fnref2:4"><a class="footnote-ref" href="#fn:4" rel="footnote">4</a></sup></td>
 </tr>
 <tr>
 <td>WILDBEAST_LANGUAGE</td>
@@ -707,12 +748,18 @@
 <td>All</td>
 <td>String</td>
 </tr>
+<tr>
+<td>WILDBEAST_SUPPRESS_COMMANDLOG</td>
+<td>Do not log command execution traces to the console.</td>
+<td>All</td>
+<td>Number (0/1)<sup id="fnref:4"><a class="footnote-ref" href="#fn:4" rel="footnote">4</a></sup></td>
+</tr>
 </tbody>
 </table>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>There are more environment variables that can be defined as well. You can find the full reference in <a href="https://github.com/TheSharks/WildBeast/blob/master/.env.example">.env.example</a>.</p>
-<p>However, we do not recommend editing variables in the <strong>Internal configuration</strong> section lest you know what you're doing. These variables exist for development and/or internal purposes and can have unintended side effects if messed with.</p>
+<p>However, editing variables in the <strong>Internal configuration</strong> section is not recommended lest you know what you're doing. These variables exist for development and/or internal purposes and can have unintended side effects if tampered without a proper understanding of the software.</p>
 </div>
 <h2 id="running-the-bot">Running the bot<a class="headerlink" href="#running-the-bot" title="Permanent link">&para;</a></h2>
 <div class="admonition note">
@@ -722,6 +769,10 @@
 <p>Your WildBeast instance should now be good to go. Start both the <strong>wildbeast_arango_1</strong> and <strong>wildbeast_lavalink_1</strong> containers, and when they're ready, start <strong>wildbeast_wildbeast_1</strong>. Wait for it to start, and if your output roughly resembles the following, you're set.</p>
 <p><img alt="Expected output" src="../img/kitematic-expected-output.png" /></p>
 <p>You can test the bot by running the <strong>ping</strong> command (With your prefix) in a text channel that the bot can see. If it answers "Pong!", then your bot is set up.</p>
+<h2 id="making-changes">Making changes<a class="headerlink" href="#making-changes" title="Permanent link">&para;</a></h2>
+<p>If you feel up for some tinkering, you're free to make modifications to the source code. When you have made your changes and want to deploy them, simply restart the <strong>wildbeast_wildbeast_1</strong> container in Kitematic. The changes you made will then be reflected in the public facing bot.</p>
+<p><strong>Note:</strong> You make changes to the source code at your own risk and responsibility. Support will not be provided for issues that stem from modifying the source code improperly. In other words, issues that are not our responsibility cannot be remedied by us either.</p>
+<h2 id="closing-words">Closing words<a class="headerlink" href="#closing-words" title="Permanent link">&para;</a></h2>
 <p>If you have further questions or need help with something, we'd be happy to help. You can find a link to the official server below.</p>
 <p><strong>Enjoy your bot and have fun!</strong></p>
 <p align="left">
@@ -741,7 +792,7 @@
 <p>Go to <a href="https://api.imgur.com/oauth2/addclient">https://api.imgur.com/oauth2/addclient</a>, register an application and input the client ID (Not secret!) you get from that here.&#160;<a class="footnote-backref" href="#fnref:3" rev="footnote" title="Jump back to footnote 3 in the text">&#8617;</a></p>
 </li>
 <li id="fn:4">
-<p>Set to 1 to enable this behaviour, or to 0 to disable it.&#160;<a class="footnote-backref" href="#fnref:4" rev="footnote" title="Jump back to footnote 4 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:4" rev="footnote" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+<p>Set to 1 to enable this behaviour, or to 0 to disable it.&#160;<a class="footnote-backref" href="#fnref:4" rev="footnote" title="Jump back to footnote 4 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:4" rev="footnote" title="Jump back to footnote 4 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:4" rev="footnote" title="Jump back to footnote 4 in the text">&#8617;</a></p>
 </li>
 </ol>
 </div>
@@ -840,7 +891,7 @@
     
       <script src="../assets/javascripts/application.583bbe55.js"></script>
       
-      <script>app.initialize({version:"1.0.3",url:{base:".."}})</script>
+      <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
       
         <script src="../js/dist/commands.js"></script>
       
