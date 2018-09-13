@@ -55,7 +55,7 @@
   },
   "optionalDependencies": {
     "arangojs": "^6.0.0",
-    "elasticsearch": "^14.0.0",
+    "elasticsearch": "^15.1.1",
     "eris-lavalink": "^1.0.0",
     "hot-shots": "^5.9.0",
     "lokijs": "^1.5.5",
