@@ -1,5 +1,12 @@
 # 6.0.0
 ## Release phase
+### 6.1.1
+Stylistic changes    
+Corrected documentation on decoupling to correctly expose both ports of Lavalink. Internal changes to reduce the quirks with this process    
+Updated `docker-compose.yml` to allow updating of the WildBeast source code without decoupling
+Added `restPort` property to Lavalink node configuration
+Upgraded Lavalink to v3 and ArangoDB to 3.3.14
+
 ### 6.1.0
 Removed translation submodule, we now include the standard file by default. Translations are able to be downloaded from our crowdin project     
 CircleCI will now automatically include translations into new Docker images   

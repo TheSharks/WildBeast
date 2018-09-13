@@ -8,15 +8,15 @@ This guide will detail how to install and setup WildBeast on Linux.
 ## Prerequisites
 
 - Linux system
-	-  OS: Docker officially supports [these distributions](https://store.docker.com/search?type=edition&offering=community&operating_system=linux), but others may be used as well
-  -  Sudo privileges on the server
-- You will also need a text editor. For command-line you may use Nano, Vim etc. while standalone editors like Visual Studio Code, Atom and Brackets are fine for systems with a desktop environment installed.
+	  -  OS: Docker officially supports [these distributions](https://store.docker.com/search?type=edition&offering=community&operating_system=linux), but others may be used as well
+    -  Root privileges (Sudo)
+- [Git](https://git-scm.com/download/linux)
+- [Node.js version 8 or above](https://nodejs.org/en/download/current/)
+- A text editor. For command-line you may use Nano, Vim etc. while standalone editors like Visual Studio Code, Atom and Brackets are fine for systems with a desktop environment installed.
 
 ## Installation
 
 You will need to install Docker and Docker Compose to use WildBeast. Find the guide for your distribution [here (Docker)](https://store.docker.com/search?type=edition&offering=community&operating_system=linux) and [here (Compose)](https://docs.docker.com/compose/install). For other distributions, you may use your own resources.
-
-You will also need Git for downloading WildBeast. Git is available on most distribution-specific package managers. Refer to an instruction manual for your distribution for installation instructions.
 
 Complete the appropriate installation procedure and verify Docker is functional before proceeding.
 
@@ -74,13 +74,14 @@ Here is a list of environment variables we recommend you define or at least cons
 | IMGUR_KEY | Imgur API key.[^2] | randommeme | String |
 | TWITCH_ID | Twitch client ID.[^3] | twitch | String |
 | WILDBEAST_VOICE_PERSIST | Prevent the bot from automatically leaving a voice channel after a playlist has ended. | Music | Number (0/1)[^4] |
-| WILDBEAT_DISABLE_MUSIC | Prevent all music functionality from being used. | Music | Number (0/1)[^4] |
+| WILDBEAST_DISABLE_MUSIC | Prevent all music functionality from being used. | Music | Number (0/1)[^4] |
 | WILDBEAST_LANGUAGE | Set the language of the bot. Currently only English is available. | All | String |
+| WILDBEAST_SUPPRESS_COMMANDLOG | Do not log command execution traces to the console. | All | Number (0/1)[^4] |
 
 !!! tip
     There are more environment variables that can be defined as well. You can find the full reference in [.env.example](https://github.com/TheSharks/WildBeast/blob/master/.env.example).
     
-    However, we do not recommend editing variables in the **Internal configuration** section lest you know what you're doing. These variables exist for development and/or internal purposes and can have unintended side effects if messed with.
+    However, editing variables in the **Internal configuration** section is not recommended lest you know what you're doing. These variables exist for development and/or internal purposes and can have unintended side effects if tampered without a proper understanding of the software.
 
 When you're done, save the file and close the editor.
 
@@ -109,6 +110,14 @@ If your output resembles the following, your bot is all set.
     If you wish to use the custom command aspect of WildBeast, or intend to make tweaks to the source code later down the line, follow the [Decoupling from Docker](decoupling.md) guide now. Due to how Docker works, data created in the ArangoDB container created here is non-transferable.
 
 You can test the bot by running the **ping** command (With your prefix) in a text channel that the bot can see. If it answers "Pong!", then your bot is set up.
+
+## Making changes
+
+If you feel up for some tinkering, you're free to make modifications to the source code. When you have made your changes and want to deploy them, simply restart the **wildbeast_wildbeast_1** container with the command `#!bash sudo docker restart wildbeast_wildbeast_1`. The changes you made will then be reflected in the public facing bot.
+
+**Note:** You make changes to the source code at your own risk and responsibility. Support will not be provided for issues that stem from modifying the source code improperly. In other words, issues that are not our responsibility cannot be remedied by us either.
+
+## Closing words
 
 If you have further questions or need help with something, we'd be happy to help. You can find a link to the official server below.
 
