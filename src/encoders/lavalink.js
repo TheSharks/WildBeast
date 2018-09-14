@@ -12,7 +12,7 @@ module.exports = {
   guildInfo: guildInfo,
   init: () => {
     global.logger.debug('Using LavaLink encoder.')
-    const {PlayerManager} = require('eris-lavalink')
+    const { PlayerManager } = require('eris-lavalink')
     let regions = {
       eu: ['eu', 'amsterdam', 'frankfurt', 'russia', 'hongkong', 'singapore', 'sydney'],
       us: ['us', 'brazil']
@@ -132,7 +132,7 @@ module.exports = {
   leaveVoiceChannel: async (msg) => {
     const channelID = global.bot.voiceConnections.get(msg.channel.guild.id).channelId
     guildInfo[msg.channel.guild.id].leave = true
-    global.i18n.send('VOICE_DISCONNECT', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === channelID).name})
+    global.i18n.send('VOICE_DISCONNECT', msg.channel, { channel: msg.channel.guild.channels.find(c => c.id === channelID).name })
     global.bot.leaveVoiceChannel(channelID)
     guildInfo[msg.channel.guild.id] = undefined
   },

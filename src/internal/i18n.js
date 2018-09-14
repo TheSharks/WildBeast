@@ -1,5 +1,5 @@
 const standard = process.env.WILDBEAST_LANGUAGE || 'en-EN'
-const available = require('./directory-loader')('../languages', {regex: /\.json$/})
+const available = require('./directory-loader')('../languages', { regex: /\.json$/ })
 const driver = require('./database-selector')
 
 if (!available[standard]) global.logger.error(`Unable to load language file ${standard}. It does not exist.`, true)

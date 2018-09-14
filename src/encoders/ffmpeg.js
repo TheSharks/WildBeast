@@ -41,7 +41,7 @@ module.exports = {
   addTracks: async (msg, tracks) => {
     if (guildInfo[msg.channel.guild.id].tracks.length <= 0) {
       module.exports.getPlayer(msg.channel).then(p => {
-        p.play(tracks[0].track, {inlineVolume: true})
+        p.play(tracks[0].track, { inlineVolume: true })
       })
     }
     for (let track of tracks) {
@@ -101,7 +101,7 @@ module.exports = {
   leaveVoiceChannel: async (msg) => {
     const channelID = global.bot.voiceConnections.get(msg.channel.guild.id).channelID
     guildInfo[msg.channel.guild.id].leave = true
-    global.i18n.send('VOICE_DISCONNECT', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === channelID).name})
+    global.i18n.send('VOICE_DISCONNECT', msg.channel, { channel: msg.channel.guild.channels.find(c => c.id === channelID).name })
     global.bot.leaveVoiceChannel(channelID)
     guildInfo[msg.channel.guild.id] = undefined
   },
@@ -137,7 +137,7 @@ module.exports = {
         })
         guildInfo[player.id].tracks.shift()
         guildInfo[player.id].skips = []
-        player.play(guildInfo[player.id].tracks[0].track, {inlineVolume: true})
+        player.play(guildInfo[player.id].tracks[0].track, { inlineVolume: true })
       } else {
         if (!process.env.WILDBEAST_VOICE_PERSIST) {
           global.i18n.send('QUEUE_END', global.bot.guilds.get(player.id).channels.find(c => c.id === guildInfo[player.id].textChan))

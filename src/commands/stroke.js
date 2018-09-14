@@ -19,9 +19,9 @@ module.exports = {
       name = ['Jake', 'Heinz']
     }
     request.get('http://api.icndb.com/jokes/random')
-      .query({escape: 'javascript'})
-      .query({firstName: name[0]})
-      .query({lastName: name[1]})
+      .query({ escape: 'javascript' })
+      .query({ firstName: name[0] })
+      .query({ lastName: name[1] })
       .end((err, res) => {
         if (!err && res.status === 200) {
           msg.channel.createMessage(res.body.value.joke)

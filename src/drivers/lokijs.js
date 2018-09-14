@@ -55,7 +55,7 @@ module.exports = {
   edit: async (handle, data, coll = 'guild_data') => {
     const collection = db.getCollection(coll)
     const orig = collection.find({ wb_id: handle })[0]
-    const newdata = {...orig, ...data} // spread ops, fancy!
+    const newdata = { ...orig, ...data } // spread ops, fancy!
     return collection.update(newdata)
   }
 }

@@ -61,7 +61,7 @@ module.exports = {
         }
         await engine.modify(msg.channel.guild, parts[0], parts.slice(1).join(' '))
         if (parts[0] === 'language') {
-          return global.i18n.multiSend([{_key: 'SETTINGS_MODIFIED', opts: {setting: parts[0], value: parts.slice(1).join(' ')}}, {_key: 'LANGUAGE_DISCLAIMER'}], msg.channel)
+          return global.i18n.multiSend([{ _key: 'SETTINGS_MODIFIED', opts: { setting: parts[0], value: parts.slice(1).join(' ') } }, { _key: 'LANGUAGE_DISCLAIMER' }], msg.channel)
         } else {
           return global.i18n.send('SETTINGS_MODIFIED', msg.channel, {
             setting: parts[0],

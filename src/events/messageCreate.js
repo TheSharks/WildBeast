@@ -47,7 +47,7 @@ module.exports = async (ctx) => {
       let time = true
       if (commands[cmd].meta.timeout) time = engines.timeout.calculate((msg.channel.guild ? msg.channel.guild.id : msg.author.id), cmd, commands[cmd].meta.timeout)
       if (time !== true) {
-        return global.i18n.send('COOLDOWN', msg.channel, {time: Math.floor(time)})
+        return global.i18n.send('COOLDOWN', msg.channel, { time: Math.floor(time) })
       }
       const level = await engines.blockade.checkDynPerm(cmd, msg.channel.guild) || commands[cmd].meta.level
       const res = (msg.channel.guild) ? await engines.perms.calculate(msg.channel.guild, msg.member, level) : await engines.perms.calculate(false, msg.author, level)
