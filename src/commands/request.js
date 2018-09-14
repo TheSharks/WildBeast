@@ -1,4 +1,4 @@
-const {resolveTracks, addTracks, hhMMss} = require('../internal/encoder-selector.js')
+const { resolveTracks, addTracks, hhMMss } = require('../internal/encoder-selector.js')
 const url = require('url')
 module.exports = {
   meta: {
@@ -15,7 +15,7 @@ module.exports = {
   fn: async (msg, suffix) => {
     if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
       if (!suffix) {
-        global.i18n.send('NO_SEARCH_SUFFIX', msg.channel, {user: msg.author.mention})
+        global.i18n.send('NO_SEARCH_SUFFIX', msg.channel, { user: msg.author.mention })
       } else {
         let link = url.parse(suffix)
         let splitLink
@@ -38,7 +38,7 @@ module.exports = {
             resolveTracks(suffix).then(result => {
               global.logger.trace(result)
               if (result.length === 0) {
-                global.i18n.send('LINK_NO_TRACK', msg.channel, {user: msg.author.username, url: suffix})
+                global.i18n.send('LINK_NO_TRACK', msg.channel, { user: msg.author.username, url: suffix })
               } else if (result.length === 1) {
                 hhMMss(result[0].info.length / 1000).then(time => {
                   addTracks(msg, result)
@@ -50,7 +50,7 @@ module.exports = {
                 })
               } else {
                 addTracks(msg, result)
-                global.i18n.send('TRACKS_ADDED', msg.channel, {count: result.length, user: msg.author.username})
+                global.i18n.send('TRACKS_ADDED', msg.channel, { count: result.length, user: msg.author.username })
               }
             }).catch(global.logger.error)
           }
@@ -58,7 +58,7 @@ module.exports = {
           resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(result => {
             global.logger.trace(result)
             if (result.length === 0) {
-              global.i18n.send('SEARCH_NO_TRACKS', msg.channel, {user: msg.author.mention})
+              global.i18n.send('SEARCH_NO_TRACKS', msg.channel, { user: msg.author.mention })
             } else {
               hhMMss(result[0].info.length / 1000).then(time => {
                 addTracks(msg, [result[0]])

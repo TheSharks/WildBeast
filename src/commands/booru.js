@@ -44,10 +44,10 @@ module.exports = {
     switch (sites[parts[0]].apiStyle) {
       case 'gelbooru': { // Gelbooru interpretation has xml conversion to provide full support, although we do prefer JSON
         SA(sites[parts[0]].baseURL)
-          .query({page: 'dapi', s: 'post', q: 'index', tags: query})
-          .set({'User-Agent': 'Superagent Node.js'})
+          .query({ page: 'dapi', s: 'post', q: 'index', tags: query })
+          .set({ 'User-Agent': 'Superagent Node.js' })
           .then(res => {
-            const result = require('xml-js').xml2js(res.text, {compact: true})
+            const result = require('xml-js').xml2js(res.text, { compact: true })
             if (!result.posts.post || result.posts.post.length < 1) {
               return global.i18n.send('BOORU_NO_RESULTS', msg.channel, {
                 query: (query.length > 0) ? query : 'random'
@@ -63,8 +63,8 @@ module.exports = {
       }
       case 'rails-booru': {
         SA(sites[parts[0]].baseURL)
-          .query({q: parts.slice(1).join('+')})
-          .set({'User-Agent': 'Superagent Node.js'})
+          .query({ q: parts.slice(1).join('+') })
+          .set({ 'User-Agent': 'Superagent Node.js' })
           .then(res => {
             if (!res.body.search || res.body.search.length < 1) {
               return global.i18n.send('BOORU_NO_RESULTS', msg.channel, {
@@ -82,8 +82,8 @@ module.exports = {
       case 'e621': {
         // wow look at e621 being all special with their own api style
         SA(sites[parts[0]].baseURL)
-          .query({limit: '50', tags: parts.slice(1).join(' ')})
-          .set({'Accept': 'application/json', 'User-Agent': 'Superagent Node.js'})
+          .query({ limit: '50', tags: parts.slice(1).join(' ') })
+          .set({ 'Accept': 'application/json', 'User-Agent': 'Superagent Node.js' })
           .then(res => {
             if (res.body.length < 1) {
               return global.i18n.send('BOORU_NO_RESULTS', msg.channel, {

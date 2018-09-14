@@ -67,19 +67,19 @@ module.exports = {
         name: 'Notable Permissions',
         value: `\`\`\`${perms.sort().join(', ')}\`\`\``
       })
-      msg.channel.createMessage({embed: {
+      msg.channel.createMessage({ embed: {
         timestamp: new Date(msg.timestamp),
         color: color,
         thumbnail: {
           url: user.avatar ? user.avatarURL : `https://cdn.discordapp.com/embed/avatars/${user.discriminator % 5}.png`
         },
         fields: fields
-      }}).catch(() => {})
+      } }).catch(() => {})
     } else {
-      msg.channel.createMessage({embed: {
+      msg.channel.createMessage({ embed: {
         color: 16396122,
         description: '**The specified user isn\'t a member of the server**'
-      }}).catch(() => {})
+      } }).catch(() => {})
     }
   }
 }

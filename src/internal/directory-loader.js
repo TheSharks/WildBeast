@@ -1,7 +1,7 @@
 const path = require('path')
 
 module.exports = function (location, opts = {}) {
-  let {regex, relative} = Object.assign({regex: /\.js$/, relative: true}, opts)
+  let { regex, relative } = Object.assign({ regex: /\.js$/, relative: true }, opts)
   let result = {}
 
   if (relative) {

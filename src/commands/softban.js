@@ -19,7 +19,7 @@ module.exports = {
     } else if (msg.mentions.filter(m => m.id !== bot.user.id).length > 0) {
       msg.channel.createMessage('Please wait...').then((m) => {
         const membersToBan = msg.mentions.filter(m => m.id !== bot.user.id)
-        const banMembers = {success: [], error: []}
+        const banMembers = { success: [], error: [] }
         let reasonWords = []
         suffix.split(' ').map((id) => {
           if (id.startsWith('<@')) {
@@ -63,7 +63,7 @@ module.exports = {
       })
     } else {
       msg.channel.createMessage(`<@${msg.author.id}>, Please wait...`).then((m) => {
-        let banMembers = {success: [], error: []}
+        let banMembers = { success: [], error: [] }
         let idArray = []
         let reasonWords = []
         suffix.split(' ').map((id) => {

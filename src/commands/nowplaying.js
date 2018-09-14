@@ -1,4 +1,4 @@
-const {guildInfo, hhMMss, getTimestamp} = require('../internal/encoder-selector.js')
+const { guildInfo, hhMMss, getTimestamp } = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Show the currently playing track.',

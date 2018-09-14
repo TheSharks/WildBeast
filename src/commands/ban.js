@@ -41,7 +41,7 @@ module.exports = {
       if ([0, 1, 7].includes(days)) {
         const members = msg.mentions.filter(u => u.id !== bot.user.id).map((user) => msg.channel.guild.members.find(m => m.id === user.id))
         const reason = isNaN(chunks[0]) ? chunks.slice(members.length).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length).join(' ') : chunks.slice(members.length + 1).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length + 1).join(' ')
-        let list = {success: [], error: []}
+        let list = { success: [], error: [] }
 
         safeLoop(msg, days, members, reason, list)
       } else {

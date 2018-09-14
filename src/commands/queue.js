@@ -1,4 +1,4 @@
-const {guildInfo, hhMMss} = require('../internal/encoder-selector.js')
+const { guildInfo, hhMMss } = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Show the playback queue.',
@@ -17,10 +17,10 @@ module.exports = {
           const trackTitle = guildInfo[msg.channel.guild.id].tracks[i].info.title
           const trackLength = guildInfo[msg.channel.guild.id].tracks[i].info.length / 1000
           const trackRequester = msg.channel.guild.members.get(guildInfo[msg.channel.guild.id].tracks[i].requester)
-          arr.push(`**${i}**. **${trackTitle}** [${await hhMMss(trackLength)}] ${global.i18n.raw('TRACK_REQUESTED_BY', {user: trackRequester ? trackRequester.user.username : 'Unknown user'})}`) // In case user is not in guild
+          arr.push(`**${i}**. **${trackTitle}** [${await hhMMss(trackLength)}] ${global.i18n.raw('TRACK_REQUESTED_BY', { user: trackRequester ? trackRequester.user.username : 'Unknown user' })}`) // In case user is not in guild
           if (i === 10) {
             if (guildInfo[msg.channel.guild.id].tracks.length - 11 !== 0) {
-              arr.push(global.i18n.raw('MORE_SONGS', {count: guildInfo[msg.channel.guild.id].tracks.length - 11}))
+              arr.push(global.i18n.raw('MORE_SONGS', { count: guildInfo[msg.channel.guild.id].tracks.length - 11 }))
             }
             break
           }

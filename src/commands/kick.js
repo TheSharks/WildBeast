@@ -20,7 +20,7 @@ module.exports = {
       let chunks = suffix.split(' ')
       let members = msg.mentions.filter(u => u.id !== bot.user.id).map((user) => msg.channel.guild.members.get(user.id))
       let reason = chunks.slice(members.length).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length).join(' ')
-      let list = {success: [], error: []}
+      let list = { success: [], error: [] }
       safeLoop(msg, members, reason, list)
     }
 

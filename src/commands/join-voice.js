@@ -1,4 +1,4 @@
-const {createPlayer, resolveTracks, hhMMss} = require('../internal/encoder-selector.js')
+const { createPlayer, resolveTracks, hhMMss } = require('../internal/encoder-selector.js')
 const url = require('url')
 module.exports = {
   meta: {
@@ -15,10 +15,10 @@ module.exports = {
     } else if (!msg.member.voiceState.channelID) {
       global.i18n.send('JOIN_VOICE_CHANNEL', msg.channel)
     } else if (!msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).permissionsOf(global.bot.user.id).has('voiceConnect') || !msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).permissionsOf(global.bot.user.id).has('voiceSpeak')) {
-      global.i18n.send('NO_VOICE_CONNECT_PERM', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).name})
+      global.i18n.send('NO_VOICE_CONNECT_PERM', msg.channel, { channel: msg.channel.guild.channels.find(c => c.id === msg.member.voiceState.channelID).name })
     } else if (global.bot.voiceConnections.get(msg.channel.guild.id)) {
       const channelID = global.bot.voiceConnections.get(msg.channel.guild.id).channelId === undefined ? global.bot.voiceConnections.get(msg.channel.guild.id).channelID : global.bot.voiceConnections.get(msg.channel.guild.id).channelId
-      global.i18n.send('VOICE_CONNECTED', msg.channel, {channel: msg.channel.guild.channels.find(c => c.id === channelID).name})
+      global.i18n.send('VOICE_CONNECTED', msg.channel, { channel: msg.channel.guild.channels.find(c => c.id === channelID).name })
     } else {
       if (suffix) {
         let link = url.parse(suffix)
@@ -42,7 +42,7 @@ module.exports = {
             resolveTracks(suffix).then(result => {
               global.logger.trace(result)
               if (result.length === 0) {
-                global.i18n.send('LINK_NO_TRACK', msg.channel, {user: msg.author.username, url: suffix})
+                global.i18n.send('LINK_NO_TRACK', msg.channel, { user: msg.author.username, url: suffix })
               } else if (result.length === 1) {
                 hhMMss(result[0].info.length / 1000).then(time => {
                   createPlayer(msg, result)
@@ -54,7 +54,7 @@ module.exports = {
                 })
               } else {
                 createPlayer(msg, result)
-                global.i18n.send('TRACKS_ADDED', msg.channel, {count: result.length, user: msg.author.username})
+                global.i18n.send('TRACKS_ADDED', msg.channel, { count: result.length, user: msg.author.username })
               }
             }).catch(global.logger.error)
           }
@@ -62,7 +62,7 @@ module.exports = {
           resolveTracks(`ytsearch:${encodeURI(suffix)}`).then(result => {
             global.logger.trace(result)
             if (result.length === 0) {
-              global.i18n.send('SEARCH_NO_TRACKS', msg.channel, {user: msg.author.mention})
+              global.i18n.send('SEARCH_NO_TRACKS', msg.channel, { user: msg.author.mention })
             } else {
               hhMMss(result[0].info.length / 1000).then(time => {
                 createPlayer(msg, [result[0]])
