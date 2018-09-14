@@ -4,7 +4,7 @@ const whitelist = [
   'prefix',
   'language',
   'welcome',
-  'welcomeMessage'
+  'welcomemessage'
 ]
 
 module.exports = {
