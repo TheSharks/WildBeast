@@ -1,4 +1,4 @@
-const {leaveVoiceChannel} = require('../internal/encoder-selector.js')
+const { leaveVoiceChannel } = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Make the bot leave the current voice channel.',

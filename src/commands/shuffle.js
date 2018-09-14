@@ -1,4 +1,4 @@
-const {guildInfo} = require('../internal/encoder-selector.js')
+const { guildInfo } = require('../internal/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Shuffle the playback queue.',

@@ -9,7 +9,7 @@ module.exports = {
   },
   fn: function (msg, suffix) {
     request.get('http://yesno.wtf/api/')
-      .query({force: suffix})
+      .query({ force: suffix })
       .end((err, res) => {
         if (!err && res.status === 200) {
           msg.channel.createMessage(`<@${msg.author.id}>, ${res.body.image}`)

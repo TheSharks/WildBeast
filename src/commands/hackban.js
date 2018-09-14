@@ -20,7 +20,7 @@ module.exports = {
       msg.channel.createMessage('You need to provide an ID to ban! Mentions aren\'t supported for hackban.')
     } else {
       msg.channel.createMessage(`<@${msg.author.id}>, Please wait...`).then((m) => {
-        let banMembers = {success: [], error: []}
+        let banMembers = { success: [], error: [] }
         let idArray = []
         let reasonWords = []
         suffix.split(' ').map((id) => {
