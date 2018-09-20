@@ -57,7 +57,7 @@
     "arangojs": "^6.6.0",
     "elasticsearch": "^15.1.1",
     "eris-lavalink": "^1.0.2",
-    "hot-shots": "^5.9.0",
+    "hot-shots": "^5.9.1",
     "lokijs": "^1.5.5",
     "raven": "^2.6.4"
   }
