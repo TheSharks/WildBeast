@@ -21,9 +21,7 @@ module.exports = {
     const reason = words === -1 ? '' : chunks.slice(words).join(' ')
     const result = { fail: [], pass: [] }
     const message = await msg.channel.createMessage('Hold on...')
-    console.log(toban)
     toban.forEach(x => {
-      console.log(x)
       msg.channel.guild.banMember(x, 7, `${msg.author.username}#${msg.author.discriminator}: ${reason.length > 0 ? reason : 'No reason provided'}`)
         .then(() => {
           result.pass.push(x)
