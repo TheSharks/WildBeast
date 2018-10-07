@@ -23,7 +23,7 @@ module.exports = {
       const memetype = tags[0].split(' ')[0]
       const keywords = tags.slice(1).filter(x => x.trim().length > 0)
       if (!memetype || keywords.length === 0) {
-        return global.i18n.send('PERMISSIONS_MALFORMED', msg.channel)
+        return global.i18n.send('INVALID_COMMAND_SYNTAX', msg.channel)
       } else {
         return msg.channel.createMessage(`http://memegen.link/${memetype}/${translate(keywords[0])}/${translate(keywords[1])}.jpg`)
       }
