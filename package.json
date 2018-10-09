@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "wildbeast",
-  "version": "6.1.1",
+  "version": "6.2.0",
   "description": "Discord bot",
   "main": "index.js",
   "scripts": {
@@ -43,23 +43,23 @@
     "uglify-es": "^3.3.9"
   },
   "dependencies": {
-    "@thesharks/jagtag-js": "^1.0.3",
     "chalk": "^2.4.1",
     "dotenv": "^6.1.0",
     "eris": "^0.9.0",
-    "jimp": "^0.5.3",
     "moment": "^2.22.2",
     "superagent": "^3.8.3",
-    "ws": "^6.1.0",
-    "xml-js": "^1.6.8",
-    "youtube-dl": "^1.12.2"
+    "ws": "^6.1.0"
   },
   "optionalDependencies": {
+    "@thesharks/jagtag-js": "^1.0.3",
     "arangojs": "^6.6.0",
     "elasticsearch": "^15.1.1",
     "eris-lavalink": "^1.0.2",
     "hot-shots": "^5.9.1",
+    "jimp": "^0.5.3",
     "lokijs": "^1.5.5",
-    "raven": "^2.6.4"
+    "raven": "^2.6.4",
+    "xml-js": "^1.6.8",
+    "youtube-dl": "^1.12.2"
   }
 }
