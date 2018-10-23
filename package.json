@@ -10,9 +10,9 @@
     "build": "npm run generate-command-data && npm run minify",
     "minify": "uglifyjs --compress --mangle --toplevel --output docs/js/dist/commands.js -- docs/js/dist/commands.js.temp",
     "test": "eslint . && mocha",
-    "dbcreate": "node src/internal/db-init.js",
-    "info-dump": "node src/internal/info-dump.js",
-    "append-command-info": "node src/internal/command-info-appender.js",
+    "dbcreate": "node src/scripts/db-init.js",
+    "info-dump": "node src/scripts/info-dump.js",
+    "append-command-info": "node src/scripts/command-info-appender.js",
     "generate-command-data": "npm run info-dump && npm run append-command-info"
   },
   "repository": {
@@ -56,6 +56,7 @@
     "elasticsearch": "^15.1.1",
     "eris-lavalink": "^1.0.2",
     "hot-shots": "^5.9.1",
+    "influx": "^5.0.7",
     "jimp": "^0.5.4",
     "lokijs": "^1.5.5",
     "raven": "^2.6.4",

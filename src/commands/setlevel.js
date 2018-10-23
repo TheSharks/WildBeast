@@ -1,4 +1,4 @@
-let perms = require('../engines/permissions')
+let perms = require('../features/permissions')
 
 module.exports = {
   meta: {
