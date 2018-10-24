@@ -1,4 +1,4 @@
-const { resolveTracks, addTracks, hhMMss } = require('../internal/encoder-selector.js')
+const { resolveTracks, addTracks, hhMMss } = require('../selectors/encoder-selector.js')
 const url = require('url')
 module.exports = {
   meta: {

@@ -1,4 +1,4 @@
-const encoder = require('../internal/encoder-selector.js')
+const encoder = require('../selectors/encoder-selector.js')
 module.exports = async function () {
   global.logger.log(`Fully ready, serving ${global.bot.guilds.size} guild(s).`)
   if (!global.bot.bot) global.logger.warn("You're not using a bot account to run WildBeast, this is unsupported and could cause problems.")
