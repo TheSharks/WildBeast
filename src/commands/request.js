@@ -17,7 +17,7 @@ module.exports = {
       if (!suffix) {
         global.i18n.send('NO_SEARCH_SUFFIX', msg.channel, { user: msg.author.mention })
       } else {
-        let link = url.parse(suffix)
+        let link = new url.URL(suffix)
         let splitLink
         if (link.hostname) {
           if (suffix.includes('list=') !== suffix.includes('playlist?')) {
