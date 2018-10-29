@@ -21,7 +21,7 @@ module.exports = {
       global.i18n.send('VOICE_CONNECTED', msg.channel, { channel: msg.channel.guild.channels.find(c => c.id === channelID).name })
     } else {
       if (suffix) {
-        let link = url.parse(suffix)
+        let link = new url.URL(suffix)
         let splitLink
         if (link.hostname) {
           if (suffix.includes('list=') !== suffix.includes('playlist?')) {
