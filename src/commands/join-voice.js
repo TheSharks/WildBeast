@@ -1,5 +1,4 @@
 const { createPlayer, resolveTracks, hhMMss } = require('../selectors/encoder-selector.js')
-const url = require('url')
 module.exports = {
   meta: {
     help: 'Make the bot join a voice channel. Optionally supply a track to play on join.',
