@@ -17,7 +17,11 @@ module.exports = {
       if (!suffix) {
         global.i18n.send('NO_SEARCH_SUFFIX', msg.channel, { user: msg.author.mention })
       } else {
-        let link = new url.URL(suffix)
+        const urlregex = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&/=]*)/)
+        const isURL = (input) => {
+          return input.match(urlregex)
+        }
+        let link = isURL(suffix) ? url.parse(suffix) : {} // HACK
         let splitLink
         if (link.hostname) {
           if (suffix.includes('list=') !== suffix.includes('playlist?')) {
