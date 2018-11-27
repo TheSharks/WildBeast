@@ -35,6 +35,11 @@ require('./src/internal/rancher-autoscale').then(x => {
 
   bot.on('debug', global.logger.debug)
 
+  bot.on('error', (e) => {
+    if (!(e instanceof Error)) global.logger.error(e.error)
+    else global.logger.error(e)
+  })
+
   if (process.env.HOTSHOTS_HOST) {
     global.logger.warn("Using Dogstats in this way is deprecated, it's recommended to switch to a different stats aggregator")
     setInterval(() => dogstats.statsHook(bot), 1000)
