@@ -12,7 +12,7 @@ require('./src/internal/version-check')
 const Eris = require('eris')
 const Events = require('./src/internal/directory-loader')('./src/events')
 const dogstats = require('./src/statistics/dogstats-legacy')
-require('./src/internal/rancher-autoscale').then(x => {
+require('./src/internal/k8s-autoscale').then(x => {
   global.logger.log(`Scaling known. Total: ${x.total}, mine: ${x.mine}`)
   const bot = new Eris(process.env.BOT_TOKEN, {
     restMode: true,
