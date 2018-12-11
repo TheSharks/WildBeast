@@ -1,4 +1,4 @@
-const driver = require('../internal/database-selector')
+const driver = require('../selectors/database-selector')
 
 module.exports = {
   raw: (guild) => {

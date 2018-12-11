@@ -1,4 +1,4 @@
-const { guildInfo, setVolume } = require('../internal/encoder-selector.js')
+const { guildInfo, setVolume } = require('../selectors/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Change the playback volume.',

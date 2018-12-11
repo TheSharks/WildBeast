@@ -1,4 +1,4 @@
-let perms = require('../engines/permissions')
+let perms = require('../features/permissions')
 
 module.exports = {
   meta: {
@@ -12,7 +12,7 @@ module.exports = {
     const mentions = mapMentions(suffix)
     const roles = mapMentions(suffix, /<@&([0-9]*)>/g)
     let to = suffix.split(' ')[suffix.split(' ').length - 1]
-    if (isNaN(parseInt(to))) return global.i18n.send('PERMISSIONS_MALFORMED', msg.channel)
+    if (isNaN(parseInt(to))) return global.i18n.send('INVALID_COMMAND_SYNTAX', msg.channel)
     if (to > 10) { // haha no
       return global.i18n.send('PERMISSIONS_OVERFLOW', msg.channel)
     }

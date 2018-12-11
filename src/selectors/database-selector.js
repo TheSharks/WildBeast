@@ -1,4 +1,4 @@
-const drivers = require('./dirscan')('../drivers')
+const drivers = require('../internal/dirscan')('../databases')
 const preferred = `${process.env.WILDBEAST_PREFERRED_DATABASE || 'arangodb'}.js`
 
 if (drivers.indexOf(preferred) === -1) {
@@ -6,4 +6,4 @@ if (drivers.indexOf(preferred) === -1) {
 }
 
 if (global.logger) global.logger.debug(`Using ${preferred} database driver`)
-module.exports = require(`../drivers/${preferred}`)
+module.exports = require(`../databases/${preferred}`)

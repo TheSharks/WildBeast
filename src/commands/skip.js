@@ -1,4 +1,4 @@
-const { guildInfo, hhMMss, skip, stop } = require('../internal/encoder-selector.js')
+const { guildInfo, hhMMss, skip, stop } = require('../selectors/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Skip the current track.',

@@ -1,5 +1,4 @@
-const { resolveTracks, addTracks, hhMMss } = require('../internal/encoder-selector.js')
-const url = require('url')
+const { resolveTracks, addTracks, hhMMss } = require('../selectors/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Add a track to the playback queue.',
@@ -17,7 +16,11 @@ module.exports = {
       if (!suffix) {
         global.i18n.send('NO_SEARCH_SUFFIX', msg.channel, { user: msg.author.mention })
       } else {
-        let link = url.parse(suffix)
+        const urlregex = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&/=]*)/)
+        const isURL = (input) => {
+          return input.match(urlregex)
+        }
+        let link = isURL(suffix) ? new URL(suffix) : {} // HACK
         let splitLink
         if (link.hostname) {
           if (suffix.includes('list=') !== suffix.includes('playlist?')) {

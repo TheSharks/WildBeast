@@ -11,7 +11,8 @@ if (process.env.ELASTICSEARCH_URI) {
   ES = new es.Client({
     host: process.env.ELASTICSEARCH_URI
   })
-  log(chalk`{bold.green DEBUG}: Opening Elasticsearch connection to ${require('url').parse(process.env.ELASTICSEARCH_URI).hostname || process.env.ELASTICSEARCH_URI}`)
+  const url = require('url')
+  log(chalk`{bold.green DEBUG}: Opening Elasticsearch connection to ${new url.URL(process.env.ELASTICSEARCH_URI).hostname || process.env.ELASTICSEARCH_URI}`)
 }
 
 if (process.env.SENTRY_DSN) {

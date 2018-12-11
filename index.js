@@ -11,8 +11,8 @@ require('./src/internal/version-check')
 
 const Eris = require('eris')
 const Events = require('./src/internal/directory-loader')('./src/events')
-const stats = require('./src/internal/dogstats')
-require('./src/internal/rancher-autoscale').then(x => {
+const dogstats = require('./src/statistics/dogstats-legacy')
+require('./src/internal/k8s-autoscale').then(x => {
   global.logger.log(`Scaling known. Total: ${x.total}, mine: ${x.mine}`)
   const bot = new Eris(process.env.BOT_TOKEN, {
     restMode: true,
@@ -35,10 +35,18 @@ require('./src/internal/rancher-autoscale').then(x => {
 
   bot.on('debug', global.logger.debug)
 
-  if (process.env.HOTSHOTS_HOST) setInterval(() => stats.statsHook(bot), 1000)
+  bot.on('error', (e) => {
+    if (!(e instanceof Error)) global.logger.error(e.error)
+    else global.logger.error(e)
+  })
+
+  if (process.env.HOTSHOTS_HOST) {
+    global.logger.warn("Using Dogstats in this way is deprecated, it's recommended to switch to a different stats aggregator")
+    setInterval(() => dogstats.statsHook(bot), 1000)
+  }
 
   bot.onAny((ctx) => {
-    stats.eventHook(ctx[0])
+    dogstats.eventHook(ctx[0])
     if (Events[ctx[0]]) {
       Events[ctx[0]](Array.from(ctx).slice(1))
     }

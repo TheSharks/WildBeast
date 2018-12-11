@@ -1,5 +1,4 @@
-const { createPlayer, resolveTracks, hhMMss } = require('../internal/encoder-selector.js')
-const url = require('url')
+const { createPlayer, resolveTracks, hhMMss } = require('../selectors/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Make the bot join a voice channel. Optionally supply a track to play on join.',
@@ -21,7 +20,11 @@ module.exports = {
       global.i18n.send('VOICE_CONNECTED', msg.channel, { channel: msg.channel.guild.channels.find(c => c.id === channelID).name })
     } else {
       if (suffix) {
-        let link = url.parse(suffix)
+        const urlregex = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&/=]*)/) // eslint-disable-line
+        const isURL = (input) => {
+          return input.match(urlregex)
+        }
+        let link = isURL(suffix) ? new URL(suffix) : {}
         let splitLink
         if (link.hostname) {
           if (suffix.includes('list=') !== suffix.includes('playlist?')) {

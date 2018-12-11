@@ -28,7 +28,7 @@
   "BOORU_SUCCESS": "You've searched for `{query}`\n{url}",
   "PERMISSIONS_OVERFLOW": "Access levels higher than 10 cannot be set.",
   "PERMISSIONS_UPDATED": "Permissions successfully updated.",
-  "PERMISSIONS_MALFORMED": "Your syntax is incorrect. Check the help for this command for the proper syntax.",
+  "INVALID_COMMAND_SYNTAX": "Your syntax is incorrect. Check the help for this command for the proper syntax.",
   "API_ERROR": "The API failed to respond or returned unusable data, please try again later.",
   "WELCOME_MESSAGE": "Please welcome {user_name} to {guild_name}!",
   "CMD_DISABLED_CHANNEL": "This command cannot be used in this channel.",

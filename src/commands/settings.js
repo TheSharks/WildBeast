@@ -1,5 +1,5 @@
-const engine = require('../engines/settings')
-const driver = require('../internal/database-selector')
+const engine = require('../features/settings')
+const driver = require('../selectors/database-selector')
 const whitelist = [
   'prefix',
   'language',

@@ -1,4 +1,4 @@
-const driver = require('../internal/database-selector')
+const driver = require('../selectors/database-selector')
 const masters = process.env.WILDBEAST_MASTERS.split('|')
 
 module.exports = {

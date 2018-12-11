@@ -1,4 +1,4 @@
-const driver = require('../internal/database-selector')
+const driver = require('../selectors/database-selector')
 
 module.exports = async function (ctx) {
   const data = await driver.getSettings(ctx[0])

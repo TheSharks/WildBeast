@@ -1,5 +1,5 @@
 require('dotenv').config()
-require('./secrets-loader')
+require('../internal/secrets-loader')
 
 const tables = [
   'guild_data', // saves guild configurations
