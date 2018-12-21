@@ -29,7 +29,7 @@ Visit our [documentation](https://docs.thesharks.xyz) for more information.
 
 ### Want to use WildBeast but don't want to host it yourself?
 
-No problem, we maintain a public instance called WildBot that you can invite to your server! Visit http://invite.wildbot.dougley.com to get started!
+No problem, we maintain a public instance called WildBot that you can invite to your server! Visit https://invite.thesharks.xyz to get started!
 
 ### Want to run WildBeast yourself?
 
