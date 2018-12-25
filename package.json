@@ -58,7 +58,6 @@
     "hot-shots": "^6.0.1",
     "jimp": "^0.6.0",
     "lokijs": "^1.5.5",
-    "prom-client": "^11.2.1",
     "raven": "^2.6.4",
     "xml-js": "^1.6.8",
     "youtube-dl": "^1.12.2"
