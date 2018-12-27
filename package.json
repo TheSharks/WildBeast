@@ -47,7 +47,7 @@
     "dotenv": "^6.2.0",
     "eris": "^0.9.0",
     "moment": "^2.23.0",
-    "superagent": "^4.0.0",
+    "superagent": "^4.1.0",
     "ws": "^6.1.2"
   },
   "optionalDependencies": {
