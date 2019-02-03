@@ -2,7 +2,7 @@ let perms = require('../features/permissions')
 
 module.exports = {
   meta: {
-    usage: 'setlevel @user/@role @user2/@role2 <0-10>',
+    usage: '@user/@role @user2/@role2 <0-10>',
     help: 'Change someone\'s permission level.',
     module: 'Settings',
     level: 7,
