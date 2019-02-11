@@ -1,4 +1,4 @@
-const { pause, guildInfo } = require('../internal/encoder-selector.js')
+const { pause, guildInfo } = require('../selectors/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Pause the playback of the current track.',

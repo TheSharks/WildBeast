@@ -1,10 +1,10 @@
-const engine = require('../engines/settings')
-const driver = require('../internal/database-selector')
+const engine = require('../features/settings')
+const driver = require('../selectors/database-selector')
 const whitelist = [
   'prefix',
   'language',
   'welcome',
-  'welcomemessage'
+  'welcomeMessage'
 ]
 
 module.exports = {
@@ -22,22 +22,23 @@ module.exports = {
   fn: async (msg, suffix) => {
     if (suffix) {
       const parts = suffix.split(' ')
-      parts[0] = parts[0].toLowerCase()
-      if (!whitelist.includes(parts[0]) && parts[0] !== 'reset') return global.i18n.send('SETTINGS_NOT_WHITELISTED', msg.channel)
+      const term = parts[0].toLowerCase()
+      const index = whitelist.map(x => x.toLowerCase()).indexOf(term)
+      if (index === -1 && term !== 'reset') return global.i18n.send('SETTINGS_NOT_WHITELISTED', msg.channel)
       const current = await driver.getSettings(msg.channel.guild)
       if (!parts[1]) {
-        if (current[parts[0]] === undefined) {
+        if (current[whitelist[index]] === undefined) {
           global.i18n.send('SETTINGS_SINGLE_NOT_SET', msg.channel, {
-            setting: parts[0]
+            setting: whitelist[index]
           })
         } else {
           global.i18n.send('SETTINGS_SINGLE_REPLY', msg.channel, {
-            setting: parts[0],
-            value: current[parts[0]]
+            setting: whitelist[index],
+            value: current[whitelist[index]]
           })
         }
       } else {
-        if (parts[0] === 'reset') {
+        if (term === 'reset') {
           if (whitelist.includes(parts[1]) && parts[1] !== 'reset') {
             await engine.modify(msg.channel.guild, parts[1], null)
             return global.i18n.send('SETTINGS_RESET', msg.channel, {
@@ -45,13 +46,13 @@ module.exports = {
             })
           } else return global.i18n.send('SETTINGS_NOT_WHITELISTED', msg.channel)
         }
-        if (parts[0] === 'welcome') {
+        if (whitelist[index] === 'welcome') {
           const match = /<#([0-9]*)>/g.exec(parts[1])
           if (parts[1].toLowerCase() !== 'dm' && !match) return global.i18n.send('SETTINGS_WELCOMING_MALFORMED', msg.channel)
           if (match) parts[1] = match[1]
           else parts[1] = parts[1].toLowerCase()
         }
-        if (parts[0] === 'language') {
+        if (whitelist[index] === 'language') {
           const languages = require('../internal/dirscan')('../languages')
           if (!languages.includes(`${parts[1]}.json`)) {
             return global.i18n.send('LANGUAGE_UNAVAILABLE', msg.channel, {
@@ -59,12 +60,12 @@ module.exports = {
             })
           }
         }
-        await engine.modify(msg.channel.guild, parts[0], parts.slice(1).join(' '))
-        if (parts[0] === 'language') {
-          return global.i18n.multiSend([{ _key: 'SETTINGS_MODIFIED', opts: { setting: parts[0], value: parts.slice(1).join(' ') } }, { _key: 'LANGUAGE_DISCLAIMER' }], msg.channel)
+        await engine.modify(msg.channel.guild, whitelist[index], parts.slice(1).join(' '))
+        if (whitelist[index] === 'language') {
+          return global.i18n.multiSend([{ _key: 'SETTINGS_MODIFIED', opts: { setting: whitelist[index], value: parts.slice(1).join(' ') } }, { _key: 'LANGUAGE_DISCLAIMER' }], msg.channel)
         } else {
           return global.i18n.send('SETTINGS_MODIFIED', msg.channel, {
-            setting: parts[0],
+            setting: whitelist[index],
             value: parts.slice(1).join(' ')
           })
         }

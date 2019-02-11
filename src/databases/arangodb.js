@@ -27,8 +27,7 @@ module.exports = {
   getArbitrary: async (key, coll) => {
     const collection = db.collection(coll)
     try {
-      const doc = await collection.document(key)
-      return doc
+      return await collection.document(key)
     } catch (e) {
       return null
     }

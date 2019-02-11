@@ -1,6 +1,6 @@
 process.env.WILDBEAST_MASTERS = '1' // HACK
 
-const dex = require('./command-indexer')
+const dex = require('../internal/command-indexer')
 const final = {}
 
 for (const cmd in dex.commands) {

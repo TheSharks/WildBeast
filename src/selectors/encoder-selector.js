@@ -1,4 +1,4 @@
-const drivers = require('./dirscan')('../encoders')
+const drivers = require('../internal/dirscan')('../encoders')
 const preferred = `${process.env.WILDBEAST_PREFERRED_ENCODER || 'lavalink'}.js`
 
 if (!drivers.includes(preferred)) {

@@ -21,7 +21,7 @@ module.exports = {
   },
   resolveTracks: async (search) => {
     const getInfo = util.promisify(youtubedl.getInfo)
-    let info = await getInfo(search.replace('%20', ' '), ['--skip-download', '-f', '[acodec*=opus]/[protocol=https]/bestaudio/best'])
+    let info = await getInfo(search.replace('%20', ' '), ['--skip-download', '-f', '[acodec*=opus]/bestaudio/best'])
     if (!Array.isArray(info)) info = [info]
     let tracks = []
     for (let t of info) {
@@ -124,7 +124,7 @@ module.exports = {
     })
     player.on('end', async () => {
       if (guildInfo[player.id].leave) return
-      if (guildInfo[player.id].endedEarly && guildInfo[player.id].tracks.length > 1) {
+      if (guildInfo[player.id].endedEarly && guildInfo[player.id].tracks.length >= 1) {
         guildInfo[player.id].endedEarly = false
         player.play(guildInfo[player.id].tracks[0].track)
       } else if (guildInfo[player.id].tracks.length > 1) {

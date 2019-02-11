@@ -1,4 +1,4 @@
-const { resume, guildInfo } = require('../internal/encoder-selector.js')
+const { resume, guildInfo } = require('../selectors/encoder-selector.js')
 module.exports = {
   meta: {
     help: 'Resume the playback of the current track.',

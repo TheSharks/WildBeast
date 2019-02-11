@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 const assert = require('assert')
-const driver = require('../src/internal/database-selector')
+const driver = require('../src/selectors/database-selector')
 
 describe('Default database driver', () => {
   it('has all required methods', done => {

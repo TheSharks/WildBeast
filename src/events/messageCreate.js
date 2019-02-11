@@ -2,10 +2,11 @@ const commands = require('../internal/command-indexer').commands
 const aliases = require('../internal/command-indexer').alias
 const help = require('../internal/command-indexer').help
 const engines = {
-  perms: require('../engines/permissions'),
-  settings: require('../engines/settings'),
-  timeout: require('../engines/timeouts'),
-  blockade: require('../engines/blockade')
+  perms: require('../features/permissions'),
+  settings: require('../features/settings'),
+  timeout: require('../features/timeouts'),
+  blockade: require('../features/blocking'),
+  flags: require('../features/flags')
 }
 const masters = process.env.WILDBEAST_MASTERS.split('|')
 
@@ -13,6 +14,12 @@ module.exports = async (ctx) => {
   const msg = ctx[0]
   if (msg.author.bot) return
   if (msg.channel.guild && !msg.channel.permissionsOf(global.bot.user.id).has('sendMessages')) return // we cant even respond to this
+  if (msg.channel.guild) {
+    if (await engines.flags.has('GuildBlacklisted', msg.channel.guild)) {
+      global.logger.debug('Detected guild blacklist, leaving')
+      return msg.channel.guild.leave()
+    }
+  }
   const prefix = (msg.channel.guild) ? await engines.settings.prefix(msg.channel.guild, msg) : process.env.BOT_PREFIX
   if (msg.content.indexOf(prefix) === 0) {
     if (global.logger._raven) {
