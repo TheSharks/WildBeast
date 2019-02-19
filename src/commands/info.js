@@ -8,8 +8,7 @@ module.exports = {
   },
   fn: async (msg) => {
     let bot = global.bot
-    let user = await bot.getRESTUser('107904023901777920')
-    let owner = `${user.username}#${user.discriminator}`
+    let owner = process.env.WILDBEAST_MASTERS.split('|')[0]
     let fields = [{ name: 'Servers Connected', value: '```\n' + bot.guilds.size + '```', inline: true },
       { name: 'Users Known', value: '```\n' + bot.users.size + '```', inline: true },
       { name: 'Channels Connected', value: '```\n' + Object.keys(bot.channelGuildMap).length + '```', inline: true },
