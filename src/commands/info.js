@@ -10,9 +10,11 @@ module.exports = {
     let bot = global.bot
     let owner
     if (process.env.WILDBEAST_MASTERS) {
-      owner = process.env.WILDBEAST_MASTERS.split('|')[0]
+      let userObj = await bot.getRESTUser(process.env.WILDBEAST_MASTERS.split('|')[0])
+      owner = `${userObj.username}#${userObj.discriminator}`
     } else {
-      owner = '107904023901777920'
+      let user = await bot.getRESTUser('107904023901777920')
+      owner = `${user.username}#${user.discriminator}`
     }
     let fields = [{ name: 'Servers Connected', value: '```\n' + bot.guilds.size + '```', inline: true },
       { name: 'Users Known', value: '```\n' + bot.users.size + '```', inline: true },
