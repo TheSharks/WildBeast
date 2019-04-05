@@ -5,6 +5,7 @@
       <a href="https://github.com/TheSharks/WildBeast/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/thesharks/wildbeast.svg?style=for-the-badge&maxAge=300" alt="License"></a>
       <a href="https://github.com/TheSharks/WildBeast/releases"><img src="https://img.shields.io/github/package-json/v/thesharks/wildbeast.svg?label=version&style=for-the-badge&maxAge=300" alt="Version"></a>
       <a href="https://discord.gg/wildbot"><img src="https://img.shields.io/discord/110462143152803840.svg?logo=discord&style=for-the-badge&maxAge=300" alt="Discord server"></a>
+      <a href="https://liberapay.com/Dougley"><img src="http://img.shields.io/liberapay/patrons/Dougley.svg?logo=liberapay&style=for-the-badge&maxAge=300" alt="Liberapay"></a>
     </p>
     <p align="center" style="margin:0;">
       <a href="https://hub.docker.com/r/dougley/wildbeast"><img src="https://img.shields.io/docker/pulls/dougley/wildbeast.svg?style=for-the-badge&maxAge=300"></a>
@@ -17,7 +18,7 @@
 ---
 
 WildBeast is a multifunctional Discord bot, intended to provide a framework that's easy to use, extend, and modify.   
-This is also the open source framework for [WildBot#3942 on Discord](http://invite.wildbot.dougley.com).
+This is also the open source framework for [WildBot#3942 on Discord](https://invite.thesharks.xyz).
 
 ## Main features
 
