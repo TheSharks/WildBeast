@@ -1,11 +1,10 @@
-const required = [ // this is the absolute minimum required to run wildbeast
-  'BOT_TOKEN',
-  'BOT_PREFIX',
-  'WILDBEAST_MASTERS'
-]
+const joi = require('@hapi/joi')
 
-for (let x of required) {
-  if (!process.env[x]) {
-    global.logger.error(`Missing environment variable ${x}`, true)
-  }
-}
+const schema = joi.object().keys({
+  BOT_TOKEN: joi.string().required()
+})
+
+const res = joi.validate(process.env, schema, {
+  allowUnknown: true
+})
+if (res.error) logger.error('ENV', chalk`{yellow ${res.error.details[0].message}}`, true)

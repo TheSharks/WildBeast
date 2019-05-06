@@ -1,8 +1,9 @@
 {
   "extends": "standard",
   "globals": {
-    "i18n": false,
     "logger": false,
+    "chalk": false,
+    "i18n": false,
     "bot": false
   }
 }
