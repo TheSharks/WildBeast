@@ -1,6 +1,7 @@
 /**
  * Indexer for all events the program should listen for
  * All events are located in /src/events, and can be multiple directories deep
+ * @type {Object}
  */
 
 const glob = require('glob')

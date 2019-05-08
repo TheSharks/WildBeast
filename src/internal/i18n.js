@@ -1,7 +1,10 @@
 const { parse } = require('path')
 const languages = require('glob').sync('src/languages/*.json').map(x => parse(x).base)
-const preflang = `${(process.env.WILDBEAST_LANGUAGE || 'en-EN')}.json`
-if (!languages.includes(preflang)) logger.error('I18N', `Language ${preflang} is requested, but no such language exists!`, true)
+let preflang = `${(process.env.WILDBEAST_LANGUAGE || 'en-EN')}.json`
+if (!languages.includes(preflang)) {
+  logger.warn('I18N', `Language ${preflang} is requested, but no such language exists! Falling back to en-EN`)
+  preflang = 'en-EN.json'
+}
 const langfile = require(`../languages/${preflang}`)
 
 module.exports = {

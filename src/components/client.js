@@ -5,6 +5,7 @@
 const Eris = require('eris')
 const bot = new Eris(process.env.BOT_TOKEN)
 
+// patch event emitter to allow for our custom event structure
 bot._ogEmit = bot.emit
 bot.emit = function emit () {
   this._anyListeners.forEach(listener => listener.apply(this, [arguments]))
@@ -17,8 +18,10 @@ bot.onAny = function onAny (func) {
 
 bot.on('debug', x => logger.debug('ERIS', x))
 bot.on('error', (e) => {
-  if (!(e instanceof Error)) global.logger.error('ERIS', e.error)
-  else global.logger.error('ERIS', e)
+  // while the error event can be handled by our own structure like all other events
+  // it wont be registered as a proper error handler, so the process can crash if we dont do it like this
+  if (!(e instanceof Error)) logger.error('ERIS', e.error)
+  else logger.error('ERIS', e)
 })
 
 const events = require('./events')

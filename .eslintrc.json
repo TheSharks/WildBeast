@@ -3,7 +3,6 @@
   "globals": {
     "logger": false,
     "chalk": false,
-    "i18n": false,
-    "bot": false
+    "i18n": false
   }
 }

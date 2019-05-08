@@ -1,5 +1,7 @@
 const log = console.log
 const inspect = require('util').inspect
+const chalk = require('chalk')
+const sentry = require('../components/sentry')
 
 module.exports = {
   /**
@@ -28,10 +30,11 @@ module.exports = {
    */
   error: (type = 'GEN', e, exit = false) => {
     if (!(e instanceof Error)) { // in case strings get logged as errors, for whatever reason
+      sentry.captureException(e)
       exit ? log(chalk`{bold.black.bgRed FATAL} - {bold [${type}]}: ${e}`) : log(chalk`{bold.red ERROR} - {bold [${type}]}: ${e}`)
       if (exit) process.exit(1)
     } else {
-      exit ? log(chalk`{bold.black.bgRed FATAL} - {bold [${type}]}: ${e.stack ? e.stack : e.message}`) : log(chalk`{bold.red ERROR - {bold [${type}]}}: ${e.stack ? e.stack : e.message}`)
+      exit ? log(chalk`{bold.black.bgRed FATAL} - {bold [${type}]}: ${e.stack ? e.stack : e.message}`) : log(chalk`{bold.red ERROR} - {bold [${type}]}: ${e.stack ? e.stack : e.message}`)
       if (exit) process.exit(1)
     }
   },
