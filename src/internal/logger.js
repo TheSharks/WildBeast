@@ -1,6 +1,9 @@
-const log = console.log
-const inspect = require('util').inspect
 const chalk = require('chalk')
+const log = (v) => {
+  const { format } = require('date-fns')
+  console.log(chalk`{gray [${format(new Date(), 'Pp')}]} - ${v}`)
+}
+const inspect = require('util').inspect
 const sentry = require('../components/sentry')
 
 module.exports = {
@@ -11,7 +14,7 @@ module.exports = {
    * @param {*} msg - The data to log
    */
   debug: (type = 'GEN', msg) => {
-    if (process.env.NODE_ENV === 'debug') log(chalk`{bold.green DEBUG} - {bold [${type}]}: ${msg}`)
+    if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.green DEBUG:${type}}] - ${msg}`)
   },
   /**
    * Log something
@@ -19,7 +22,7 @@ module.exports = {
    * @param {*} msg - The data to log
    */
   log: (type = 'GEN', msg) => {
-    log(chalk`{bold.blue INFO} - {bold [${type}]}: ${msg}`) // nothing too interesting going on here
+    log(chalk`[{bold.blue INFO:${type}}] - ${msg}`) // nothing too interesting going on here
   },
   /**
    * Log an error
@@ -31,10 +34,10 @@ module.exports = {
   error: (type = 'GEN', e, exit = false) => {
     if (!(e instanceof Error)) { // in case strings get logged as errors, for whatever reason
       sentry.captureException(e)
-      exit ? log(chalk`{bold.black.bgRed FATAL} - {bold [${type}]}: ${e}`) : log(chalk`{bold.red ERROR} - {bold [${type}]}: ${e}`)
+      exit ? log(chalk`[{bold.black.bgRed FATAL:${type}}] - ${e}`) : log(chalk`[{bold.red ERROR:${type}}] - ${e}`)
       if (exit) process.exit(1)
     } else {
-      exit ? log(chalk`{bold.black.bgRed FATAL} - {bold [${type}]}: ${e.stack ? e.stack : e.message}`) : log(chalk`{bold.red ERROR} - {bold [${type}]}: ${e.stack ? e.stack : e.message}`)
+      exit ? log(chalk`[{bold.black.bgRed FATAL}:${type}}] - ${e.stack ? e.stack : e.message}`) : log(chalk`[{bold.red ERROR:${type}}] - ${e.stack ? e.stack : e.message}`)
       if (exit) process.exit(1)
     }
   },
@@ -44,7 +47,7 @@ module.exports = {
    * @param {*} msg - The data to log
    */
   warn: (type = 'GEN', msg) => {
-    log(chalk`{bold.yellow WARN} - {bold [${type}]}: ${msg}`)
+    log(chalk`[{bold.yellow WARN:${type}}] - ${msg}`)
   },
   /**
    * Trace something
@@ -54,7 +57,7 @@ module.exports = {
    * @param {*} msg - The data to log
    */
   trace: (type = 'GEN', msg) => {
-    if (process.env.NODE_ENV === 'debug') log(chalk`{bold.cyan TRACE} - {bold [${type}]}: ${inspect(msg)}`) // trace is the only logging route that inspects automatically
+    if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.cyan TRACE:${type}}] - ${inspect(msg)}`) // trace is the only logging route that inspects automatically
   },
   /**
    * Log a command that's being ran
@@ -62,6 +65,6 @@ module.exports = {
    */
   command: (opts) => { // specifically to log commands being ran
     if (process.env.WILDBEAST_SUPPRESS_COMMANDLOG) return
-    log(chalk`{bold.magenta CMD}: ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
+    log(chalk`[{bold.magenta CMD}] - ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
   }
 }

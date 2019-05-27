@@ -38,6 +38,7 @@
     "@sentry/integrations": "^5.1.2",
     "@sentry/node": "^5.1.2",
     "chalk": "^2.4.2",
+    "date-fns": "^2.0.0-alpha.27",
     "dotenv": "^6.2.0",
     "eris": "^0.9.0",
     "eventemitter3": "^3.1.0",

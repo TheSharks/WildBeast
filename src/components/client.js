@@ -26,6 +26,7 @@ bot.on('error', (e) => {
 
 const events = require('./events')
 bot.onAny(ctx => {
+  if (events.any) events.any.forEach(x => x(Array.from(ctx)))
   if (events[ctx[0]]) events[ctx[0]].forEach(x => x(Array.from(ctx).slice(1)))
 })
 
