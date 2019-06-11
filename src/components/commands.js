@@ -22,14 +22,15 @@ indexed.forEach(x => {
     let basename = path.basename(x, '.js')
     if (!(cmd instanceof Command)) throw `Command ${basename} is not a WildBeast command, skipping`
     if (final.commands[basename]) throw `Can't index command ${basename}, this command is duplicated, skipping`
+    final.commands[basename] = cmd
     if (cmd.aliases && Array.isArray(cmd.aliases)) {
       cmd.aliases.forEach(x => {
+        if (x.length < 1) throw `Aliases must be at least 1 character, an alias from ${basename} is not, skipping`
         if (final.commands[x]) throw `Can't use ${x} as an alias, there's a command with this name, skipping`
         if (final.aliases.has(x)) throw `Can't set ${x} as an alias of ${basename}, this alias already exists, skipping`
         final.aliases.set(x, basename)
       })
     }
-    final.commands[basename] = cmd
   } catch (e) {
     logger.error('COMMANDS', e)
   }

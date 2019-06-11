@@ -3,8 +3,6 @@ global.logger = require('./src/internal/logger')
 global.i18n = require('./src/internal/i18n')
 require('./src/internal/check-env')
 
-require('./src/components/commands')
-
 logger.log('BOOT', 'Beginning startup sequence...')
 
 require('./src/internal/version-check')

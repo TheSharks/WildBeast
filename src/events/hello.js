@@ -1,3 +1,3 @@
-module.exports = () => {
-  logger.log('TEST', 'Hello from Discord!')
+module.exports = (trace) => {
+  logger.debug('GATEWAY', `Hello from Discord! Connecting to gateways ${trace.join(' ')}`)
 }

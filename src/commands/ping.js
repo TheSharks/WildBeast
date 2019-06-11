@@ -6,4 +6,8 @@ module.exports = new Command(msg => {
   msg.channel.createMessage('Pong!').then(c => {
     c.edit(`Pong! \`${Math.floor(new Date(c.timestamp) - start)}ms, ${client.shards.random().latency}ms\``) // whatever, latency is pretty consistent across shards anyway
   })
+}, {
+  prereqs: {
+    standard: ['administrator', 'manageGuild']
+  }
 })
