@@ -1,11 +1,15 @@
 const { parse } = require('path')
 const languages = require('glob').sync('src/languages/*.json').map(x => parse(x).base)
+const langfiles = new Map()
 let preflang = `${(process.env.WILDBEAST_LANGUAGE || 'en-EN')}.json`
 if (!languages.includes(preflang)) {
   logger.warn('I18N', `Language ${preflang} is requested, but no such language exists! Falling back to en-EN`)
   preflang = 'en-EN.json'
 }
-const langfile = require(`../languages/${preflang}`)
+langfiles.set('pref', require(`../languages/${preflang}`))
+languages.forEach(x => {
+  langfiles.set(x, require(`../languages/${x}`))
+})
 
 module.exports = {
   /**
@@ -16,9 +20,11 @@ module.exports = {
    * @returns {String}
    */
   translateRaw: (key, opts = {}) => {
+    const langfile = langfiles.get('pref')
     if (!langfile[key]) return '[NO SUCH KEY]'
     else return contextualize(langfile[key], opts)
-  }
+  },
+  _files: langfiles
 }
 
 /**

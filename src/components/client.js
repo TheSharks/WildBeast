@@ -24,6 +24,8 @@ bot.on('error', (e) => {
   else logger.error('ERIS', e)
 })
 
+bot.on('rawWS', () => {}) // forces eris to fire rawWS into onAny
+
 const events = require('./events')
 bot.onAny(ctx => {
   if (events.any) events.any.forEach(x => x(...ctx))

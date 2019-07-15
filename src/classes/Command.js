@@ -19,7 +19,7 @@ module.exports = class Command {
   }
   /**
    * Run the command
-   * @param {eris.Message} msg
+   * @param {module:eris.Message} msg
    * @param {String} suffix
    * @returns {Function}
    */
@@ -30,7 +30,7 @@ module.exports = class Command {
   /**
    * Check prerequisites for this command
    * This returns an object with the calculated result, and any failed checks
-   * @param {eris.Message} msg
+   * @param {module:eris.Message} msg
    * @returns {Object}
    */
   runPrereqs (msg) {

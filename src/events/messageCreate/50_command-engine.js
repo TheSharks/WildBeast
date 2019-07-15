@@ -1,4 +1,5 @@
 const commands = require('../../components/commands')
+const { commands: cmdAnalytics } = require('../../components/analytics')
 
 module.exports = (msg) => {
   const prefix = process.env.BOT_PREFIX
@@ -14,6 +15,7 @@ module.exports = (msg) => {
       } catch (e) {
         logger.error('COMMANDS', e)
       } finally {
+        cmdAnalytics.labels(cmd).inc()
         logger.command({
           cmd: cmd,
           opts: suffix,
