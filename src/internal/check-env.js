@@ -5,7 +5,8 @@ const schema = joi.object().keys({
   BOT_PREFIX: joi.string().required(),
   SENTRY_DSN: joi.string(),
   ENABLE_METRICS: joi.boolean(),
-  METRICS_INTERVAL: joi.number()
+  METRICS_INTERVAL: joi.number(),
+  WILDBEAST_MASTERS: joi.string().required().regex(/([0-9]{17,},?)\1?/)
 })
 
 const res = joi.validate(process.env, schema, {

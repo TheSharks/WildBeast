@@ -35,6 +35,7 @@ module.exports = class Command {
   runWithPrereqs (msg, suffix) {
     // run customs first
     for (const x of this.props.customPrereqs) {
+      if (!prereqs[x]) throw new TypeError(`Attempting to use a custom prereq that does not exist: ${x}`)
       if (!prereqs[x].fn(msg)) return msg.channel.createMessage(prereqs[x].errorMessage)
     }
     // then, run default perm checks
