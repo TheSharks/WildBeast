@@ -7,11 +7,10 @@ module.exports = (msg) => {
   let cmd = msg.content.substr(prefix.length).split(' ')[0].toLowerCase()
   if (msg.content.startsWith(prefix)) {
     if (commands.aliases.has(cmd)) cmd = commands.aliases.get(cmd)
-    if (commands.commands[cmd]) {
-      const prereqs = commands.commands[cmd].runPrereqs(msg)
-      if (!prereqs.passed) return msg.channel.createMessage(`Prereqs failed! ${prereqs.checks}`) // fixme
+    const command = commands.commands[cmd]
+    if (command) {
       try {
-        commands.commands[cmd].run(msg, suffix)
+        command.runWithPrereqs(msg, suffix)
       } catch (e) {
         logger.error('COMMANDS', e)
       } finally {

@@ -1,3 +1,4 @@
+const prereqs = require('../internal/dir-require')('src/components/prereqs/*.js')
 /**
  * Represents a command
  * @type {module.Command}
@@ -10,15 +11,13 @@ module.exports = class Command {
       helpMessage: '[help message not set]',
       accessLevel: 0,
       hidden: false,
-      prereqs: {
-        standard: [],
-        custom: null
-      },
+      standardPrereqs: [],
+      customPrereqs: [],
       ...props
     }
   }
   /**
-   * Run the command
+   * Run the command instantly
    * @param {module:eris.Message} msg
    * @param {String} suffix
    * @returns {Function}
@@ -28,34 +27,20 @@ module.exports = class Command {
   }
 
   /**
-   * Check prerequisites for this command
-   * This returns an object with the calculated result, and any failed checks
+   * Check prerequisites for this command, and run the command
    * @param {module:eris.Message} msg
-   * @returns {Object}
+   * @param {String} suffix
+   * @returns {Function | Promise}
    */
-  runPrereqs (msg) {
-    let failed = []
-    if (typeof this.props.prereqs.custom === 'function') {
-      let res = this.props.prereqs.custom()
-      if (res !== true) failed.push(res) // we expect a string with what the error is
+  runWithPrereqs (msg, suffix) {
+    // run customs first
+    for (const x of this.props.customPrereqs) {
+      if (!prereqs[x].fn(msg)) return msg.channel.createMessage(prereqs[x].errorMessage)
     }
-    if (this.props.prereqs.standard.length > 0) {
-      this.props.prereqs.standard.forEach(x => {
-        switch (x) {
-          case 'serverOwner': {
-            if (msg.author.id !== msg.channel.guild.ownerID) failed.push(x)
-            break
-          }
-          default: {
-            if (!msg.member || !msg.member.permission.has(x)) failed.push(x)
-            break
-          }
-        }
-      })
-    }
-    return {
-      passed: (failed.length === 0),
-      checks: failed
-    }
+    // then, run default perm checks
+    if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs') // assumption, if discord perms are needed this is likely a guild-only command
+    const missingPerms = this.props.standardPrereqs.filter(x => !msg.member.permission.has(x))
+    if (missingPerms.length > 0) { return msg.channel.createMessage(`You're missing the following permissions: \`${missingPerms.join(', ')}\``) }
+    return this.run(msg, suffix)
   }
 }
