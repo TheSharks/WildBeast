@@ -18,7 +18,7 @@ module.exports = {
         .end((err, res) => {
           if (!err && res.status === 200) {
             const uD = res.body
-            if (uD.result_type !== 'no_results' || uD.list.length > 0) {
+            if (uD.result_type !== 'no_results' && uD.list.length > 0) {
               msg.channel.createMessage({
                 embed: {
                   color: 0x6832e3,
