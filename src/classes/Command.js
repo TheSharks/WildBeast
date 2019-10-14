@@ -8,6 +8,7 @@ module.exports = class Command {
     if (typeof fn === 'function') this.fn = fn
     else throw new TypeError('Fn param must be a function')
     this.props = {
+      category: 'Uncategorized',
       helpMessage: '[help message not set]',
       accessLevel: 0,
       hidden: false,
