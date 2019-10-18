@@ -2,47 +2,47 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
      <loc>https://docs.thesharks.xyz/</loc>
-     <lastmod>2019-07-11</lastmod>
+     <lastmod>2019-10-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://docs.thesharks.xyz/migrating/</loc>
-     <lastmod>2019-07-11</lastmod>
+     <lastmod>2019-10-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://docs.thesharks.xyz/commands/</loc>
-     <lastmod>2019-07-11</lastmod>
+     <lastmod>2019-10-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://docs.thesharks.xyz/custom_commands/</loc>
-     <lastmod>2019-07-11</lastmod>
+     <lastmod>2019-10-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://docs.thesharks.xyz/legacy_custom_commands/</loc>
-     <lastmod>2019-07-11</lastmod>
+     <lastmod>2019-10-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://docs.thesharks.xyz/install_windows/</loc>
-     <lastmod>2019-07-11</lastmod>
+     <lastmod>2019-10-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://docs.thesharks.xyz/install_linux/</loc>
-     <lastmod>2019-07-11</lastmod>
+     <lastmod>2019-10-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://docs.thesharks.xyz/decoupling/</loc>
-     <lastmod>2019-07-11</lastmod>
+     <lastmod>2019-10-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://docs.thesharks.xyz/minimal_setup/</loc>
-     <lastmod>2019-07-11</lastmod>
+     <lastmod>2019-10-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>
