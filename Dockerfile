@@ -1,4 +1,4 @@
-FROM node:10
+FROM node:current
 
 ARG buildno
 ARG commitsha

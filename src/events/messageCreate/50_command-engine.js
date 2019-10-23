@@ -30,39 +30,34 @@ module.exports = (msg) => {
 
 const generateHelpMessage = async (msg, suffix) => {
   const client = require('../../components/client')
-  const channel = (msg.channel.guild) ? await msg.author.getDMChannel() : msg.channel
-  if (suffix) {
-    const cmd = commands.commands[suffix]
-    if (!cmd) return channel.createMessage('No such command')
-    else {
-      return channel.createMessage({
-        embed: {
-          title: `Help for command ${suffix}`,
-          description: cmd.props.helpMessage,
-          color: 0xFE8E08,
-          fields: [
-            {
-              name: 'Category',
-              value: cmd.props.category,
-              inline: true
-            },
-            {
-              name: 'Access level',
-              value: cmd.props.accessLevel,
-              inline: true
-            }
-          ],
-          footer: {
-            icon_url: client.user.dynamicAvatarURL(),
-            text: `${client.user.username} - Powered by WildBeast`
-          }
+  const generateEmbed = (name, cmd) => {
+    return {
+      title: `Help for command ${name}`,
+      description: cmd.props.helpMessage,
+      color: 0xFE8E08,
+      fields: [
+        {
+          name: 'Category',
+          value: cmd.props.category,
+          inline: true
+        },
+        {
+          name: 'Access level',
+          value: cmd.props.accessLevel,
+          inline: true
         }
-      }).then(() => {
-        msg.addReaction(String.fromCharCode(0x2705)) // White Heavy Check Mark
-      }).catch(e => {
-        if (e.code === 50007) return msg.channel.createMessage('DMs disabled')
-        else throw e
-      })
+      ],
+      footer: {
+        icon_url: client.user.dynamicAvatarURL(),
+        text: `${client.user.username} - Powered by WildBeast`
+      }
     }
+  }
+  if (!suffix) {
+    const pages = require('../../components/paginator')
+    await pages.init(msg.author.id, msg.channel, Object.keys(commands.commands).filter(x => !commands.commands[x].props.hidden).map(x => generateEmbed(x, commands.commands[x])))
+  } else {
+    if (!commands.commands[suffix]) return msg.channel.createMessage('No such command')
+    await msg.channel.createMessage({ embed: generateEmbed(suffix, commands.commands[suffix]) })
   }
 }

@@ -24,7 +24,8 @@ module.exports = class Command {
    * @returns {Function}
    */
   run (msg, suffix) {
-    return this.fn(msg, suffix)
+    if (!this.fn || typeof this.fn !== 'function') throw new TypeError('The command does not have a valid function definition')
+    else return this.fn(msg, suffix)
   }
 
   /**
