@@ -12,8 +12,10 @@ module.exports = {
     const msg = await channel.createMessage({
       embed: pages[0]
     })
+    await msg.addReaction(String.fromCodePoint(0x23EA)) // rewind
     await msg.addReaction(String.fromCodePoint(0x2b05)) // arrow left
     await msg.addReaction(String.fromCodePoint(0x27A1)) // arrow right
+    await msg.addReaction(String.fromCodePoint(0x23E9)) // fast-forward
     store.set(msg.id, { pages: pages, currentPage: 0, user: user })
     store.set(`timeout:${msg.id}`, setTimeout(() => stopPaginationSession(msg), 5000))
     return msg
@@ -24,6 +26,13 @@ module.exports = {
       const data = store.get(msg.id)
       if (user !== data.user) return
       switch (emoji.name.codePointAt(0)) {
+        case 0x23EA : { // rewind
+          await msg.edit({
+            embed: data.pages[0]
+          })
+          data.currentPage = 0
+          break
+        }
         case 0x2b05 : { // left
           if (!data.pages[data.currentPage - 1]) break
           await msg.edit({
@@ -38,6 +47,13 @@ module.exports = {
             embed: data.pages[data.currentPage + 1]
           })
           data.currentPage++
+          break
+        }
+        case 0x23E9 : { // fast-forward
+          await msg.edit({
+            embed: data.pages[data.pages.length - 1]
+          })
+          data.currentPage = data.pages.length - 1
           break
         }
       }
