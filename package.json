@@ -56,7 +56,7 @@
     "elasticsearch": "^16.6.0",
     "eris-lavalink": "^1.0.2",
     "hot-shots": "^6.8.7",
-    "jimp": "^0.9.3",
+    "jimp": "^0.9.5",
     "lokijs": "^1.5.8",
     "raven": "^2.6.4",
     "xml-js": "^1.6.11",
