@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.3">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,17 +46,17 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application.30686662.css">
+      <link rel="stylesheet" href="../assets/stylesheets/application.adb8469c.css">
       
       
     
     
-      <script src="../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
         <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
       
     
@@ -85,7 +85,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#preface" tabindex="1" class="md-skip">
+      <a href="#preface" tabindex="0" class="md-skip">
         Skip to content
       </a>
     
@@ -94,7 +94,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="https://docs.thesharks.xyz" title="WildBeast Documentation" class="md-header-nav__button md-logo">
+        <a href="https://docs.thesharks.xyz" title="WildBeast Documentation" aria-label="WildBeast Documentation" class="md-header-nav__button md-logo">
           
             <i class="md-icon"></i>
           
@@ -125,7 +125,7 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <input type="text" class="md-search__input" aria-label="search" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
       <label class="md-icon md-search__icon" for="__search"></label>
       <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
         &#xE5CD;
@@ -549,9 +549,9 @@
 <p>If you're using Docker Toolbox, the hostname for a service will not be <strong>localhost</strong>. Due to how Docker Toolbox handles networking, the hostname will be an IPv4 address, such as <strong>192.168.99.100</strong>. In this case, this address must be used instead. The IP can be found by going to Kitematic and checking the <strong>Hostname / Ports</strong> section of any container.</p>
 </div>
 <p>First, open the <strong>.env</strong> configuration file in the directory to which you installed the WildBeast source code, and tweak these values as follows:</p>
-<div class="codehilite"><pre><span></span><span class="nv">ARANGO_URI</span><span class="o">=</span>http://localhost:8529
+<div class="codehilite"><pre><span></span><code><span class="nv">ARANGO_URI</span><span class="o">=</span>http://localhost:8529
 <span class="nv">LAVA_NODES</span><span class="o">=[{</span><span class="s2">&quot;host&quot;</span>:<span class="s2">&quot;localhost&quot;</span>,<span class="s2">&quot;port&quot;</span>:80,<span class="s2">&quot;restPort&quot;</span>:2333,<span class="s2">&quot;region&quot;</span>:<span class="s2">&quot;us&quot;</span>,<span class="s2">&quot;password&quot;</span>:<span class="s2">&quot;password&quot;</span><span class="o">}]</span>
-</pre></div>
+</code></pre></div>
 
 
 <h3 id="windows">Windows<a class="headerlink" href="#windows" title="Permanent link">&para;</a></h3>
@@ -568,18 +568,18 @@
 </div>
 <p>For this section, you need to browse to the WildBeast source code directory.</p>
 <p>Before you run the following commands, make sure that all WildBeast-related containers have been turned off. This can be checked by running <code class="codehilite">sudo docker ps</code>, and if the output contains no WildBeast-related containers, you're ready to go. Otherwise shut them down and then proceed.</p>
-<div class="codehilite"><pre><span></span>sudo docker rm wildbeast_arango_1
+<div class="codehilite"><pre><span></span><code>sudo docker rm wildbeast_arango_1
 sudo docker rm wildbeast_lavalink_1
 <span class="c1"># Check that the image versions are correct via &#39;sudo docker images&#39;</span>
 <span class="c1"># Also remember to ensure that the ports you&#39;re exposing (Format is DOCKER_PORT:EXPOSED_PORT) are available</span>
 sudo docker run -d --env-file arangodb.env --name wildbeast_arango_1 -p <span class="m">8529</span>:8529 arangodb:3.3.14
 sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span class="m">2333</span>:2333 -p <span class="m">80</span>:80 fredboat/lavalink:v3
-</pre></div>
+</code></pre></div>
 
 
 <h2 id="installing-dependencies-and-starting">Installing dependencies and starting<a class="headerlink" href="#installing-dependencies-and-starting" title="Permanent link">&para;</a></h2>
 <p>If you haven't already, browse to the WildBeast source code directory. Run <code class="codehilite">npm i</code> to install the dependencies required to run from source. If you have not yet initialised the database, do so by running <code class="codehilite">npm run dbcreate</code> after the dependency installation command finishes.</p>
-<p>When the previous step has finished, run <code class="codehilite"><span class="n">npm</span> <span class="k">start</span></code> in the terminal. If the output of that command resembles the following, you're finished.</p>
+<p>When the previous step has finished, run <code class="codehilite"><span class="err">npm start</span></code> in the terminal. If the output of that command resembles the following, you're finished.</p>
 <p><img alt="Source startup" src="../img/source-startup.png" /></p>
 <div class="admonition danger">
 <p class="admonition-title">Security considerations</p>
@@ -600,6 +600,7 @@ sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span 
                       decoupling.md
                     </a>
                   
+                
                 
               
               
@@ -659,16 +660,16 @@ sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span 
           </div>
         
         powered by
-        <a href="https://www.mkdocs.org">MkDocs</a>
+        <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>
         and
-        <a href="https://squidfunk.github.io/mkdocs-material/">
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
           Material for MkDocs</a>
       </div>
       
   <div class="md-footer-social">
     <link rel="stylesheet" href="../assets/fonts/font-awesome.css">
     
-      <a href="https://github.com/TheSharks" class="md-footer-social__link fa fa-github"></a>
+      <a href="https://github.com/TheSharks" target="_blank" rel="noopener" title="github" class="md-footer-social__link fa fa-github"></a>
     
   </div>
 
@@ -678,9 +679,9 @@ sudo docker run -d --env-file lavalink.env --name wildbeast_lavalink_1 -p <span 
       
     </div>
     
-      <script src="../assets/javascripts/application.ac79c3b0.js"></script>
+      <script src="../assets/javascripts/application.c33a9706.js"></script>
       
-      <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:".."}})</script>
       
         <script src="../js/dist/commands.js"></script>
       
