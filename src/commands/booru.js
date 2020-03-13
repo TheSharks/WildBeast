@@ -15,7 +15,7 @@ const sites = {
   },
   e621: {
     apiStyle: 'e621',
-    baseURL: 'https://e621.net/post/index.json'
+    baseURL: 'https://e621.net/posts.json'
   }
 }
 
@@ -83,17 +83,17 @@ module.exports = {
         // wow look at e621 being all special with their own api style
         SA(sites[parts[0]].baseURL)
           .query({ limit: '50', tags: parts.slice(1).join(' ') })
-          .set({ 'Accept': 'application/json', 'User-Agent': 'Superagent Node.js' })
+          .set({ Accept: 'application/json', 'User-Agent': 'github.com/TheSharks/WildBeast@6.0.0 (by @Dougley)' })
           .then(res => {
-            if (res.body.length < 1) {
+            if (res.body.posts.length < 1) {
               return global.i18n.send('BOORU_NO_RESULTS', msg.channel, {
                 query: (query.length > 0) ? query : 'random'
               })
             }
-            const count = Math.floor((Math.random() * res.body.length))
+            const count = Math.floor((Math.random() * res.body.posts.length))
             global.i18n.send('BOORU_SUCCESS', msg.channel, {
               query: (query.length > 0) ? query : 'random',
-              url: res.body[count].file_url
+              url: res.body.posts[count].file.url
             })
           }).catch(e => {
             if (e.status) { // is this error thrown by the e621 server or by the module?
