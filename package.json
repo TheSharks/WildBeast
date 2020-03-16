@@ -39,7 +39,7 @@
     "eslint-plugin-standard": "^4.0.1",
     "fs-extra": "^8.1.0",
     "mocha": "^6.2.2",
-    "standard": "^14.3.1",
+    "standard": "^14.3.3",
     "uglify-es": "^3.3.9"
   },
   "dependencies": {
