@@ -1,4 +1,5 @@
 const prereqs = require('../internal/dir-require')('src/components/prereqs/*.js')
+const client = require('../components/client')
 /**
  * Represents a command
  * @type {module.Command}
@@ -12,11 +13,16 @@ module.exports = class Command {
       helpMessage: '[help message not set]',
       accessLevel: 0,
       hidden: false,
+      nsfw: false,
+      disableDM: false,
       standardPrereqs: [],
       customPrereqs: [],
+      aliases: [],
+      ownPermsNeeded: [],
       ...props
     }
   }
+
   /**
    * Run the command instantly
    * @param {module:eris.Message} msg
@@ -41,9 +47,16 @@ module.exports = class Command {
       if (!prereqs[x].fn(msg)) return msg.channel.createMessage(prereqs[x].errorMessage)
     }
     // then, run default perm checks
-    if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs') // assumption, if discord perms are needed this is likely a guild-only command
-    const missingPerms = this.props.standardPrereqs.filter(x => !msg.member.permission.has(x))
-    if (missingPerms.length > 0) { return msg.channel.createMessage(`You're missing the following permissions: \`${missingPerms.join(', ')}\``) }
+    if (this.props.ownPermsNeeded.length > 0) {
+      if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs')
+      const missingPerms = this.props.standardPrereqs.filter(x => !!msg.channel.guild.members.get(client.user.id).permission.has(x))
+      if (missingPerms.length > 0) { return msg.channel.createMessage(`I'm missing the following permissions: \`${missingPerms.join(', ')}\``) }
+    }
+    if (this.props.standardPrereqs.length > 0) {
+      if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs') // assumption, if discord perms are needed this is likely a guild-only command
+      const missingPerms = this.props.standardPrereqs.filter(x => !msg.member.permission.has(x))
+      if (missingPerms.length > 0) { return msg.channel.createMessage(`You're missing the following permissions: \`${missingPerms.join(', ')}\``) }
+    }
     return this.run(msg, suffix)
   }
 }

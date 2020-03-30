@@ -55,7 +55,7 @@ const generateHelpMessage = async (msg, suffix) => {
   }
   if (!suffix) {
     const pages = require('../../components/paginator')
-    await pages.init(msg.author.id, msg.channel, Object.keys(commands.commands).filter(x => !commands.commands[x].props.hidden).map(x => generateEmbed(x, commands.commands[x])))
+    await pages.init(msg.author.id, msg.channel, Object.keys(commands.commands).filter(x => !commands.commands[x].props.hidden).map(x => generateEmbed(x, commands.commands[x])), 'See <https://docs.thesharks.xyz/commands> for a full list of commands')
   } else {
     if (!commands.commands[suffix]) return msg.channel.createMessage('No such command')
     await msg.channel.createMessage({ embed: generateEmbed(suffix, commands.commands[suffix]) })

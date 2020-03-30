@@ -1,4 +1,4 @@
-const Command = require('../classes/Command')
+const Command = require('../../classes/Command')
 
 module.exports = new Command((msg, suffix) => {
   const util = require('util')

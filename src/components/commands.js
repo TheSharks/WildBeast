@@ -5,30 +5,26 @@
  * @type {Object}
  */
 
-const glob = require('glob')
-const events = glob.sync('src/commands/**/*.js')
+const dirreq = require('../internal/dir-require')
 const Command = require('../classes/Command')
-const path = require('path')
-const indexed = events.map(x => x.split('/').splice(2)[0])
+const commands = dirreq('src/commands/**/*.js')
 const final = {
   commands: {},
   aliases: new Map()
 }
 
-indexed.forEach(x => {
+Object.keys(commands).forEach(x => {
   /* eslint-disable no-throw-literal */
   try {
-    let cmd = require(`${process.cwd()}/src/commands/${x}`)
-    let basename = path.basename(x, '.js')
-    if (!(cmd instanceof Command)) throw `Command ${basename} is not a WildBeast command, skipping`
-    if (final.commands[basename]) throw `Can't index command ${basename}, this command is duplicated, skipping`
-    final.commands[basename] = cmd
-    if (cmd.aliases && Array.isArray(cmd.aliases)) {
-      cmd.aliases.forEach(x => {
-        if (x.length < 1) throw `Aliases must be at least 1 character, an alias from ${basename} is not, skipping`
-        if (final.commands[x]) throw `Can't use ${x} as an alias, there's a command with this name, skipping`
-        if (final.aliases.has(x)) throw `Can't set ${x} as an alias of ${basename}, this alias already exists, skipping`
-        final.aliases.set(x, basename)
+    if (!(commands[x] instanceof Command)) throw `Command ${x} is not a WildBeast command, skipping`
+    if (final.commands[x]) throw `Can't index command ${x}, this command is duplicated, skipping`
+    final.commands[x] = commands[x]
+    if (commands[x].props.aliases && Array.isArray(commands[x].props.aliases)) {
+      commands[x].props.aliases.forEach(y => {
+        if (y.length < 1) throw `Aliases must be at least 1 character, an alias from ${x} is not, skipping`
+        if (final.commands[y]) throw `Can't use ${y} as an alias, there's a command with this name, skipping`
+        if (final.aliases.has(y)) throw `Can't set ${y} as an alias of ${x}, this alias already exists, skipping`
+        final.aliases.set(y, x)
       })
     }
   } catch (e) {
