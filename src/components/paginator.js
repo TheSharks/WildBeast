@@ -6,10 +6,12 @@ module.exports = {
    * @param {String} user - The ID of the user that should be listened to
    * @param {module:eris.TextChannel} channel - The channel where the message should be sent
    * @param {Object[]} pages - Array of embed-compatible objects to act as pages for this pagination session
+   * @param {String} text - Optional message to display above all embeds
    * @returns {Promise<Message>}
    */
-  init: async (user, channel, pages) => {
+  init: async (user, channel, pages, text) => {
     const msg = await channel.createMessage({
+      content: text,
       embed: pages[0]
     })
     await msg.addReaction(String.fromCodePoint(0x23EA)) // rewind
@@ -28,6 +30,7 @@ module.exports = {
       switch (emoji.name.codePointAt(0)) {
         case 0x23EA : { // rewind
           await msg.edit({
+            content: msg.content,
             embed: data.pages[0]
           })
           data.currentPage = 0
@@ -36,6 +39,7 @@ module.exports = {
         case 0x2b05 : { // left
           if (!data.pages[data.currentPage - 1]) break
           await msg.edit({
+            content: msg.content,
             embed: data.pages[data.currentPage - 1]
           })
           data.currentPage--
@@ -44,6 +48,7 @@ module.exports = {
         case 0x27A1 : { // right
           if (!data.pages[data.currentPage + 1]) break
           await msg.edit({
+            content: msg.content,
             embed: data.pages[data.currentPage + 1]
           })
           data.currentPage++
@@ -51,6 +56,7 @@ module.exports = {
         }
         case 0x23E9 : { // fast-forward
           await msg.edit({
+            content: msg.content,
             embed: data.pages[data.pages.length - 1]
           })
           data.currentPage = data.pages.length - 1

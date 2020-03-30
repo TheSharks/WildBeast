@@ -4,7 +4,7 @@ const http = require('http')
 client.collectDefaultMetrics({ timeout: 5000 })
 
 const server = http.createServer((req, res) => {
-  let reqUrl = new URL(req.url, 'http://127.0.0.1/')
+  const reqUrl = new URL(req.url, 'http://127.0.0.1/')
   switch ((req.method + reqUrl.pathname)) {
     case 'GET/metrics': {
       res.writeHead(200)

@@ -37,7 +37,7 @@ module.exports = {
       exit ? log(chalk`[{bold.black.bgRed FATAL:${type}}] - ${e}`) : log(chalk`[{bold.red ERROR:${type}}] - ${e}`)
       if (exit) process.exit(1)
     } else {
-      exit ? log(chalk`[{bold.black.bgRed FATAL}:${type}}] - ${e.stack ? e.stack : e.message}`) : log(chalk`[{bold.red ERROR:${type}}] - ${e.stack ? e.stack : e.message}`)
+      exit ? log(chalk`[{bold.black.bgRed FATAL:${type}}] - ${e.stack ? e.stack : e.message}`) : log(chalk`[{bold.red ERROR:${type}}] - ${e.stack ? e.stack : e.message}`)
       if (exit) process.exit(1)
     }
   },
