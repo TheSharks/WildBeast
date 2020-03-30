@@ -72,3 +72,5 @@ docs/js/dist/commands.js*
 
 # lokijs database
 wildbeast.db
+
+.vscode

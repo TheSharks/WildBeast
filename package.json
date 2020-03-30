@@ -14,9 +14,9 @@
   },
   "author": "Remco Jongschaap <hello@dougley.com>",
   "contributors": [
-    "Anthony Zaza <tony@lemonmc.com>",
     "Curtis Fowler <caf203@gmail.com>",
-    "Linus Willner <hello@linuswillner.me>"
+    "Linus Willner <hello@linuswillner.me>",
+    "Pierce Harriz <pierce.harriz@gmail.com>"
   ],
   "license": "AGPL-3.0",
   "bugs": {
@@ -24,27 +24,29 @@
   },
   "homepage": "https://docs.thesharks.xyz/",
   "devDependencies": {
-    "eslint": "^5.16.0",
-    "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-node": "^8.0.1",
+    "eslint": "^6.8.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "fs-extra": "^7.0.1",
-    "standard": "^12.0.1",
+    "fs-extra": "^8.1.0",
+    "standard": "^14.3.1",
     "uglify-es": "^3.3.9"
   },
   "dependencies": {
-    "@hapi/joi": "^15.1.1",
-    "@sentry/integrations": "^5.6.1",
-    "@sentry/node": "^5.6.2",
-    "chalk": "^2.4.2",
-    "date-fns": "^2.4.1",
-    "dotenv": "^6.2.0",
-    "eris": "^0.10.1",
-    "eventemitter3": "^3.1.2",
-    "glob": "^7.1.4",
-    "prom-client": "^11.5.3",
-    "superagent": "^5.1.0"
+    "@hapi/joi": "^17.1.1",
+    "@sentry/integrations": "^5.14.2",
+    "@sentry/node": "^5.14.2",
+    "@thesharks/tyr": "^1.0.1",
+    "chalk": "^3.0.0",
+    "date-fns": "^2.11.0",
+    "dotenv": "^8.2.0",
+    "eris": "^0.11.2",
+    "eventemitter3": "^4.0.0",
+    "glob": "^7.1.6",
+    "jimp": "^0.9.8",
+    "prom-client": "^12.0.0",
+    "superagent": "^5.2.2"
   }
 }
