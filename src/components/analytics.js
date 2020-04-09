@@ -42,5 +42,18 @@ module.exports = {
     name: 'commands_ran',
     help: 'Total amount of commands ran broken up per command name',
     labelNames: ['commandName']
+  }),
+  guildMessages: new client.Counter({
+    name: 'messages_sent',
+    help: 'The amount of messages the bot has seen per server',
+    labelNames: ['guildID']
+  }),
+  users: new client.Gauge({
+    name: 'users_visible',
+    help: 'How many users are visible to this shard'
+  }),
+  uniqueUsers: new client.Gauge({
+    name: 'unique_users_visible',
+    help: 'How many unique users are visible to this shard'
   })
 }
