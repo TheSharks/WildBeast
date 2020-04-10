@@ -55,5 +55,9 @@ module.exports = {
   uniqueUsers: new client.Gauge({
     name: 'unique_users_visible',
     help: 'How many unique users are visible to this shard'
+  }),
+  activeEncoders: new client.Gauge({
+    name: 'active_encoders',
+    help: 'How many encoders are running managed by the shard'
   })
 }
