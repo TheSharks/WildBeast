@@ -3,7 +3,9 @@
  * @type {module:eris.Client}
  */
 const Eris = require('eris')
-module.exports = new Eris(process.env.BOT_TOKEN)
+module.exports = new Eris(process.env.BOT_TOKEN, {
+  messageLimit: 10
+})
 
 // patch event emitter to allow for our custom event structure
 module.exports._ogEmit = module.exports.emit
