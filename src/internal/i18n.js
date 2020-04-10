@@ -34,7 +34,7 @@ module.exports = {
  * @return {String}
  */
 const contextualize = (key, opts) => {
-  for (let x in opts) {
+  for (const x in opts) {
     key = key.replace(new RegExp(`{${x}`, 'g'), opts[x])
   }
   return key
