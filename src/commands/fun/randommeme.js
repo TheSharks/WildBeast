@@ -26,4 +26,7 @@ module.exports = new Command(async msg => {
     msg.channel.createMessage('Something went wrong, try again later')
     logger.error(e)
   }
+}, {
+  ownPermsNeeded: ['embedLinks'],
+  nsfw: true
 })

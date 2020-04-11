@@ -2,6 +2,8 @@ const Command = require('../../classes/Command')
 const client = require('../../components/client')
 
 module.exports = new Command(async (msg, suffix) => {
+  if (suffix.length === 0) return msg.channel.createMessage('Please provide IDs or mention users you\'d like to kick')
+
   const chunks = suffix.split(' ')
   const ids = chunks
     .map(x => x.match(/([0-9]*)/)[1])
@@ -9,8 +11,10 @@ module.exports = new Command(async (msg, suffix) => {
   const members = [
     ...msg.mentions.filter(u => u.id !== client.user.id).map((user) => msg.channel.guild.members.get(user.id)),
     ...ids.map((user) => msg.channel.guild.members.get(user))
-  ]
-  if (members.length === 0) return msg.channel.createMessage('Please provide IDs or mention users you\'d like to kick')
+  ].filter(x => x !== undefined)
+
+  if (members.length === 0) return msg.channel.createMessage('Couldn\'t find those users in the server')
+
   const reason = chunks.slice(members.length).join(' ').length === 0
     ? '[No reason provided]'
     : chunks.slice(members.length).join(' ')
