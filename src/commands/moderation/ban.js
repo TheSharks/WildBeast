@@ -23,12 +23,15 @@ module.exports = new Command(async (msg, suffix) => {
   const result = await Promise.all(
     members
       .map(x => msg.channel.guild.banMember(x, 7, `${msg.author.username}#${msg.author.discriminator}: ${reason}`))
-      .map(p => p.catch(e => e))
+      // If a promise returns an error, add it to the results anyway and alert the user later
+      .map(banReq => banReq.catch(e => e))
   )
 
+  const succeeded = result.filter(x => !(x instanceof Error)).length
+  const failed = result.filter(x => x instanceof Error).length
   await reply.edit(
-    `Banned ${result.filter(x => !(x instanceof Error)).length} members` +
-    ((result.filter(x => x instanceof Error).length > 0) ? `\nCouldn't ban ${result.filter(x => x instanceof Error).length} members` : '')
+    `Banned ${succeeded} members` +
+    (failed > 0 ? `\nFailed to ban ${failed} members` : '')
   )
 }, {
   ownPermsNeeded: ['banMembers'],

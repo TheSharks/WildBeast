@@ -11,10 +11,10 @@ module.exports = new Eris(process.env.BOT_TOKEN, {
 module.exports.wildbeastVoiceConnections = new Collection(require('../classes/VoiceConnection'))
 
 // patch event emitter to allow for our custom event structure
-module.exports._ogEmit = module.exports.emit
+module.exports._defaultEmit = module.exports.emit
 module.exports.emit = function emit () {
   this._anyListeners.forEach(listener => listener.apply(this, [arguments]))
-  return this._ogEmit.apply(this, arguments)
+  return this._defaultEmit.apply(this, arguments)
 }
 module.exports.onAny = function onAny (func) {
   if (!this._anyListeners) this._anyListeners = []

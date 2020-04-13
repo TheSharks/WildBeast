@@ -4,7 +4,7 @@ const Command = require('../../classes/Command')
 module.exports = new Command(async msg => {
   try {
     const res = await SA.get('https://random.dog/woof.json?filter=mp4,webm')
-    const fact = (await SA.get('https://some-random-api.ml/facts/dog')).body.fact
+    const { fact } = (await SA.get('https://some-random-api.ml/facts/dog')).body
     await msg.channel.createMessage({
       embed: {
         description: fact,

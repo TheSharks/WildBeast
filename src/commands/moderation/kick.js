@@ -26,9 +26,11 @@ module.exports = new Command(async (msg, suffix) => {
       .map(p => p.catch(e => e))
   )
 
+  const succeeded = result.filter(x => !(x instanceof Error)).length
+  const failed = result.filter(x => x instanceof Error).length
   await reply.edit(
-    `Kicked ${result.filter(x => !(x instanceof Error)).length} members` +
-    ((result.filter(x => x instanceof Error).length > 0) ? `\nCouldn't kick ${result.filter(x => x instanceof Error).length} members` : '')
+    `Kicked ${succeeded} members` +
+    (failed > 0 ? `\nFailed to kick ${failed} members` : '')
   )
 }, {
   ownPermsNeeded: ['kickMembers'],
