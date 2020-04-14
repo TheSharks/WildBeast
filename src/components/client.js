@@ -5,10 +5,18 @@
 const Eris = require('eris')
 const { Collection } = require('eris')
 module.exports = new Eris(process.env.BOT_TOKEN, {
-  messageLimit: 10
+  messageLimit: 10,
+  intents: [
+    'guilds',
+    'guildMessages',
+    'guildMessageReactions', // paginator
+    'guildVoiceStates', // our voice join method needs this
+    'directMessages', // we support dms
+    'directMessageReactions' // paginator
+  ]
 })
 
-module.exports.wildbeastVoiceConnections = new Collection(require('../classes/VoiceConnection'))
+module.exports.voiceConnectionManager = new Collection(require('../classes/VoiceConnection'))
 
 // patch event emitter to allow for our custom event structure
 module.exports._defaultEmit = module.exports.emit
@@ -21,7 +29,7 @@ module.exports.onAny = function onAny (func) {
   this._anyListeners.push(func)
 }
 
-// module.exports.on('debug', x => logger.debug('ERIS', x))
+module.exports.on('debug', x => logger.debug('ERIS', x))
 module.exports.on('error', (e) => {
   // while the error event can be handled by our own structure like all other events
   // it wont be registered as a proper error handler, so the process can crash if we dont do it like this

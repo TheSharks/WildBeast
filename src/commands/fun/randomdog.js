@@ -21,6 +21,6 @@ module.exports = new Command(async msg => {
     logger.error(e)
   }
 }, {
-  ownPermsNeeded: ['embedLinks'],
+  requiredPermissions: ['embedLinks'],
   aliases: ['dog']
 })

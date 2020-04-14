@@ -33,6 +33,6 @@ module.exports = new Command(async (msg, suffix) => {
     (failed > 0 ? `\nFailed to kick ${failed} members` : '')
   )
 }, {
-  ownPermsNeeded: ['kickMembers'],
+  requiredPermissions: ['kickMembers'],
   standardPrereqs: ['kickMembers']
 })

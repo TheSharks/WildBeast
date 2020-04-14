@@ -15,5 +15,5 @@ module.exports = new Command(async msg => {
     msg.channel.createMessage('Something went terribly wrong!')
   }
 }, {
-  ownPermsNeeded: ['attachFiles']
+  requiredPermissions: ['attachFiles']
 })

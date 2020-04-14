@@ -66,14 +66,15 @@ module.exports = {
       clearTimeout(store.get(`timeout:${msg.id}`))
       store.set(`timeout:${msg.id}`, setTimeout(() => stopPaginationSession(msg), 5000))
       store.set(msg.id, data)
-      if (msg.channel.guild && msg.member.permissions.has('manageMessages')) await client.removeMessageReaction(msg.channel.id, msg.id, emoji.name, user)
+      if (msg.channel.guild && msg.channel.permissionsOf(client.user.id).has('manageMessages')) await client.removeMessageReaction(msg.channel.id, msg.id, emoji.name, user)
     }
   },
   _store: store
 }
 
 const stopPaginationSession = async (msg) => {
-  if (msg.channel.guild && msg.member.permissions.has('manageMessages')) await msg.removeReactions()
+  if (msg.channel.guild && msg.channel.permissionsOf(msg.author.id).has('manageMessages')) await msg.removeReactions()
+  // the author is guaranteed to be the client
   store.delete(msg.id)
   store.delete(`timeout:${msg.id}`)
 }

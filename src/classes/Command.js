@@ -18,7 +18,7 @@ module.exports = class Command {
       standardPrereqs: [],
       customPrereqs: [],
       aliases: [],
-      ownPermsNeeded: [],
+      requiredPermissions: [],
       ...props
     }
   }
@@ -30,7 +30,7 @@ module.exports = class Command {
    * @returns {Function}
    */
   run (msg, suffix) {
-    if (!this.fn || typeof this.fn !== 'function') throw new TypeError('The command does not have a valid function definition')
+    if (!this.fn || typeof this.fn !== 'function') throw new TypeError(`Expected type 'function', got ${typeof this.fn}`)
     else return this.fn(msg, suffix)
   }
 
@@ -47,15 +47,15 @@ module.exports = class Command {
       if (!prereqs[x].fn(msg)) return msg.channel.createMessage(prereqs[x].errorMessage)
     }
     // then, run default perm checks
-    if (this.props.ownPermsNeeded.length > 0) {
+    if (this.props.requiredPermissions.length > 0) {
       if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs')
-      const missingPerms = this.props.standardPrereqs.filter(x => !!msg.channel.guild.members.get(client.user.id).permission.has(x))
-      if (missingPerms.length > 0) { return msg.channel.createMessage(`I'm missing the following permissions: \`${missingPerms.join(', ')}\``) }
+      const missingPerms = this.props.requiredPermissions.filter(x => !!msg.channel.guild.members.get(client.user.id).permission.has(x))
+      if (missingPerms.length > 0) return msg.channel.createMessage(`I'm missing the following permissions: \`${missingPerms.join(', ')}\``)
     }
     if (this.props.standardPrereqs.length > 0) {
       if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs') // assumption, if discord perms are needed this is likely a guild-only command
       const missingPerms = this.props.standardPrereqs.filter(x => !msg.member.permission.has(x))
-      if (missingPerms.length > 0) { return msg.channel.createMessage(`You're missing the following permissions: \`${missingPerms.join(', ')}\``) }
+      if (missingPerms.length > 0) return msg.channel.createMessage(`You're missing the following permissions: \`${missingPerms.join(', ')}\``)
     }
     return this.run(msg, suffix)
   }

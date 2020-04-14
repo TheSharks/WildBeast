@@ -29,4 +29,6 @@ module.exports = new Command(async (msg, suffix) => {
     msg.channel.createMessage('Something went wrong, try again later')
     logger.error(e)
   }
+}, {
+  requiredPermissions: ['embedLinks']
 })
