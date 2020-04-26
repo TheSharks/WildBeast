@@ -18,7 +18,7 @@
     "Linus Willner <hello@linuswillner.me>",
     "Pierce Harriz <pierce.harriz@gmail.com>"
   ],
-  "license": "AGPL-3.0",
+  "license": "SEE LICENSE IN LICENSE.md",
   "bugs": {
     "url": "https://github.com/TheSharks/WildBeast/issues"
   },
@@ -34,16 +34,16 @@
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
-    "@sentry/integrations": "^5.15.4",
-    "@sentry/node": "^5.15.4",
-    "@thesharks/tyr": "^1.1.0",
+    "@sentry/integrations": "^5.15.5",
+    "@sentry/node": "^5.15.5",
+    "@thesharks/tyr": "^1.1.2",
     "chalk": "^4.0.0",
     "date-fns": "^2.12.0",
     "dotenv": "^8.2.0",
     "eris": "^0.12.0",
     "eventemitter3": "^4.0.0",
     "glob": "^7.1.6",
-    "jimp": "^0.10.1",
+    "jimp": "^0.10.3",
     "prom-client": "^12.0.0",
     "superagent": "^5.2.2"
   }
