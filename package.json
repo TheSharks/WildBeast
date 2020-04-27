@@ -48,7 +48,7 @@
     "eris": "^0.11.2",
     "moment": "^2.24.0",
     "superagent": "^5.2.2",
-    "ws": "^7.2.3"
+    "ws": "^7.2.5"
   },
   "optionalDependencies": {
     "@thesharks/jagtag-js": "^1.0.4",
