@@ -38,6 +38,11 @@ module.exports = new Command(async (msg, suffix) => {
     (failed > 0 ? `\nFailed to softban ${failed} members` : '')
   )
 }, {
-  requiredPermissions: ['banMembers'],
-  standardPrereqs: ['banMembers']
+  requiredPermissions: {
+    guild: ['banMembers']
+  },
+  standardPrereqs: {
+    guild: ['kickMembers']
+  },
+  disableDM: true
 })

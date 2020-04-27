@@ -27,6 +27,8 @@ module.exports = new Command(async msg => {
     logger.error(e)
   }
 }, {
-  requiredPermissions: ['embedLinks'],
+  requiredPermissions: {
+    channel: ['embedLinks']
+  },
   nsfw: true
 })

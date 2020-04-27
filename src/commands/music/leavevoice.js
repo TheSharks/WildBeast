@@ -8,5 +8,6 @@ module.exports = new Command(async msg => {
   client.voiceConnectionManager.delete(msg.channel.guild.id)
 }, {
   aliases: ['leave-voice'],
-  customPrereqs: ['musicCommand']
+  customPrereqs: ['musicCommand'],
+  disableDM: true
 })

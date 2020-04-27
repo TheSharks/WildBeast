@@ -16,5 +16,6 @@ module.exports = new Command(async msg => {
     textChannel: msg.channel
   })
 }, {
-  aliases: ['voice', 'join-voice']
+  aliases: ['voice', 'join-voice'],
+  disableDM: true
 })

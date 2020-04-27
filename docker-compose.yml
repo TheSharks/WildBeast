@@ -5,11 +5,8 @@ services:
     env_file:
       - .env
     links:
-    - lavalink
+      - lavalink
     depends_on:
       - lavalink
-      - install
   lavalink:
     image: fredboat/lavalink:master-v3
-    env_file:
-      - lavalink.env
