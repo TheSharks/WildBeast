@@ -17,7 +17,7 @@ module.exports = {
           if (suffix.toLowerCase() === 'current') {
             msg.channel.createMessage(`<@${msg.author.id}>, **Alternate text (shown on mouse over)**\n ${xkcdInfo.alt}\n\n${xkcdInfo.img}`)
           } else if (!suffix) {
-            let xkcdRandom = Math.floor(Math.random() * (xkcdInfo.num - 1)) + 1
+            const xkcdRandom = Math.floor(Math.random() * (xkcdInfo.num - 1)) + 1
             request.get(`http://xkcd.com/${xkcdRandom}/info.0.json`)
               .end((error, response) => {
                 if (!error && response.status === 200) {

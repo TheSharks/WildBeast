@@ -7,7 +7,7 @@ module.exports = {
     timeout: 5
   },
   fn: function (msg, suffix) {
-    let bot = msg.channel.guild.shard.client
+    const bot = msg.channel.guild.shard.client
     const split = suffix.split(' ')
     const hex = split[split.length - 1]
     split.pop()

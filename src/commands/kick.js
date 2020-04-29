@@ -9,7 +9,7 @@ module.exports = {
     permAddons: ['Kick Members']
   },
   fn: function (msg, suffix) {
-    let bot = global.bot
+    const bot = global.bot
     if (!msg.member.permission.json.kickMembers) {
       msg.channel.createMessage(`<@${msg.author.id}>, Sorry but you do not have permission to kick members.`)
     } else if (!msg.channel.guild.members.get(bot.user.id).permission.json.kickMembers) {
@@ -17,10 +17,10 @@ module.exports = {
     } else if (msg.mentions.filter(m => m.id !== bot.user.id).length === 0) {
       msg.channel.createMessage('Please mention the user(s) you want to kick.')
     } else {
-      let chunks = suffix.split(' ')
-      let members = msg.mentions.filter(u => u.id !== bot.user.id).map((user) => msg.channel.guild.members.get(user.id))
-      let reason = chunks.slice(members.length).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length).join(' ')
-      let list = { success: [], error: [] }
+      const chunks = suffix.split(' ')
+      const members = msg.mentions.filter(u => u.id !== bot.user.id).map((user) => msg.channel.guild.members.get(user.id))
+      const reason = chunks.slice(members.length).join(' ').length === 0 ? 'No reason provided.' : chunks.slice(members.length).join(' ')
+      const list = { success: [], error: [] }
       safeLoop(msg, members, reason, list)
     }
 

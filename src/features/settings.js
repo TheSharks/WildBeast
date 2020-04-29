@@ -4,7 +4,7 @@ module.exports = {
   prefix: async (guild, msg) => {
     const tag = new RegExp(`<@!?${global.bot.user.id}>`)
     if (msg.content.search(tag) === 0) return tag.exec(msg.content) + ' '
-    let settings = await driver.getSettings(guild)
+    const settings = await driver.getSettings(guild)
     if (settings.prefix) return settings.prefix
     else {
       if (process.env.BOT_PREFIX) return process.env.BOT_PREFIX

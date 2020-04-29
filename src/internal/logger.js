@@ -76,7 +76,7 @@ module.exports = {
 
 function transform (guild) {
   if (!guild) return
-  let proxy = guild
+  const proxy = guild
   proxy.joinedAt = new Date(guild.joinedAt).toISOString()
   proxy.createdAt = new Date(guild.createdAt).toISOString()
   // why eris gives numbers instead of dates for this i dont even know
@@ -88,9 +88,11 @@ function sendToES (opts) {
   if (ES) {
     const moment = require('moment')
     opts['@timestamp'] = new Date().toISOString()
-    store.push({ index: {
-      _index: (process.env.ELASTICSEARCH_INDEX || 'wildbeast') + `-${moment().format('YYYY.MM.DD')}`, _type: '_doc'
-    } })
+    store.push({
+      index: {
+        _index: (process.env.ELASTICSEARCH_INDEX || 'wildbeast') + `-${moment().format('YYYY.MM.DD')}`, _type: '_doc'
+      }
+    })
     store.push(opts)
   }
 }

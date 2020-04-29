@@ -24,7 +24,7 @@ module.exports = {
         const isURL = (input) => {
           return input.match(urlregex)
         }
-        let link = isURL(suffix) ? new URL(suffix) : {}
+        const link = isURL(suffix) ? new URL(suffix) : {}
         let splitLink
         if (link.hostname) {
           if (suffix.includes('list=') !== suffix.includes('playlist?')) {

@@ -8,7 +8,7 @@ module.exports = {
     noDM: true,
     alias: ['play'],
     addons: [
-      `Supported resources: YouTube, SoundCloud, Bandcamp, Twitch, Vimeo, Mixer and raw HTML audio`
+      'Supported resources: YouTube, SoundCloud, Bandcamp, Twitch, Vimeo, Mixer and raw HTML audio'
     ]
   },
   fn: async (msg, suffix) => {
@@ -20,7 +20,7 @@ module.exports = {
         const isURL = (input) => {
           return input.match(urlregex)
         }
-        let link = isURL(suffix) ? new URL(suffix) : {} // HACK
+        const link = isURL(suffix) ? new URL(suffix) : {} // HACK
         let splitLink
         if (link.hostname) {
           if (suffix.includes('list=') !== suffix.includes('playlist?')) {

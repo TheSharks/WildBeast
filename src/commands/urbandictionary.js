@@ -11,7 +11,7 @@ module.exports = {
   },
   fn: function (msg, suffix) {
     if (!suffix) {
-      msg.channel.createMessage(`Please enter a search term.`)
+      msg.channel.createMessage('Please enter a search term.')
     } else {
       request.get('http://api.urbandictionary.com/v0/define')
         .query({ term: suffix })

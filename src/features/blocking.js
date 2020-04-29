@@ -20,7 +20,7 @@ module.exports = {
 }
 
 function calculate (matches) {
-  let res = { allow: [], deny: [] }
+  const res = { allow: [], deny: [] }
   if (matches) {
     matches.forEach(x => {
       if (x.startsWith('-')) res.deny.push(x.slice(1))

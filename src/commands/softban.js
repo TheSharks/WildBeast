@@ -20,7 +20,7 @@ module.exports = {
       msg.channel.createMessage('Please wait...').then((m) => {
         const membersToBan = msg.mentions.filter(m => m.id !== bot.user.id)
         const banMembers = { success: [], error: [] }
-        let reasonWords = []
+        const reasonWords = []
         suffix.split(' ').map((id) => {
           if (id.startsWith('<@')) {
           } else {
@@ -63,9 +63,9 @@ module.exports = {
       })
     } else {
       msg.channel.createMessage(`<@${msg.author.id}>, Please wait...`).then((m) => {
-        let banMembers = { success: [], error: [] }
-        let idArray = []
-        let reasonWords = []
+        const banMembers = { success: [], error: [] }
+        const idArray = []
+        const reasonWords = []
         suffix.split(' ').map((id) => {
           if (isNaN(id) || id.length < 16) {
             reasonWords.push(id)
@@ -73,9 +73,9 @@ module.exports = {
             idArray.push(id)
           }
         })
-        let reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'No reason provided.'
+        const reason = reasonWords.length > 0 ? reasonWords.join(' ') : 'No reason provided.'
         idArray.map((id) => {
-          let member = msg.channel.guild.members.get(id)
+          const member = msg.channel.guild.members.get(id)
           if (!member) {
             m.edit('A provided ID isn\'t a member of this guild!')
             return

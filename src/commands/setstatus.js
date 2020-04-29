@@ -10,7 +10,7 @@ module.exports = {
     const first = suffix.split(' ')
     if (!suffix) {
       bot.editStatus('online', null)
-      msg.channel.createMessage(`Cleared status.`)
+      msg.channel.createMessage('Cleared status.')
     } else {
       if (/^https?/.test(first[0])) {
         bot.editStatus(null, {
@@ -30,7 +30,7 @@ module.exports = {
         msg.channel.createMessage(`Set status to ${suffix}`)
       } else {
         bot.editStatus('online', null)
-        msg.channel.createMessage(`Cleared status.`)
+        msg.channel.createMessage('Cleared status.')
       }
     }
   }

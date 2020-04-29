@@ -5,7 +5,7 @@ module.exports = async function () {
   if (global.bot.guilds.size === 0) {
     const app = await global.bot.getOAuthApplication()
     global.logger.log('Detected a fresh bot account')
-    global.logger.log(`Please open the following link in your browser to invite the bot to your server:`)
+    global.logger.log('Please open the following link in your browser to invite the bot to your server:')
     global.logger.log(`https://discordapp.com/oauth2/authorize?&client_id=${app.id}&scope=bot`)
   }
   if (!process.env.WILDBEAST_DISABLE_MUSIC) encoder.init()

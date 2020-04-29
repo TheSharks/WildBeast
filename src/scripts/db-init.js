@@ -28,7 +28,7 @@ driver.listDatabases().then(async databases => {
     return driver.listCollections()
   }
 }).then(collections => {
-  let names = []
+  const names = []
   collections.map(c => names.push(c.name))
   tables.map(x => {
     if (names.includes(x)) console.log(`Collection ${x} already exists.`)

@@ -22,7 +22,7 @@ module.exports = {
   },
   fn: (msg, suffix) => {
     const moment = require('moment')
-    let fields = []
+    const fields = []
     let user = msg.channel.guild.members.filter(m => m.nick).filter(m => m.nick.toLowerCase().includes(suffix.toLowerCase()))[0]
     if (!user) user = msg.channel.guild.members.find(m => m.username.toLowerCase().includes(suffix.toLowerCase()))
     if (!user) user = msg.channel.guild.members.filter(u => u.id === suffix)[0]
@@ -34,7 +34,7 @@ module.exports = {
       user = msg.member
     }
     if (user) {
-      let perms = []
+      const perms = []
       let color = 12552203 // away color
       if (user.status === 'online') {
         color = 8383059
@@ -67,25 +67,29 @@ module.exports = {
         name: 'Notable Permissions',
         value: `\`\`\`${perms.sort().join(', ')}\`\`\``
       })
-      msg.channel.createMessage({ embed: {
-        timestamp: new Date(msg.timestamp),
-        color: color,
-        thumbnail: {
-          url: user.avatar ? user.avatarURL : `https://cdn.discordapp.com/embed/avatars/${user.discriminator % 5}.png`
-        },
-        fields: fields
-      } }).catch(() => {})
+      msg.channel.createMessage({
+        embed: {
+          timestamp: new Date(msg.timestamp),
+          color: color,
+          thumbnail: {
+            url: user.avatar ? user.avatarURL : `https://cdn.discordapp.com/embed/avatars/${user.discriminator % 5}.png`
+          },
+          fields: fields
+        }
+      }).catch(() => {})
     } else {
-      msg.channel.createMessage({ embed: {
-        color: 16396122,
-        description: '**The specified user isn\'t a member of the server**'
-      } }).catch(() => {})
+      msg.channel.createMessage({
+        embed: {
+          color: 16396122,
+          description: '**The specified user isn\'t a member of the server**'
+        }
+      }).catch(() => {})
     }
   }
 }
 
 function mapMentions (string, reg = /<@!?([0-9]*)>/g) {
-  let res = []
+  const res = []
   let x
   while ((x = reg.exec(string)) !== null) {
     res.push(x[1])

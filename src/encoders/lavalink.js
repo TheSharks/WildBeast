@@ -13,7 +13,7 @@ module.exports = {
   init: () => {
     global.logger.debug('Using LavaLink encoder.')
     const { PlayerManager } = require('eris-lavalink')
-    let regions = {
+    const regions = {
       eu: ['eu', 'amsterdam', 'frankfurt', 'russia', 'hongkong', 'singapore', 'sydney'],
       us: ['us', 'brazil']
     }
@@ -37,12 +37,12 @@ module.exports = {
       throw new Error('Not a guild channel.')
     }
 
-    let player = global.bot.voiceConnections.get(channel.guild.id)
+    const player = global.bot.voiceConnections.get(channel.guild.id)
     if (player) {
       return (player)
     }
 
-    let options = {}
+    const options = {}
     if (channel.guild.region) {
       options.region = channel.guild.region
     }
@@ -67,10 +67,10 @@ module.exports = {
   addTracks: async (msg, tracks) => {
     if (guildInfo[msg.channel.guild.id] !== undefined) {
       if (guildInfo[msg.channel.guild.id].tracks.length <= 0) {
-        let player = await global.bot.voiceConnections.get(msg.channel.guild.id)
+        const player = await global.bot.voiceConnections.get(msg.channel.guild.id)
         player.play(tracks[0].track)
       }
-      for (let track of tracks) {
+      for (const track of tracks) {
         track.requester = msg.author.id
         guildInfo[msg.channel.guild.id].tracks.push(track)
       }
@@ -79,7 +79,7 @@ module.exports = {
   skip: async (msg) => {
     guildInfo[msg.channel.guild.id].tracks.shift()
     guildInfo[msg.channel.guild.id].skips = []
-    let player = await global.bot.voiceConnections.get(msg.channel.guild.id)
+    const player = await global.bot.voiceConnections.get(msg.channel.guild.id)
     player.play(guildInfo[msg.channel.guild.id].tracks[0].track)
     if (player.playing === false) player.setPause(false)
     if (guildInfo[msg.channel.guild.id].paused === true) guildInfo[msg.channel.guild.id].paused = false
@@ -117,10 +117,10 @@ module.exports = {
   },
   hhMMss: async (time) => {
     if (time || !isNaN(time)) {
-      let hours = (Math.floor(time / ((60 * 60)) % 24))
-      let minutes = (Math.floor(time / (60)) % 60)
-      let seconds = (Math.floor(time) % 60)
-      let parsedTime = []
+      const hours = (Math.floor(time / ((60 * 60)) % 24))
+      const minutes = (Math.floor(time / (60)) % 60)
+      const seconds = (Math.floor(time) % 60)
+      const parsedTime = []
       if (hours >= 1) parsedTime.push(hours)
       minutes >= 10 ? parsedTime.push(minutes) : parsedTime.push(`0${minutes}`)
       seconds >= 10 ? parsedTime.push(seconds) : parsedTime.push(`0${seconds}`)
@@ -171,7 +171,7 @@ module.exports = {
           } else {
             if (!process.env.WILDBEAST_VOICE_PERSIST) {
               global.i18n.send('QUEUE_END', global.bot.guilds.get(data.guildId).channels.find(c => c.id === guildInfo[data.guildId].textChan))
-              let player = await global.bot.voiceConnections.get(data.guildId)
+              const player = await global.bot.voiceConnections.get(data.guildId)
               global.bot.leaveVoiceChannel(player.channelId)
               guildInfo[data.guildId] = undefined
             } else {

@@ -12,7 +12,7 @@ module.exports = {
       if (guildInfo[msg.channel.guild.id].tracks.length === 0) {
         global.i18n.send('QUEUE_EMPTY', msg.channel)
       } else {
-        let arr = []
+        const arr = []
         for (let i = 1; i < guildInfo[msg.channel.guild.id].tracks.length; i++) {
           const trackTitle = guildInfo[msg.channel.guild.id].tracks[i].info.title
           const trackLength = guildInfo[msg.channel.guild.id].tracks[i].info.length / 1000

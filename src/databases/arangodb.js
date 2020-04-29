@@ -34,7 +34,7 @@ module.exports = {
   },
   create: async (coll, data) => {
     const collection = db.collection(coll)
-    let newdoc = await collection.save(data, {
+    const newdoc = await collection.save(data, {
       returnNew: true
     })
     return newdoc.new
@@ -46,27 +46,27 @@ module.exports = {
   edit: (handle, data, coll = 'guild_data', opts = {
     keepNull: false // values set to null will be deleted instead of being saved
   }) => {
-    let collection = db.collection(coll)
+    const collection = db.collection(coll)
     return collection.update(handle, data, opts)
   },
   _driver: db
 }
 
 function getSelection (guild, select) {
-  return new Promise(async (resolve, reject) => {
-    let data = await ensureGuild(guild)
+  return new Promise(async (resolve, reject) => { // eslint-disable-line
+    const data = await ensureGuild(guild)
     return resolve(data[select])
   })
 }
 
 async function ensureSystem (guild) {
-  let collection = db.collection('system')
+  const collection = db.collection('system')
   try {
-    let doc = await collection.document(guild.id)
+    const doc = await collection.document(guild.id)
     global.logger.trace(doc)
     return doc
   } catch (e) {
-    let newdoc = await module.exports.create('system', {
+    const newdoc = await module.exports.create('system', {
       _key: guild.id,
       flags: [],
       overrides: {}
@@ -77,13 +77,13 @@ async function ensureSystem (guild) {
 }
 
 async function ensureGuild (guild) {
-  let collection = db.collection('guild_data')
+  const collection = db.collection('guild_data')
   try {
-    let doc = await collection.document(guild.id)
+    const doc = await collection.document(guild.id)
     global.logger.trace(doc)
     return doc
   } catch (e) {
-    let newdoc = await module.exports.create('guild_data', {
+    const newdoc = await module.exports.create('guild_data', {
       _key: guild.id,
       perms: {
         users: {},

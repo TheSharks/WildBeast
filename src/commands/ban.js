@@ -39,7 +39,7 @@ function finalize (message, result) {
 }
 
 function mapMentions (string, reg = /<@!?([0-9]*)>/g) {
-  let res = []
+  const res = []
   let x
   while ((x = reg.exec(string)) !== null) {
     if (x[1] !== global.bot.user.id) res.push(x[1])

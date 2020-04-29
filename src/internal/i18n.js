@@ -25,7 +25,7 @@ module.exports = {
   },
   multiSend: async (strings, channel) => {
     const requested = strings.map(v => v._key)
-    for (let v of requested) {
+    for (const v of requested) {
       if (!available[standard][v]) return global.logger.error(`Missing i18n key ${v} from standard language file!`)
     }
     let settings
@@ -36,7 +36,7 @@ module.exports = {
 }
 
 function transform (string, opts) {
-  for (let x in opts) {
+  for (const x in opts) {
     string = string.replace(new RegExp(`{${x}}`, 'g'), opts[x])
   }
   return string

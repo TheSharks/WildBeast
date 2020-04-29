@@ -34,7 +34,7 @@ function start () {
       }
       case '1002': { // IDENTIFY_REPLY
         if (msg.c.success === true) {
-          global.logger.debug(`Bezerk connection fully open.`)
+          global.logger.debug('Bezerk connection fully open.')
           global.logger.log('Successfully connected to Bezerk.')
         } else {
           global.logger.warn('Bezerk rejected authentication! Not reconnecting.')

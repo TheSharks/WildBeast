@@ -38,7 +38,7 @@ module.exports = async (ctx) => {
       const blocks = await engines.blockade.blacklist(ctx[0].channel)
       if (blocks.deny.includes(cmd) || (blocks.deny.includes('all') && !blocks.allow.includes(cmd))) return global.i18n.send('CMD_DISABLED_CHANNEL', msg.channel)
       if (commands[cmd].meta.module !== undefined) {
-        let mod = commands[cmd].meta.module.toLowerCase()
+        const mod = commands[cmd].meta.module.toLowerCase()
         if ((blocks.deny.includes(mod) && !blocks.allow.includes(cmd)) || (blocks.deny.includes('all') && !blocks.allow.includes(cmd) && !blocks.allow.includes(mod))) return global.i18n.send('CMD_DISABLED_CHANNEL', msg.channel)
         // IF deny includes module BUT allow includes command, pass
         // IF deny includes all BUT allow includes module or cmd, pass

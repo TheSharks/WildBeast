@@ -25,7 +25,7 @@ module.exports = {
       msg.channel.createMessage(`<@${msg.author.id}>, The role does not seem to exist. Check your spelling and remember that this command is case sensitive.`)
     } else {
       msg.mentions.filter(m => m.id !== msg.channel.guild.shard.client.user.id).forEach((mention) => {
-        let guildMember = msg.channel.guild.members.get(mention.id)
+        const guildMember = msg.channel.guild.members.get(mention.id)
         guildMember.removeRole(role.id, `Role revoked by ${msg.author.username}#${msg.author.username}`).then(() => {
           msg.channel.createMessage({
             embed: {

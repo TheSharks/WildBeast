@@ -25,7 +25,7 @@ module.exports = {
       msg.channel.createMessage(`<@${msg.author.id}>, The role does not seem to exist. Check your spelling and remember that this command is case sensitive.`)
     } else {
       msg.mentions.filter(m => m.id !== global.bot.user.id).forEach((mention) => {
-        let guildMember = msg.channel.guild.members.get(mention.id)
+        const guildMember = msg.channel.guild.members.get(mention.id)
         guildMember.addRole(role.id, `Role added by ${msg.author.username}#${msg.author.discriminator}`).then(() => {
           msg.channel.createMessage({
             embed: {
