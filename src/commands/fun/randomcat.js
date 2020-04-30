@@ -18,7 +18,7 @@ module.exports = new Command(async msg => {
     })
   } catch (e) {
     msg.channel.createMessage('Something went wrong, try again later')
-    logger.error(e)
+    logger.error('CMD', e)
   }
 }, {
   requiredPermissions: {

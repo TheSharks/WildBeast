@@ -15,16 +15,10 @@ module.exports = class Command {
       hidden: false,
       nsfw: false,
       disableDM: false,
-      standardPrereqs: {
-        channel: [],
-        guild: []
-      },
+      standardPrereqs: {},
       customPrereqs: [],
       aliases: [],
-      requiredPermissions: {
-        channel: [],
-        guild: []
-      },
+      requiredPermissions: {},
       ...props
     }
   }
@@ -54,19 +48,27 @@ module.exports = class Command {
     }
     if (this.props.disableDM && !msg.channel.guild) return msg.channel.createMessage('This command cannot be used in DMs')
     // then, run default perm checks
-    if (this.props.requiredPermissions.channel.length > 0 || this.props.requiredPermissions.guild.length > 0) {
+    if (Object.keys(this.props.requiredPermissions).length > 0) {
       if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs')
       const missingPerms = [
-        ...this.props.requiredPermissions.guild.filter(x => !!msg.channel.guild.members.get(client.user.id).permission.has(x)),
-        ...this.props.requiredPermissions.channel.filter(x => !!msg.channel.permissionsOf(client.user.id).has(x))
+        ...(this.props.requiredPermissions.guild && Array.isArray(this.props.requiredPermissions.guild)
+          ? this.props.requiredPermissions.guild.filter(x => !msg.channel.guild.members.get(client.user.id).permission.has(x))
+          : []),
+        ...(this.props.requiredPermissions.channel && Array.isArray(this.props.requiredPermissions.channel)
+          ? this.props.requiredPermissions.channel.filter(x => !msg.channel.permissionsOf(client.user.id).has(x))
+          : [])
       ]
       if (missingPerms.length > 0) return msg.channel.createMessage(`I'm missing the following permissions: \`${missingPerms.join(', ')}\``)
     }
-    if (this.props.standardPrereqs.channel.length > 0 || this.props.standardPrereqs.guild.length > 0) {
+    if (Object.keys(this.props.standardPrereqs).length > 0) {
       if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs') // assumption, if discord perms are needed this is likely a guild-only command
       const missingPerms = [
-        ...this.props.standardPrereqs.guild.filter(x => !msg.member.permission.has(x)),
-        ...this.props.standardPrereqs.channel.filter(x => !msg.channel.permissionsOf(msg.member.id).has(x))
+        ...(this.props.standardPrereqs.guild && Array.isArray(this.props.standardPrereqs.guild)
+          ? this.props.standardPrereqs.guild.filter(x => !msg.member.permission.has(x))
+          : []),
+        ...(this.props.standardPrereqs.channel && Array.isArray(this.props.standardPrereqs.channel)
+          ? this.props.standardPrereqs.channel.filter(x => !msg.channel.permissionsOf(msg.member.id).has(x))
+          : [])
       ]
       if (missingPerms.length > 0) return msg.channel.createMessage(`You're missing the following permissions: \`${missingPerms.join(', ')}\``)
     }

@@ -12,8 +12,7 @@ module.exports = (msg) => {
     const command = commands.commands[cmd]
     if (command) {
       try {
-        if (masters.includes(msg.author.id)) command.run(msg, suffix)
-        else command.runWithPrereqs(msg, suffix)
+        command.runWithPrereqs(msg, suffix)
       } catch (e) {
         logger.error('COMMANDS', e)
       } finally {
