@@ -1,6 +1,5 @@
 const commands = require('../../components/commands')
 const { commands: cmdAnalytics } = require('../../components/analytics')
-const masters = process.env.WILDBEAST_MASTERS.split(',')
 
 module.exports = (msg) => {
   const prefix = process.env.BOT_PREFIX
