@@ -52,7 +52,7 @@
   },
   "optionalDependencies": {
     "@thesharks/jagtag-js": "^1.0.4",
-    "arangojs": "^6.14.0",
+    "arangojs": "^6.14.1",
     "elasticsearch": "^16.7.1",
     "eris-lavalink": "^1.0.2",
     "hot-shots": "^7.4.1",
