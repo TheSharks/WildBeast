@@ -85,5 +85,5 @@ jobs:
           # Use Docker `latest` tag convention
           [ "$VERSION" == "master" ] && VERSION=latest
           
-          docker tag image $IMAGE_NAME:$VERSION
-          docker push $IMAGE_NAME:$VERSION
+          docker tag image dougley/$IMAGE_NAME:$VERSION
+          docker push dougley/$IMAGE_NAME:$VERSION
