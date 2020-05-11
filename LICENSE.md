@@ -1,3 +1,25 @@
+### Additional notices
+
+#### Definitions
+
+The definitions in this section are the same as those [stated in the main body of The License](#0-definitions), with the following addendums:
+
+The "Discord Bot Verification Program" refers to [the bot verification process](https://support.discord.com/hc/en-us/articles/360040720412-Bot-Verification-and-Data-Whitelisting) provided by Discord, Inc.
+
+A "bot listing service" refers to any public forum which provides, on your submission, without limitation to: Visibility, advertising, ranking or any other means of public visibility and/or profiling for your copy of the covered work.
+
+To "compete" refers to the act whereby you, without regard to whether you are propagating and/or conveying the covered work:
+- Verify your copy of the covered work through the Discord Bot Verification Program, and/or
+- Submit your copy of the covered work to a bot listing service.
+
+An "official instance" refers to any conveyed propagation made by the author of This Program.
+
+#### Additional Limitations
+
+The Software is provided to you by the Licensor under the License, as defined below, subject to the following additional conditions.
+
+Without limiting other conditions in the License, the grant of rights under the License will not include, and the License does not grant to you, the right to compete with an official instance of the covered work.
+
 ### GNU AFFERO GENERAL PUBLIC LICENSE
 
 Version 3, 19 November 2007
