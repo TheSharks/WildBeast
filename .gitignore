@@ -63,13 +63,6 @@ typings/
 # idea files
 .idea
 
-# Docs build
-site
-
-# Command info dump
-commandInfo.json
-docs/js/dist/commands.js*
-
 # lokijs database
 wildbeast.db
 
