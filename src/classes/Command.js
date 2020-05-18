@@ -1,5 +1,3 @@
-const prereqs = require('../internal/dir-require')('src/components/prereqs/*.js')
-const client = require('../components/client')
 /**
  * Represents a command
  * @type {module.Command}
@@ -41,6 +39,8 @@ module.exports = class Command {
    * @returns {Function | Promise}
    */
   runWithPrereqs (msg, suffix) {
+    const prereqs = require('../internal/dir-require')('src/components/prereqs/*.js')
+    const client = require('../components/client')
     // run customs first
     for (const x of this.props.customPrereqs) {
       if (!prereqs[x]) throw new TypeError(`Attempting to use a custom prereq that does not exist: ${x}`)

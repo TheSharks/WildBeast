@@ -1,7 +1,7 @@
-const SA = require('superagent')
 const Command = require('../../classes/Command')
 
 module.exports = new Command(async msg => {
+  const SA = require('superagent')
   try {
     const res = await SA.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`)
       .set('Authorization', 'Client-ID ' + process.env.IMGUR_KEY)

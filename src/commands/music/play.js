@@ -1,7 +1,7 @@
 const Command = require('../../classes/Command')
-const client = require('../../components/client')
 
 module.exports = new Command(async (msg, suffix) => {
+  const client = require('../../components/client')
   const player = client.voiceConnectionManager.get(msg.channel.guild.id)
   if (player) {
     const m = await msg.channel.createMessage('Working on it...')

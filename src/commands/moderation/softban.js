@@ -1,7 +1,7 @@
 const Command = require('../../classes/Command')
-const client = require('../../components/client')
 
 module.exports = new Command(async (msg, suffix) => {
+  const client = require('../../components/client')
   if (suffix.length === 0) return msg.channel.createMessage('Please provide IDs or mention users you\'d like to softban')
 
   const chunks = suffix.split(' ')

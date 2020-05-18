@@ -1,7 +1,7 @@
-const SA = require('superagent')
 const Command = require('../../classes/Command')
 
 module.exports = new Command(async (msg, suffix) => {
+  const SA = require('superagent')
   try {
     if (!suffix) return msg.channel.createMessage('Please enter a search term')
     const res = await SA.get('http://api.urbandictionary.com/v0/define')

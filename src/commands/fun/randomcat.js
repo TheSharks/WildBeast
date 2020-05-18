@@ -1,7 +1,7 @@
-const SA = require('superagent')
 const Command = require('../../classes/Command')
 
 module.exports = new Command(async msg => {
+  const SA = require('superagent')
   try {
     const res = await SA.get('https://aws.random.cat/meow')
     const fact = (await SA.get('https://catfact.ninja/fact')).body.fact

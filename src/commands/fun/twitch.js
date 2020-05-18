@@ -1,7 +1,7 @@
-const SA = require('superagent')
 const Command = require('../../classes/Command')
 
 module.exports = new Command(async (msg, suffix) => {
+  const SA = require('superagent')
   if (!suffix) return msg.channel.createMessage('No channel specified!')
   try {
     const res = await SA.get(`https://api.twitch.tv/kraken/users?login=${suffix}`)

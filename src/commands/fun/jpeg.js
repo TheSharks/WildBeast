@@ -1,7 +1,7 @@
 const Command = require('../../classes/Command')
-const jimp = require('jimp')
 
 module.exports = new Command(async msg => {
+  const jimp = require('jimp')
   if (!msg.attachments[0]) return msg.channel.createMessage('Please upload an image while using this command')
   try {
     const image = await jimp.read(msg.attachments[0].url)

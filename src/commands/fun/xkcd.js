@@ -1,7 +1,7 @@
-const SA = require('superagent')
 const Command = require('../../classes/Command')
 
 module.exports = new Command(async (msg, suffix) => {
+  const SA = require('superagent')
   try {
     const res = await SA.get('http://xkcd.com/info.0.json')
     if (suffix.toLowerCase() === 'current') {
