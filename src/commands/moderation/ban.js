@@ -34,10 +34,10 @@ module.exports = new Command(async (msg, suffix) => {
     (failed > 0 ? `\nFailed to ban ${failed} members` : '')
   )
 }, {
-  requiredPermissions: {
+  clientPerms: {
     guild: ['banMembers']
   },
-  standardPrereqs: {
+  userPerms: {
     guild: ['banMembers']
   },
   disableDM: true

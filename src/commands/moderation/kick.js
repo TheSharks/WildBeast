@@ -33,10 +33,10 @@ module.exports = new Command(async (msg, suffix) => {
     (failed > 0 ? `\nFailed to kick ${failed} members` : '')
   )
 }, {
-  requiredPermissions: {
+  clientPerms: {
     guild: ['kickMembers']
   },
-  standardPrereqs: {
+  userPerms: {
     guild: ['kickMembers']
   },
   disableDM: true

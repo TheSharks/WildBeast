@@ -30,7 +30,7 @@ module.exports = new Command(async (msg, suffix) => {
     logger.error('CMD', e)
   }
 }, {
-  requiredPermissions: {
+  clientPerms: {
     channel: ['embedLinks']
   }
 })

@@ -22,7 +22,7 @@ module.exports = new Command(async (msg, suffix) => {
 },
 {
   aliases: ['tw'],
-  requiredPermissions: {
+  clientPerms: {
     channel: ['embedLinks']
   }
 })
