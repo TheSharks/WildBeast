@@ -9,7 +9,7 @@ module.exports = new Command(msg => {
   const total = player.addDJs(...newdjs)
   return msg.channel.createMessage(`Added ${newdjs.length} new DJ(s), there are now ${total} DJs`)
 }, {
-  customPrereq: ['musicCommand'],
+  prereqs: ['musicCommand'],
   aliases: ['new-dj', 'new-djs', 'newdjs'],
   disableDM: true
 })

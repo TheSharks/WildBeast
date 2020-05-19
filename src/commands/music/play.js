@@ -25,6 +25,6 @@ module.exports = new Command(async (msg, suffix) => {
   } else return msg.channel.createMessage("I'm not streaming in this server")
 }, {
   aliases: ['request'],
-  customPrereq: ['musicCommand'],
+  prereqs: ['musicCommand'],
   disableDM: true
 })
