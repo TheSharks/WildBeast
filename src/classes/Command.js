@@ -14,9 +14,9 @@ module.exports = class Command {
       nsfw: false,
       disableDM: false,
       userPerms: {},
+      clientPerms: {},
       prereqs: [],
       aliases: [],
-      clientPerms: {},
       ...props
     }
   }
