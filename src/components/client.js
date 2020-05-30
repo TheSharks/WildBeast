@@ -5,6 +5,10 @@
 const Eris = require('eris')
 const { Collection } = require('eris')
 module.exports = new Eris(process.env.BOT_TOKEN, {
+  allowedMentions: {
+    everyone: false
+  },
+  guildSubscriptions: false,
   messageLimit: 10,
   intents: [
     'guilds',
