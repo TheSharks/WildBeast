@@ -8,6 +8,7 @@ module.exports = new Eris(process.env.BOT_TOKEN, {
   allowedMentions: {
     everyone: false
   },
+  compress: true,
   guildSubscriptions: false,
   messageLimit: 10,
   intents: [

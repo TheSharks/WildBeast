@@ -1,4 +1,6 @@
 const chalk = require('chalk')
+const Sentry = require('../components/sentry')
+
 const log = (v) => {
   const { format } = require('date-fns')
   console.log(chalk`{gray [${format(new Date(), 'Pp')}]} - ${v}`)
@@ -14,6 +16,11 @@ module.exports = {
    * @param {*} msg - The data to log
    */
   debug: (type = 'GEN', msg) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Debug,
+      message: msg
+    })
     if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.green DEBUG:${type}}] - ${msg}`)
   },
   /**
@@ -22,6 +29,11 @@ module.exports = {
    * @param {*} msg - The data to log
    */
   log: (type = 'GEN', msg) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Info,
+      message: msg
+    })
     log(chalk`[{bold.blue INFO:${type}}] - ${msg}`) // nothing too interesting going on here
   },
   /**
@@ -37,6 +49,11 @@ module.exports = {
       exit ? log(chalk`[{bold.black.bgRed FATAL:${type}}] - ${e}`) : log(chalk`[{bold.red ERROR:${type}}] - ${e}`)
       if (exit) process.exit(1)
     } else {
+      Sentry.addBreadcrumb({
+        category: 'console',
+        level: Sentry.Severity.Error,
+        message: e
+      })
       exit ? log(chalk`[{bold.black.bgRed FATAL:${type}}] - ${e.stack ? e.stack : e.message}`) : log(chalk`[{bold.red ERROR:${type}}] - ${e.stack ? e.stack : e.message}`)
       if (exit) process.exit(1)
     }
@@ -47,6 +64,11 @@ module.exports = {
    * @param {*} msg - The data to log
    */
   warn: (type = 'GEN', msg) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Warning,
+      message: msg
+    })
     log(chalk`[{bold.yellow WARN:${type}}] - ${msg}`)
   },
   /**
@@ -57,6 +79,11 @@ module.exports = {
    * @param {*} msg - The data to log
    */
   trace: (type = 'GEN', msg) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Debug,
+      message: msg
+    })
     if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.cyan TRACE:${type}}] - ${inspect(msg)}`) // trace is the only logging route that inspects automatically
   },
   /**
@@ -64,6 +91,11 @@ module.exports = {
    * @param {Object} opts - Object with data concerning the command
    */
   command: (opts) => { // specifically to log commands being ran
+    Sentry.addBreadcrumb({
+      category: 'command',
+      level: Sentry.Severity.Info,
+      message: `${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`
+    })
     if (process.env.WILDBEAST_SUPPRESS_COMMANDLOG) return
     log(chalk`[{bold.magenta CMD}] - ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
   }
