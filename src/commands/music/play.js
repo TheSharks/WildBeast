@@ -7,7 +7,12 @@ module.exports = new Command(async (msg, suffix) => {
     const m = await msg.channel.createMessage('Working on it...')
     const x = await player.resolve(suffix)
     switch (x.loadType) {
-      case 'PLAYLIST_LOADED':
+      case 'PLAYLIST_LOADED': {
+        if (x.tracks && x.tracks.length > 0) {
+          player.addMany(x.tracks)
+          return m.edit(`Playlist ${x.playlistInfo.name} has been added`)
+        } else return m.edit('Nothing found with your search query')
+      }
       case 'SEARCH_RESULT':
       case 'TRACK_LOADED': {
         if (x.tracks && x.tracks.length > 0) {

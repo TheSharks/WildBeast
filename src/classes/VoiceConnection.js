@@ -22,7 +22,7 @@ module.exports = class VoiceConnection {
       this.nowPlaying = this.playlist[index] || { info: {} }
       if (index !== -1) this.playlist.splice(index, 1)
       this.textChannel.createMessage({
-        content: 'Now playing',
+        content: 'Now playing:',
         embed: {
           url: this.nowPlaying.info.uri,
           title: this.nowPlaying.info.title || '[Unknown!]',
@@ -47,16 +47,38 @@ module.exports = class VoiceConnection {
     }
   }
 
+  shuffle () { // https://stackoverflow.com/a/6274381
+    for (let i = this.playlist.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.playlist[i], this.playlist[j]] = [this.playlist[j], this.playlist[i]]
+    }
+  }
+
   destroy () {
     return this._encoder.disconnect()
   }
 
   resolve (ctx) {
-    return this._encoder.node.loadTracks(ctx)
+    try {
+      // eslint-disable-next-line no-new
+      new URL(ctx)
+      return this._encoder.node.loadTracks(ctx)
+    } catch (_) {
+      return this._encoder.node.loadTracks(`scsearch:${ctx}`)
+    }
   }
 
   add (ctx) {
     this.playlist.push(ctx)
+    if (this.fresh) {
+      this.fresh = false
+      this.next()
+    }
+    return this.playlist
+  }
+
+  addMany (ctx) {
+    for (const x of ctx) this.playlist.push(x)
     if (this.fresh) {
       this.fresh = false
       this.next()

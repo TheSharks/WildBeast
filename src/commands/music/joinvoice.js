@@ -9,6 +9,7 @@ module.exports = new Command(async msg => {
     return msg.channel.createMessage("I can't connect to the channel you're currently in!")
   }
   const player = await channel.join()
+  player.setVolume(80)
   client.voiceConnectionManager.add({
     id: msg.channel.guild.id,
     controllers: [msg.member.id],

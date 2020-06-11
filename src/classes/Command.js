@@ -9,7 +9,6 @@ module.exports = class Command {
     this.props = {
       category: 'Uncategorized',
       helpMessage: '[help message not set]',
-      accessLevel: 0,
       hidden: false,
       nsfw: false,
       disableDM: false,
@@ -46,10 +45,12 @@ module.exports = class Command {
       if (!prereqs[x]) throw new TypeError(`Attempting to use a custom prereq that does not exist: ${x}`)
       if (!prereqs[x].fn(msg)) return msg.channel.createMessage(prereqs[x].errorMessage)
     }
+    if (this.props.nsfw && msg.channel.guild && !msg.channel.nsfw) {
+      return msg.channel.createMessage('This channel needs to be marked as NSFW before this command can be used')
+    }
     if (this.props.disableDM && !msg.channel.guild) return msg.channel.createMessage('This command cannot be used in DMs')
     // then, run default perm checks
     if (Object.keys(this.props.clientPerms).length > 0) {
-      if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs')
       const missingPerms = [
         ...(this.props.clientPerms.guild && Array.isArray(this.props.clientPerms.guild)
           ? this.props.clientPerms.guild.filter(x => !msg.channel.guild.members.get(client.user.id).permission.has(x))
@@ -61,7 +62,6 @@ module.exports = class Command {
       if (missingPerms.length > 0) return msg.channel.createMessage(`I'm missing the following permissions: \`${missingPerms.join(', ')}\``)
     }
     if (Object.keys(this.props.userPerms).length > 0) {
-      if (!msg.member) return msg.channel.createMessage('This command cannot be used in DMs') // assumption, if discord perms are needed this is likely a guild-only command
       const missingPerms = [
         ...(this.props.userPerms.guild && Array.isArray(this.props.userPerms.guild)
           ? this.props.userPerms.guild.filter(x => !msg.member.permission.has(x))

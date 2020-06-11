@@ -31,6 +31,7 @@ module.exports = new Command(async (msg, suffix) => {
   }
 }, {
   clientPerms: {
-    channel: ['embedLinks']
+    channel: ['embedLinks'],
+    aliases: ['ud']
   }
 })
