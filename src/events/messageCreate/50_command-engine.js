@@ -36,13 +36,7 @@ const generateHelpMessage = async (msg, suffix) => {
       fields: [
         {
           name: 'Category',
-          value: cmd.props.category,
-          inline: true
-        },
-        {
-          name: 'Access level',
-          value: cmd.props.accessLevel,
-          inline: true
+          value: cmd.props.category
         }
       ],
       footer: {
