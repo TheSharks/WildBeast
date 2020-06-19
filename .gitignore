@@ -63,7 +63,10 @@ typings/
 # idea files
 .idea
 
-# lokijs database
-wildbeast.db
+# sqlite database
+wildbeast.sqlite
 
 .vscode
+
+# knex config
+knexfile.js
