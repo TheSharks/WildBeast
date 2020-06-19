@@ -45,7 +45,7 @@
   "dependencies": {
     "chalk": "^4.0.0",
     "dotenv": "^8.2.0",
-    "eris": "^0.12.0",
+    "eris": "^0.13.3",
     "moment": "^2.24.0",
     "superagent": "^5.2.2",
     "ws": "^7.2.5"
