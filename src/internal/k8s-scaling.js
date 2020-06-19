@@ -8,15 +8,18 @@ module.exports = {
   keys: {},
   init: async function () {
     logger.log('K8S-SCALE', 'Starting up k8s autonomous scaling...')
+    // determine some vars first
     this.keys.namespace = (await fs.readFile('/var/run/secrets/kubernetes.io/serviceaccount/namespace')).toString()
     this.keys.token = (await fs.readFile('/var/run/secrets/kubernetes.io/serviceaccount/token')).toString()
     this.keys.ca = await fs.readFile('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt')
+    // whats the name of the replicaset the current pod is owned by?
     this.keys.replicaset = (await SA
       .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/api/v1/namespaces/${this.keys.namespace}/pods/${require('os').hostname()}`)
       .ca(this.keys.ca)
       .set({
         Authorization: `Bearer ${this.keys.token}`
       })).body.metadata.ownerReferences.filter(x => x.kind === 'ReplicaSet')[0].name
+    // whats the name of the deployment the replicaset is owned by?
     this.keys.deployment = (await SA
       .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/apis/apps/v1/namespaces/${this.keys.namespace}/replicasets/${this.keys.replicaset}`)
       .ca(this.keys.ca)
@@ -24,6 +27,7 @@ module.exports = {
         Authorization: `Bearer ${this.keys.token}`
       })).body.metadata.ownerReferences.filter(x => x.kind === 'Deployment')[0].name
     logger.debug('K8S-SCALE', `Namespace: ${this.keys.namespace}, ReplicaSet: ${this.keys.replicaset}, Deployment: ${this.keys.deployment}`)
+    // do we need to trigger a renegotiation immediatly?
     const workload = await SA
       .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/apis/apps/v1/namespaces/${this.keys.namespace}/deployments/${this.keys.deployment}`)
       .ca(this.keys.ca)
@@ -33,21 +37,24 @@ module.exports = {
     if (workload.body.spec.replicas === 1) {
       logger.log('K8S-SCALE', 'Deployment has only 1 replica!')
       await this.renegotiate()
-      logger.log('K8S-SCALE', 'Stalling for 20 seconds to allow k8s to update...')
+      logger.log('K8S-SCALE', 'Stalling for 1 minute to allow k8s to update...')
       // TODO swap for a watch call
-      stall(20000)
+      stall(60000)
     }
     await this.determine(false)
   },
   renegotiate: async function (force = false) {
+    // only shard 0 needs to renegotiate
     if (client.options.firstShardID !== 0 && !force) return logger.log('K8S-SCALE', 'Renegotiation cancelled, this client does not manage shard 0')
     logger.log('K8S-SCALE', 'Renegotiating scale...')
+    // what scale runs the deployment at right now?
     const workload = await SA
       .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/apis/apps/v1/namespaces/${this.keys.namespace}/deployments/${this.keys.deployment}`)
       .ca(this.keys.ca)
       .set({
         Authorization: `Bearer ${this.keys.token}`
       })
+    // ask discord what the recommended shard count is and edit the deployment to start as many replicas as shards
     const discord = await client.getBotGateway()
     if (discord.shards > workload.body.spec.replicas) {
       logger.log('K8S-SCALE', `Scale inadequate! Discord recommends ${discord.shards} shards but client has ${client.options.maxShards}`)
@@ -67,6 +74,7 @@ module.exports = {
     } else logger.log('K8S-SCALE', 'Scale adequate!')
   },
   determine: async function (autoconnect = true) {
+    // the index of the workload in the set is needed to determine what shards this client needs to support
     logger.log('K8S-SCALE', 'Determining workload index...')
     const res = await SA
       .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/api/v1/namespaces/${this.keys.namespace}/pods`)
@@ -74,6 +82,7 @@ module.exports = {
       .set({
         Authorization: `Bearer ${this.keys.token}`
       })
+    // filter pods int the current namespace based on their owner, since we only care about pods that are in the same replicaset
     const thisworkload = res.body.items.filter(x =>
       x.metadata.ownerReferences.filter(x => x.kind === 'ReplicaSet' && x.name === this.keys.replicaset).length > 0 &&
       ['Pending', 'Running'].includes(x.status.phase)
@@ -88,6 +97,7 @@ module.exports = {
       client.options.lastShardID = index
       client.options.maxShards = thisworkload.length
       if (autoconnect) await client.connect()
+      client.options.autoreconnect = true
     }
   }
 }

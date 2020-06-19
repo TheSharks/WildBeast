@@ -39,5 +39,6 @@ module.exports = new Command((msg, suffix) => {
     msg.channel.createMessage('```js\n' + e + '\n```')
   }
 }, {
-  prereqs: ['masterUser']
+  prereqs: ['masterUser'],
+  hidden: true
 })

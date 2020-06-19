@@ -3,11 +3,12 @@
  * @type {module:@sentry/node}
  */
 const Sentry = require('@sentry/node')
-const { Modules } = Sentry.Integrations
+const { Modules, Http, LinkedErrors } = Sentry.Integrations
 const { Dedupe } = require('@sentry/integrations')
 Sentry.init({
+  defaultIntegrations: false,
   dsn: process.env.SENTRY_DSN,
-  integrations: [new Modules(), new Dedupe()],
+  integrations: [new Modules(), new Dedupe(), new Http(), new LinkedErrors()],
   ignoreErrors: [
     'src.commands.utils:eval'
   ]
