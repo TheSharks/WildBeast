@@ -1,5 +1,3 @@
-const logger = require('./src/internal/logger')
-
 require('dotenv').config()
 global.logger = require('./src/internal/logger')
 require('./src/internal/check-env')
