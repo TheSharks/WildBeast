@@ -1,3 +1,5 @@
+const logger = require('./src/internal/logger')
+
 require('dotenv').config()
 global.logger = require('./src/internal/logger')
 require('./src/internal/check-env')
@@ -14,4 +16,4 @@ process.on('uncaughtException', err => logger.error('NODE', err, true)); // we'r
   if (process.env.WILDBEAST_K8S_AUTOSCALE) await require('./src/internal/k8s-scaling').init()
   await require('./src/components/knex').attemptMigrations()
   await require('./src/components/client').connect()
-})()
+})().catch(e => logger.error('STARTUP', e, true))
