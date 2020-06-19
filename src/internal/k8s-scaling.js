@@ -80,7 +80,7 @@ module.exports = {
     ).map(x => x.metadata.name).sort()
     const index = thisworkload.indexOf(require('os').hostname())
     logger.log('K8S-SCALE', `Index determined! This pod is ${index} with ${thisworkload.length} total`)
-    if (client.options.firstShardID !== index) {
+    if (client.options.maxShards !== thisworkload.length) {
       logger.log('K8S-SCALE', 'This pod is not supporting required shards, reidentifying...')
       client.options.autoreconnect = false
       await client.disconnect()
