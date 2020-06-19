@@ -8,6 +8,10 @@ require('./src/internal/version-check')
 
 process.on('warn', x => logger.warn('NODE', x))
 process.on('unhandledRejection', err => logger.error('NODE', err)) // rejections might not be breaking
-process.on('uncaughtException', err => logger.error('NODE', err, true)) // we're exiting here, uncaughts are scary
+process.on('uncaughtException', err => logger.error('NODE', err, true)); // we're exiting here, uncaughts are scary
 
-require('./src/components/client').connect()
+(async () => {
+  if (process.env.WILDBEAST_K8S_AUTOSCALE) await require('./src/internal/k8s-scaling').init()
+  await require('./src/components/knex').attemptMigrations()
+  await require('./src/components/client').connect()
+})()
