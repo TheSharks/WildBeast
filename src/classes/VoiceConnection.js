@@ -32,6 +32,9 @@ module.exports = class VoiceConnection {
         }
       })
     })
+    this._encoder.once('disconnected', () => {
+      this.textChannel.createMessage('I got disconnected from the voice channel, ending playback')
+    })
   }
 
   next (msg = {}) {

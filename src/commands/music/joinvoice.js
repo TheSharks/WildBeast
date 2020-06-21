@@ -11,8 +11,8 @@ module.exports = new Command(async msg => {
   }
   try {
     const player = await channel.join()
-    player.once('disconnected', console.log)
-    player.on('warn', console.log)
+    player.once('disconnected', () => client.voiceConnectionManager.delete(msg.channel.guild.id))
+    player.on('warn', x => logger.warn('PLAYER', x))
     player.setVolume(80)
     client.voiceConnectionManager.add({
       id: msg.channel.guild.id,
