@@ -2,7 +2,7 @@ const { LavalinkVoiceConnectionManager } = require('@thesharks/tyr')
 
 module.exports = async () => {
   const client = require('../components/client')
-  logger.log('BOOT', `Done starting up, logged in as ${client.user.username}#${client.user.discriminator} (${client.user.id}), shard range: ${client.options.firstShardID}-${client.options.lastShardID}`)
+  logger.log('BOOT', `Done starting up, logged in as ${client.user.username}#${client.user.discriminator} (${client.user.id}), shard range: ${client.options.firstShardID}-${client.options.lastShardID} max ${client.options.maxShards}`)
 
   require('../components/services')
 

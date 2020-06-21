@@ -28,60 +28,42 @@ module.exports = {
       })).body.metadata.ownerReferences.filter(x => x.kind === 'Deployment')[0].name
     logger.debug('K8S-SCALE', `Namespace: ${this.keys.namespace}, ReplicaSet: ${this.keys.replicaset}, Deployment: ${this.keys.deployment}`)
     // do we need to trigger a renegotiation immediatly?
-    const workload = await SA
-      .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/apis/apps/v1/namespaces/${this.keys.namespace}/deployments/${this.keys.deployment}`)
-      .ca(this.keys.ca)
-      .set({
-        Authorization: `Bearer ${this.keys.token}`
-      })
+    const workload = await this.getCurrentWorkload()
     if (workload.body.spec.replicas === 1) {
       logger.log('K8S-SCALE', 'Deployment has only 1 replica!')
-      await this.renegotiate()
-      logger.log('K8S-SCALE', 'Stalling for 1 minute to allow k8s to update...')
-      // TODO swap for a watch call
-      stall(60000)
+      const scale = await this.renegotiate()
+      while (true) {
+        const res = await this.determine(false)
+        if (res !== scale) {
+          logger.log('K8S-SCALE', 'Retrying in 10 seconds, pod index seems to be inaccurate')
+          await stall(10000)
+        } else break
+      }
+    } else {
+      logger.log('K8S-SCALE', 'Not renegotiating since workload seems to already be scaled')
+      await this.determine(false)
     }
-    await this.determine(false)
   },
   renegotiate: async function (force = false) {
     // only shard 0 needs to renegotiate
     if (client.options.firstShardID !== 0 && !force) return logger.log('K8S-SCALE', 'Renegotiation cancelled, this client does not manage shard 0')
     logger.log('K8S-SCALE', 'Renegotiating scale...')
     // what scale runs the deployment at right now?
-    const workload = await SA
-      .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/apis/apps/v1/namespaces/${this.keys.namespace}/deployments/${this.keys.deployment}`)
-      .ca(this.keys.ca)
-      .set({
-        Authorization: `Bearer ${this.keys.token}`
-      })
     // ask discord what the recommended shard count is and edit the deployment to start as many replicas as shards
     const discord = await client.getBotGateway()
+    const workload = await this.getCurrentWorkload()
     if (discord.shards > workload.body.spec.replicas) {
       logger.log('K8S-SCALE', `Scale inadequate! Discord recommends ${discord.shards} shards but client has ${client.options.maxShards}`)
       logger.log('K8S-SCALE', `Telling k8s to scale Deployment ${this.keys.deployment} to ${discord.shards} replicas...`)
-      await SA
-        .patch(`https://${process.env.KUBERNETES_SERVICE_HOST}/apis/apps/v1/namespaces/${this.keys.namespace}/deployments/${this.keys.deployment}`)
-        .ca(this.keys.ca)
-        .set({
-          Authorization: `Bearer ${this.keys.token}`,
-          'Content-Type': 'application/strategic-merge-patch+json'
-        })
-        .send({
-          spec: { replicas: discord.shards }
-        })
+      await this.patchCurrentWorkload(discord.shards)
       logger.log('K8S-SCALE', `Scale changed! New scale is now ${discord.shards}`)
-      return discord.shards
     } else logger.log('K8S-SCALE', 'Scale adequate!')
+    return discord.shards
   },
   determine: async function (autoconnect = true) {
     // the index of the workload in the set is needed to determine what shards this client needs to support
     logger.log('K8S-SCALE', 'Determining workload index...')
-    const res = await SA
-      .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/api/v1/namespaces/${this.keys.namespace}/pods`)
-      .ca(this.keys.ca)
-      .set({
-        Authorization: `Bearer ${this.keys.token}`
-      })
+    const res = await this.getNamespacePods()
     // filter pods int the current namespace based on their owner, since we only care about pods that are in the same replicaset
     const thisworkload = res.body.items.filter(x =>
       x.metadata.ownerReferences.filter(x => x.kind === 'ReplicaSet' && x.name === this.keys.replicaset).length > 0 &&
@@ -99,5 +81,34 @@ module.exports = {
       if (autoconnect) await client.connect()
       client.options.autoreconnect = true
     }
+    return thisworkload.length
+  },
+  getCurrentWorkload: async function () {
+    return SA
+      .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/apis/apps/v1/namespaces/${this.keys.namespace}/deployments/${this.keys.deployment}`)
+      .ca(this.keys.ca)
+      .set({
+        Authorization: `Bearer ${this.keys.token}`
+      })
+  },
+  getNamespacePods: async function () {
+    return SA
+      .get(`https://${process.env.KUBERNETES_SERVICE_HOST}/api/v1/namespaces/${this.keys.namespace}/pods`)
+      .ca(this.keys.ca)
+      .set({
+        Authorization: `Bearer ${this.keys.token}`
+      })
+  },
+  patchCurrentWorkload: async function (shards) {
+    return SA
+      .patch(`https://${process.env.KUBERNETES_SERVICE_HOST}/apis/apps/v1/namespaces/${this.keys.namespace}/deployments/${this.keys.deployment}`)
+      .ca(this.keys.ca)
+      .set({
+        Authorization: `Bearer ${this.keys.token}`,
+        'Content-Type': 'application/strategic-merge-patch+json'
+      })
+      .send({
+        spec: { replicas: shards }
+      })
   }
 }
