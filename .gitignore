@@ -65,6 +65,7 @@ typings/
 
 # sqlite database
 wildbeast.sqlite
+wildbeast.sqlite-journal
 
 .vscode
 

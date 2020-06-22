@@ -15,7 +15,7 @@ WORKDIR /opt/wildbeast
 RUN npm ci --production
 # Install optional native modules
 # TODO: swap out UWS whenever a better module is available
-RUN npm i zlib-sync uws@10.148.1 https://github.com/discordapp/erlpack.git bufferutil
+RUN npm i zlib-sync uws@10.148.1 https://github.com/discordapp/erlpack.git bufferutil pg
 # Switch to wildbeast user and run entrypoint
 # USER wildbeast
 CMD ["node", "index.js"]

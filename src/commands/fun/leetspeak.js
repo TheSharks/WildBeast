@@ -15,6 +15,8 @@ const Command = require('../../classes/Command')
 module.exports = new Command((msg, suffix) => {
   if (!suffix) return msg.channel.createMessage('You need to type something to encode your message into l337sp3@K!')
   msg.channel.createMessage(translate(suffix))
+}, {
+  aliases: ['leetspeek', 'leetspeech', 'leet']
 })
 
 function translate (string) {

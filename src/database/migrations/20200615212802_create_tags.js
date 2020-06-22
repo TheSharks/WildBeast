@@ -1,6 +1,6 @@
 exports.up = async function (knex) {
   return knex.schema.createTable('tags', table => {
-    table.uuid('id').primary()
+    table.increments('id')
     table.string('name').notNullable()
     table.string('content', 4000).notNullable()
     table.string('owner_id').notNullable()

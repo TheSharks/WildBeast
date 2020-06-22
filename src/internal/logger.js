@@ -21,7 +21,7 @@ module.exports = {
       level: Sentry.Severity.Debug,
       message: msg
     })
-    if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.green DEBUG:${type}}] - ${msg}`)
+    if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.green ${`DEBUG:${type}`.padStart(20)}}] - ${msg}`)
   },
   /**
    * Log something
@@ -34,7 +34,7 @@ module.exports = {
       level: Sentry.Severity.Info,
       message: msg
     })
-    log(chalk`[{bold.blue INFO:${type}}] - ${msg}`) // nothing too interesting going on here
+    log(chalk`[{bold.blue ${`INFO:${type}`.padStart(20)}}] - ${msg}`) // nothing too interesting going on here
   },
   /**
    * Log an error
@@ -44,17 +44,17 @@ module.exports = {
    * @param {Boolean} [exit=false] - Whether or not to exit the program after processing of this error is done
    */
   error: (type = 'GEN', e, exit = false) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Error,
+      message: e
+    })
     if (!(e instanceof Error)) { // in case strings get logged as errors, for whatever reason
-      sentry.captureException(e)
-      exit ? log(chalk`[{bold.black.bgRed FATAL:${type}}] - ${e}`) : log(chalk`[{bold.red ERROR:${type}}] - ${e}`)
+      exit ? log(chalk`[{bold.black.bgRed ${`FATAL:${type}`.padStart(20)}}] - ${e}`) : log(chalk`[{bold.red ${`ERROR:${type}`.padStart(20)}}] - ${e}`)
       if (exit) process.exit(1)
     } else {
-      Sentry.addBreadcrumb({
-        category: 'console',
-        level: Sentry.Severity.Error,
-        message: e
-      })
-      exit ? log(chalk`[{bold.black.bgRed FATAL:${type}}] - ${e.stack ? e.stack : e.message}`) : log(chalk`[{bold.red ERROR:${type}}] - ${e.stack ? e.stack : e.message}`)
+      sentry.captureException(e)
+      exit ? log(chalk`[{bold.black.bgRed ${`FATAL:${type}`.padStart(20)}}] - ${e.stack ? e.stack : e.message}`) : log(chalk`[{bold.red ${`ERROR:${type}`.padStart(20)}}] - ${e.stack ? e.stack : e.message}`)
       if (exit) process.exit(1)
     }
   },
@@ -69,7 +69,7 @@ module.exports = {
       level: Sentry.Severity.Warning,
       message: msg
     })
-    log(chalk`[{bold.yellow WARN:${type}}] - ${msg}`)
+    log(chalk`[{bold.yellow ${`WARN:${type}`.padStart(20)}}] - ${msg}`)
   },
   /**
    * Trace something
@@ -84,7 +84,7 @@ module.exports = {
       level: Sentry.Severity.Debug,
       message: msg
     })
-    if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.cyan TRACE:${type}}] - ${inspect(msg)}`) // trace is the only logging route that inspects automatically
+    if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.cyan ${`TRACE:${type}`.padStart(20)}}] - ${inspect(msg)}`) // trace is the only logging route that inspects automatically
   },
   /**
    * Log a command that's being ran
@@ -97,6 +97,6 @@ module.exports = {
       message: `${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`
     })
     if (process.env.WILDBEAST_SUPPRESS_COMMANDLOG) return
-    log(chalk`[{bold.magenta CMD}] - ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
+    log(chalk`[{bold.magenta ${'CMD'.padStart(20)}}] - ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
   }
 }
