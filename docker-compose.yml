@@ -1,34 +1,12 @@
 version: '3'
 services:
   wildbeast:
-    image: dougley/wildbeast
-    volumes:
-      - ./src:/opt/wildbeast/src
-      - ./index.js:/opt/wildbeast/index.js
+    image: .
     env_file:
       - .env
     links:
-    - arango
-    - lavalink
-    depends_on:
-      - arango
       - lavalink
-      - install
-  arango:
-    image: arangodb:3.3.14
-    env_file:
-      - arangodb.env
-  install:
-    restart: 'no'
-    links:
-      - arango
-    environment:
-      ARANGO_URI: http://arango:8529
-    image: dougley/wildbeast
     depends_on:
-      - arango
-    command: npm run-script dbcreate
+      - lavalink
   lavalink:
-    image: fredboat/lavalink:v3
-    env_file:
-      - lavalink.env
+    image: fredboat/lavalink:master-v3

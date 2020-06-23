@@ -1,0 +1,21 @@
+name: ReleaseWorkflow
+
+on:
+  release:
+    types: [published, prereleased]
+
+jobs:
+  createSentryRelease:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Create a Sentry.io release
+        uses: tclindner/sentry-releases-action@v1.0.0
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: wild-beast
+          SENTRY_PROJECT: wildbeast
+        with:
+          tagName: ${{ github.ref }}
+          environment: qa

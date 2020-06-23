@@ -63,12 +63,11 @@ typings/
 # idea files
 .idea
 
-# Docs build
-site
+# sqlite database
+wildbeast.sqlite
+wildbeast.sqlite-journal
 
-# Command info dump
-commandInfo.json
-docs/js/dist/commands.js*
+.vscode
 
-# lokijs database
-wildbeast.db
+# knex config
+knexfile.js

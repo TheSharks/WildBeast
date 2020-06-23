@@ -1,104 +1,102 @@
 const chalk = require('chalk')
-const log = console.log
+const Sentry = require('../components/sentry')
+
+const log = (v) => {
+  const { format } = require('date-fns')
+  console.log(chalk`{gray [${format(new Date(), 'Pp')}]} - ${v}`)
+}
 const inspect = require('util').inspect
-let raven
-let ES
-let store = []
-
-if (process.env.ELASTICSEARCH_URI) {
-  setInterval(flushES, 10000) // every 10 seconds, bulk flush data to ES
-  const es = require('elasticsearch')
-  ES = new es.Client({
-    host: process.env.ELASTICSEARCH_URI
-  })
-  const url = require('url')
-  log(chalk`{bold.green DEBUG}: Opening Elasticsearch connection to ${new url.URL(process.env.ELASTICSEARCH_URI).hostname || process.env.ELASTICSEARCH_URI}`)
-}
-
-if (process.env.SENTRY_DSN) {
-  const revision = require('child_process').execSync('git rev-parse HEAD').toString().trim()
-  log(chalk`{bold.green DEBUG}: Initializing Sentry, setting release to ${revision}`)
-  raven = require('raven')
-  raven.config(process.env.SENTRY_DSN, {
-    release: revision,
-    parseUser: false
-  }).install()
-}
+const sentry = require('../components/sentry')
 
 module.exports = {
-  debug: (msg, data) => {
-    if (process.env.NODE_ENV === 'debug') log(chalk`{bold.green DEBUG}: ${msg}`)
-    if (data && ES) {
-      data.type = 'debug'
-      sendToES(data)
-    }
+  /**
+   * Debug log something
+   * These log messages only get shown if NODE_ENV is set to debug
+   * @param {String} type - Type of the message to log
+   * @param {*} msg - The data to log
+   */
+  debug: (type = 'GEN', msg) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Debug,
+      message: msg
+    })
+    if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.green ${`DEBUG:${type}`.padStart(20)}}] - ${msg}`)
   },
-  log: (msg) => {
-    log(chalk`{bold.blue INFO}: ${msg}`) // nothing too interesting going on here
+  /**
+   * Log something
+   * @param {String} type - Type of the message to log
+   * @param {*} msg - The data to log
+   */
+  log: (type = 'GEN', msg) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Info,
+      message: msg
+    })
+    log(chalk`[{bold.blue ${`INFO:${type}`.padStart(20)}}] - ${msg}`) // nothing too interesting going on here
   },
-  error: (e, exit = false) => {
+  /**
+   * Log an error
+   * Errors logged this way can be sent to Sentry
+   * @param {String} type - Type of the message to log
+   * @param {Error | String} e - The error to log
+   * @param {Boolean} [exit=false] - Whether or not to exit the program after processing of this error is done
+   */
+  error: (type = 'GEN', e, exit = false) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Error,
+      message: e
+    })
     if (!(e instanceof Error)) { // in case strings get logged as errors, for whatever reason
-      exit ? log(chalk`{bold.black.bgRed FATAL}: ${e}`) : log(chalk`{bold.red ERROR}: ${e}`)
+      exit ? log(chalk`[{bold.black.bgRed ${`FATAL:${type}`.padStart(20)}}] - ${e}`) : log(chalk`[{bold.red ${`ERROR:${type}`.padStart(20)}}] - ${e}`)
       if (exit) process.exit(1)
     } else {
-      if (raven && raven.installed) {
-        exit ? log(chalk`{bold.black.bgRed FATAL}: ${e.stack ? e.stack : e.message}`) : log(chalk`{bold.red ERROR}: ${e.stack ? e.stack : e.message}`)
-        raven.captureException(e, { level: exit ? 'fatal' : 'error' }, () => { // sentry logging MUST happen before we might exit
-          if (exit) process.exit(1)
-        })
-      } else {
-        exit ? log(chalk`{bold.black.bgRed FATAL}: ${e.stack ? e.stack : e.message}`) : log(chalk`{bold.red ERROR}: ${e.stack ? e.stack : e.message}`)
-        if (exit) process.exit(1)
-      }
+      sentry.captureException(e)
+      exit ? log(chalk`[{bold.black.bgRed ${`FATAL:${type}`.padStart(20)}}] - ${e.stack ? e.stack : e.message}`) : log(chalk`[{bold.red ${`ERROR:${type}`.padStart(20)}}] - ${e.stack ? e.stack : e.message}`)
+      if (exit) process.exit(1)
     }
   },
-  warn: (msg) => {
-    log(chalk`{bold.yellow WARN}: ${msg}`)
-  },
-  trace: (msg) => {
-    if (process.env.NODE_ENV === 'debug') log(chalk`{bold.cyan TRACE}: ${inspect(msg)}`) // trace is the only logging route that inspects automatically
-  },
-  command: (opts) => { // specifically to log commands being ran
-    if (process.env.WILDBEAST_SUPPRESS_COMMANDLOG) return
-    log(chalk`{bold.magenta CMD}: ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
-    opts.m.channel.lastPinTimestamp = undefined
-    sendToES({
-      type: 'command',
-      cmd: opts.cmd,
-      args: opts.opts.split(' '),
-      author: opts.m.author,
-      channel: opts.m.channel,
-      guild: transform(opts.m.channel.guild)
+  /**
+   * Warn the console about something
+   * @param {String} type - Type of the message to log
+   * @param {*} msg - The data to log
+   */
+  warn: (type = 'GEN', msg) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Warning,
+      message: msg
     })
+    log(chalk`[{bold.yellow ${`WARN:${type}`.padStart(20)}}] - ${msg}`)
   },
-  _raven: raven
-}
-
-function transform (guild) {
-  if (!guild) return
-  let proxy = guild
-  proxy.joinedAt = new Date(guild.joinedAt).toISOString()
-  proxy.createdAt = new Date(guild.createdAt).toISOString()
-  // why eris gives numbers instead of dates for this i dont even know
-  proxy.emojis = undefined // we really dont care about this
-  return proxy
-}
-
-function sendToES (opts) {
-  if (ES) {
-    const moment = require('moment')
-    opts['@timestamp'] = new Date().toISOString()
-    store.push({ index: {
-      _index: (process.env.ELASTICSEARCH_INDEX || 'wildbeast') + `-${moment().format('YYYY.MM.DD')}`, _type: '_doc'
-    } })
-    store.push(opts)
+  /**
+   * Trace something
+   * These messages only get shown if NODE_ENV is set to debug
+   * The msg param gets passed through util.inspect
+   * @param {String} type - Type of the message to log
+   * @param {*} msg - The data to log
+   */
+  trace: (type = 'GEN', msg) => {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level: Sentry.Severity.Debug,
+      message: msg
+    })
+    if (process.env.NODE_ENV === 'debug') log(chalk`[{bold.cyan ${`TRACE:${type}`.padStart(20)}}] - ${inspect(msg)}`) // trace is the only logging route that inspects automatically
+  },
+  /**
+   * Log a command that's being ran
+   * @param {Object} opts - Object with data concerning the command
+   */
+  command: (opts) => { // specifically to log commands being ran
+    Sentry.addBreadcrumb({
+      category: 'command',
+      level: Sentry.Severity.Info,
+      message: `${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`
+    })
+    if (process.env.WILDBEAST_SUPPRESS_COMMANDLOG) return
+    log(chalk`[{bold.magenta ${'CMD'.padStart(20)}}] - ${opts.cmd} by ${opts.m.author.username} in ${opts.m.channel.guild ? opts.m.channel.guild.name : 'DM'}`)
   }
-}
-
-function flushES () {
-  if (store.length === 0) return
-  ES.bulk({
-    body: store
-  }).then(module.exports.trace).catch(module.exports.error)
-  store = []
 }

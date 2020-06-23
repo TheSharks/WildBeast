@@ -6,13 +6,10 @@ Please follow these rules when making contributions to this repository.
 
 ## Unwanted contributions
 
-1. Style violations fixes
-2. ESLint rules changes
-3. Alias additions (Only applies if no new commands are provided)
-
-## Wanted contributions
-
-We welcome all contributions that aren't unwanted by the rules defined above.
+1. Changes to ESLint configuration without justifiable reason
+2. New commands that are confusing to use for end users
+3. Breaking changes to already existing commands, unless strictly necessary 
+4. Unnecessarily large restructurings of code
 
 ## Code rules
 
@@ -36,7 +33,6 @@ When writing abstractions, you only need to write them for the officially suppor
 ### Global objects
 
 Avoid polluting the global namespace unnecessarily, if something is not likely to be frequently used across the project, don't add it.   
-When calling global objects, call them as you would a non-global object, for example: `global.logger.log('Hello world!')`.
 
 ### Promises and async
 
@@ -65,7 +61,20 @@ aPromise().then(result => {
 aPromise().then(async result => {
   const anotherresult = await anotherPromise(result)
   console.log(anotherresult)
-})
+}).catch(console.error)
+```
+
+```js
+// 💯 great!
+(async () => { // top-level async is used as an example, its not required
+  try {
+    const result = await aPromise()
+    const anotherresult = await anotherPromise(result)
+    console.log(anotherresult)
+  } catch (e) { 
+    console.error(e) 
+  }
+})()
 ```
 
 # Docs
@@ -77,7 +86,7 @@ aPromise().then(async result => {
 * Do not commit or PR to the **gh-pages** branch. The **gh-pages** branch is handled by our CI.
 * Follow the overall format in the docs.
 * Do not add extraneous material such as screenshots.
-* New pages must be added to the navbar in [mkdocs.yml](../mkdocs.yml). See [DOCS_GUIDE.md](DOCS_GUIDE.md) for more details.
+* New pages must be added to the navbar in [mkdocs.yml](../docs/mkdocs.yml). See [DOCS_GUIDE.md](DOCS_GUIDE.md) for more details.
 
 ## Unwanted contributions
 

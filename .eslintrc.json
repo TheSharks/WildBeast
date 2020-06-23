@@ -1,8 +1,6 @@
 {
   "extends": "standard",
   "globals": {
-    "i18n": false,
-    "logger": false,
-    "bot": false
+    "logger": false
   }
 }

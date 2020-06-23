@@ -1,5 +1,3 @@
-module.exports = function (ctx) {
-  global.logger.debug(`Gateways: ${ctx[0]}`, {
-    gateways: ctx[0]
-  })
+module.exports = (trace) => {
+  logger.debug('GATEWAY', `Hello from Discord! Connecting to gateways ${trace.join(' ')}`)
 }
