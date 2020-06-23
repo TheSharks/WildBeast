@@ -6,10 +6,9 @@ exec('git remote update').then(gitVerify).catch(async () => {
   const SA = require('superagent')
   const local = require('../../package.json').version
   const stable = await SA.get('https://raw.githubusercontent.com/TheSharks/WildBeast/master/package.json')
-  const exp = await SA.get('https://raw.githubusercontent.com/TheSharks/WildBeast/experimental/package.json')
-  logger.log('VERSION', `Latest stable version: ${JSON.parse(stable.text).version}. Latest experimental version: ${JSON.parse(exp.text).version}`)
-  if (local !== JSON.parse(stable.text).version && local !== JSON.parse(exp.text).version) {
-    logger.warn('VERSION', 'Not up-to-date with any remote version, update recommended')
+  logger.log('VERSION', `Latest version: ${JSON.parse(stable.text).version}`)
+  if (local !== JSON.parse(stable.text).version) {
+    logger.warn('VERSION', 'Not up-to-date with remote version, update recommended')
   }
 })
 
