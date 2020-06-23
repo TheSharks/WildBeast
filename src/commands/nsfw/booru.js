@@ -43,7 +43,12 @@ module.exports = new Command(async (msg, suffix) => {
           'User-Agent': `github.com/TheSharks/WildBeast@${require('../../../package.json').version}`,
           Accept: 'application/json'
         })
-      resp.body = JSON.parse(resp.text)
+      try {
+        resp.body = JSON.parse(resp.text)
+      } catch (e) {
+        if (resp.body.length === 0) return msg.channel.createMessage(`No results found for \`${query}\``) // quality api
+        else return msg.channel.createMessage('Something when wrong! Try again later')
+      }
       const post = resp.body[Math.floor((Math.random() * resp.body.length))]
       return msg.channel.createMessage(generateEmbed(sites[parts[0]].cdn(post)))
     }
