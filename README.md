@@ -23,7 +23,7 @@ This is also the open source framework for [WildBot#3942 on Discord](https://inv
 - Easy to modify
 - Built-in command system with permissions and server-unique configurations
 
-Visit our [documentation](https://docs.thesharks.xyz) for more information.
+Visit our [documentation](https://wildbeast.guide/) for more information.
 
 ### Want to use WildBeast but don't want to host it yourself?
 
@@ -31,7 +31,7 @@ No problem, we maintain a public instance called WildBot that you can invite to 
 
 ### Want to run WildBeast yourself?
 
-We've got you covered on that - we provide installation instructions for Windows and Linux. Check out the [Windows installation manual](https://docs.thesharks.xyz/install_windows) or [Linux installation manual](https://docs.thesharks.xyz/install_linux) to get started.
+We've got you covered on that - we provide installation instructions for Windows and Linux. Check out the [Windows installation manual](https://wildbeast.guide/install_windows) or [Linux installation manual](https://wildbeast.guide/install_linux) to get started.
 
 ---
 
