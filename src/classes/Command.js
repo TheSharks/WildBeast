@@ -40,6 +40,7 @@ module.exports = class Command {
   runWithPrereqs (msg, suffix) {
     const prereqs = require('../internal/dir-require')('src/components/prereqs/*.js')
     const client = require('../components/client')
+    if (this.props.disableDM && !msg.channel.guild) return msg.channel.createMessage('This command cannot be used in DMs')
     // run customs first
     for (const x of this.props.prereqs) {
       if (!prereqs[x]) throw new TypeError(`Attempting to use a custom prereq that does not exist: ${x}`)
@@ -48,7 +49,6 @@ module.exports = class Command {
     if (this.props.nsfw && msg.channel.guild && !msg.channel.nsfw) {
       return msg.channel.createMessage('This channel needs to be marked as NSFW before this command can be used')
     }
-    if (this.props.disableDM && !msg.channel.guild) return msg.channel.createMessage('This command cannot be used in DMs')
     // then, run default perm checks
     if (Object.keys(this.props.clientPerms).length > 0) {
       const missingPerms = [
