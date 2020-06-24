@@ -1,5 +1,4 @@
 const Command = require('../../classes/Command')
-const logger = require('../../internal/logger')
 
 module.exports = new Command(async msg => {
   const client = require('../../components/client')
