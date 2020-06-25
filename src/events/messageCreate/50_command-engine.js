@@ -33,12 +33,6 @@ const generateHelpMessage = async (msg, suffix) => {
       title: `Help for command ${name}`,
       description: cmd.props.helpMessage,
       color: 0xFE8E08,
-      fields: [
-        {
-          name: 'Category',
-          value: cmd.props.category
-        }
-      ],
       footer: {
         icon_url: client.user.dynamicAvatarURL(),
         text: `${client.user.username} - Powered by WildBeast`
