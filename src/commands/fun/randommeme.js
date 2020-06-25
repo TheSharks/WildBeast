@@ -5,7 +5,7 @@ module.exports = new Command(async msg => {
   try {
     const res = await SA.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`)
       .set('Authorization', 'Client-ID ' + process.env.IMGUR_KEY)
-    const ctx = res.body.data[Math.floor((Math.random() * 20) + 1)]
+    const ctx = res.body.data[Math.floor((Math.random() * 20))]
     await msg.channel.createMessage({
       embed: {
         url: ctx.link,
