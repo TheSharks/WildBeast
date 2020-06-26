@@ -49,27 +49,29 @@ module.exports = class Command {
       return msg.channel.createMessage('This channel needs to be marked as NSFW before this command can be used')
     }
     // then, run default perm checks
-    if (Object.keys(this.props.clientPerms).length > 0) {
-      const missingPerms = [
-        ...(this.props.clientPerms.guild && Array.isArray(this.props.clientPerms.guild)
-          ? this.props.clientPerms.guild.filter(x => !msg.channel.guild.members.get(client.user.id).permission.has(x))
-          : []),
-        ...(this.props.clientPerms.channel && Array.isArray(this.props.clientPerms.channel)
-          ? this.props.clientPerms.channel.filter(x => !msg.channel.permissionsOf(client.user.id).has(x))
-          : [])
-      ]
-      if (missingPerms.length > 0) return msg.channel.createMessage(`I'm missing the following permissions: \`${missingPerms.join(', ')}\``)
-    }
-    if (Object.keys(this.props.userPerms).length > 0) {
-      const missingPerms = [
-        ...(this.props.userPerms.guild && Array.isArray(this.props.userPerms.guild)
-          ? this.props.userPerms.guild.filter(x => !msg.member.permission.has(x))
-          : []),
-        ...(this.props.userPerms.channel && Array.isArray(this.props.userPerms.channel)
-          ? this.props.userPerms.channel.filter(x => !msg.channel.permissionsOf(msg.member.id).has(x))
-          : [])
-      ]
-      if (missingPerms.length > 0) return msg.channel.createMessage(`You're missing the following permissions: \`${missingPerms.join(', ')}\``)
+    if (msg.channel.guild) {
+      if (Object.keys(this.props.clientPerms).length > 0) {
+        const missingPerms = [
+          ...(this.props.clientPerms.guild && Array.isArray(this.props.clientPerms.guild)
+            ? this.props.clientPerms.guild.filter(x => !msg.channel.guild.members.get(client.user.id).permission.has(x))
+            : []),
+          ...(this.props.clientPerms.channel && Array.isArray(this.props.clientPerms.channel)
+            ? this.props.clientPerms.channel.filter(x => !msg.channel.permissionsOf(client.user.id).has(x))
+            : [])
+        ]
+        if (missingPerms.length > 0) return msg.channel.createMessage(`I'm missing the following permissions: \`${missingPerms.join(', ')}\``)
+      }
+      if (Object.keys(this.props.userPerms).length > 0) {
+        const missingPerms = [
+          ...(this.props.userPerms.guild && Array.isArray(this.props.userPerms.guild)
+            ? this.props.userPerms.guild.filter(x => !msg.member.permission.has(x))
+            : []),
+          ...(this.props.userPerms.channel && Array.isArray(this.props.userPerms.channel)
+            ? this.props.userPerms.channel.filter(x => !msg.channel.permissionsOf(msg.member.id).has(x))
+            : [])
+        ]
+        if (missingPerms.length > 0) return msg.channel.createMessage(`You're missing the following permissions: \`${missingPerms.join(', ')}\``)
+      }
     }
     return this.run(msg, suffix)
   }
