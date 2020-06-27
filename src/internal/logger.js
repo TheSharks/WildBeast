@@ -47,7 +47,7 @@ module.exports = {
     Sentry.addBreadcrumb({
       category: 'console',
       level: Sentry.Severity.Error,
-      message: e
+      message: (e instanceof Error) ? e.message : e
     })
     if (!(e instanceof Error)) { // in case strings get logged as errors, for whatever reason
       exit ? log(chalk`[{bold.black.bgRed ${`FATAL:${type}`.padStart(20)}}] - ${e}`) : log(chalk`[{bold.red ${`ERROR:${type}`.padStart(20)}}] - ${e}`)

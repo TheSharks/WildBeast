@@ -14,8 +14,9 @@ jobs:
         uses: tclindner/sentry-releases-action@v1.0.0
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: wild-beast
-          SENTRY_PROJECT: wildbeast
+          SENTRY_ORG: wildbeast
+          SENTRY_PROJECT: wildbeast-v7
         with:
+          releaseNamePrefix: thesharks/wildbeast@
           tagName: ${{ github.ref }}
           environment: qa
