@@ -7,11 +7,9 @@ const { Modules, Http, LinkedErrors } = Sentry.Integrations
 const { Dedupe } = require('@sentry/integrations')
 let release
 try {
-  release = require('child_process').execSync('git rev-parse HEAD --short').toString().trim()
-  logger.debug('SENTRY', `Setting release to ${release}`)
+  release = require('child_process').execSync('git rev-parse --short HEAD').toString().trim()
 } catch (_) {
   release = require('../../package.json').version
-  logger.debug('SENTRY', `Git failed, setting release to ${release}`)
 }
 Sentry.init({
   defaultIntegrations: false,
