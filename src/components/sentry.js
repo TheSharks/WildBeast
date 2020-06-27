@@ -23,7 +23,7 @@ Sentry.init({
     'Missing Access',
     'Connection reset by peer'
   ],
-  release: `thesharks/wildbeast@${release}`
+  release: `wildbeast@${release}`
 })
 
 module.exports = Sentry

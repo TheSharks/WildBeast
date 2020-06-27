@@ -17,6 +17,6 @@ jobs:
           SENTRY_ORG: wildbeast
           SENTRY_PROJECT: wildbeast-v7
         with:
-          releaseNamePrefix: thesharks/wildbeast@
+          releaseNamePrefix: wildbeast@
           tagName: ${{ github.ref }}
           environment: qa
