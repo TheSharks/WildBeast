@@ -11,7 +11,7 @@ module.exports = new Command(async msg => {
         url: ctx.link,
         title: ctx.title,
         image: {
-          url: ctx.images[0].link
+          url: (ctx.images) ? ctx.images[0].link : ctx.link
         },
         footer: {
           text: 'imgur.com',
