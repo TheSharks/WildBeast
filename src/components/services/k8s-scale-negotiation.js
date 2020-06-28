@@ -7,7 +7,7 @@ module.exports = {
     const scale = await k8s.renegotiate()
     if (client.options.maxShards !== scale) {
       while (true) {
-        const res = await client.determine(false)
+        const res = await k8s.determine(false)
         if (res !== scale) {
           logger.log('K8S-SCALE', 'Retrying in 10 seconds, pod index seems to be inaccurate')
           await stall(10000)
