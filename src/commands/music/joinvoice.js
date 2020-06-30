@@ -1,6 +1,6 @@
 const Command = require('../../classes/Command')
 
-module.exports = new Command(async msg => {
+module.exports = new Command(async (msg, suffix) => {
   const client = require('../../components/client')
   if (!msg.member || !msg.member.voiceState.channelID) return msg.channel.createMessage('Please join a voice channel and try this command again')
   if (client.voiceConnectionManager.get(msg.channel.guild.id)) return msg.channel.createMessage("I'm already streaming in this server!")
@@ -19,6 +19,7 @@ module.exports = new Command(async msg => {
       encoder: player,
       textChannel: msg.channel
     })
+    if (suffix) require('./play').run(msg, suffix)
   } catch (e) {
     msg.channel.createMessage('Failed to join voice channel, try again?')
     logger.error(e)
