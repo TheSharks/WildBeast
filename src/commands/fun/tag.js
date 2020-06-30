@@ -9,7 +9,7 @@ module.exports = new Command(async (msg, suffix) => {
   switch (chunks[0]) {
     case 'create': {
       tag = (await driver.get(chunks[1]))[0]
-      if (['create', 'raw', 'owner', 'edit', 'delte', 'import'].includes(chunks[1])) return msg.channel.createMessage("You can't name your tag that")
+      if (['create', 'raw', 'owner', 'edit', 'delete', 'import'].includes(chunks[1])) return msg.channel.createMessage("You can't name your tag that")
       if (tag) return msg.channel.createMessage('A tag with that name already exists')
       else return createNewTag(msg, chunks)
     }
