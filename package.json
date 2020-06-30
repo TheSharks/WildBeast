@@ -44,7 +44,7 @@
     "eris": "^0.13.3",
     "eventemitter3": "^4.0.4",
     "glob": "^7.1.6",
-    "jimp": "^0.13.0",
+    "jimp": "^0.14.0",
     "knex": "^0.21.1",
     "prom-client": "^12.0.0",
     "superagent": "^5.2.2"
