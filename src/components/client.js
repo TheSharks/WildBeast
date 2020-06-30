@@ -5,6 +5,7 @@
 const Eris = require('eris')
 const { Collection } = require('eris')
 module.exports = new Eris(process.env.BOT_TOKEN, {
+  restMode: true,
   allowedMentions: {
     everyone: false
   },
