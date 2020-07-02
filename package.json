@@ -50,6 +50,6 @@
     "superagent": "^5.2.2"
   },
   "optionalDependencies": {
-    "sqlite3": "^4.2.0"
+    "sqlite3": "^5.0.0"
   }
 }
