@@ -27,12 +27,9 @@ To verify your code adheres to our styleguide, run `npm test` in the project roo
 
 ### Database operations
 
-When performing database operations, **don't import a driver and call it directly**, instead, require `database-selector.js` and write abstractions.   
-When writing abstractions, you only need to write them for the officially supported database at that time. (currently ArangoDB)
-
-### Global objects
-
-Avoid polluting the global namespace unnecessarily, if something is not likely to be frequently used across the project, don't add it.   
+We use Knex as our SQL driver, and we write abstractions in the form of drivers for each moving part that requires database access.   
+When something requires database access and does not already have a driver, **do not directly import Knex, make a driver instead**   
+When writing Knex abstractions, your abstractions should provide support for the databases we support officially, namely SQLite and PostgreSQL
 
 ### Promises and async
 
@@ -76,24 +73,3 @@ aPromise().then(async result => {
   }
 })()
 ```
-
-# Docs
-
-## General contribution rules
-
-* Additions should be committed to a **docs/<your-changes-title\>** branch and PRed to the experimental branch.
-* Strive to submit grammatically correct changes.
-* Do not commit or PR to the **gh-pages** branch. The **gh-pages** branch is handled by our CI.
-* Follow the overall format in the docs.
-* Do not add extraneous material such as screenshots.
-* New pages must be added to the navbar in [mkdocs.yml](../docs/mkdocs.yml). See [DOCS_GUIDE.md](DOCS_GUIDE.md) for more details.
-
-## Unwanted contributions
-
-* Unnecessary restructurations of the docs.
-* Untested changes (Changes must be verified as working)
-* Configuration changes, except when changes are necessary for the documentation to work properly.
-
-## Wanted contributions
-
-Anything not outlined in the above section is considered wanted.
