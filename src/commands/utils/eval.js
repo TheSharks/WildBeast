@@ -1,6 +1,6 @@
 const Command = require('../../classes/Command')
 
-module.exports = new Command((msg, suffix) => {
+module.exports = new Command(function (msg, suffix) {
   const util = require('util')
   try {
     const returned = eval(suffix) // eslint-disable-line no-eval
@@ -12,7 +12,7 @@ module.exports = new Command((msg, suffix) => {
       str = str + '...'
     }
     str = str.replace(new RegExp(process.env.BOT_TOKEN, 'gi'), '( ͡° ͜ʖ ͡°)')
-    msg.channel.createMessage('```js\n' + str + '\n```').then((ms) => {
+    this.safeSendMessage(msg.channel, '```js\n' + str + '\n```').then((ms) => {
       if (returned !== undefined && returned !== null && typeof returned.then === 'function') {
         returned.then(() => {
           let str = util.inspect(returned, {
@@ -36,7 +36,7 @@ module.exports = new Command((msg, suffix) => {
       }
     })
   } catch (e) {
-    msg.channel.createMessage('```js\n' + e + '\n```')
+    this.safeSendMessage(msg.channel, '```js\n' + e + '\n```')
   }
 }, {
   prereqs: ['masterUser'],

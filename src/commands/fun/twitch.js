@@ -1,23 +1,23 @@
 const Command = require('../../classes/Command')
 
-module.exports = new Command(async (msg, suffix) => {
+module.exports = new Command(async function (msg, suffix) {
   const SA = require('superagent')
-  if (!suffix) return msg.channel.createMessage('No channel specified!')
+  if (!suffix) return this.safeSendMessage(msg.channel, 'No channel specified!')
   try {
     const res = await SA.get(`https://api.twitch.tv/kraken/users?login=${suffix}`)
       .set({ Accept: 'application/vnd.twitchtv.v5+json', 'Client-ID': process.env.TWITCH_ID })
     const user = res.body._total
       ? res.body.users[0]._id
       : false
-    if (!user) return msg.channel.createMessage(`**${suffix}** isn't a valid channel.`)
+    if (!user) return this.safeSendMessage(msg.channel, `**${suffix}** isn't a valid channel.`)
     const stream = await SA.get(`https://api.twitch.tv/kraken/streams/${user}`)
       .set({ Accept: 'application/vnd.twitchtv.v5+json', 'Client-ID': process.env.TWITCH_ID })
     stream.body.stream
-      ? msg.channel.createMessage(getEmbed(stream.body))
-      : msg.channel.createMessage(`**${suffix}** is not currently streaming.`)
+      ? this.safeSendMessage(msg.channel, getEmbed(stream.body))
+      : this.safeSendMessage(msg.channel, `**${suffix}** is not currently streaming.`)
   } catch (error) {
     logger.error('REST TWITCH', error)
-    return msg.channel.createMessage('We ran into an error making that request, sorry about that!')
+    return this.safeSendMessage(msg.channel, 'We ran into an error making that request, sorry about that!')
   }
 },
 {

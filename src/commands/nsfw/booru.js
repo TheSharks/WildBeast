@@ -21,12 +21,12 @@ const sites = {
 
 const Command = require('../../classes/Command')
 
-module.exports = new Command(async (msg, suffix) => {
+module.exports = new Command(async function (msg, suffix) {
   const SA = require('superagent')
 
   const parts = suffix.split(' ')
-  if (parts.length < 2) return msg.channel.createMessage('Your formatting appears to be wrong')
-  if (!sites[parts[0]]) return msg.channel.createMessage(`I don't have support for ${parts[0]}, currently I support ${Object.keys(sites).join(', ')}`)
+  if (parts.length < 2) return this.safeSendMessage(msg.channel, 'Your formatting appears to be wrong')
+  if (!sites[parts[0]]) return this.safeSendMessage(msg.channel, `I don't have support for ${parts[0]}, currently I support ${Object.keys(sites).join(', ')}`)
   const query = parts.slice(1).join(' ')
   msg.channel.sendTyping()
   switch (sites[parts[0]].apiStyle) {
@@ -46,11 +46,11 @@ module.exports = new Command(async (msg, suffix) => {
       try {
         resp.body = JSON.parse(resp.text)
       } catch (e) {
-        if (resp.body.length === 0) return msg.channel.createMessage(`No results found for \`${query}\``) // quality api
-        else return msg.channel.createMessage('Something when wrong! Try again later')
+        if (resp.body.length === 0) return this.safeSendMessage(msg.channel, `No results found for \`${query}\``) // quality api
+        else return this.safeSendMessage(msg.channel, 'Something when wrong! Try again later')
       }
       const post = resp.body[Math.floor((Math.random() * resp.body.length))]
-      return msg.channel.createMessage(generateEmbed(sites[parts[0]].cdn(post)))
+      return this.safeSendMessage(msg.channel, generateEmbed(sites[parts[0]].cdn(post)))
     }
     case 'rails-booru': {
       SA(sites[parts[0]].baseURL)
@@ -58,10 +58,10 @@ module.exports = new Command(async (msg, suffix) => {
         .set({ 'User-Agent': `github.com/TheSharks/WildBeast@${require('../../../package.json').version}` })
         .then(res => {
           if (!res.body.search || res.body.search.length < 1) {
-            return msg.channel.createMessage(`No results found for \`${query}\``)
+            return this.safeSendMessage(msg.channel, `No results found for \`${query}\``)
           }
           const count = Math.floor((Math.random() * res.body.search.length))
-          return msg.channel.createMessage(generateEmbed(`https:${res.body.search[count].representations.tall}`)) // why
+          return this.safeSendMessage(msg.channel, generateEmbed(`https:${res.body.search[count].representations.tall}`)) // why
         })
       break
     }
@@ -75,13 +75,13 @@ module.exports = new Command(async (msg, suffix) => {
         })
         .then(res => {
           if (res.body.posts.length < 1) {
-            return msg.channel.createMessage(`No results found for \`${query}\``)
+            return this.safeSendMessage(msg.channel, `No results found for \`${query}\``)
           }
           const post = res.body.posts[Math.floor((Math.random() * res.body.posts.length))]
-          return msg.channel.createMessage(generateEmbed(post.file.url))
+          return this.safeSendMessage(msg.channel, generateEmbed(post.file.url))
         }).catch(e => {
           if (e.status) { // is this error thrown by the e621 server or by the module?
-            if (e.response.body.reason) msg.channel.createMessage(e.response.body.reason)
+            if (e.response.body.reason) this.safeSendMessage(msg.channel, e.response.body.reason)
           } else throw e
         })
     }

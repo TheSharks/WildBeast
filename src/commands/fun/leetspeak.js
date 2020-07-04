@@ -12,9 +12,9 @@ const map = {
 
 const Command = require('../../classes/Command')
 
-module.exports = new Command((msg, suffix) => {
-  if (!suffix) return msg.channel.createMessage('You need to type something to encode your message into l337sp3@K!')
-  msg.channel.createMessage(translate(suffix))
+module.exports = new Command(function (msg, suffix) {
+  if (!suffix) return this.safeSendMessage(msg.channel, 'You need to type something to encode your message into l337sp3@K!')
+  this.safeSendMessage(msg.channel, translate(suffix))
 }, {
   aliases: ['leetspeek', 'leetspeech', 'leet']
 })

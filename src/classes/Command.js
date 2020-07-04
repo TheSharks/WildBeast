@@ -75,4 +75,18 @@ module.exports = class Command {
     }
     return this.run(msg, suffix)
   }
+
+  /**
+   * Try to send a message to a channel with regards to the channel's permissions
+   * @param {module:eris.TextChannel} channel The channel where to send the message to
+   * @param {String | Object} msg The message to send
+   * @see {@link https://abal.moe/Eris/docs/TextChannel#function-createMessage}
+   */
+  async safeSendMessage (channel, msg) {
+    const client = require('../components/client')
+    if (channel.guild) {
+      if (channel.permissionsOf(client.user.id).has('sendMessages')) return channel.createMessage(msg)
+      else return Promise.reject(new Error('No permissions to create messages in this channel'))
+    } else return channel.createMessage(msg)
+  }
 }

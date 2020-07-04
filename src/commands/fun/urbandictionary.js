@@ -1,14 +1,14 @@
 const Command = require('../../classes/Command')
 
-module.exports = new Command(async (msg, suffix) => {
+module.exports = new Command(async function (msg, suffix) {
   const SA = require('superagent')
   try {
-    if (!suffix) return msg.channel.createMessage('Please enter a search term')
+    if (!suffix) return this.safeSendMessage(msg.channel, 'Please enter a search term')
     const res = await SA.get('http://api.urbandictionary.com/v0/define')
       .query({ term: suffix })
-    if (res.body.list.length < 1) return msg.channel.createMessage("This word is so screwed up, even Urban Dictionary doesn't know it")
+    if (res.body.list.length < 1) return this.safeSendMessage(msg.channel, "This word is so screwed up, even Urban Dictionary doesn't know it")
     const ctx = res.body.list[0]
-    await msg.channel.createMessage({
+    await this.safeSendMessage(msg.channel, {
       embed: {
         color: 0x6832e3,
         author: {
@@ -26,7 +26,7 @@ module.exports = new Command(async (msg, suffix) => {
       }
     })
   } catch (e) {
-    msg.channel.createMessage('Something went wrong, try again later')
+    this.safeSendMessage(msg.channel, 'Something went wrong, try again later')
     logger.error('CMD', e)
   }
 }, {

@@ -1,5 +1,5 @@
 const Command = require('../../classes/Command')
 
-module.exports = new Command((msg, suffix) => {
-  msg.channel.createMessage('\u200B' + suffix) // eris does escaping for us
+module.exports = new Command(function (msg, suffix) {
+  this.safeSendMessage(msg.channel, '\u200B' + suffix) // eris does escaping for us
 })

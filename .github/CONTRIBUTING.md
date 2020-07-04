@@ -31,6 +31,24 @@ We use Knex as our SQL driver, and we write abstractions in the form of drivers 
 When something requires database access and does not already have a driver, **do not directly import Knex, make a driver instead**   
 When writing Knex abstractions, your abstractions should provide support for the databases we support officially, namely SQLite and PostgreSQL
 
+### Sending messages with commands
+
+When sending messages, send them using `<Command>.safeSendMessage()`. This will check whether or not the client has permissions to send messages in the channel before trying to send them. Calling `<TextChannel>.createMessage()` directly is discouraged.
+
+```js
+// ⚠ avoid
+new Command(async function (msg) {
+  await msg.channel.createMessage('Hello world!')
+})
+```
+
+```js
+// ✓ prefered
+new Command(async function (msg) {
+  await this.safeSendMessage(msg.channel, 'Hello world!')
+})
+```
+
 ### Promises and async
 
 **Always** chain promises where possible.   

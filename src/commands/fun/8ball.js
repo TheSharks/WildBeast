@@ -26,6 +26,6 @@ const answers = [
 ]
 const Command = require('../../classes/Command')
 
-module.exports = new Command(msg => {
-  msg.channel.createMessage(`The magic 8 ball says: \`${answers[Math.floor(Math.random() * answers.length)]}\``)
+module.exports = new Command(function (msg) {
+  this.safeSendMessage(msg.channel, `The magic 8 ball says: \`${answers[Math.floor(Math.random() * answers.length)]}\``)
 })

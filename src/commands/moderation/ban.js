@@ -1,8 +1,8 @@
 const Command = require('../../classes/Command')
 
-module.exports = new Command(async (msg, suffix) => {
+module.exports = new Command(async function (msg, suffix) {
   const client = require('../../components/client')
-  if (suffix.length === 0) return msg.channel.createMessage('Please provide IDs or mention users you\'d like to ban')
+  if (suffix.length === 0) return this.safeSendMessage(msg.channel, 'Please provide IDs or mention users you\'d like to ban')
 
   const chunks = suffix.split(' ')
   const ids = chunks
@@ -13,13 +13,13 @@ module.exports = new Command(async (msg, suffix) => {
     ...ids
   ]
 
-  if (members.length === 0) return msg.channel.createMessage('Couldn\'t find those users in the server')
+  if (members.length === 0) return this.safeSendMessage(msg.channel, 'Couldn\'t find those users in the server')
 
   const reason = chunks.slice(members.length).join(' ').length === 0
     ? '[No reason provided]'
     : chunks.slice(members.length).join(' ')
 
-  const reply = await msg.channel.createMessage('Working on it...')
+  const reply = await this.safeSendMessage(msg.channel, 'Working on it...')
   const result = await Promise.all(
     members
       .map(x => msg.channel.guild.banMember(x, 7, `${msg.author.username}#${msg.author.discriminator}: ${reason}`))

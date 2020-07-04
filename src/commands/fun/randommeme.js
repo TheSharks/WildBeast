@@ -1,12 +1,12 @@
 const Command = require('../../classes/Command')
 
-module.exports = new Command(async msg => {
+module.exports = new Command(async function (msg) {
   const SA = require('superagent')
   try {
     const res = await SA.get(`https://api.imgur.com/3/g/memes/viral/${Math.floor((Math.random() * 8) + 1)}`)
       .set('Authorization', 'Client-ID ' + process.env.IMGUR_KEY)
     const ctx = res.body.data[Math.floor((Math.random() * 20))]
-    await msg.channel.createMessage({
+    await this.safeSendMessage(msg.channel, {
       embed: {
         url: ctx.link,
         title: ctx.title,
@@ -23,7 +23,7 @@ module.exports = new Command(async msg => {
       }
     })
   } catch (e) {
-    msg.channel.createMessage('Something went wrong, try again later')
+    this.safeSendMessage(msg.channel, 'Something went wrong, try again later')
     logger.error('CMD', e)
   }
 }, {
