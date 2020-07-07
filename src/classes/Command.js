@@ -97,7 +97,7 @@ module.exports = class Command {
           })
         } else {
           return channel.createMessage({
-            ...msg, 
+            ...msg,
             allowedMentions: {
               everyone: false,
               roles: false,
