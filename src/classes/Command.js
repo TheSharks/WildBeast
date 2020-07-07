@@ -15,6 +15,7 @@ module.exports = class Command {
       clientPerms: {},
       prereqs: [],
       aliases: [],
+      timeout: 0,
       ...props
     }
   }
@@ -39,14 +40,19 @@ module.exports = class Command {
   runWithPrereqs (msg, suffix) {
     const prereqs = require('../internal/dir-require')('src/components/prereqs/*.js')
     const client = require('../components/client')
-    if (this.props.disableDM && !msg.channel.guild) return msg.channel.createMessage('This command cannot be used in DMs')
+    const timeouts = require('../components/timeouts')
+    if (this.props.disableDM && !msg.channel.guild) return this.safeSendMessage(msg.channel, 'This command cannot be used in DMs')
     // run customs first
     for (const x of this.props.prereqs) {
       if (!prereqs[x]) throw new TypeError(`Attempting to use a custom prereq that does not exist: ${x}`)
-      if (!prereqs[x].fn(msg)) return msg.channel.createMessage(prereqs[x].errorMessage)
+      if (!prereqs[x].fn(msg)) return this.safeSendMessage(msg.channel, prereqs[x].errorMessage)
     }
     if (this.props.nsfw && msg.channel.guild && !msg.channel.nsfw) {
-      return msg.channel.createMessage('This channel needs to be marked as NSFW before this command can be used')
+      return this.safeSendMessage(msg.channel, 'This channel needs to be marked as NSFW before this command can be used')
+    }
+    if (this.props.timeout !== 0) {
+      const res = timeouts.calculate({ id: (msg.channel.guild ? msg.channel.guild.id : msg.author.id), cmd: this }, this.props.timeout)
+      if (res !== true) return this.safeSendMessage(msg.channel, `This command is still on timeout for ${Math.floor(res)} seconds`)
     }
     // then, run default perm checks
     if (msg.channel.guild) {
@@ -59,7 +65,7 @@ module.exports = class Command {
             ? this.props.clientPerms.channel.filter(x => !msg.channel.permissionsOf(client.user.id).has(x))
             : [])
         ]
-        if (missingPerms.length > 0) return msg.channel.createMessage(`I'm missing the following permissions: \`${missingPerms.join(', ')}\``)
+        if (missingPerms.length > 0) return this.safeSendMessage(msg.channel, `I'm missing the following permissions: \`${missingPerms.join(', ')}\``)
       }
       if (Object.keys(this.props.userPerms).length > 0) {
         const missingPerms = [
@@ -70,7 +76,7 @@ module.exports = class Command {
             ? this.props.userPerms.channel.filter(x => !msg.channel.permissionsOf(msg.member.id).has(x))
             : [])
         ]
-        if (missingPerms.length > 0) return msg.channel.createMessage(`You're missing the following permissions: \`${missingPerms.join(', ')}\``)
+        if (missingPerms.length > 0) return this.safeSendMessage(msg.channel, `You're missing the following permissions: \`${missingPerms.join(', ')}\``)
       }
     }
     return this.run(msg, suffix)
@@ -84,26 +90,14 @@ module.exports = class Command {
    */
   async safeSendMessage (channel, msg) {
     const client = require('../components/client')
-    if (channel.guild) {
-      if (channel.permissionsOf(client.user.id).has('sendMessages')) {
-        return channel.createMessage({
-          content: msg,
-          allowedMentions: {
-            everyone: false,
-            roles: false,
-            users: false
-          }
-        })
-      } else return Promise.reject(new Error('No permissions to create messages in this channel'))
-    } else {
-      return channel.createMessage({
-        content: msg,
-        allowedMentions: {
-          everyone: false,
-          roles: false,
-          users: false
-        }
-      })
-    }
+    if (channel.guild && !channel.permissionsOf(client.user.id).has('sendMessages')) return Promise.reject(new Error('No permissions to create messages in this channel'))
+    return channel.createMessage({
+      ...((typeof msg === 'string') ? { content: msg } : msg),
+      allowedMentions: {
+        everyone: false,
+        roles: false,
+        users: false
+      }
+    })
   }
 }
