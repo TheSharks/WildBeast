@@ -86,14 +86,25 @@ module.exports = class Command {
     const client = require('../components/client')
     if (channel.guild) {
       if (channel.permissionsOf(client.user.id).has('sendMessages')) {
-        return channel.createMessage({
-          content: msg,
-          allowedMentions: {
-            everyone: false,
-            roles: false,
-            users: false
-          }
-        })
+        if (typeof msg === 'string') {
+          return channel.createMessage({
+            content: msg,
+            allowedMentions: {
+              everyone: false,
+              roles: false,
+              users: false
+            }
+          })
+        } else {
+          return channel.createMessage({
+            ...msg, 
+            allowedMentions: {
+              everyone: false,
+              roles: false,
+              users: false
+            }
+          })
+        }
       } else return Promise.reject(new Error('No permissions to create messages in this channel'))
     } else {
       return channel.createMessage({

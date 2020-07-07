@@ -5,8 +5,8 @@ const sites = {
     cdn: (ctx) => ctx.file_url
   },
   derpibooru: {
-    apiStyle: 'rails-booru',
-    baseURL: 'https://derpibooru.org/search.json'
+    apiStyle: 'derpibooru', // there is probably a better name, but whatever for now
+    baseURL: 'https://derpibooru.org/api/v1/json/search/images'
   },
   rule34: {
     apiStyle: 'gelbooru',
@@ -46,22 +46,22 @@ module.exports = new Command(async function (msg, suffix) {
       try {
         resp.body = JSON.parse(resp.text)
       } catch (e) {
-        if (resp.body.length === 0) return this.safeSendMessage(msg.channel, `No results found for \`${query}\``) // quality api
+        if (!resp.body.length) return this.safeSendMessage(msg.channel, `No results found for \`${query}\``) // quality api
         else return this.safeSendMessage(msg.channel, 'Something when wrong! Try again later')
       }
       const post = resp.body[Math.floor((Math.random() * resp.body.length))]
       return this.safeSendMessage(msg.channel, generateEmbed(sites[parts[0]].cdn(post)))
     }
-    case 'rails-booru': {
+    case 'derpibooru': {
       SA(sites[parts[0]].baseURL)
         .query({ q: parts.slice(1).join('+') })
         .set({ 'User-Agent': `github.com/TheSharks/WildBeast@${require('../../../package.json').version}` })
         .then(res => {
-          if (!res.body.search || res.body.search.length < 1) {
+          if (!res.body.images || res.body.images.length < 1) {
             return this.safeSendMessage(msg.channel, `No results found for \`${query}\``)
           }
-          const count = Math.floor((Math.random() * res.body.search.length))
-          return this.safeSendMessage(msg.channel, generateEmbed(`https:${res.body.search[count].representations.tall}`)) // why
+          const count = Math.floor((Math.random() * res.body.images.length))
+          return this.safeSendMessage(msg.channel, generateEmbed(res.body.images[count].representations.tall)) // why UPDATE: not anymore lol
         })
       break
     }

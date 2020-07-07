@@ -1,6 +1,8 @@
 const Command = require('../../classes/Command')
 
 module.exports = new Command(function (msg) {
+  this.safeSendMessage(msg.channel, 'This command is temporarily disabled!') // The website isn't responding
+  /*
   const request = require('superagent')
   request.get('https://api.yomomma.info/')
     .then(res => {
@@ -12,4 +14,5 @@ module.exports = new Command(function (msg) {
         return this.safeSendMessage(msg.channel, 'Something went wrong!')
       }
     })
+    */
 })
