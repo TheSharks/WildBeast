@@ -35,7 +35,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@sentry/integrations": "^5.19.0",
-    "@sentry/node": "^5.19.0",
+    "@sentry/node": "^5.19.1",
     "@thesharks/jagtag-js": "^1.0.4",
     "@thesharks/tyr": "^1.1.3",
     "chalk": "^4.1.0",
