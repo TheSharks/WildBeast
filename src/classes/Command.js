@@ -40,7 +40,7 @@ module.exports = class Command {
   runWithPrereqs (msg, suffix) {
     const prereqs = require('../internal/dir-require')('src/components/prereqs/*.js')
     const client = require('../components/client')
-    // const timeouts = require('../components/timeouts')
+    const timeouts = require('../components/timeouts')
     if (this.props.disableDM && !msg.channel.guild) return this.safeSendMessage(msg.channel, 'This command cannot be used in DMs')
     // run customs first
     for (const x of this.props.prereqs) {
@@ -50,10 +50,10 @@ module.exports = class Command {
     if (this.props.nsfw && msg.channel.guild && !msg.channel.nsfw) {
       return this.safeSendMessage(msg.channel, 'This channel needs to be marked as NSFW before this command can be used')
     }
-    // if (this.props.timeout !== 0) {
-    //   const res = timeouts.calculate({ id: (msg.channel.guild ? msg.channel.guild.id : msg.author.id), cmd: this }, this.props.timeout)
-    //   if (res !== true) return this.safeSendMessage(msg.channel, `This command is still on timeout for ${Math.floor(res)} seconds`)
-    // }
+    if (this.props.timeout !== 0) {
+      const res = timeouts.calculate(`${this.name}:${(msg.channel.guild ? msg.channel.guild.id : msg.author.id)}`, this.props.timeout)
+      if (res !== true) return this.safeSendMessage(msg.channel, `This command is still on timeout for ${Math.floor(res)} seconds`)
+    }
     // then, run default perm checks
     if (msg.channel.guild) {
       if (Object.keys(this.props.clientPerms).length > 0) {
