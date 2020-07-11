@@ -8,5 +8,5 @@ module.exports = {
     const masters = process.env.WILDBEAST_MASTERS.split(',')
     return masters.includes(ctx.author.id)
   },
-  errorMessage: 'This command is only for the bot owner'
+  errorMessage: () => 'This command is only for the bot owner'
 }

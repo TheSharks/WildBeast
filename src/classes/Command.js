@@ -45,7 +45,7 @@ module.exports = class Command {
     // run customs first
     for (const x of this.props.prereqs) {
       if (!prereqs[x]) throw new TypeError(`Attempting to use a custom prereq that does not exist: ${x}`)
-      if (!prereqs[x].fn(msg)) return this.safeSendMessage(msg.channel, prereqs[x].errorMessage)
+      if (!prereqs[x].fn(msg)) return this.safeSendMessage(msg.channel, prereqs[x].errorMessage(msg))
     }
     if (this.props.nsfw && msg.channel.guild && !msg.channel.nsfw) {
       return this.safeSendMessage(msg.channel, 'This channel needs to be marked as NSFW before this command can be used')
