@@ -42,6 +42,7 @@ module.exports = {
    * @param {String} type - Type of the message to log
    * @param {Error | String} e - The error to log
    * @param {Boolean} [exit=false] - Whether or not to exit the program after processing of this error is done
+   * @returns {String} The corresponding Sentry UID
    */
   error: (type = 'GEN', e, exit = false) => {
     Sentry.addBreadcrumb({
@@ -52,10 +53,11 @@ module.exports = {
     if (!(e instanceof Error)) { // in case strings get logged as errors, for whatever reason
       exit ? log(chalk`[{bold.black.bgRed ${`FATAL:${type}`.padStart(20)}}] - ${e}`) : log(chalk`[{bold.red ${`ERROR:${type}`.padStart(20)}}] - ${e}`)
       if (exit) process.exit(1)
+      return sentry.captureMessage(e)
     } else {
-      sentry.captureException(e)
       exit ? log(chalk`[{bold.black.bgRed ${`FATAL:${type}`.padStart(20)}}] - ${e.stack ? e.stack : e.message}`) : log(chalk`[{bold.red ${`ERROR:${type}`.padStart(20)}}] - ${e.stack ? e.stack : e.message}`)
       if (exit) process.exit(1)
+      return sentry.captureException(e)
     }
   },
   /**

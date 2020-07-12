@@ -13,7 +13,8 @@ module.exports = (msg) => {
       try {
         command.runWithPrereqs(msg, suffix)
       } catch (e) {
-        logger.error('COMMANDS', e)
+        const uid = logger.error('COMMANDS', e)
+        command.safeSendMessage(msg.channel, `This command failed to run.\nIf you see my owner, give them this error code: \`${uid}\``)
       } finally {
         cmdAnalytics.labels(cmd).inc()
         logger.command({
