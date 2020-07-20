@@ -55,7 +55,7 @@ const createNewTag = async (msg, chunks) => {
     owner_id: msg.author.id,
     guild_id: msg.channel.guild ? msg.channel.guild.id : 'DM'
   })
-  return this.safeSendMessage(msg.channel, 'Your tag was created')
+  return module.exports.safeSendMessage(msg.channel, 'Your tag was created')
 }
 
 const editTag = async (tag, msg, chunks) => {
@@ -65,12 +65,12 @@ const editTag = async (tag, msg, chunks) => {
     ...tag,
     content: chunks.slice(2).join(' ')
   })
-  return this.safeSendMessage(msg.channel, 'Your tag was edited')
+  return module.exports.safeSendMessage(msg.channel, 'Your tag was edited')
 }
 
 const deleteTag = async (tag, msg) => {
   const driver = require('../../database/drivers/tags')
   if (msg.author.id !== tag.owner_id && !process.env.WILDBEAST_MASTERS.split(',').includes(msg.author.id)) return this.safeSendMessage(msg.channel, 'This tag is not yours to edit')
   await driver.delete(tag.name)
-  return this.safeSendMessage(msg.channel, 'Your tag was deleted')
+  return module.exports.safeSendMessage(msg.channel, 'Your tag was deleted')
 }
