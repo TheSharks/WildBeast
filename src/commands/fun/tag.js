@@ -36,7 +36,7 @@ module.exports = new Command(async function (msg, suffix) {
     default: {
       if (!tag) return this.safeSendMessage(msg.channel, 'No such tag')
       return this.safeSendMessage(msg.channel, compiler(tag.content, {
-        tagArgs: chunks.slice(2),
+        tagArgs: chunks.slice(1),
         author: msg.author,
         channel: msg.channel,
         guild: msg.channel.guild,
