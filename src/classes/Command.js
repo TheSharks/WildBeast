@@ -15,9 +15,10 @@ module.exports = class Command {
       clientPerms: {},
       prereqs: [],
       aliases: [],
-      timeout: 0,
+      cooldowns: {},
       ...props
     }
+    this._timeouts = new Map()
   }
 
   /**
@@ -40,7 +41,6 @@ module.exports = class Command {
   runWithPrereqs (msg, suffix) {
     const prereqs = require('../internal/dir-require')('src/components/prereqs/*.js')
     const client = require('../components/client')
-    const timeouts = require('../components/timeouts')
     if (this.props.disableDM && !msg.channel.guild) return this.safeSendMessage(msg.channel, 'This command cannot be used in DMs')
     // run customs first
     for (const x of this.props.prereqs) {
@@ -50,11 +50,7 @@ module.exports = class Command {
     if (this.props.nsfw && msg.channel.guild && !msg.channel.nsfw) {
       return this.safeSendMessage(msg.channel, 'This channel needs to be marked as NSFW before this command can be used')
     }
-    if (this.props.timeout !== 0) {
-      const res = timeouts.calculate(`${this.name}:${(msg.channel.guild ? msg.channel.guild.id : msg.author.id)}`, this.props.timeout)
-      if (res !== true) return this.safeSendMessage(msg.channel, `This command is still on timeout for ${Math.floor(res)} seconds`)
-    }
-    // then, run default perm checks
+    if (this.shouldCooldown(msg)) return this.safeSendMessage(msg.channel, 'This command is on cooldown, try again later')
     if (msg.channel.guild) {
       if (Object.keys(this.props.clientPerms).length > 0) {
         const missingPerms = [
@@ -99,5 +95,42 @@ module.exports = class Command {
         users: false
       }
     })
+  }
+
+  /**
+   * Check if the command needs to cooldown before it can be used again
+   * @param {module:eris.Message} ctx
+   * @return {Boolean}
+   */
+  shouldCooldown (ctx) {
+    const keys = Object.keys(this.props.cooldowns)
+    if (keys.length === 0) return false
+    const check = (key, ctx) => {
+      const timeout = this._timeouts.get(key)
+      if (!timeout) {
+        this._timeouts.set(key, Date.now())
+        return false
+      }
+      if (Date.now() - timeout < this.props.cooldowns[ctx]) return timeout
+      this._timeouts.delete(key)
+      return false
+    }
+    // cooldowns get checked in order of how the command declared them
+    const final = keys.map(element => {
+      switch (element) {
+        case 'global':
+          return check('global', element)
+        case 'channel':
+          return check(ctx.channel.id, element)
+        case 'guild':
+          return check(ctx.channel.guild ? ctx.channel.guild.id : ctx.channel.id, element)
+        case 'user':
+          return check(ctx.author.id, element)
+        default:
+          logger.warn('CMD', `Unknown cooldown directive! ${element} is unknown`)
+          return false
+      }
+    })
+    return final.some(x => typeof x === 'number')
   }
 }

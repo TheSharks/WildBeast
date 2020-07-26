@@ -18,7 +18,6 @@ Object.keys(commands).forEach(x => {
   try {
     if (!(commands[x] instanceof Command)) throw `Command ${x} is not a WildBeast command, skipping`
     if (final.commands[x]) throw `Command ${x} is a duplicate, skipping`
-    commands[x].props.name = x
     final.commands[x] = commands[x]
     if (commands[x].props.aliases && Array.isArray(commands[x].props.aliases)) {
       commands[x].props.aliases.forEach(alias => {
