@@ -1,4 +1,4 @@
-const joi = require('@hapi/joi')
+const joi = require('joi')
 
 const schema = joi.object().keys({
   BOT_TOKEN: joi.string().required(),
