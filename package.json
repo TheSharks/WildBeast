@@ -41,7 +41,7 @@
     "date-fns": "^2.15.0",
     "dotenv": "^8.2.0",
     "eris": "^0.13.3",
-    "eventemitter3": "^4.0.6",
+    "eventemitter3": "^4.0.7",
     "glob": "^7.1.6",
     "jimp": "^0.16.0",
     "joi": "^17.2.1",
