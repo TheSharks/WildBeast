@@ -31,7 +31,7 @@ module.exports = class VoiceConnection {
             ...(this.nowPlaying.info.authorImage ? { icon_url: this.nowPlaying.info.authorImage } : {}),
             ...(this.nowPlaying.info.authorURL ? { url: this.nowPlaying.info.authorURL } : {})
           },
-          ...(this.nowPlaying.info.image ? { image: { url: this.nowPlaying.info.image } } : {})
+          ...(this.nowPlaying.info.image ? { thumbnail: { url: this.nowPlaying.info.image } } : {})
         }
       })
     })
@@ -65,6 +65,7 @@ module.exports = class VoiceConnection {
   }
 
   async resolve (ctx) {
+    const SA = require('superagent')
     ctx = ctx.trim()
     const ytreg = /(?:https?:\/\/)?(?:www\.)?youtu(?:.be\/|be\.com\/watch\?v=)(\w{11})/
     const authorImg = (data) => {
@@ -74,7 +75,6 @@ module.exports = class VoiceConnection {
     }
     if (ytreg.test(ctx) && process.env.INVIDIOUS_HOST) {
       const videoid = ctx.match(ytreg)[1]
-      const SA = require('superagent')
       const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoid}?fields=author,title,authorThumbnails,authorUrl`)
       const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoid}&itag=250&local=true`)
       lavaresp.tracks[0].info = {
@@ -93,7 +93,20 @@ module.exports = class VoiceConnection {
       new URL(ctx)
       return this._encoder.node.loadTracks(ctx)
     } catch (_) {
-      return this._encoder.node.loadTracks(`scsearch:${ctx}`)
+      if (process.env.INVIDIOUS_HOST) {
+        const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/search?q=${encodeURIComponent(ctx)}`)
+        const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${resp.body[0].videoId}&itag=250&local=true`)
+        lavaresp.tracks[0].info = {
+          ...lavaresp.tracks[0].info,
+          author: resp.body[0].author,
+          title: resp.body[0].title,
+          uri: `https://youtu.be/${resp.body[0].videoId}`,
+          image: `https://i.ytimg.com/vi/${resp.body[0].videoId}/hqdefault.jpg`,
+          // authorImage: authorImg(resp.body[0]),
+          authorURL: `https://youtube.com${resp.body[0].authorUrl}`
+        }
+        return lavaresp
+      } else return this._encoder.node.loadTracks(`scsearch:${ctx}`)
     }
   }
 

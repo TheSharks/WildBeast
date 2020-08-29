@@ -30,7 +30,7 @@ module.exports = new Command(async function (msg, suffix) {
       }
     } else return this.safeSendMessage(msg.channel, "I'm not streaming in this server")
   } catch (e) {
-    logger.error(e)
+    logger.error('CMD', e)
     if (!(m instanceof require('eris').Messsage)) await this.safeSendMessage(msg.channel, 'Something went wrong, try again?')
     else await m.edit('Something went wrong, try again?')
   }
