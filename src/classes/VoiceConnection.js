@@ -61,7 +61,17 @@ module.exports = class VoiceConnection {
     return this._encoder.disconnect()
   }
 
-  resolve (ctx) {
+  async resolve (ctx) {
+    ctx = ctx.trim()
+    const ytreg = /(?:https?:\/\/)?(?:www\.)?youtu(?:.be\/|be\.com\/watch\?v=)(\w{11})/
+    if (ytreg.test(ctx) && process.env.INVIDIOUS_HOST) {
+      const videoid = ctx.match(ytreg)[1]
+      const SA = require('superagent')
+      const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoid}?fields=author,title`)
+      const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoid}&itag=250&local=true`)
+      lavaresp.tracks[0].info = { author: resp.body.author, title: resp.body.title, uri: `https://youtu.be/${videoid}` }
+      return lavaresp
+    }
     try {
       // eslint-disable-next-line no-new
       new URL(ctx)
