@@ -67,6 +67,11 @@ module.exports = class VoiceConnection {
   async resolve (ctx) {
     ctx = ctx.trim()
     const ytreg = /(?:https?:\/\/)?(?:www\.)?youtu(?:.be\/|be\.com\/watch\?v=)(\w{11})/
+    const authorImg = (data) => {
+      if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
+      else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
+      return data.authorThumbnails[0].url
+    }
     if (ytreg.test(ctx) && process.env.INVIDIOUS_HOST) {
       const videoid = ctx.match(ytreg)[1]
       const SA = require('superagent')
@@ -78,7 +83,7 @@ module.exports = class VoiceConnection {
         title: resp.body.title,
         uri: `https://youtu.be/${videoid}`,
         image: `https://i.ytimg.com/vi/${videoid}/hqdefault.jpg`,
-        authorImage: (resp.body.authorThumbnails[0].url.startsWith('https:')) ? resp.body.authorThumbnails[0].url : `https:${resp.body.authorThumbnails[0].url}`,
+        authorImage: authorImg(resp.body),
         authorURL: `https://youtube.com${resp.body.authorUrl}`
       }
       return lavaresp
