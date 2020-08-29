@@ -27,8 +27,11 @@ module.exports = class VoiceConnection {
           url: this.nowPlaying.info.uri,
           title: this.nowPlaying.info.title || '[Unknown!]',
           author: {
-            name: this.nowPlaying.info.author || '[Unknown!]'
-          }
+            name: this.nowPlaying.info.author || '[Unknown!]',
+            ...(this.nowPlaying.info.authorImage ? { icon_url: this.nowPlaying.info.authorImage } : {}),
+            ...(this.nowPlaying.info.authorURL ? { url: this.nowPlaying.info.authorURL } : {})
+          },
+          ...(this.nowPlaying.info.image ? { image: { url: this.nowPlaying.info.image } } : {})
         }
       })
     })
@@ -67,9 +70,17 @@ module.exports = class VoiceConnection {
     if (ytreg.test(ctx) && process.env.INVIDIOUS_HOST) {
       const videoid = ctx.match(ytreg)[1]
       const SA = require('superagent')
-      const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoid}?fields=author,title`)
+      const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoid}?fields=author,title,authorThumbnails,authorUrl`)
       const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoid}&itag=250&local=true`)
-      lavaresp.tracks[0].info = { author: resp.body.author, title: resp.body.title, uri: `https://youtu.be/${videoid}` }
+      lavaresp.tracks[0].info = {
+        ...lavaresp.tracks[0].info,
+        author: resp.body.author,
+        title: resp.body.title,
+        uri: `https://youtu.be/${videoid}`,
+        image: `https://i.ytimg.com/vi/${videoid}/hqdefault.jpg`,
+        authorImage: (resp.body.authorThumbnails[0].url.startsWith('https:')) ? resp.body.authorThumbnails[0].url : `https:${resp.body.authorThumbnails[0].url}`,
+        authorURL: `https://youtube.com${resp.body.authorUrl}`
+      }
       return lavaresp
     }
     try {
