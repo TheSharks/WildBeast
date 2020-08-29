@@ -68,6 +68,7 @@ module.exports = class VoiceConnection {
     const SA = require('superagent')
     ctx = ctx.trim()
     const ytreg = /(?:https?:\/\/)?(?:www\.)?youtu(?:.be\/|be\.com\/watch\?v=)(\w{11})/
+    const itags = ['251', '250', '249', '171', '141', '140', '139']
     const authorImg = (data) => {
       if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
       else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
@@ -75,8 +76,9 @@ module.exports = class VoiceConnection {
     }
     if (ytreg.test(ctx) && process.env.INVIDIOUS_HOST) {
       const videoid = ctx.match(ytreg)[1]
-      const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoid}?fields=author,title,authorThumbnails,authorUrl`)
-      const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoid}&itag=250&local=true`)
+      const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoid}?fields=author,title,authorThumbnails,authorUrl,adaptiveFormats`)
+      const tag = resp.body.adaptiveFormats.find(x => itags.includes(x.itag))
+      const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoid}&itag=${tag.itag}&local=true`)
       lavaresp.tracks[0].info = {
         ...lavaresp.tracks[0].info,
         author: resp.body.author,
@@ -95,15 +97,17 @@ module.exports = class VoiceConnection {
     } catch (_) {
       if (process.env.INVIDIOUS_HOST) {
         const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/search?q=${encodeURIComponent(ctx)}`)
-        const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${resp.body[0].videoId}&itag=250&local=true`)
+        const info = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${resp.body[0].videoId}?fields=author,title,authorThumbnails,authorUrl,adaptiveFormats`)
+        const tag = info.body.adaptiveFormats.find(x => itags.includes(x.itag))
+        const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${resp.body[0].videoId}&itag=${tag.itag}&local=true`)
         lavaresp.tracks[0].info = {
           ...lavaresp.tracks[0].info,
-          author: resp.body[0].author,
-          title: resp.body[0].title,
+          author: info.body.author,
+          title: info.body.title,
           uri: `https://youtu.be/${resp.body[0].videoId}`,
           image: `https://i.ytimg.com/vi/${resp.body[0].videoId}/hqdefault.jpg`,
-          // authorImage: authorImg(resp.body[0]),
-          authorURL: `https://youtube.com${resp.body[0].authorUrl}`
+          authorImage: authorImg(info.body),
+          authorURL: `https://youtube.com${info.body.authorUrl}`
         }
         return lavaresp
       } else return this._encoder.node.loadTracks(`scsearch:${ctx}`)
