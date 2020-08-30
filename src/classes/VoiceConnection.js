@@ -68,27 +68,9 @@ module.exports = class VoiceConnection {
     const SA = require('superagent')
     ctx = ctx.trim()
     const ytreg = /(?:https?:\/\/)?(?:www\.)?youtu(?:.be\/|be\.com\/watch\?v=)(\w{11})/
-    const itags = ['251', '250', '249', '171', '141', '140', '139']
-    const authorImg = (data) => {
-      if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
-      else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
-      return data.authorThumbnails[0].url
-    }
     if (ytreg.test(ctx) && process.env.INVIDIOUS_HOST) {
       const videoid = ctx.match(ytreg)[1]
-      const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoid}?fields=author,title,authorThumbnails,authorUrl,adaptiveFormats`)
-      const tag = resp.body.adaptiveFormats.find(x => itags.includes(x.itag))
-      const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoid}&itag=${tag.itag}&local=true`)
-      lavaresp.tracks[0].info = {
-        ...lavaresp.tracks[0].info,
-        author: resp.body.author,
-        title: resp.body.title,
-        uri: `https://youtu.be/${videoid}`,
-        image: `https://i.ytimg.com/vi/${videoid}/hqdefault.jpg`,
-        authorImage: authorImg(resp.body),
-        authorURL: `https://youtube.com${resp.body.authorUrl}`
-      }
-      return lavaresp
+      return this._invidiousResolve(videoid)
     }
     try {
       // eslint-disable-next-line no-new
@@ -97,19 +79,7 @@ module.exports = class VoiceConnection {
     } catch (_) {
       if (process.env.INVIDIOUS_HOST) {
         const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/search?q=${encodeURIComponent(ctx)}`)
-        const info = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${resp.body[0].videoId}?fields=author,title,authorThumbnails,authorUrl,adaptiveFormats`)
-        const tag = info.body.adaptiveFormats.find(x => itags.includes(x.itag))
-        const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${resp.body[0].videoId}&itag=${tag.itag}&local=true`)
-        lavaresp.tracks[0].info = {
-          ...lavaresp.tracks[0].info,
-          author: info.body.author,
-          title: info.body.title,
-          uri: `https://youtu.be/${resp.body[0].videoId}`,
-          image: `https://i.ytimg.com/vi/${resp.body[0].videoId}/hqdefault.jpg`,
-          authorImage: authorImg(info.body),
-          authorURL: `https://youtube.com${info.body.authorUrl}`
-        }
-        return lavaresp
+        return this._invidiousResolve(resp.body[0].videoId)
       } else return this._encoder.node.loadTracks(`scsearch:${ctx}`)
     }
   }
@@ -134,5 +104,29 @@ module.exports = class VoiceConnection {
 
   addDJs (ctx) {
     return this.controllers.push(ctx)
+  }
+
+  async _invidiousResolve (videoId) {
+    const authorImg = (data) => {
+      if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
+      else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
+      return data.authorThumbnails[0].url
+    }
+    const itags = ['251', '250', '249', '171', '141', '140', '139']
+    const SA = require('superagent')
+    const info = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoId}?fields=author,title,authorThumbnails,authorUrl,adaptiveFormats`)
+    const tag = info.body.adaptiveFormats.find(x => itags.includes(x.itag))
+    const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoId}&itag=${tag.itag}&local=true`)
+    if (lavaresp.loadType !== 'TRACK_LOADED') return lavaresp
+    lavaresp.tracks[0].info = {
+      ...lavaresp.tracks[0].info,
+      author: info.body.author,
+      title: info.body.title,
+      uri: `https://youtu.be/${videoId}`,
+      image: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      authorImage: authorImg(info.body),
+      authorURL: `https://youtube.com${info.body.authorUrl}`
+    }
+    return lavaresp
   }
 }
