@@ -23,7 +23,7 @@ const createEmbed = (ctx) => {
       fields: ctx.slice(0, 10).map(x => {
         return {
           name: ctx.indexOf(x) + 1,
-          value: `${x.info.title} - ${x.info.author}`
+          value: `[${x.info.title} - ${x.info.author}](${x.info.uri})`
         }
       })
     }
