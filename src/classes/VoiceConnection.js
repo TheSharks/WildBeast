@@ -69,7 +69,7 @@ module.exports = class VoiceConnection {
     ctx = ctx.trim()
     try {
       const url = new URL(ctx)
-      if (/(?:https?:\/\/)?(?:www\.)?youtu(.be|be\.com)/.test(url.hostname)) {
+      if (process.env.INVIDIOUS_HOST && /(?:https?:\/\/)?(?:www\.)?youtu(.be|be\.com)/.test(url.hostname)) {
         if (url.hostname === 'youtu.be') return this._invidiousResolve(url.pathname.slice(1))
         if (url.searchParams.has('list')) return this._invidiousPlaylist(url.searchParams.get('list'))
         if (url.searchParams.has('v')) return this._invidiousResolve(url.searchParams.get('v'))
@@ -115,7 +115,7 @@ module.exports = class VoiceConnection {
     const SA = require('superagent')
     const info = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoId}?fields=author,title,authorThumbnails,authorUrl,adaptiveFormats`)
     const tag = info.body.adaptiveFormats.find(x => itags.includes(x.itag))
-    const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoId}&itag=${tag.itag}&local=true`)
+    const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoId}&itag=${tag.itag}${process.env.INVIDIOUS_PROXY ? '&local=true' : ''}`)
     if (lavaresp.loadType !== 'TRACK_LOADED') return lavaresp
     lavaresp.tracks[0].info = {
       ...lavaresp.tracks[0].info,
