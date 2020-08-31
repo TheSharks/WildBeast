@@ -67,14 +67,13 @@ module.exports = class VoiceConnection {
   async resolve (ctx) {
     const SA = require('superagent')
     ctx = ctx.trim()
-    const ytreg = /(?:https?:\/\/)?(?:www\.)?youtu(?:.be\/|be\.com\/watch\?v=)(\w{11})/
-    if (ytreg.test(ctx) && process.env.INVIDIOUS_HOST) {
-      const videoid = ctx.match(ytreg)[1]
-      return this._invidiousResolve(videoid)
-    }
     try {
-      // eslint-disable-next-line no-new
-      new URL(ctx)
+      const url = new URL(ctx)
+      if (/(?:https?:\/\/)?(?:www\.)?youtu(.be|be\.com)/.test(url.hostname)) {
+        if (url.hostname === 'youtu.be') return this._invidiousResolve(url.pathname.slice(1))
+        if (url.searchParams.has('list')) return this._invidiousPlaylist(url.searchParams.get('list'))
+        if (url.searchParams.has('v')) return this._invidiousResolve(url.searchParams.get('v'))
+      }
       return this._encoder.node.loadTracks(ctx)
     } catch (_) {
       if (process.env.INVIDIOUS_HOST) {
@@ -128,5 +127,26 @@ module.exports = class VoiceConnection {
       authorURL: `https://youtube.com${info.body.authorUrl}`
     }
     return lavaresp
+  }
+
+  async _invidiousPlaylist (id) {
+    const authorImg = (data) => {
+      if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
+      else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
+      return data.authorThumbnails[0].url
+    }
+    const SA = require('superagent')
+    const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/playlists/${id}`)
+    const result = await Promise.allSettled(resp.body.videos.map(x => this._invidiousResolve(x.videoId)))
+    this.addMany(result.filter(x => x.status === 'fulfilled').map(x => x.value.tracks).flat(1))
+    return {
+      loadType: 'IV_PLAYLIST_LOADED',
+      uri: `https://youtube.com/playlist?list=${resp.body.playlistId}`,
+      title: resp.body.title,
+      author: resp.body.author,
+      authorImage: authorImg(resp.body),
+      authorURL: `https://youtube.com${resp.body.authorUrl}`,
+      image: resp.body.playlistThumbnail
+    }
   }
 }

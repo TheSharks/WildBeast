@@ -14,6 +14,23 @@ module.exports = new Command(async function (msg, suffix) {
             return m.edit(`Playlist ${x.playlistInfo.name} has been added`)
           } else return m.edit('Nothing found with your search query')
         }
+        case 'IV_PLAYLIST_LOADED': {
+          return m.edit({
+            content: 'Your playlist has finished loading',
+            embed: {
+              url: x.uri,
+              title: x.title,
+              author: {
+                name: x.author,
+                icon_url: x.authorImage,
+                url: x.authorURL
+              },
+              thumbnail: {
+                url: x.image
+              }
+            }
+          })
+        }
         case 'SEARCH_RESULT':
         case 'TRACK_LOADED': {
           if (x.tracks && x.tracks.length > 0) {
