@@ -7,14 +7,20 @@ module.exports = class VoiceConnection {
     this.fresh = true
     this.textChannel = opts.textChannel
 
-    this._encoder.on('trackEnd', this.next.bind(this))
+    this._encoder.on('trackEnd', () => {
+      if (this.playlist.length === 0) {
+        this.textChannel.createMessage('The queue is empty, disconnecting')
+        this.destroy()
+      } else this.next()
+    })
     this._encoder.on('trackError', x => {
       this.textChannel.createMessage(`The track I'm trying to play broke! \`${x.error}\``)
-      this.next.bind(this)
+      this.next()
     })
     this._encoder.on('trackStuck', x => {
+      logger.debug(x)
       this.textChannel.createMessage('Seems the track got stuck, automatically skipping it...')
-      this.next.bind(this)
+      this.next()
     })
     this._encoder.on('trackStart', ctx => {
       const index = this.playlist.findIndex(x => x.track === ctx.track)
@@ -35,8 +41,9 @@ module.exports = class VoiceConnection {
         }
       })
     })
-    this._encoder.once('disconnected', () => {
-      this.textChannel.createMessage('I got disconnected from the voice channel, ending playback')
+    this._encoder.once('disconnected', x => {
+      if (x.byRemote && x.code !== 4014) this.textChannel.createMessage('I got disconnected from the voice channel, ending playback')
+      this.destroy()
     })
   }
 
