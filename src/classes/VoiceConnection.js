@@ -118,11 +118,17 @@ module.exports = class VoiceConnection {
       else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
       return data.authorThumbnails[0].url
     }
-    const itags = ['251', '250', '249', '171', '141', '140', '139']
     const SA = require('superagent')
-    const info = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoId}?fields=author,title,authorThumbnails,authorUrl,adaptiveFormats`)
-    const tag = info.body.adaptiveFormats.find(x => itags.includes(x.itag))
-    const lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoId}&itag=${tag.itag}${process.env.INVIDIOUS_PROXY ? '&local=true' : ''}`)
+    const info = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoId}`)
+    let lavaresp
+    if (info.body.liveNow) {
+      // lavaresp = await this._encoder.node.loadTracks(`${info.body.hlsUrl}?local=true`)
+      return { loadType: 'LOAD_FAILED', exception: { severity: 'COMMON', message: 'Unable to play livestreams at the moment' } }
+    } else {
+      const itags = ['251', '250', '249', '171', '141', '140', '139']
+      const tag = info.body.adaptiveFormats.find(x => itags.includes(x.itag))
+      lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoId}&itag=${tag.itag}${process.env.INVIDIOUS_PROXY ? '&local=true' : ''}`)
+    }
     if (lavaresp.loadType !== 'TRACK_LOADED') return lavaresp
     lavaresp.tracks[0].info = {
       ...lavaresp.tracks[0].info,
