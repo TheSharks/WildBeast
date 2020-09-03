@@ -1,12 +1,21 @@
 version: '3'
 services:
   wildbeast:
-    image: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: dougley/wildbeast
     env_file:
       - .env
+    environment:
+      LAVALINK_NODES: '[{"host":"lavalink", "port": 2333, "password":"youshallnotpass"}]'
     links:
       - lavalink
     depends_on:
       - lavalink
   lavalink:
     image: fredboat/lavalink:master-v3
+    environment:
+      LAVALINK_SERVER_PASSWORD: youshallnotpass
+      SERVER_PORT: 2333
+      SERVER_HOST: 0.0.0.0
