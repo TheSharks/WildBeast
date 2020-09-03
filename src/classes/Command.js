@@ -84,7 +84,7 @@ module.exports = class Command {
    * @param {String | Object} msg The message to send
    * @see {@link https://abal.moe/Eris/docs/TextChannel#function-createMessage}
    */
-  async safeSendMessage (channel, msg) {
+  async safeSendMessage (channel, msg, file) {
     const client = require('../components/client')
     if (channel.guild && !channel.permissionsOf(client.user.id).has('sendMessages')) return Promise.reject(new Error('No permissions to create messages in this channel'))
     return channel.createMessage({
@@ -94,7 +94,7 @@ module.exports = class Command {
         roles: false,
         users: false
       }
-    })
+    }, file)
   }
 
   /**
