@@ -1,3 +1,17 @@
+# 7.0.0
+## Release phase
+### 7.0.0
+**This is a breaking change**
+
+Internal structure changed   
+We no longer support ArangoDB as official database, the new official databases are SQLite and PostgreSQL  
+Commands are no longer objects, instead they're based off classes     
+Command indexing changed, commands can now be nested inside directories    
+Event idexing changed, every event can now supply a directory to run multiple event handlers for one event    
+Removed ffmpeg support for music streaming     
+Removed Rancher scaling, this is replaced with Kubernetes scaling    
+Removed Elasticsearch logging    
+
 # 6.0.0
 ## Release phase
 ### 6.1.1
