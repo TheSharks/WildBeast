@@ -5,7 +5,7 @@ module.exports = new Command(async function (msg, suffix) {
   const encoder = client.voiceConnectionManager.get(msg.channel.guild.id)
   if (!encoder) return this.safeSendMessage(msg.channel, "I'm currently not streaming in this server")
   if (!encoder._encoder.state.position) return this.safeSendMessage(msg.channel, 'Not currently playing anything')
-  if (!suffix) encoder._encoder.seek(0)
+  if (!suffix) return this.safeSendMessage(msg.channel, 'Please enter a time')
   else {
     const time = stringToMS(suffix)
     if (time === false) return this.safeSendMessage(msg.channel, 'Invalid time')
