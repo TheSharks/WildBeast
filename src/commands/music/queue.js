@@ -9,7 +9,8 @@ module.exports = new Command(async function (msg) {
   clientPerms: {
     channel: ['embedLinks']
   },
-  disableDM: true
+  disableDM: true,
+  aliases: ['playlist', 'pl']
 })
 
 const createEmbed = (ctx) => {
