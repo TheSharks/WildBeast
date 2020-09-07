@@ -8,6 +8,7 @@ module.exports = class VoiceConnection {
     this.textChannel = opts.textChannel
 
     this._encoder.on('trackEnd', x => {
+      clearInterval(this._sponsorInterval)
       if (this.playlist.length === 0) {
         this.textChannel.createMessage('The queue is empty, disconnecting')
         this.destroy()
@@ -23,10 +24,14 @@ module.exports = class VoiceConnection {
       this.next()
     })
     this._encoder.on('trackStart', ctx => {
+      console.log(ctx)
       const index = this.playlist.findIndex(x => x.track === ctx.track)
       // the track its playing is not guaranteed in the playlist
       this.nowPlaying = this.playlist[index] || { info: {} }
       if (index !== -1) this.playlist.splice(index, 1)
+      if (this.nowPlaying.info.sponsors) {
+        this._sponsorInterval = setInterval(this._sponsorLoop.bind(this), 500)
+      }
       this.textChannel.createMessage({
         content: 'Now playing:',
         embed: {
@@ -113,6 +118,7 @@ module.exports = class VoiceConnection {
   }
 
   async _invidiousResolve (videoId) {
+    const SPONSORBLOCK_API = 'https://sponsor.ajay.app/api'
     const authorImg = (data) => {
       if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
       else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
@@ -130,6 +136,7 @@ module.exports = class VoiceConnection {
       lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoId}&itag=${tag.itag}${process.env.INVIDIOUS_PROXY ? '&local=true' : ''}`)
     }
     if (lavaresp.loadType !== 'TRACK_LOADED') return lavaresp
+    const sponsors = await SA.get(`${SPONSORBLOCK_API}/skipSegments?videoID=${videoId}&category=music_offtopic`).ok(res => res.status < 500)
     lavaresp.tracks[0].info = {
       ...lavaresp.tracks[0].info,
       author: info.body.author,
@@ -137,7 +144,8 @@ module.exports = class VoiceConnection {
       uri: `https://youtu.be/${videoId}`,
       image: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
       authorImage: authorImg(info.body),
-      authorURL: `https://youtube.com${info.body.authorUrl}`
+      authorURL: `https://youtube.com${info.body.authorUrl}`,
+      sponsors: (sponsors.status === 200) ? sponsors.body.map(x => x.segment.map(y => Math.floor(y * 1000))) : []
     }
     return lavaresp
   }
@@ -160,6 +168,14 @@ module.exports = class VoiceConnection {
       authorImage: authorImg(resp.body),
       authorURL: `https://youtube.com${resp.body.authorUrl}`,
       image: resp.body.playlistThumbnail
+    }
+  }
+
+  _sponsorLoop () {
+    if (this.nowPlaying.info.sponsors.length === 0) return
+    if (this._encoder.state.position > this.nowPlaying.info.sponsors[0][0]) {
+      this._encoder.seek(this.nowPlaying.info.sponsors[0][1])
+      this.nowPlaying.info.sponsors.shift()
     }
   }
 }

@@ -36,3 +36,5 @@ We've got you covered on that - we provide installation instructions for Windows
 ---
 
 "Discord", "Discord App", and any associated logos are registered trademarks of Discord, inc.
+
+This project uses the SponsorBlock database and/or API by Ajay Ramachandran licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). More details can be found at https://sponsor.ajay.app/
