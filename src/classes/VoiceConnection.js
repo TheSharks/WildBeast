@@ -7,11 +7,11 @@ module.exports = class VoiceConnection {
     this.fresh = true
     this.textChannel = opts.textChannel
 
-    this._encoder.on('trackEnd', () => {
+    this._encoder.on('trackEnd', x => {
       if (this.playlist.length === 0) {
         this.textChannel.createMessage('The queue is empty, disconnecting')
         this.destroy()
-      } else this.next()
+      } else this.next(x)
     })
     this._encoder.on('trackError', x => {
       this.textChannel.createMessage(`The track I'm trying to play broke! \`${x.error}\``)
