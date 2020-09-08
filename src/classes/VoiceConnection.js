@@ -8,6 +8,7 @@ module.exports = class VoiceConnection {
     this.textChannel = opts.textChannel
 
     this._encoder.on('trackEnd', x => {
+      if (x.reason === 'STOPPED') return
       clearInterval(this._sponsorInterval)
       if (this.playlist.length === 0) {
         this.textChannel.createMessage('The queue is empty, disconnecting')
@@ -24,7 +25,6 @@ module.exports = class VoiceConnection {
       this.next()
     })
     this._encoder.on('trackStart', ctx => {
-      console.log(ctx)
       const index = this.playlist.findIndex(x => x.track === ctx.track)
       // the track its playing is not guaranteed in the playlist
       this.nowPlaying = this.playlist[index] || { info: {} }
@@ -42,7 +42,15 @@ module.exports = class VoiceConnection {
             ...(this.nowPlaying.info.authorImage ? { icon_url: this.nowPlaying.info.authorImage } : {}),
             ...(this.nowPlaying.info.authorURL ? { url: this.nowPlaying.info.authorURL } : {})
           },
-          ...(this.nowPlaying.info.image ? { thumbnail: { url: this.nowPlaying.info.image } } : {})
+          ...(this.nowPlaying.info.image ? { thumbnail: { url: this.nowPlaying.info.image } } : {}),
+          ...(this.nowPlaying.info.sponsorsRaw ? { footer: { text: 'Using sponsor.ajay.app' } } : {}),
+          fields: [
+            (this.nowPlaying.info.sponsorsRaw
+              ? {
+                name: 'Sections without music',
+                value: `${this.nowPlaying.info.sponsorsRaw.map(x => x.segment).map(x => `${this.formatTime(x[0])} - ${this.formatTime(x[1])}`).join('\n')}`
+              } : {})
+          ]
         }
       })
     })
@@ -145,7 +153,8 @@ module.exports = class VoiceConnection {
       image: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
       authorImage: authorImg(info.body),
       authorURL: `https://youtube.com${info.body.authorUrl}`,
-      sponsors: (sponsors.status === 200) ? sponsors.body.map(x => x.segment.map(y => Math.floor(y * 1000))) : []
+      sponsors: (sponsors.status === 200) ? sponsors.body.map(x => x.segment.map(y => Math.floor(y * 1000))) : [],
+      sponsorsRaw: (sponsors.status === 200) ? sponsors.body : []
     }
     return lavaresp
   }
@@ -177,5 +186,16 @@ module.exports = class VoiceConnection {
       this._encoder.seek(this.nowPlaying.info.sponsors[0][1])
       this.nowPlaying.info.sponsors.shift()
     }
+  }
+
+  formatTime (seconds) { // https://stackoverflow.com/a/40350003
+    const h = Math.floor(seconds / 3600)
+    const m = Math.floor((seconds % 3600) / 60)
+    const s = Math.round(seconds % 60)
+    return [
+      h,
+      m > 9 ? m : (h ? '0' + m : m || '0'),
+      s > 9 ? s : '0' + s
+    ].filter(Boolean).join(':')
   }
 }
