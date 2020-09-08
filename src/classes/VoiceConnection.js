@@ -182,9 +182,10 @@ module.exports = class VoiceConnection {
 
   _sponsorLoop () {
     if (this.nowPlaying.info.sponsors.length === 0) return
-    if (this._encoder.state.position > this.nowPlaying.info.sponsors[0][0]) {
-      this._encoder.seek(this.nowPlaying.info.sponsors[0][1])
-      this.nowPlaying.info.sponsors.shift()
+    const sponsor = this.nowPlaying.info.sponsors.find(x => this._encoder.state.position > x[0] && this._encoder.state.position < x[1])
+    if (sponsor) {
+      this._encoder.seek(sponsor[1])
+      this._encoder.state.position += sponsor[1] // this gets overwritten by lava eventually, but this is just to ensure we dont double skip
     }
   }
 
