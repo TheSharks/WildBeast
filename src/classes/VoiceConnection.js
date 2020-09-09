@@ -43,13 +43,13 @@ module.exports = class VoiceConnection {
             ...(this.nowPlaying.info.authorURL ? { url: this.nowPlaying.info.authorURL } : {})
           },
           ...(this.nowPlaying.info.image ? { thumbnail: { url: this.nowPlaying.info.image } } : {}),
-          ...(this.nowPlaying.info.sponsorsRaw ? { footer: { text: 'Using sponsor.ajay.app' } } : {}),
+          ...(this.nowPlaying.info.sponsorsRaw.length > 0 ? { footer: { text: 'Using sponsor.ajay.app' } } : {}),
           fields: [
-            (this.nowPlaying.info.sponsorsRaw
-              ? {
+            ...(this.nowPlaying.info.sponsorsRaw.length > 0
+              ? [{
                 name: 'Sections without music',
                 value: `${this.nowPlaying.info.sponsorsRaw.map(x => x.segment).map(x => `${this.formatTime(x[0])} - ${this.formatTime(x[1])}`).join('\n')}`
-              } : {})
+              }] : [])
           ]
         }
       })
