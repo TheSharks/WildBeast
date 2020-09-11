@@ -8,8 +8,8 @@ module.exports = class VoiceConnection {
     this.textChannel = opts.textChannel
 
     this._encoder.on('trackEnd', x => {
-      if (x.reason === 'STOPPED') return
       clearInterval(this._sponsorInterval)
+      if (x.reason === 'STOPPED') return
       if (this.playlist.length === 0) {
         this.textChannel.createMessage('The queue is empty, disconnecting')
         this.destroy()
