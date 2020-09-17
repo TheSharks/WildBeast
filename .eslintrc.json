@@ -1,6 +1,7 @@
 {
   "extends": "standard",
   "globals": {
-    "logger": false
+    "logger": false,
+    "i18n": false
   }
 }
