@@ -1,5 +1,6 @@
 const commands = require('../../components/commands')
 const { commands: cmdAnalytics } = require('../../components/analytics')
+const i18n = require('../../internal/i18n')
 
 module.exports = (msg) => {
   const prefix = process.env.BOT_PREFIX
@@ -31,20 +32,20 @@ const generateHelpMessage = async (msg, suffix) => {
   const client = require('../../components/client')
   const generateEmbed = (name, cmd) => {
     return {
-      title: `Help for command ${name}`,
+      title: i18n.t('commands.help.title', { cmd: name }),
       description: cmd.props.helpMessage,
       color: 0xFE8E08,
       footer: {
         icon_url: client.user.dynamicAvatarURL(),
-        text: `${client.user.username} - Powered by WildBeast`
+        text: i18n.t('commands.help.footer', { botname: client.user.username })
       }
     }
   }
   if (!suffix) {
     const pages = require('../../components/paginator')
-    await pages.init(msg.author.id, msg.channel, Object.keys(commands.commands).filter(x => !commands.commands[x].props.hidden).map(x => generateEmbed(x, commands.commands[x])), 'See <https://wildbeast.guide/commands> for a full list of commands')
+    await pages.init(msg.author.id, msg.channel, Object.keys(commands.commands).filter(x => !commands.commands[x].props.hidden).map(x => generateEmbed(x, commands.commands[x])), i18n.t('commands.help.header'))
   } else {
-    if (!commands.commands[suffix]) return msg.channel.createMessage('No such command')
+    if (!commands.commands[suffix]) return msg.channel.createMessage(i18n.t('commands.help.errors.notFound'))
     await msg.channel.createMessage({ embed: generateEmbed(suffix, commands.commands[suffix]) })
   }
 }

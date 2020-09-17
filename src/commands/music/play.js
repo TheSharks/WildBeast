@@ -4,19 +4,19 @@ module.exports = new Command(async function (msg, suffix) {
   const client = require('../../components/client')
   const player = client.voiceConnectionManager.get(msg.channel.guild.id)
   if (player) {
-    const m = await this.safeSendMessage(msg.channel, 'Working on it...')
+    const m = await this.safeSendMessage(msg.channel, i18n.t('commands.common.working'))
     try {
       const x = await player.resolve(suffix)
       switch (x.loadType) {
         case 'PLAYLIST_LOADED': {
           if (x.tracks && x.tracks.length > 0) {
             player.addMany(x.tracks)
-            return m.edit(`Playlist ${x.playlistInfo.name} has been added`)
-          } else return m.edit('Nothing found with your search query')
+            return m.edit(i18n.t('commands.play.playlistAdded', { name: x.playlistInfo.name }))
+          } else return m.edit(i18n.t('commands.play.noResults'))
         }
         case 'IV_PLAYLIST_LOADED': {
           return m.edit({
-            content: 'Your playlist has finished loading',
+            content: i18n.t('commands.play.ivPlaylist'),
             embed: {
               url: x.uri,
               title: x.title,
@@ -35,22 +35,22 @@ module.exports = new Command(async function (msg, suffix) {
         case 'TRACK_LOADED': {
           if (x.tracks && x.tracks.length > 0) {
             player.add(x.tracks[0])
-            return m.edit('Your track has been added')
-          } else return m.edit('Nothing found with your search query')
+            return m.edit(i18n.t('commands.play.trackAdded'))
+          } else return m.edit(i18n.t('commands.play.noResults'))
         }
         case 'LOAD_FAILED': {
-          if (x.exception.severity === 'COMMON') return m.edit(`I'm unable to play that track: \`${x.exception.message}\``)
-          else return m.edit("I'm unable to play that track for unknown reasons")
+          if (x.exception.severity === 'COMMON') return m.edit(i18n.t('commands.play.cantPlay', { message: x.exception.message }))
+          else return m.edit(i18n.t('commands.play.cantPlayUnknown'))
         }
-        case 'NO_MATCHES': return m.edit('Nothing found with your search query')
-        default: return m.edit('Something went wrong while adding this track, try again later')
+        case 'NO_MATCHES': return m.edit(i18n.t('commands.play.noResults'))
+        default: return m.edit(i18n.t('commands.play.addFailed'))
       }
     } catch (e) {
       logger.error('CMD', e)
-      if (!(m instanceof require('eris').Message)) await this.safeSendMessage(msg.channel, 'Something went wrong, try again?')
-      else await m.edit('Something went wrong, try again?')
+      if (!(m instanceof require('eris').Message)) await this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
+      else await m.edit(i18n.t('commands.common.softFail'))
     }
-  } else return this.safeSendMessage(msg.channel, "I'm not streaming in this server")
+  } else return this.safeSendMessage(msg.channel, i18n.t('commands.common.notStreaming'))
 }, {
   aliases: ['request'],
   prereqs: ['musicCommand'],

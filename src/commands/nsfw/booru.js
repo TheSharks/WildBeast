@@ -25,8 +25,8 @@ module.exports = new Command(async function (msg, suffix) {
   const SA = require('superagent')
 
   const parts = suffix.split(' ')
-  if (parts.length < 2) return this.safeSendMessage(msg.channel, 'Your formatting appears to be wrong')
-  if (!sites[parts[0]]) return this.safeSendMessage(msg.channel, `I don't have support for ${parts[0]}, currently I support ${Object.keys(sites).join(', ')}`)
+  if (parts.length < 2) return this.safeSendMessage(msg.channel, i18n.t('commands.booru.badFormatting'))
+  if (!sites[parts[0]]) return this.safeSendMessage(msg.channel, i18n.t('commands.booru.siteNotSupported', { site: parts[0], supported: Object.keys(sites).join(', ') }))
   const query = parts.slice(1).join(' ')
   msg.channel.sendTyping()
   switch (sites[parts[0]].apiStyle) {

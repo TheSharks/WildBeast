@@ -14,7 +14,7 @@ module.exports = {
   errorMessage: (ctx) => {
     const client = require('../client')
     const player = client.voiceConnectionManager.get(ctx.channel.guild.id)
-    if (!player) return "I'm not currently streaming in this server"
-    else return `You're currently not added as a DJ, ask the one that started streaming to add you with \`${process.env.BOT_PREFIX}newdj\``
+    if (!player) return i18n.t('commands.common.notStreaming')
+    else return i18n.t('prereqs.errors.musicNoDJ', { command: `${process.env.BOT_PREFIX}newdj` })
   }
 }

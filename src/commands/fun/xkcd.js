@@ -11,13 +11,13 @@ module.exports = new Command(async function (msg, suffix) {
     if (isNaN(num)) {
       num = Math.floor(Math.random() * (res.body.num - 1)) + 1
     } else if (num > res.body.num) {
-      return this.safeSendMessage(msg.channel, `There are only ${res.body.num} xkcd comics!`)
+      return this.safeSendMessage(msg.channel, i18n.t('commands.xkcd.errors.limit', { num: res.body.num }))
     }
     const numRes = await SA.get(`http://xkcd.com/${num}/info.0.json`)
     this.safeSendMessage(msg.channel, getEmbed(numRes.body))
   } catch (error) {
     logger.error('REST XKCD', error)
-    this.safeSendMessage(msg.channel, 'We ran into an error making that request, sorry about that!')
+    this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
   }
 })
 

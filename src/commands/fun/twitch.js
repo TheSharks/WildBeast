@@ -2,22 +2,22 @@ const Command = require('../../classes/Command')
 
 module.exports = new Command(async function (msg, suffix) {
   const SA = require('superagent')
-  if (!suffix) return this.safeSendMessage(msg.channel, 'No channel specified!')
+  if (!suffix) return this.safeSendMessage(msg.channel, i18n.t('commands.twitch.errors.noChannel'))
   try {
     const res = await SA.get(`https://api.twitch.tv/kraken/users?login=${suffix}`)
       .set({ Accept: 'application/vnd.twitchtv.v5+json', 'Client-ID': process.env.TWITCH_ID })
     const user = res.body._total
       ? res.body.users[0]._id
       : false
-    if (!user) return this.safeSendMessage(msg.channel, `**${suffix}** isn't a valid channel.`)
+    if (!user) return this.safeSendMessage(msg.channel, i18n.t('commands.twitch.errors.invalidChannel'))
     const stream = await SA.get(`https://api.twitch.tv/kraken/streams/${user}`)
       .set({ Accept: 'application/vnd.twitchtv.v5+json', 'Client-ID': process.env.TWITCH_ID })
     stream.body.stream
       ? this.safeSendMessage(msg.channel, getEmbed(stream.body))
-      : this.safeSendMessage(msg.channel, `**${suffix}** is not currently streaming.`)
+      : this.safeSendMessage(msg.channel, i18n.t('commands.twitch.offline'))
   } catch (error) {
     logger.error('REST TWITCH', error)
-    return this.safeSendMessage(msg.channel, 'We ran into an error making that request, sorry about that!')
+    return this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
   }
 },
 {
@@ -31,21 +31,21 @@ function getEmbed (resp) {
   const stream = resp.stream
   const name = resp.stream.channel.display_name
   return {
-    content: `**${name}** is currently live at <https://twitch.tv/${name}>.`,
+    content: i18n.t('commands.twitch.online', { name }),
     embed: {
       url: `https://twitch.tv/${name}`,
       title: stream.channel.status,
       color: 0x9013FE,
       fields: [{
-        name: 'Game',
+        name: i18n.t('commands.twitch.game'),
         value: stream.game,
         inline: true
       }, {
-        name: 'Viewers',
+        name: i18n.t('commands.twitch.viewers'),
         value: stream.viewers,
         inline: true
       }, {
-        name: 'Total Views',
+        name: i18n.t('commands.twitch.views'),
         value: stream.channel.views,
         inline: true
       }],

@@ -2,7 +2,7 @@ const Command = require('../../classes/Command')
 
 module.exports = new Command(async function (msg, suffix) {
   const client = require('../../components/client')
-  if (suffix.length === 0) return this.safeSendMessage(msg.channel, 'Please provide IDs or mention users you\'d like to ban')
+  if (suffix.length === 0) return this.safeSendMessage(msg.channel, i18n.t('commands.ban.noMentions'))
 
   const chunks = suffix.split(' ')
   const ids = chunks
@@ -13,13 +13,13 @@ module.exports = new Command(async function (msg, suffix) {
     ...ids
   ]
 
-  if (members.length === 0) return this.safeSendMessage(msg.channel, 'Couldn\'t find those users in the server')
+  if (members.length === 0) return this.safeSendMessage(msg.channel, i18n.t('commands.ban.noResults'))
 
   const reason = chunks.slice(members.length).join(' ').length === 0
     ? '[No reason provided]'
     : chunks.slice(members.length).join(' ')
 
-  const reply = await this.safeSendMessage(msg.channel, 'Working on it...')
+  const reply = await this.safeSendMessage(msg.channel, i18n.t('commands.common.working'))
   const result = await Promise.all(
     members
       .map(x => msg.channel.guild.banMember(x, 7, `${msg.author.username}#${msg.author.discriminator}: ${reason}`))
@@ -30,8 +30,8 @@ module.exports = new Command(async function (msg, suffix) {
   const succeeded = result.filter(x => !(x instanceof Error)).length
   const failed = result.filter(x => x instanceof Error).length
   await reply.edit(
-    `Banned ${succeeded} members` +
-    (failed > 0 ? `\nFailed to ban ${failed} members` : '')
+    i18n.t('commands.ban.done', { num: succeeded }) +
+    (failed > 0 ? '\n' + i18n.t('commands.ban.failed', { num: failed }) : '')
   )
 }, {
   clientPerms: {
