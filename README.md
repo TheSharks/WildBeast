@@ -7,6 +7,7 @@
       <a href="https://liberapay.com/Dougley"><img src="http://img.shields.io/liberapay/patrons/Dougley.svg?logo=liberapay&style=for-the-badge&maxAge=300" alt="Liberapay"></a>
     </p>
     <p align="center" style="margin:0;">
+      <a title="Crowdin" target="_blank" href="https://crowdin.com/project/wildbeast"><img src="https://img.shields.io/badge/Localization-Crowdin-blue?logo=crowdin&style=for-the-badge&maxAge=300"></a>
       <a href="https://hub.docker.com/r/dougley/wildbeast"><img src="https://img.shields.io/docker/pulls/dougley/wildbeast.svg?style=for-the-badge&maxAge=300"></a>
     </p>
   </div>
