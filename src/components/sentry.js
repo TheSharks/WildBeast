@@ -7,7 +7,7 @@ const { Modules, Http, LinkedErrors } = Sentry.Integrations
 const { Dedupe } = require('@sentry/integrations')
 let release
 try {
-  release = require('child_process').execSync('git rev-parse --short HEAD').toString().trim()
+  release = require('child_process').execSync('git rev-parse HEAD').toString().trim()
 } catch (_) {
   release = require('../../package.json').version
 }
@@ -23,7 +23,7 @@ Sentry.init({
     'Missing Access',
     'Connection reset by peer'
   ],
-  release: `wildbeast@${release}`
+  release
 })
 
 module.exports = Sentry

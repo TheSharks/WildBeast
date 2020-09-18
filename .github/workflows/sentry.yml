@@ -1,4 +1,4 @@
-name: ReleaseWorkflow
+name: Sentry Release
 
 on:
   push:
