@@ -28,7 +28,7 @@ To verify your code adheres to our styleguide, run `npm test` in the project roo
 ### Translations
 
 All user-facing text, meaning text that gets send to Discord and is displayed to end-users, needs to be included in the i18n framework.   
-The `i18n` object is globally accessible thoughout the project, so don't require it seperately.    
+The `i18n` object is globally accessible throughout the project, so don't require it separately.    
 The framework utilises ICU syntax for translations, a primer for this syntax can be found [here](https://formatjs.io/docs/core-concepts/icu-syntax).
 
 ```js
