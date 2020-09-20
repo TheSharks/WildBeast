@@ -1,6 +1,6 @@
 {
   "i18n": {
-    "disclaimer": "Please note: translations are provided by the community, we cannot guarantee their correctness, completeness, or quality.",
+    "disclaimer": "Please note: translations are provided by the community, we cannot guarantee their correctness, completeness, or quality",
     "cta": "Do you speak fluent English and want to help us translate? Check out {url}"
   },
   "prereqs": {
@@ -155,30 +155,30 @@
     "8ball": {
       "prefix": "The magic 8 ball says: `{response}`",
       "choices": {
-        "0": "Signs point to yes.",
-        "1": "Yes.",
-        "2": "Reply hazy, try again.",
-        "3": "Without a doubt.",
-        "4": "My sources say no.",
-        "5": "As I see it, yes.",
-        "6": "You may rely on it.",
-        "7": "Concentrate and ask again.",
-        "8": "Outlook not so good.",
-        "9": "It is decidedly so.",
-        "10": "Better not tell you now.",
-        "11": "Very doubtful.",
-        "12": "Yes - definitely.",
-        "13": "It is certain.",
-        "14": "Cannot predict now.",
-        "15": "Most likely.",
-        "16": "Ask again later.",
-        "17": "My reply is no.",
-        "18": "Outlook good.",
-        "19": "Don't count on it.",
+        "0": "Signs point to yes",
+        "1": "Yes",
+        "2": "Reply hazy, try again",
+        "3": "Without a doubt",
+        "4": "My sources say no",
+        "5": "As I see it, yes",
+        "6": "You may rely on it",
+        "7": "Concentrate and ask again",
+        "8": "Outlook not so good",
+        "9": "It is decidedly so",
+        "10": "Better not tell you now",
+        "11": "Very doubtful",
+        "12": "Yes - definitely",
+        "13": "It is certain",
+        "14": "Cannot predict now",
+        "15": "Most likely",
+        "16": "Ask again later",
+        "17": "My reply is no",
+        "18": "Outlook good",
+        "19": "Don't count on it",
         "20": "Who cares?",
-        "21": "Never, ever, ever.",
-        "22": "Possibly.",
-        "23": "There is a small chance."
+        "21": "Never, ever, ever",
+        "22": "Possibly",
+        "23": "There is a small chance"
       }
     }
   },

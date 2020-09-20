@@ -1,6 +1,5 @@
 const commands = require('../../components/commands')
 const { commands: cmdAnalytics } = require('../../components/analytics')
-const i18n = require('../../internal/i18n')
 
 module.exports = (msg) => {
   const prefix = process.env.BOT_PREFIX
