@@ -184,7 +184,7 @@
   "voice": {
     "events": {
       "queueEmpty": "The queue is empty, disconnecting",
-      "trackBroke": "The track I'm trying to play broke! `{error}`",
+      "trackBroke": "The track I'm trying to play broke: `{error}`",
       "trackStuck": "Seems the track got stuck, automatically skipping it...",
       "nowPlaying": "Now playing:",
       "disconnected": "I got disconnected from the voice channel, ending playback"
