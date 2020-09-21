@@ -56,8 +56,8 @@
     "joinvoice": {
       "errors": {
         "notConnected": "Please join a voice channel and try this command again",
-        "alreadyStreaming": "I'm already streaming in this server!",
-        "cantConnect": "I can't connect to the channel you're currently in!",
+        "alreadyStreaming": "I'm already streaming in this server",
+        "cantConnect": "I can't connect to the channel you're currently in",
         "failed": "Failed to join voice channel, try again?"
       }
     },
@@ -72,13 +72,13 @@
     },
     "newdj": {
       "errors": {
-        "noMentions": "Please mention who you want to add as a DJ!"
+        "noMentions": "Please mention who you want to add as a DJ"
       },
       "done": "Added {new, plural, =0 {no new DJs} =1 {one new DJ} other {# new DJs}}, there {total, plural, =0 {are now no DJs} =1 {is now one DJ} other {are now # DJs}}"
     },
     "leetspeak": {
       "errors": {
-        "suffixMissing": "You need to type something to encode your message into l337sp3@K!"
+        "suffixMissing": "You need to type something to encode your message into l337sp3@K"
       }
     },
     "tag": {
@@ -94,7 +94,7 @@
     },
     "twitch": {
       "errors": {
-        "noChannel": "No channel specified!",
+        "noChannel": "No channel specified",
         "invalidChannel": "{channel} isn't a valid channel"
       },
       "offline": "{channel} isn't streaming currently",
@@ -140,7 +140,7 @@
     },
     "xkcd": {
       "errors": { 
-        "limit": "There are only {num} xkcd comics!"
+        "limit": "There are only {num} xkcd comics"
       }
     },
     "help": {
