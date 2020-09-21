@@ -12,7 +12,7 @@ module.exports = new Command(async function (msg) {
     })
   } catch (e) {
     logger.error(e)
-    this.safeSendMessage(msg.channel, i18n.t('commands.common.hardFail'))
+    this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
   }
 }, {
   clientPerms: {

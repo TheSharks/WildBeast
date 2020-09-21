@@ -13,7 +13,6 @@
   "commands": {
     "common": {
       "softFail": "Something went wrong, try again later",
-      "hardFail": "Something went terribly wrong!",
       "attachmentNeeded": "Please upload an image while using this command",
       "notStreaming": "I'm not streaming in this server",
       "nsfwDisabled": "This channel needs to be marked as NSFW before this command can be used",
