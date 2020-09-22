@@ -112,7 +112,7 @@ module.exports = class VoiceConnection {
     return this.controllers.push(ctx)
   }
 
-  async _invidiousResolve (videoId) {
+  async _invidiousResolve (videoId, proxy = false) {
     const authorImg = (data) => {
       if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
       else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
@@ -127,9 +127,10 @@ module.exports = class VoiceConnection {
     } else {
       const itags = ['251', '250', '249', '171', '141', '140', '139']
       const tag = info.body.adaptiveFormats.find(x => itags.includes(x.itag))
-      lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoId}&itag=${tag.itag}${process.env.INVIDIOUS_PROXY ? '&local=true' : ''}`)
+      lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoId}&itag=${tag.itag}${proxy ? '&local=true' : ''}`)
     }
-    if (lavaresp.loadType !== 'TRACK_LOADED') return lavaresp
+    if (lavaresp.loadType !== 'TRACK_LOADED' && !proxy) return this._invidiousResolve(videoId, true)
+    if (lavaresp.loadType !== 'TRACK_LOADED' && proxy) return lavaresp
     lavaresp.tracks[0].info = {
       ...lavaresp.tracks[0].info,
       author: info.body.author,
