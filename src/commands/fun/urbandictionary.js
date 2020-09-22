@@ -3,10 +3,10 @@ const Command = require('../../classes/Command')
 module.exports = new Command(async function (msg, suffix) {
   const SA = require('superagent')
   try {
-    if (!suffix) return this.safeSendMessage(msg.channel, 'Please enter a search term')
+    if (!suffix) return this.safeSendMessage(msg.channel, i18n.t('commands.urbandictionary.errors.noTerm'))
     const res = await SA.get('http://api.urbandictionary.com/v0/define')
       .query({ term: suffix })
-    if (res.body.list.length < 1) return this.safeSendMessage(msg.channel, "This word is so screwed up, even Urban Dictionary doesn't know it")
+    if (res.body.list.length < 1) return this.safeSendMessage(msg.channel, i18n.t('commands.urbandictionary.errors.notFound'))
     const ctx = res.body.list[0]
     await this.safeSendMessage(msg.channel, {
       embed: {
@@ -19,14 +19,14 @@ module.exports = new Command(async function (msg, suffix) {
         description: ctx.definition.length > 2000 ? ctx.definition.substring(0, 2000) + '[...]' : ctx.definition,
         fields: [
           {
-            name: 'Example',
+            name: i18n.t('commands.urbandictionary.example'),
             value: ctx.example.length > 1000 ? ctx.example.substring(0, 1000) + '[...]' : ctx.example
           }
         ]
       }
     })
   } catch (e) {
-    this.safeSendMessage(msg.channel, 'Something went wrong, try again later')
+    this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
     logger.error('CMD', e)
   }
 }, {

@@ -4,12 +4,12 @@ module.exports = new Command(function (msg, suffix) {
   const client = require('../../components/client')
   const player = client.voiceConnectionManager.get(msg.channel.guild.id)
   if (player) {
-    if (isNaN(parseInt(suffix))) return this.safeSendMessage(msg.channel, 'Your argument must be a number')
+    if (isNaN(parseInt(suffix))) return this.safeSendMessage(msg.channel, i18n.t('commands.remove.notANumber'))
     suffix = parseInt(suffix)
-    if (suffix < 1 || suffix > player.playlist.length) return this.safeSendMessage(msg.channel, `The playlist only has ${player.playlist.length} songs`)
+    if (suffix < 1 || suffix > player.playlist.length) return this.safeSendMessage(msg.channel, i18n.t('commands.remove.outOfRange', { songs: player.playlist.length }))
     const removed = player.playlist.splice(suffix + 1, 1)[0]
     return this.safeSendMessage(msg.channel, {
-      content: 'Removed this song from the playlist',
+      content: i18n.t('commands.remove.done'),
       embed: {
         url: removed.info.uri,
         title: removed.info.title || '[Unknown!]',

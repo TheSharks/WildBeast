@@ -41,16 +41,16 @@ module.exports = class Command {
   runWithPrereqs (msg, suffix) {
     const prereqs = require('../internal/dir-require')('src/components/prereqs/*.js')
     const client = require('../components/client')
-    if (this.props.disableDM && !msg.channel.guild) return this.safeSendMessage(msg.channel, 'This command cannot be used in DMs')
+    if (this.props.disableDM && !msg.channel.guild) return this.safeSendMessage(msg.channel, i18n.t('commands.common.dmDisabled'))
     // run customs first
     for (const x of this.props.prereqs) {
       if (!prereqs[x]) throw new TypeError(`Attempting to use a custom prereq that does not exist: ${x}`)
       if (!prereqs[x].fn(msg)) return this.safeSendMessage(msg.channel, prereqs[x].errorMessage(msg))
     }
     if (this.props.nsfw && msg.channel.guild && !msg.channel.nsfw) {
-      return this.safeSendMessage(msg.channel, 'This channel needs to be marked as NSFW before this command can be used')
+      return this.safeSendMessage(msg.channel, i18n.t('commands.common.nsfwDisabled'))
     }
-    if (this.shouldCooldown(msg)) return this.safeSendMessage(msg.channel, 'This command is on cooldown, try again later')
+    if (this.shouldCooldown(msg)) return this.safeSendMessage(msg.channel, i18n.t('commands.common.cooldown'))
     if (msg.channel.guild) {
       if (Object.keys(this.props.clientPerms).length > 0) {
         const missingPerms = [
@@ -61,7 +61,7 @@ module.exports = class Command {
             ? this.props.clientPerms.channel.filter(x => !msg.channel.permissionsOf(client.user.id).has(x))
             : [])
         ]
-        if (missingPerms.length > 0) return this.safeSendMessage(msg.channel, `I'm missing the following permissions: \`${missingPerms.join(', ')}\``)
+        if (missingPerms.length > 0) return this.safeSendMessage(msg.channel, i18n.t('commands.common.permsMissingOwn', { perms: missingPerms.join(', ') }))
       }
       if (Object.keys(this.props.userPerms).length > 0) {
         const missingPerms = [
@@ -72,7 +72,7 @@ module.exports = class Command {
             ? this.props.userPerms.channel.filter(x => !msg.channel.permissionsOf(msg.member.id).has(x))
             : [])
         ]
-        if (missingPerms.length > 0) return this.safeSendMessage(msg.channel, `You're missing the following permissions: \`${missingPerms.join(', ')}\``)
+        if (missingPerms.length > 0) return this.safeSendMessage(msg.channel, i18n.t('commands.common.permsMissingUser', { perms: missingPerms.join(', ') }))
       }
     }
     return this.run(msg, suffix)

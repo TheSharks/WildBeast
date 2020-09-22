@@ -6,7 +6,6 @@ const log = (v) => {
   console.log(chalk`{gray [${format(new Date(), 'Pp')}]} - ${v}`)
 }
 const inspect = require('util').inspect
-const sentry = require('../components/sentry')
 
 module.exports = {
   /**
@@ -53,11 +52,11 @@ module.exports = {
     if (!(e instanceof Error)) { // in case strings get logged as errors, for whatever reason
       exit ? log(chalk`[{bold.black.bgRed ${`FATAL:${type}`.padStart(20)}}] - ${e}`) : log(chalk`[{bold.red ${`ERROR:${type}`.padStart(20)}}] - ${e}`)
       if (exit) process.exit(1)
-      return sentry.captureMessage(e)
+      return Sentry.captureMessage(e)
     } else {
       exit ? log(chalk`[{bold.black.bgRed ${`FATAL:${type}`.padStart(20)}}] - ${e.stack ? e.stack : e.message}`) : log(chalk`[{bold.red ${`ERROR:${type}`.padStart(20)}}] - ${e.stack ? e.stack : e.message}`)
       if (exit) process.exit(1)
-      return sentry.captureException(e)
+      return Sentry.captureException(e)
     }
   },
   /**

@@ -16,7 +16,7 @@ module.exports = new Command(async function (msg) {
       }
     })
   } catch (e) {
-    this.safeSendMessage(msg.channel, 'Something went wrong, try again later')
+    this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
     logger.error('CMD', e)
   }
 }, {

@@ -25,6 +25,22 @@ To verify your code adheres to our styleguide, run `npm test` in the project roo
 
 ## Code practices
 
+### Translations
+
+All user-facing text, meaning text that gets send to Discord and is displayed to end-users, needs to be included in the i18n framework.   
+The `i18n` object is globally accessible throughout the project, so don't require it separately.    
+The framework utilises ICU syntax for translations, a primer for this syntax can be found [here](https://formatjs.io/docs/core-concepts/icu-syntax).
+
+```js
+// ✗ bad
+msg.channel.createMessage(`Hi there ${user.name}!`)
+```
+
+```js
+// ✓ good
+msg.channel.createMessage(i18n.t('user.greeting', { name: user.name }))
+```
+
 ### Database operations
 
 We use Knex as our SQL driver, and we write abstractions in the form of drivers for each moving part that requires database access.   

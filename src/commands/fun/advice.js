@@ -8,6 +8,6 @@ module.exports = new Command(async function (msg) {
     this.safeSendMessage(msg.channel, advice)
   } catch (e) {
     logger.error(e)
-    this.safeSendMessage(msg.channel, 'Something went wrong!')
+    this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
   }
 })

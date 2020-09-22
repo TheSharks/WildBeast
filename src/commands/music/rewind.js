@@ -3,12 +3,12 @@ const Command = require('../../classes/Command')
 module.exports = new Command(async function (msg, suffix) {
   const client = require('../../components/client')
   const encoder = client.voiceConnectionManager.get(msg.channel.guild.id)
-  if (!encoder) return this.safeSendMessage(msg.channel, "I'm currently not streaming in this server")
-  if (!encoder._encoder.state.position) return this.safeSendMessage(msg.channel, 'Not currently playing anything')
+  if (!encoder) return this.safeSendMessage(msg.channel, i18n.t('commands.common.notStreaming'))
+  if (!encoder._encoder.state.position) return this.safeSendMessage(msg.channel, i18n.t('commands.ffrw.notPlaying'))
   if (!suffix) encoder._encoder.seek(0)
   else {
     const time = stringToMS(suffix)
-    if (time === false) return this.safeSendMessage(msg.channel, 'Invalid time')
+    if (time === false) return this.safeSendMessage(msg.channel, i18n.t('commands.ffrw.invalidTime'))
     encoder._encoder.seek(encoder._encoder.state.position - time)
   }
   if (msg.channel.permissionsOf(client.user.id).has('addReactions')) await msg.addReaction('👍')

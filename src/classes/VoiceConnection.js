@@ -9,17 +9,17 @@ module.exports = class VoiceConnection {
 
     this._encoder.on('trackEnd', x => {
       if (this.playlist.length === 0) {
-        this.textChannel.createMessage('The queue is empty, disconnecting')
+        this.textChannel.createMessage(i18n.t('voice.events.queueEmpty'))
         this.destroy()
       } else this.next(x)
     })
     this._encoder.on('trackError', x => {
-      this.textChannel.createMessage(`The track I'm trying to play broke! \`${x.error}\``)
+      this.textChannel.createMessage(i18n.t('voice.events.trackBroke', { error: x.error }))
       this.next()
     })
     this._encoder.on('trackStuck', x => {
       logger.debug(x)
-      this.textChannel.createMessage('Seems the track got stuck, automatically skipping it...')
+      this.textChannel.createMessage(i18n.t('voice.events.trackStuck'))
       this.next()
     })
     this._encoder.on('trackStart', ctx => {
@@ -28,7 +28,7 @@ module.exports = class VoiceConnection {
       this.nowPlaying = this.playlist[index] || { info: {} }
       if (index !== -1) this.playlist.splice(index, 1)
       this.textChannel.createMessage({
-        content: 'Now playing:',
+        content: i18n.t('voice.events.nowPlaying'),
         embed: {
           url: this.nowPlaying.info.uri,
           title: this.nowPlaying.info.title || '[Unknown!]',
@@ -42,7 +42,7 @@ module.exports = class VoiceConnection {
       })
     })
     this._encoder.once('disconnected', x => {
-      if (x.byRemote && x.code !== 4014) this.textChannel.createMessage('I got disconnected from the voice channel, ending playback')
+      if (x.byRemote && x.code !== 4014) this.textChannel.createMessage(i18n.t('voice.events.disconnected'))
       this.destroy()
     })
   }

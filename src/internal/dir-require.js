@@ -14,7 +14,7 @@ module.exports = (globPattern) => {
   })
   const returnValue = {}
   files.forEach(x => {
-    const basename = path.basename(x, '.js')
+    const basename = path.basename(x, path.extname(x))
     returnValue[basename] = require(x)
   })
   return returnValue

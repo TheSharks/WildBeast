@@ -2,11 +2,11 @@ const Command = require('../../classes/Command')
 
 module.exports = new Command(async function (msg, suffix) {
   const client = require('../../components/client')
-  if (!msg.member || !msg.member.voiceState.channelID) return this.safeSendMessage(msg.channel, 'Please join a voice channel and try this command again')
-  if (client.voiceConnectionManager.get(msg.channel.guild.id)) return this.safeSendMessage(msg.channel, "I'm already streaming in this server!")
+  if (!msg.member || !msg.member.voiceState.channelID) return this.safeSendMessage(msg.channel, i18n.t('commands.joinvoice.errors.notConnected'))
+  if (client.voiceConnectionManager.get(msg.channel.guild.id)) return this.safeSendMessage(msg.channel, i18n.t('commands.joinvoice.errors.alreadyStreaming'))
   const channel = msg.channel.guild.channels.get(msg.member.voiceState.channelID)
   if (!channel.permissionsOf(client.user.id).has('voiceSpeak') || !channel.permissionsOf(client.user.id).has('voiceConnect')) {
-    return this.safeSendMessage(msg.channel, "I can't connect to the channel you're currently in!")
+    return this.safeSendMessage(msg.channel, i18n.t('commands.joinvoice.errors.cantConnect'))
   }
   try {
     const player = await channel.join()
@@ -21,7 +21,7 @@ module.exports = new Command(async function (msg, suffix) {
     })
     if (suffix) require('./play').run(msg, suffix)
   } catch (e) {
-    this.safeSendMessage(msg.channel, 'Failed to join voice channel, try again?')
+    this.safeSendMessage(msg.channel, i18n.t('commands.joinvoice.errors.failed'))
     logger.error(e)
   }
 }, {

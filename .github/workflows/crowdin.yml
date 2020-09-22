@@ -1,0 +1,28 @@
+name: Crowdin Action
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  synchronize-with-crowdin:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: crowdin action
+      uses: crowdin/github-action@1.0.10
+      with:
+        upload_sources: true
+        download_translations: false
+        source : "/src/languages/en-EN.json"
+        translation : "/src/languages/%locale%.json"
+        # for now we don't want to download and sync translations
+        # we might want to do this in the future
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CROWDIN_PROJECT_ID: "196440"
+        CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}

@@ -9,32 +9,32 @@ module.exports = new Command(async function (msg, suffix) {
   switch (chunks[0]) {
     case 'create': {
       tag = (await driver.get(chunks[1]))[0]
-      if (['create', 'raw', 'owner', 'edit', 'delete', 'import'].includes(chunks[1])) return this.safeSendMessage(msg.channel, "You can't name your tag that")
-      if (tag) return this.safeSendMessage(msg.channel, 'A tag with that name already exists')
+      if (['create', 'raw', 'owner', 'edit', 'delete', 'import'].includes(chunks[1])) return this.safeSendMessage(msg.channel, i18n.t('commands.tag.errors.illegal'))
+      if (tag) return this.safeSendMessage(msg.channel, i18n.t('commands.tag.errors.conflict'))
       else return createNewTag(msg, chunks)
     }
     case 'raw': {
       tag = (await driver.get(chunks[1]))[0]
-      if (!tag) return this.safeSendMessage(msg.channel, 'No such tag')
+      if (!tag) return this.safeSendMessage(msg.channel, i18n.t('commands.tag.errors.notFound'))
       else return this.safeSendMessage(msg.channel, tag.content)
     }
     case 'owner': {
       tag = (await driver.get(chunks[1]))[0]
       const user = await client.getRESTUser(tag.owner_id)
-      return this.safeSendMessage(msg.channel, `The owner of that tag is ${user.username}#${user.discriminator}`)
+      return this.safeSendMessage(msg.channel, i18n.t('commands.tag.owner', { owner: `${user.username}#${user.discriminator}` }))
     }
     case 'edit': {
       tag = (await driver.get(chunks[1]))[0]
-      if (!tag) return this.safeSendMessage(msg.channel, 'No such tag')
+      if (!tag) return this.safeSendMessage(msg.channel, i18n.t('commands.tag.errors.notFound'))
       else return editTag(tag, msg, chunks)
     }
     case 'delete': {
       tag = (await driver.get(chunks[1]))[0]
-      if (!tag) return this.safeSendMessage(msg.channel, 'No such tag')
+      if (!tag) return this.safeSendMessage(msg.channel, i18n.t('commands.tag.errors.notFound'))
       else return deleteTag(tag, msg)
     }
     default: {
-      if (!tag) return this.safeSendMessage(msg.channel, 'No such tag')
+      if (!tag) return this.safeSendMessage(msg.channel, i18n.t('commands.tag.errors.notFound'))
       return this.safeSendMessage(msg.channel, compiler(tag.content, {
         tagArgs: chunks.slice(1),
         author: msg.author,
@@ -55,7 +55,7 @@ const createNewTag = async (msg, chunks) => {
     owner_id: msg.author.id,
     guild_id: msg.channel.guild ? msg.channel.guild.id : 'DM'
   })
-  return module.exports.safeSendMessage(msg.channel, 'Your tag was created')
+  return module.exports.safeSendMessage(msg.channel, i18n.t('commands.tag.created'))
 }
 
 const editTag = async (tag, msg, chunks) => {
@@ -65,12 +65,12 @@ const editTag = async (tag, msg, chunks) => {
     ...tag,
     content: chunks.slice(2).join(' ')
   })
-  return module.exports.safeSendMessage(msg.channel, 'Your tag was edited')
+  return module.exports.safeSendMessage(msg.channel, i18n.t('commands.tag.edited'))
 }
 
 const deleteTag = async (tag, msg) => {
   const driver = require('../../database/drivers/tags')
   if (msg.author.id !== tag.owner_id && !process.env.WILDBEAST_MASTERS.split(',').includes(msg.author.id)) return this.safeSendMessage(msg.channel, 'This tag is not yours to edit')
   await driver.delete(tag.name)
-  return module.exports.safeSendMessage(msg.channel, 'Your tag was deleted')
+  return module.exports.safeSendMessage(msg.channel, i18n.t('commands.tag.deleted'))
 }

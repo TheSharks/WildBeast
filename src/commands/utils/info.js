@@ -12,17 +12,17 @@ module.exports = new Command(function (msg) {
     embed: {
       fields: [
         {
-          name: 'Guilds on this shard',
+          name: i18n.t('commands.info.guilds'),
           value: client.guilds.size,
           inline: true
         },
         {
-          name: 'Uptime',
+          name: i18n.t('commands.info.uptime'),
           value: `${normalizedUptime} (${ISOUptime})`,
           inline: true
         },
         {
-          name: 'Current shard',
+          name: i18n.t('commands.info.shard'),
           value: `${client.options.firstShardID}/${client.options.maxShards}`,
           inline: true
         }
