@@ -1,6 +1,6 @@
 {
   "i18n": {
-    "disclaimer": "Please note: translations are provided by the community, we cannot guarantee their correctness, completeness, or quality",
+    "disclaimer": "Please note: translations are provided by the community, and we cannot guarantee their correctness, completeness, or quality",
     "cta": "Do you speak fluent English and want to help us translate? Check out {url}"
   },
   "prereqs": {
@@ -41,7 +41,7 @@
     },
     "play": {
       "playlistAdded": "Playlist {name} has been added",
-      "noResults": "Nothing found with your search query",
+      "noResults": "No search results found",
       "ivPlaylist": "Your playlist has finished loading",
       "trackAdded": "Your track has been added",
       "cantPlay": "I'm unable to play that track: `{message}`",
