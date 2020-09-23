@@ -5,6 +5,7 @@ module.exports = new Command(async function (msg, suffix) {
   const encoder = client.voiceConnectionManager.get(msg.channel.guild.id)
   if (!encoder) return this.safeSendMessage(msg.channel, i18n.t('commands.common.notStreaming'))
   if (!encoder._encoder.state.position) return this.safeSendMessage(msg.channel, i18n.t('commands.ffrw.notPlaying'))
+  if (!encoder.nowPlaying.info.isSeekable) return this.safeSendMessage(msg.channel, i18n.t('commands.ffrw.cantSeekTrack'))
   if (!suffix) return this.safeSendMessage(msg.channel, i18n.t('commands.ffrw.noTime'))
   else {
     const time = stringToMS(suffix)

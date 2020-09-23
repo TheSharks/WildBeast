@@ -7,7 +7,7 @@ module.exports = new Command(function (msg, suffix) {
     if (isNaN(parseInt(suffix))) return this.safeSendMessage(msg.channel, i18n.t('commands.remove.notANumber'))
     suffix = parseInt(suffix)
     if (suffix < 1 || suffix > player.playlist.length) return this.safeSendMessage(msg.channel, i18n.t('commands.remove.outOfRange', { songs: player.playlist.length }))
-    const removed = player.playlist.splice(suffix + 1, 1)[0]
+    const removed = player.playlist.splice(suffix - 1, 1)[0]
     return this.safeSendMessage(msg.channel, {
       content: i18n.t('commands.remove.done'),
       embed: {

@@ -25,7 +25,8 @@
     "ffrw": {
       "notPlaying": "Not currently playing anything",
       "noTime": "Please enter a time",
-      "invalidTime": "The time you entered was invalid"
+      "invalidTime": "The time you entered was invalid",
+      "cantSeekTrack": "The track that's currently playing cannot be seeked"
     },
     "shuffle": {
       "done": "The playlist has been shuffled"
