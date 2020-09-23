@@ -11,7 +11,7 @@ module.exports = new Command(async function (msg) {
       name: 'needsmore.jpg'
     })
   } catch (e) {
-    logger.error(e)
+    logger.error('CMD', e)
     this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
   }
 }, {

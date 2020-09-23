@@ -22,7 +22,7 @@ module.exports = new Command(async function (msg, suffix) {
     if (suffix) require('./play').run(msg, suffix)
   } catch (e) {
     this.safeSendMessage(msg.channel, i18n.t('commands.joinvoice.errors.failed'))
-    logger.error(e)
+    logger.error('CMD', e)
   }
 }, {
   aliases: ['voice', 'join-voice'],

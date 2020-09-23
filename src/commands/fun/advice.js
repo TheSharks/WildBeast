@@ -7,7 +7,7 @@ module.exports = new Command(async function (msg) {
     const advice = (JSON.parse(res.text)).slip.advice
     this.safeSendMessage(msg.channel, advice)
   } catch (e) {
-    logger.error(e)
+    logger.error('CMD', e)
     this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
   }
 })
