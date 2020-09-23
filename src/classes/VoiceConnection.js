@@ -47,14 +47,26 @@ module.exports = class VoiceConnection {
     })
   }
 
-  next (msg = {}) {
+  async next (msg = {}) {
     if (msg.reason === 'REPLACED') return
     // the skip command uses this func too
     // if we dont do this, you end up skipping 2 songs
     // since trackEnd will also fire
-    const nextup = this.playlist[0]
+    let nextup = this.playlist[0]
     // no shift, on(trackStart) does that
     if (nextup) {
+      if (nextup.needsResolve) {
+        logger.debug('I7S-PLAYLIST', `Resolving ${this.playlist[0].info.videoId} on the fly`)
+        const data = await this._invidiousResolve(this.playlist[0].info.videoId)
+        if (data.loadType === 'TRACK_LOADED') {
+          this.playlist[0] = data.tracks[0]
+          nextup = data.tracks[0]
+        } else {
+          logger.debug('I7S-PLAYLIST', `Couldn't load ${this.playlist[0].info.videoId}, removing and skipping`)
+          this.playlist.splice(0, 1)
+          this.next()
+        }
+      }
       this._encoder.play(nextup.track)
       return nextup
     }
@@ -143,16 +155,27 @@ module.exports = class VoiceConnection {
     return lavaresp
   }
 
-  async _invidiousPlaylist (id) {
+  async _invidiousPlaylist (id, page = 1) {
     const authorImg = (data) => {
       if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
       else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
       return data.authorThumbnails[0].url
     }
     const SA = require('superagent')
-    const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/playlists/${id}`)
-    const result = await Promise.allSettled(resp.body.videos.map(x => this._invidiousResolve(x.videoId)))
-    this.addMany(result.filter(x => x.status === 'fulfilled').map(x => x.value.tracks).flat(1))
+    const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/playlists/${id}?page=${page}`)
+    // const result = await Promise.allSettled(resp.body.videos.map(x => this._invidiousResolve(x.videoId)))
+    // if (this.fresh) this.add((await this._invidiousResolve(resp.body.videos[0].videoId)).tracks[0])
+    this.addMany(resp.body.videos.map(x => {
+      return {
+        info: {
+          ...x,
+          uri: `https://youtu.be/${x.videoId}`
+        },
+        needsResolve: true
+      }
+    }))
+    // invidious returns 99 results per api call, so we need to paginate if there are more than 99 songs
+    if (resp.body.videos.length === 99 && resp.body.videoCount > (99 * page)) this._invidiousPlaylist(id, page + 1)
     return {
       loadType: 'IV_PLAYLIST_LOADED',
       uri: `https://youtube.com/playlist?list=${resp.body.playlistId}`,
