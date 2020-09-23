@@ -46,8 +46,8 @@ module.exports = new Command(async function (msg, suffix) {
       try {
         resp.body = JSON.parse(resp.text)
       } catch (e) {
-        if (resp.body.length === 0) return this.safeSendMessage(msg.channel, `No results found for \`${query}\``) // quality api
-        else return this.safeSendMessage(msg.channel, 'Something when wrong! Try again later')
+        if (resp.body.length === 0) return this.safeSendMessage(msg.channel, i18n.t('commands.booru.noResults', { query })) // quality api
+        else return this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
       }
       const post = resp.body[Math.floor((Math.random() * resp.body.length))]
       return this.safeSendMessage(msg.channel, generateEmbed(sites[parts[0]].cdn(post)))
@@ -58,7 +58,7 @@ module.exports = new Command(async function (msg, suffix) {
         .set({ 'User-Agent': `github.com/TheSharks/WildBeast@${require('../../../package.json').version}` })
         .then(res => {
           if (!res.body.search || res.body.search.length < 1) {
-            return this.safeSendMessage(msg.channel, `No results found for \`${query}\``)
+            return this.safeSendMessage(msg.channel, i18n.t('commands.booru.noResults', { query }))
           }
           const count = Math.floor((Math.random() * res.body.search.length))
           return this.safeSendMessage(msg.channel, generateEmbed(`https:${res.body.search[count].representations.tall}`)) // why
@@ -75,7 +75,7 @@ module.exports = new Command(async function (msg, suffix) {
         })
         .then(res => {
           if (res.body.posts.length < 1) {
-            return this.safeSendMessage(msg.channel, `No results found for \`${query}\``)
+            return this.safeSendMessage(msg.channel, i18n.t('commands.booru.noResults', { query }))
           }
           const post = res.body.posts[Math.floor((Math.random() * res.body.posts.length))]
           return this.safeSendMessage(msg.channel, generateEmbed(post.file.url))
