@@ -28,6 +28,9 @@
       "invalidTime": "The time you entered was invalid",
       "cantSeekTrack": "The track that's currently playing cannot be seeked"
     },
+    "skip": {
+      "queueEmpty": "There's nothing to play after this, add something to play after this if you want to skip"
+    },
     "shuffle": {
       "done": "The playlist has been shuffled"
     },
