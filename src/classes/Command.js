@@ -8,6 +8,7 @@ module.exports = class Command {
     else throw new TypeError('Fn param must be a function')
     this.props = {
       helpMessage: '[help message not set]',
+      docsDescription: '[description not set]',
       hidden: false,
       nsfw: false,
       disableDM: false,

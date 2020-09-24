@@ -64,7 +64,7 @@ module.exports = class VoiceConnection {
         } else {
           logger.debug('I7S-PLAYLIST', `Couldn't load ${this.playlist[0].info.videoId}, removing and skipping`)
           this.playlist.splice(0, 1)
-          this.next()
+          return this.next()
         }
       }
       this._encoder.play(nextup.track)

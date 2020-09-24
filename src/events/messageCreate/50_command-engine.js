@@ -14,7 +14,7 @@ module.exports = (msg) => {
         command.runWithPrereqs(msg, suffix)
       } catch (e) {
         const uid = logger.error('COMMANDS', e)
-        command.safeSendMessage(msg.channel, `This command failed to run.\nIf you see my owner, give them this error code: \`${uid}\``)
+        command.safeSendMessage(msg.channel, i18n.t('commands.common.failedToRun', { errorcode: uid }))
       } finally {
         cmdAnalytics.labels(cmd).inc()
         logger.command({
