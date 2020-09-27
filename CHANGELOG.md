@@ -1,5 +1,10 @@
 # 7.0.0
 ## Release phase
+### 7.1.0
+Reintroduced translation support    
+Introduce new music related commands: `fastforward`, `rewind`, `remove`    
+Support sharding via environment variables    
+
 ### 7.0.0
 **This is a breaking change**
 

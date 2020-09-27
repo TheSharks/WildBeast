@@ -29,6 +29,10 @@ module.exports = class Command {
    * @returns {Function}
    */
   run (msg, suffix) {
+    const client = require('../components/client')
+    if (msg.channel.guild && !msg.channel.permissionsOf(client.user.id).has('sendMessages')) {
+      return logger.debug('CMD-CTRL', "Discarding command invokation in a channel where the client can't respond")
+    }
     if (!this.fn || typeof this.fn !== 'function') throw new TypeError(`Expected type 'function', got ${typeof this.fn}`)
     else return this.fn(msg, suffix)
   }

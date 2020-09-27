@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@thesharks/wildbeast",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "description": "Discord bot",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   },
   "homepage": "https://wildbeast.guide/",
   "devDependencies": {
-    "eslint": "^7.9.0",
+    "eslint": "^7.10.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-node": "^11.1.0",
