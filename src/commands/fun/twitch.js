@@ -31,7 +31,7 @@ function getEmbed (resp) {
   const stream = resp.stream
   const name = resp.stream.channel.display_name
   return {
-    content: i18n.t('commands.twitch.online', { name }),
+    content: i18n.t('commands.twitch.online', { channel: name }),
     embed: {
       url: `https://twitch.tv/${name}`,
       title: stream.channel.status,
