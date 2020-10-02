@@ -9,12 +9,12 @@ module.exports = new Command(async function (msg, suffix) {
     const user = res.body._total
       ? res.body.users[0]._id
       : false
-    if (!user) return this.safeSendMessage(msg.channel, i18n.t('commands.twitch.errors.invalidChannel', { channel: msg.channel.name }))
+    if (!user) return this.safeSendMessage(msg.channel, i18n.t('commands.twitch.errors.invalidChannel', { channel: suffix }))
     const stream = await SA.get(`https://api.twitch.tv/kraken/streams/${user}`)
       .set({ Accept: 'application/vnd.twitchtv.v5+json', 'Client-ID': process.env.TWITCH_ID })
     stream.body.stream
       ? this.safeSendMessage(msg.channel, getEmbed(stream.body))
-      : this.safeSendMessage(msg.channel, i18n.t('commands.twitch.offline', { channel: msg.channel.name }))
+      : this.safeSendMessage(msg.channel, i18n.t('commands.twitch.offline', { channel: suffix }))
   } catch (error) {
     logger.error('REST TWITCH', error)
     return this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
