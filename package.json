@@ -33,7 +33,7 @@
     "standard": "^14.3.4"
   },
   "dependencies": {
-    "@sentry/integrations": "^5.24.2",
+    "@sentry/integrations": "^5.25.0",
     "@sentry/node": "^5.24.2",
     "@thesharks/jagtag-js": "^1.0.4",
     "@thesharks/tyr": "^1.1.3",
