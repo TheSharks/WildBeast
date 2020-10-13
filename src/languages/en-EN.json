@@ -39,6 +39,12 @@
       "outOfRange": "Volume must be a number between 0 and 100",
       "done": "Volume adjusted"
     },
+    "dice": {
+      "resultMany": "You rolled **{result}**\n```{explaination}```",
+      "resultSingle": "You rolled **{result}**",
+      "resultTooLarge": "[result too large to show explaination]",
+      "badSyntax": "Please specify how many dice you want to roll like this: `4d6`, `2d12`"
+    },
     "remove": {
       "notANumber": "Your argument must be a number",
       "outOfRange": "The playlist only has {songs} songs",
