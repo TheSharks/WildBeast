@@ -4,6 +4,9 @@ module.exports = new Command(async function (msg, suffix) {
   const client = require('../../components/client')
   const player = client.voiceConnectionManager.get(msg.channel.guild.id)
   if (player) {
+    if (!(require('../../components/prereqs/musicCommand').fn(msg))) {
+      return this.safeSendMessage(msg.channel, require('../../components/prereqs/musicCommand').errorMessage(msg))
+    }
     const m = await this.safeSendMessage(msg.channel, i18n.t('commands.common.working'))
     try {
       const x = await player.resolve(suffix)
@@ -50,9 +53,8 @@ module.exports = new Command(async function (msg, suffix) {
       if (!(m instanceof require('eris').Message)) await this.safeSendMessage(msg.channel, i18n.t('commands.common.softFail'))
       else await m.edit(i18n.t('commands.common.softFail'))
     }
-  } else return this.safeSendMessage(msg.channel, i18n.t('commands.common.notStreaming'))
+  } else return require('./joinvoice').run(msg, suffix)
 }, {
   aliases: ['request'],
-  prereqs: ['musicCommand'],
   disableDM: true
 })
