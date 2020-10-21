@@ -20,6 +20,7 @@ module.exports = new Command(async function (msg, suffix) {
     }
     case 'owner': {
       tag = (await driver.get(chunks[1]))[0]
+      if (!tag) return this.safeSendMessage(msg.channel, i18n.t('commands.tag.errors.notFound'))
       const user = await client.getRESTUser(tag.owner_id)
       return this.safeSendMessage(msg.channel, i18n.t('commands.tag.owner', { owner: `${user.username}#${user.discriminator}` }))
     }
@@ -60,7 +61,7 @@ const createNewTag = async (msg, chunks) => {
 
 const editTag = async (tag, msg, chunks) => {
   const driver = require('../../database/drivers/tags')
-  if (msg.author.id !== tag.owner_id && !process.env.WILDBEAST_MASTERS.split(',').includes(msg.author.id)) return this.safeSendMessage(msg.channel, 'This tag is not yours to edit')
+  if (msg.author.id !== tag.owner_id && !process.env.WILDBEAST_MASTERS.split(',').includes(msg.author.id)) return this.safeSendMessage(msg.channel, i18n.t('commands.tag.errors.notYours'))
   await driver.edit({
     ...tag,
     content: chunks.slice(2).join(' ')
@@ -70,7 +71,7 @@ const editTag = async (tag, msg, chunks) => {
 
 const deleteTag = async (tag, msg) => {
   const driver = require('../../database/drivers/tags')
-  if (msg.author.id !== tag.owner_id && !process.env.WILDBEAST_MASTERS.split(',').includes(msg.author.id)) return this.safeSendMessage(msg.channel, 'This tag is not yours to edit')
+  if (msg.author.id !== tag.owner_id && !process.env.WILDBEAST_MASTERS.split(',').includes(msg.author.id)) return this.safeSendMessage(msg.channel, i18n.t('commands.tag.errors.notYours'))
   await driver.delete(tag.name)
   return module.exports.safeSendMessage(msg.channel, i18n.t('commands.tag.deleted'))
 }

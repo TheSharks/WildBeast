@@ -96,7 +96,8 @@
       "errors": {
         "notFound": "No such tag",
         "conflict": "A tag with that name already exists",
-        "illegal": "You can't name your tag that"
+        "illegal": "You can't name your tag that",
+        "notYours": "You don't own that tag, so you can't edit it"
       },
       "owner": "The owner of that tag is {user}",
       "created": "Your tag was created",
