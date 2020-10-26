@@ -46,7 +46,7 @@
     "intl-messageformat": "^9.3.11",
     "jimp": "^0.16.1",
     "joi": "^17.2.1",
-    "knex": "^0.21.6",
+    "knex": "^0.21.7",
     "prom-client": "^12.0.0",
     "sqlite3": "^5.0.0",
     "superagent": "^6.1.0"
