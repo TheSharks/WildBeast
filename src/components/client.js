@@ -11,10 +11,11 @@ module.exports = new Eris(process.env.BOT_TOKEN, {
   },
   ...(process.env.WILDBEAST_SHARDS_MINE && process.env.WILDBEAST_SHARDS_TOTAL && !process.env.WILDBEAST_K8S_AUTOSCALE
     ? {
-      maxShards: parseInt(process.env.WILDBEAST_SHARDS_TOTAL),
-      firstShardID: parseInt(process.env.WILDBEAST_SHARDS_MINE),
-      lastShardID: parseInt(process.env.WILDBEAST_SHARDS_MINE)
-    } : {}),
+        maxShards: parseInt(process.env.WILDBEAST_SHARDS_TOTAL),
+        firstShardID: parseInt(process.env.WILDBEAST_SHARDS_MINE),
+        lastShardID: parseInt(process.env.WILDBEAST_SHARDS_MINE)
+      }
+    : {}),
   compress: true,
   guildSubscriptions: false,
   messageLimit: 10,
