@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@sentry/integrations": "^5.27.1",
-    "@sentry/node": "^5.27.1",
+    "@sentry/node": "^5.27.2",
     "@thesharks/jagtag-js": "^1.1.0",
     "@thesharks/tyr": "^1.2.1",
     "chalk": "^4.1.0",
