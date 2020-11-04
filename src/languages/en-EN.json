@@ -148,7 +148,8 @@
         "noTerm": "Please enter a search term",
         "notFound": "This word is so screwed up, even Urban Dictionary doesn't know it"
       },
-      "example": "Example"
+      "example": "Example",
+      "noExample": "[no example provided]"
     },
     "xkcd": {
       "errors": { 

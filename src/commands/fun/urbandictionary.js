@@ -20,7 +20,7 @@ module.exports = new Command(async function (msg, suffix) {
         fields: [
           {
             name: i18n.t('commands.urbandictionary.example'),
-            value: ctx.example.length > 1000 ? ctx.example.substring(0, 1000) + '[...]' : ctx.example
+            value: ctx.example ? (ctx.example.length > 1000 ? ctx.example.substring(0, 1000) + '[...]' : ctx.example) : i18n.t('commands.urbandictionary.noExample')
           }
         ]
       }
