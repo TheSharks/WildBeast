@@ -60,7 +60,7 @@ module.exports = class Command {
       if (Object.keys(this.props.clientPerms).length > 0) {
         const missingPerms = [
           ...(this.props.clientPerms.guild && Array.isArray(this.props.clientPerms.guild)
-            ? this.props.clientPerms.guild.filter(x => !msg.channel.guild.members.get(client.user.id).permission.has(x))
+            ? this.props.clientPerms.guild.filter(x => !msg.channel.guild.members.get(client.user.id).permissions.has(x))
             : []),
           ...(this.props.clientPerms.channel && Array.isArray(this.props.clientPerms.channel)
             ? this.props.clientPerms.channel.filter(x => !msg.channel.permissionsOf(client.user.id).has(x))
@@ -71,7 +71,7 @@ module.exports = class Command {
       if (Object.keys(this.props.userPerms).length > 0) {
         const missingPerms = [
           ...(this.props.userPerms.guild && Array.isArray(this.props.userPerms.guild)
-            ? this.props.userPerms.guild.filter(x => !msg.member.permission.has(x))
+            ? this.props.userPerms.guild.filter(x => !msg.member.permissions.has(x))
             : []),
           ...(this.props.userPerms.channel && Array.isArray(this.props.userPerms.channel)
             ? this.props.userPerms.channel.filter(x => !msg.channel.permissionsOf(msg.member.id).has(x))
