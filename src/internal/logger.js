@@ -14,7 +14,7 @@ module.exports = {
    * @param {String} type - Type of the message to log
    * @param {*} msg - The data to log
    */
-  debug: (type = 'GEN', msg) => {
+  debug: (type, msg) => {
     Sentry.addBreadcrumb({
       category: 'console',
       level: Sentry.Severity.Debug,
@@ -27,7 +27,7 @@ module.exports = {
    * @param {String} type - Type of the message to log
    * @param {*} msg - The data to log
    */
-  log: (type = 'GEN', msg) => {
+  log: (type, msg) => {
     Sentry.addBreadcrumb({
       category: 'console',
       level: Sentry.Severity.Info,
@@ -43,7 +43,7 @@ module.exports = {
    * @param {Boolean} [exit=false] - Whether or not to exit the program after processing of this error is done
    * @returns {String} The corresponding Sentry UID
    */
-  error: (type = 'GEN', e, exit = false) => {
+  error: (type, e, exit = false) => {
     Sentry.addBreadcrumb({
       category: 'console',
       level: Sentry.Severity.Error,
@@ -64,7 +64,7 @@ module.exports = {
    * @param {String} type - Type of the message to log
    * @param {*} msg - The data to log
    */
-  warn: (type = 'GEN', msg) => {
+  warn: (type, msg) => {
     Sentry.addBreadcrumb({
       category: 'console',
       level: Sentry.Severity.Warning,
@@ -79,7 +79,7 @@ module.exports = {
    * @param {String} type - Type of the message to log
    * @param {*} msg - The data to log
    */
-  trace: (type = 'GEN', msg) => {
+  trace: (type, msg) => {
     Sentry.addBreadcrumb({
       category: 'console',
       level: Sentry.Severity.Debug,
