@@ -43,7 +43,7 @@
     "eris": "^0.14.0",
     "eventemitter3": "^4.0.7",
     "glob": "^7.1.6",
-    "intl-messageformat": "^9.3.17",
+    "intl-messageformat": "^9.3.18",
     "jimp": "^0.16.1",
     "joi": "^17.3.0",
     "knex": "^0.21.12",
