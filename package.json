@@ -24,17 +24,17 @@
   },
   "homepage": "https://wildbeast.guide/",
   "devDependencies": {
-    "eslint": "^7.13.0",
-    "eslint-config-standard": "^16.0.1",
+    "eslint": "^7.14.0",
+    "eslint-config-standard": "^16.0.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.2",
-    "standard": "^16.0.1"
+    "eslint-plugin-standard": "^4.1.0",
+    "standard": "^16.0.3"
   },
   "dependencies": {
-    "@sentry/integrations": "^5.27.3",
-    "@sentry/node": "^5.27.3",
+    "@sentry/integrations": "^5.27.6",
+    "@sentry/node": "^5.27.6",
     "@thesharks/jagtag-js": "^1.1.0",
     "@thesharks/tyr": "^1.2.1",
     "chalk": "^4.1.0",
@@ -43,7 +43,7 @@
     "eris": "^0.14.0",
     "eventemitter3": "^4.0.7",
     "glob": "^7.1.6",
-    "intl-messageformat": "^9.3.17",
+    "intl-messageformat": "^9.3.20",
     "jimp": "^0.16.1",
     "joi": "^17.3.0",
     "knex": "^0.21.12",

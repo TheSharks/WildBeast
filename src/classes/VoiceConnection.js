@@ -125,14 +125,14 @@ module.exports = class VoiceConnection {
     return this.controllers.push(ctx)
   }
 
-  async _invidiousResolve (videoId, proxy = false) {
+  async _invidiousResolve (videoId, proxy = false, invidiousHost = process.env.INVIDIOUS_HOST) {
     const authorImg = (data) => {
       if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
       else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
       return data.authorThumbnails[0].url
     }
     const SA = require('superagent')
-    const info = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/videos/${videoId}`)
+    const info = await SA.get(`${invidiousHost}/api/v1/videos/${videoId}`)
     let lavaresp
     if (info.body.liveNow) {
       // lavaresp = await this._encoder.node.loadTracks(`${info.body.hlsUrl}?local=true`)
@@ -140,10 +140,25 @@ module.exports = class VoiceConnection {
     } else {
       const itags = ['251', '250', '249', '171', '141', '140', '139']
       const tag = info.body.adaptiveFormats.find(x => itags.includes(x.itag))
-      lavaresp = await this._encoder.node.loadTracks(`${process.env.INVIDIOUS_HOST}/latest_version?id=${videoId}&itag=${tag.itag}${proxy ? '&local=true' : ''}`)
+      lavaresp = await this._encoder.node.loadTracks(`${invidiousHost}/latest_version?id=${videoId}&itag=${tag.itag}${proxy ? '&local=true' : ''}`)
     }
-    if (lavaresp.loadType !== 'TRACK_LOADED' && !proxy) return this._invidiousResolve(videoId, true)
-    if (lavaresp.loadType !== 'TRACK_LOADED' && proxy) return lavaresp
+    if (lavaresp.loadType !== 'TRACK_LOADED' && !proxy) {
+      logger.debug('I7S', `Retrying resolve for ${videoId} with Invidious host ${invidiousHost} with proxying enabled`)
+      return this._invidiousResolve(videoId, true)
+    }
+    if (lavaresp.loadType !== 'TRACK_LOADED' && proxy) {
+      if (!process.env.INVIDIOUS_ALTERNATIVE_SERVERS) return lavaresp
+      const proxys = JSON.parse(process.env.INVIDIOUS_ALTERNATIVE_SERVERS)
+      if (proxys.indexOf(invidiousHost) === proxys.length - 1) {
+        logger.debug('I7S', `All alternative servers exhausted! Abandoning resolve for ${videoId}`)
+        return lavaresp
+      }
+      // dont have to try to rotate if all alternative servers are exhausted
+      const altServer = (proxys.indexOf(invidiousHost) !== -1) ? proxys[proxys.indexOf(invidiousHost) + 1] : proxys[0]
+      logger.debug('I7S', `Retrying resolve for ${videoId} with alternative Invidious host ${altServer}`)
+      return this._invidiousResolve(videoId, false, altServer)
+    }
+    logger.debug('I7S', `Resolve for ${videoId} succeeded with Invidious host ${invidiousHost}, proxy ${proxy}`)
     lavaresp.tracks[0].info = {
       ...lavaresp.tracks[0].info,
       author: info.body.author,
@@ -156,14 +171,14 @@ module.exports = class VoiceConnection {
     return lavaresp
   }
 
-  async _invidiousPlaylist (id, page = 1) {
+  async _invidiousPlaylist (id, page = 1, invidiousHost = process.env.INVIDIOUS_HOST) {
     const authorImg = (data) => {
       if (!data.authorThumbnails[0].url || data.authorThumbnails[0].url.length < 1) return undefined // this can happen sometimes
       else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
       return data.authorThumbnails[0].url
     }
     const SA = require('superagent')
-    const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/playlists/${id}?page=${page}`)
+    const resp = await SA.get(`${invidiousHost}/api/v1/playlists/${id}?page=${page}`)
     // const result = await Promise.allSettled(resp.body.videos.map(x => this._invidiousResolve(x.videoId)))
     // if (this.fresh) this.add((await this._invidiousResolve(resp.body.videos[0].videoId)).tracks[0])
     this.addMany(resp.body.videos.map(x => {
