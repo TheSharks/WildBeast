@@ -53,15 +53,15 @@ jobs:
 
           docker build . --file Dockerfile --tag image
 
-      - name: Log into GPR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+      - name: Log into GHCR
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u dougley --password-stdin
 
       - name: Log into Dockerhub
         run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u dougley --password-stdin
 
       - name: Push image to GPR
         run: |
-          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+          IMAGE_ID=ghcr.io/thesharks/$IMAGE_NAME
           
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
