@@ -15,31 +15,32 @@ module.exports = class Command {
       userPerms: {},
       clientPerms: {},
       prereqs: [],
-      aliases: [],
       cooldowns: {},
+      args: [],
       ...props
     }
     this._timeouts = new Map()
+    this.interactions = require('../interfaces/Interactions')
   }
 
   /**
    * Run the command instantly
-   * @param {module:eris.Message} msg
+   * @param {import('detritus-client/lib/structures').Message} msg
    * @param {String} suffix
    * @returns {Function}
    */
   run (msg, suffix) {
-    const client = require('../components/client')
-    if (msg.channel.guild && !msg.channel.permissionsOf(client.user.id).has('sendMessages')) {
-      return logger.debug('CMD-CTRL', "Discarding command invokation in a channel where the client can't respond")
-    }
+    // const client = require('../components/client')
+    // if (msg.channel.guild && !msg.channel.permissionsOf(client.user.id).has('sendMessages')) {
+    //   return logger.debug('CMD-CTRL', "Discarding command invokation in a channel where the client can't respond")
+    // }
     if (!this.fn || typeof this.fn !== 'function') throw new TypeError(`Expected type 'function', got ${typeof this.fn}`)
     else return this.fn(msg, suffix)
   }
 
   /**
    * Check prerequisites for this command, and run the command
-   * @param {module:eris.Message} msg
+   * @param {import('detritus-client/lib/structures').Message} msg
    * @param {String} suffix
    * @returns {Function | Promise}
    */
@@ -85,26 +86,23 @@ module.exports = class Command {
 
   /**
    * Try to send a message to a channel with regards to the channel's permissions
-   * @param {module:eris.TextChannel} channel The channel where to send the message to
+   * @param {import('detritus-client/lib/structures').Channel} channel The channel where to send the message to
    * @param {String | Object} msg The message to send
-   * @see {@link https://abal.moe/Eris/docs/TextChannel#function-createMessage}
    */
   async safeSendMessage (channel, msg, file) {
-    const client = require('../components/client')
-    if (channel.guild && !channel.permissionsOf(client.user.id).has('sendMessages')) return Promise.reject(new Error('No permissions to create messages in this channel'))
+    if (channel.isGuildText && !channel.canMessage) return Promise.reject(new Error('No permissions to create messages in this channel'))
     return channel.createMessage({
       ...((typeof msg === 'string') ? { content: msg } : msg),
       allowedMentions: {
-        everyone: false,
-        roles: false,
-        users: false
+        roles: [],
+        users: []
       }
-    }, file)
+    })
   }
 
   /**
    * Check if the command needs to cooldown before it can be used again
-   * @param {module:eris.Message} ctx
+   * @param {import('detritus-client/lib/structures').Message} ctx
    * @return {Boolean}
    */
   shouldCooldown (ctx) {
@@ -137,5 +135,12 @@ module.exports = class Command {
       }
     })
     return final.some(x => typeof x === 'number')
+  }
+
+  toJSON () {
+    return {
+      description: this.props.helpMessage,
+      options: this.props.args
+    }
   }
 }

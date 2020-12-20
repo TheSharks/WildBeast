@@ -9,9 +9,9 @@ module.exports = {
       .retry(3)
       .type('json')
       .send({
-        guildCount: client.guilds.length,
-        shardCount: client.options.maxShards,
-        shardId: client.options.firstShardID
+        guildCount: client.guilds.size,
+        shardCount: client.gateway.shardCount,
+        shardId: client.gateway.shardId
       })
       .set({
         Authorization: process.env.WILDBEAST_BOTS_GG_KEY,

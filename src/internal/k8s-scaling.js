@@ -46,14 +46,14 @@ module.exports = {
   },
   renegotiate: async function (force = false) {
     // only shard 0 needs to renegotiate
-    if (client.options.firstShardID !== 0 && !force) return logger.log('K8S-SCALE', 'Renegotiation cancelled, this client does not manage shard 0')
+    if (client.gateway.shardId !== 0 && !force) return logger.log('K8S-SCALE', 'Renegotiation cancelled, this client does not manage shard 0')
     logger.log('K8S-SCALE', 'Renegotiating scale...')
     // what scale runs the deployment at right now?
     // ask discord what the recommended shard count is and edit the deployment to start as many replicas as shards
     const discord = await client.getBotGateway()
     const workload = await this.getCurrentWorkload()
     if (discord.shards > workload.body.spec.replicas) {
-      logger.log('K8S-SCALE', `Scale inadequate! Discord recommends ${discord.shards} shards but client has ${client.options.maxShards}`)
+      logger.log('K8S-SCALE', `Scale inadequate! Discord recommends ${discord.shards} shards but client has ${client.gateway.shardCount}`)
       logger.log('K8S-SCALE', `Telling k8s to scale Deployment ${this.keys.deployment} to ${discord.shards} replicas...`)
       await this.patchCurrentWorkload(discord.shards)
       logger.log('K8S-SCALE', `Scale changed! New scale is now ${discord.shards}`)
@@ -71,15 +71,14 @@ module.exports = {
     ).map(x => x.metadata.name).sort()
     const index = thisworkload.indexOf(require('os').hostname())
     logger.log('K8S-SCALE', `Index determined! This pod is ${index} with ${thisworkload.length} total`)
-    if (client.options.maxShards !== thisworkload.length) {
+    if (client.gateway.shardCount !== thisworkload.length) {
       logger.log('K8S-SCALE', 'This pod is not supporting required shards, reidentifying...')
-      client.options.autoreconnect = false
+      client.gateway.autoReconnect = false
       await client.disconnect()
-      client.options.firstShardID = index
-      client.options.lastShardID = index
-      client.options.maxShards = thisworkload.length
+      client.gateway.shardId = index
+      client.gateway.shardCount = thisworkload.length
       if (autoconnect) await client.connect()
-      client.options.autoreconnect = true
+      client.gateway.autoReconnect = true
     }
     return thisworkload.length
   },

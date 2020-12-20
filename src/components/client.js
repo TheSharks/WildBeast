@@ -1,35 +1,30 @@
+const { ShardClient } = require('detritus-client')
+const { GatewayIntents } = require('detritus-client-socket').Constants
+
 /**
  * Represents the client
- * @type {module:eris.Client}
+ * @type {ShardClient}
  */
-const Eris = require('eris')
-const { Collection } = require('eris')
-module.exports = new Eris(process.env.BOT_TOKEN, {
-  restMode: true,
-  allowedMentions: {
-    everyone: false
-  },
-  ...(process.env.WILDBEAST_SHARDS_MINE && process.env.WILDBEAST_SHARDS_TOTAL && !process.env.WILDBEAST_K8S_AUTOSCALE
-    ? {
-        maxShards: parseInt(process.env.WILDBEAST_SHARDS_TOTAL),
-        firstShardID: parseInt(process.env.WILDBEAST_SHARDS_MINE),
-        lastShardID: parseInt(process.env.WILDBEAST_SHARDS_MINE)
-      }
-    : {}),
-  compress: true,
-  guildSubscriptions: false,
-  messageLimit: 10,
-  intents: [
-    'guilds',
-    'guildMessages',
-    'guildMessageReactions', // paginator
-    'guildVoiceStates', // our voice join method needs this
-    'directMessages', // we support dms
-    'directMessageReactions' // paginator
-  ]
+module.exports = new ShardClient(process.env.BOT_TOKEN, {
+  gateway: {
+    ...(process.env.WILDBEAST_SHARDS_MINE && process.env.WILDBEAST_SHARDS_TOTAL && !process.env.WILDBEAST_K8S_AUTOSCALE
+      ? {
+          shardCount: parseInt(process.env.WILDBEAST_SHARDS_TOTAL),
+          shardId: parseInt(process.env.WILDBEAST_SHARDS_MINE)
+        }
+      : {}),
+    intents: [
+      GatewayIntents.GUILD_VOICE_STATES,
+      // GatewayIntents.GUILD_MESSAGES,
+      GatewayIntents.GUILDS
+    ],
+    compress: true,
+    autoReconnect: true,
+    guildSubscriptions: false
+  }
 })
 
-module.exports.voiceConnectionManager = new Collection(require('../classes/VoiceConnection'))
+module.exports.voiceConnectionManager = new Map()
 
 // patch event emitter to allow for our custom event structure
 module.exports._defaultEmit = module.exports.emit
@@ -42,15 +37,13 @@ module.exports.onAny = function onAny (func) {
   this._anyListeners.push(func)
 }
 
-module.exports.on('debug', x => logger.debug('ERIS', x))
+module.exports.on('debug', x => logger.debug('DETRITUS', x))
 module.exports.on('error', (e) => {
   // while the error event can be handled by our own structure like all other events
   // it wont be registered as a proper error handler, so the process can crash if we dont do it like this
-  if (!(e instanceof Error)) logger.error('ERIS', e.error)
-  else logger.error('ERIS', e)
+  if (!(e instanceof Error)) logger.error('DETRITUS', e.error)
+  else logger.error('DETRITUS', e)
 })
-
-module.exports.on('rawWS', () => {}) // forces eris to fire rawWS into onAny
 
 const events = require('./events')
 module.exports.onAny(ctx => {

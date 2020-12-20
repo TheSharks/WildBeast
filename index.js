@@ -14,5 +14,6 @@ process.on('uncaughtException', err => logger.error('NODE', err, true)); // we'r
 (async () => {
   if (process.env.WILDBEAST_K8S_AUTOSCALE) await require('./src/internal/k8s-scaling').init()
   await require('./src/components/knex').attemptMigrations()
-  await require('./src/components/client').connect()
-})().catch(e => logger.error('STARTUP', e, true))
+  await require('./src/components/client').run()
+  await require('./src/components/interactions').register()
+})().catch(e => logger.error('STARTUP', e))

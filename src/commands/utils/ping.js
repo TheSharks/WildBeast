@@ -1,9 +1,9 @@
 const Command = require('../../classes/Command')
+const { timestamp } = require('detritus-client').Utils.Snowflake
 
 module.exports = new Command(function (msg) {
-  const client = require('../../components/client')
-  const start = new Date(msg.timestamp)
-  this.safeSendMessage(msg.channel, 'Pong!').then(m => {
-    m.edit(`Pong! \`${Math.floor(new Date(m.timestamp) - start)}ms, ${client.shards.random().latency}ms\``) // whatever, latency is pretty consistent across shards anyway
+  const start = new Date(timestamp(msg.id))
+  this.interactions.callback(msg, 'Pong!').then(() => {
+    this.interactions.editCallback(msg, `Pong! \`${Math.floor(Date.now() - start)}ms\``)
   })
 })

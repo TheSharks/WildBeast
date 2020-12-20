@@ -5,7 +5,7 @@ module.exports = {
    * @return {Boolean}
    */
   fn: (ctx) => {
-    return ctx.author.id === ctx.channel.guild.ownerID
+    return ctx.author.id === ctx.channel.guild.ownerId
   },
   errorMessage: () => i18n.t('prereqs.errors.serverOwner')
 }

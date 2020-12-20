@@ -2,13 +2,13 @@ const { LavalinkVoiceConnectionManager } = require('@thesharks/tyr')
 
 module.exports = async () => {
   const client = require('../components/client')
-  logger.log('BOOT', `Done starting up, logged in as ${client.user.username}#${client.user.discriminator} (${client.user.id}), shard range: ${client.options.firstShardID}-${client.options.lastShardID} max ${client.options.maxShards}`)
+  logger.log('BOOT', `Done starting up, logged in as ${client.user.username}#${client.user.discriminator} (${client.user.id}), shard ${client.gateway.shardId} max ${client.gateway.shardCount}`)
 
   require('../components/services')
 
   if (!(client.voiceConnections instanceof LavalinkVoiceConnectionManager)) {
     client.voiceConnections = new LavalinkVoiceConnectionManager([], { // we're instantiating without nodes intentionally!
-      shards: client.options.maxShards,
+      shards: client.gateway.shardCount,
       userId: client.user.id
     })
 
@@ -22,20 +22,20 @@ module.exports = async () => {
         logger.log('LAVA', `Got ${result.length} nodes from the DNS server, connecting to them now...`)
 
         client.voiceConnections.remapNodes(result.map(x => { return { host: x, ...ctx } }), {
-          shards: client.options.maxShards,
+          shards: client.gateway.shardCount,
           userId: client.user.id
         }, true)
       } catch (e) {
         logger.error('LAVA', e)
         logger.warn('LAVA', 'Falling back to LAVALINK_NODES')
         client.voiceConnections.remapNodes(JSON.parse(process.env.LAVALINK_NODES), {
-          shards: client.options.maxShards,
+          shards: client.gateway.shardCount,
           userId: client.user.id
         }, true)
       }
     } else {
       client.voiceConnections.remapNodes(JSON.parse(process.env.LAVALINK_NODES), {
-        shards: client.options.maxShards,
+        shards: client.gateway.shardCount,
         userId: client.user.id
       }, true)
     }

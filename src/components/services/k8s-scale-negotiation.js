@@ -5,7 +5,7 @@ const stall = require('util').promisify(setTimeout)
 module.exports = {
   fn: async () => {
     const scale = await k8s.renegotiate()
-    if (client.options.maxShards !== scale) {
+    if (client.gateway.shardCount !== scale) {
       while (true) {
         const res = await k8s.determine(false)
         if (res !== scale) {

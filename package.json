@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@thesharks/wildbeast",
-  "version": "7.1.0",
+  "version": "8.0.0",
   "description": "Discord bot",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   },
   "homepage": "https://wildbeast.guide/",
   "devDependencies": {
-    "eslint": "^7.14.0",
+    "eslint": "^7.15.0",
     "eslint-config-standard": "^16.0.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
@@ -33,21 +33,21 @@
     "standard": "^16.0.3"
   },
   "dependencies": {
-    "@sentry/integrations": "^5.27.6",
-    "@sentry/node": "^5.28.0",
+    "@sentry/integrations": "^5.29.1",
+    "@sentry/node": "^5.29.1",
     "@thesharks/jagtag-js": "^1.1.0",
     "@thesharks/tyr": "^1.2.1",
     "chalk": "^4.1.0",
     "date-fns": "^2.16.1",
+    "detritus-client": "^0.12.0",
     "dotenv": "^8.2.0",
-    "eris": "^0.14.0",
     "eventemitter3": "^4.0.7",
     "glob": "^7.1.6",
-    "intl-messageformat": "^9.3.20",
+    "intl-messageformat": "^9.4.0",
     "jimp": "^0.16.1",
     "joi": "^17.3.0",
-    "knex": "^0.21.12",
-    "prom-client": "^12.0.0",
+    "knex": "^0.21.13",
+    "prom-client": "^13.0.0",
     "sqlite3": "^5.0.0",
     "superagent": "^6.1.0"
   }

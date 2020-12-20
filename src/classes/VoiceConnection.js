@@ -1,3 +1,4 @@
+const SA = require('superagent')
 module.exports = class VoiceConnection {
   constructor (opts) {
     this.id = opts.id
@@ -85,7 +86,6 @@ module.exports = class VoiceConnection {
   }
 
   async resolve (ctx) {
-    const SA = require('superagent')
     ctx = ctx.trim()
     try {
       const url = new URL(ctx)
@@ -97,7 +97,12 @@ module.exports = class VoiceConnection {
       return this._encoder.node.loadTracks(ctx)
     } catch (_) {
       if (process.env.INVIDIOUS_HOST) {
-        const resp = await SA.get(`${process.env.INVIDIOUS_HOST}/api/v1/search?q=${encodeURIComponent(ctx)}`)
+        const resp = await SA
+          .get(`${process.env.INVIDIOUS_HOST}/api/v1/search?q=${encodeURIComponent(ctx)}`)
+          .set({
+            'User-Agent': `WildBeast/${require('../../../package.json').version} (hey@dougley.com; +https://github.com/TheSharks/WildBeast)`,
+            Accept: 'application/json'
+          })
         return this._invidiousResolve(resp.body[0].videoId)
       } else return this._encoder.node.loadTracks(`scsearch:${ctx}`)
     }
@@ -131,8 +136,12 @@ module.exports = class VoiceConnection {
       else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
       return data.authorThumbnails[0].url
     }
-    const SA = require('superagent')
-    const info = await SA.get(`${invidiousHost}/api/v1/videos/${videoId}`)
+    const info = await SA
+      .get(`${invidiousHost}/api/v1/videos/${videoId}`)
+      .set({
+        'User-Agent': `WildBeast/${require('../../../package.json').version} (hey@dougley.com; +https://github.com/TheSharks/WildBeast)`,
+        Accept: 'application/json'
+      })
     let lavaresp
     if (info.body.liveNow) {
       // lavaresp = await this._encoder.node.loadTracks(`${info.body.hlsUrl}?local=true`)
@@ -177,8 +186,12 @@ module.exports = class VoiceConnection {
       else if (!data.authorThumbnails[0].url.startsWith('https:')) return `https:${data.authorThumbnails[0].url}`
       return data.authorThumbnails[0].url
     }
-    const SA = require('superagent')
-    const resp = await SA.get(`${invidiousHost}/api/v1/playlists/${id}?page=${page}`)
+    const resp = await SA
+      .get(`${invidiousHost}/api/v1/playlists/${id}?page=${page}`)
+      .set({
+        'User-Agent': `WildBeast/${require('../../../package.json').version} (hey@dougley.com; +https://github.com/TheSharks/WildBeast)`,
+        Accept: 'application/json'
+      })
     // const result = await Promise.allSettled(resp.body.videos.map(x => this._invidiousResolve(x.videoId)))
     // if (this.fresh) this.add((await this._invidiousResolve(resp.body.videos[0].videoId)).tracks[0])
     this.addMany(resp.body.videos.map(x => {
