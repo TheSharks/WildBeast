@@ -25,6 +25,7 @@ export class PlayerManager extends Map<string, Player> {
     if (destroy) {
       info('Destoying connections to all current Lavalink nodes', 'PlayerManager')
       if (this.nodes.length > 0) this.nodes.forEach(x => x.destroy())
+      this.nodes = []
     }
     const nodeAdresses = this.nodes.map(x => x.address)
     const newnodes = nodes.filter(x => !nodeAdresses.includes(`${x.host}:${x.port}`))
@@ -45,6 +46,7 @@ export class PlayerManager extends Map<string, Player> {
         x.on('disconnected', () => warn('Node disconnected!', `Lavalink node ${x.address}`))
         x.on('error', e => error(e, `Lavalink node ${x.address}`))
       })
+    if (this.nodes.length === 0) warn('Called connect, but got no nodes! Music related commands will not work', 'PlayerManager')
   }
 
   async join (guildID: string, channelID: string, shard: ShardClient): Promise<Player> {
