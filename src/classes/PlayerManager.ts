@@ -34,7 +34,7 @@ export class PlayerManager extends Map<string, Player> {
       debug(`Constructing a node with address ${x.host}:${x.port}`, 'PlayerManager')
       return new Node({
         shards: client.shardCount,
-        user: client.shards.first()!.userId as `${bigint}`, // todo: fix this typing
+        user: client.shards.first()!.userId,
         ...x
       })
     })
@@ -53,7 +53,7 @@ export class PlayerManager extends Map<string, Player> {
     debug(`Instatiating a new player for guild ${guildID} and channel ${channelID}`, 'PlayerManager')
     const player = this.get(guildID)
     if ((player?.connected) === true) {
-      player.switchChannel(channelID as `${bigint}`) // todo: fix this typing
+      player.switchChannel(channelID)
       return player
     }
     shard.gateway.voiceStateUpdate(guildID, channelID, {
@@ -89,7 +89,7 @@ export class PlayerManager extends Map<string, Player> {
         return
       }
       debug(`Got a voiceServerUpdate, creating a new player for guild ID ${data.guildId!}`, 'PlayerManager')
-      player = new Player(this.selectBestLavalinkNode(), data.guildId as `${bigint}`, (op, ctx) => data.shard.gateway.send(op, ctx))
+      player = new Player(this.selectBestLavalinkNode(), data.guildId!, (op, ctx) => data.shard.gateway.send(op, ctx))
       this.set(data.guildId!, player)
     }
     player.once('ready', () => {
@@ -99,7 +99,7 @@ export class PlayerManager extends Map<string, Player> {
       this.pending.delete(data.guildId!)
     })
     player.once('disconnected', ctx => {
-      debug(`The player for guild ${data.guildId!} disconnected prematurely! ${ctx.reason as string}`, 'Lavalink')
+      debug(`The player for guild ${data.guildId!} disconnected prematurely! ${ctx.reason}`, 'Lavalink')
       pending?.rej(new Error(ctx.reason))
       this.pending.delete(data.guildId!)
       this.delete(data.guildId!)
