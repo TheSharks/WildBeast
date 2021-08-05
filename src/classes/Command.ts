@@ -1,8 +1,8 @@
 import { ShardClient } from 'detritus-client'
-import { InteractionTypes } from 'detritus-client/lib/constants'
 import { Interaction, InteractionEditOrRespond, Message } from 'detritus-client/lib/structures'
 import { debug, error, info } from '../components/logger'
 import { Command as CmdInterface } from '../interfaces/Command'
+import { RequestTypes } from 'detritus-client-rest'
 
 export interface Command extends CmdInterface {}
 
@@ -16,23 +16,17 @@ export class Command {
   async processInteraction (interaction: Interaction, shard: ShardClient): Promise<void> {
     info(`Got an interaction tagetting ${this.name}`, 'Command')
     try {
-      await interaction.respond(5)
-      if (this.function.before?.apply(this, [interaction, shard]) ?? true) {
-        switch (interaction.type) {
-          case InteractionTypes.APPLICATION_COMMAND: {
-            if (this.function.run !== null) await this.function.run.call(this, interaction, shard)
-            break
-          }
-          case InteractionTypes.MESSAGE_COMPONENT: await this.function.components?.call(this, interaction, shard); break
-        }
-        this.function.success?.apply(this)
+      await interaction.respond(5) // ack
+      if (this.function.before?.call(this, interaction, shard) ?? true) {
+        await this.function.run.call(this, interaction, shard)
+        this.function.success?.call(this)
       }
     } catch (e) {
       error(e, 'Command')
-      this.function.failed?.apply(this, e)
+      this.function.failed?.call(this, e)
     } finally {
       debug(`Finished processing ${this.name}`, 'Command')
-      this.function.after?.apply(this)
+      this.function.after?.call(this)
     }
   }
 
@@ -45,11 +39,11 @@ export class Command {
     }) as Message
   }
 
-  toJSON (): object {
+  toJSON (): { name: string, description: string, options?: RequestTypes.CreateApplicationCommandOption[], defaultPermission: boolean } {
     return {
       name: this.name,
-      description: this.helpMessage,
-      options: this.function.options,
+      description: this.description,
+      options: this.options,
       defaultPermission: true
     }
   }

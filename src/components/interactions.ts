@@ -39,4 +39,22 @@ export async function update (): Promise<void> {
       }
     }
   }
+
+  // do we have to update current commands?
+  const toUpdate = current
+    .filter(x => cache.commands.has(x.id))
+    .filter(x =>
+      cache.commands.get(x.id)!.description !== x.description ||
+      cache.commands.get(x.id)!.toJSON().defaultPermission !== x.default_permission ||
+      JSON.stringify(cache.commands.get(x.id)!.options?.sort()) !== JSON.stringify(x.options?.sort())
+    )
+  if (toUpdate.length > 0) {
+    info(`Updating ${toUpdate.length} command(s)`, 'Interactions')
+    toUpdate.forEach(async x => {
+      const command = cache.commands.get(x.id)!
+      // const resp = await client.rest.editApplicationCommand(x.application_id, x.id, command) as APIApplicationCommand
+      const resp = await client.rest.editApplicationGuildCommand(x.application_id, '110462143152803840', x.id, command) as APIApplicationCommand
+      debug(`Successfully updated command ${resp.name} with ID ${resp.id}`, 'Interactions')
+    })
+  } else debug('No commands to update', 'Interactions')
 }

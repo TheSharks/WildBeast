@@ -6,8 +6,10 @@ import { Command } from '../../classes/Command'
 const command = new Command({
   name: 'ping',
   description: "Checks the bot's status.",
-  helpMessage: 'Check if the bot is working',
   nsfw: false,
+  options: [
+    { name: 'user', description: 'The user to ping.', type: 1 }
+  ],
   function: {
     run: async function (interaction: Interaction, shard: ShardClient) {
       const msg = await this.safeReply(interaction, {
