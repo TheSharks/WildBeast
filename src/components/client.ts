@@ -3,7 +3,7 @@ import { GatewayIntents } from 'detritus-client-socket/lib/constants'
 import { cache } from '../cache'
 
 interface ModClient extends ClusterClient {
-  _defaultEmit: Function
+  _defaultEmit: (this: ModClient, ...args: any[]) => boolean
 }
 
 const client = new ClusterClient(process.env.BOT_TOKEN ?? '', {
@@ -23,9 +23,9 @@ client._defaultEmit = client.hookedEmit
 client.hookedEmit = function hookedEmit () {
   if (cache.events.has(arguments[1])) {
     // eslint-disable-next-line no-void
-    void cache.events.get(arguments[1])!.call(this, arguments)
+    void cache.events.get(arguments[1])!.apply(arguments[0], Array.from(arguments).slice(2))
   }
-  return client._defaultEmit.apply(this, arguments)
+  return client._defaultEmit.apply(this, Array.from(arguments))
 }
 
 if ((process.env.WILDBEAST_SHARDING_START != null) && (process.env.WILDBEAST_SHARDING_END != null) && (process.env.WILDBEAST_SHARDING_TOTAL != null)) {

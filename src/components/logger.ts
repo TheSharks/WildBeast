@@ -105,5 +105,5 @@ export function trace (message: any, component: string = 'generic'): void {
     message,
     level: Sentry.Severity.Debug
   })
-  if (process.env.NODE_ENV === 'debug') log(chalk`{cyan trce}`, chalk`{cyan ${component}}`, inspect(message))
+  if (process.env.NODE_ENV === 'debug') log(chalk`{cyan trce}`, chalk`{cyan ${component}}`, inspect(message, { colors: true, depth: null }))
 }

@@ -1,33 +1,28 @@
 import { ShardClient } from 'detritus-client'
 import { Command as CommandClass } from '../classes/Command'
-import { ApplicationCommandOption, Interaction, Message } from 'detritus-client/lib/structures'
+import { ApplicationCommandOption, Interaction } from 'detritus-client/lib/structures'
 
 export interface SlashFunctionDefenition {
-  type: 'slash'
   enableDM?: boolean
   subcommandOf?: CommandClass
   options?: ApplicationCommandOption[]
-  before?: (interaction: Interaction, shard: ShardClient) => boolean
-  run?: (interaction: Interaction, shard: ShardClient) => Promise<void> | void
-  components?: (interaction: Interaction, shard: ShardClient) => Promise<void> | void
-  after?: () => void
-  success?: () => void
-  failed?: (e: typeof Error) => void
+  before?: (this: CommandClass, interaction: Interaction, shard: ShardClient) => boolean
+  run: ((this: CommandClass, interaction: Interaction, shard: ShardClient) => Promise<void> | void) | null
+  components?: (this: CommandClass, interaction: Interaction, shard: ShardClient) => Promise<void> | void
+  after?: (this: CommandClass) => void
+  success?: (this: CommandClass) => void
+  failed?: (this: CommandClass, e: typeof Error) => void
 }
 
-export interface StandardFunctionDefenition {
-  type: 'standard'
-  enableDM?: boolean
-  before?: (message: Message, shard: ShardClient) => boolean
-  run: (message: Message, shard: ShardClient) => Promise<void> | void
-  after?: () => void
-  success?: () => void
-  failed?: (e: typeof Error) => void
+export type CooldownTypes = 'global' | 'user' | 'channel' | 'guild'
+export type CooldownDirective = {
+  [k in CooldownTypes]?: number
 }
-
 export interface Command {
+  name: string
   helpMessage: string
   description: string
   nsfw: boolean
-  functions: [StandardFunctionDefenition] | [SlashFunctionDefenition] | [SlashFunctionDefenition, StandardFunctionDefenition]
+  function: SlashFunctionDefenition
+  cooldowns?: CooldownDirective
 }
