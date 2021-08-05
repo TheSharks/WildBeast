@@ -3,6 +3,7 @@ import client from '../components/client'
 import { info, warn, error, debug } from '../components/logger'
 import { PlayerEvent, PlayerUpdate } from '@lavaclient/types'
 import { GatewayClientEvents, ShardClient } from 'detritus-client'
+import { promises as dns } from 'dns'
 
 declare interface NodeConstructor {
   host: string
@@ -47,6 +48,18 @@ export class PlayerManager extends Map<string, Player> {
         x.on('error', e => error(e, `Lavalink node ${x.address}`))
       })
     if (this.nodes.length === 0) warn('Called connect, but got no nodes! Music related commands will not work', 'PlayerManager')
+  }
+
+  async autoDiscovery (data: NodeConstructor): Promise<void> {
+    info('Starting Lavalink auto discovery', 'PlayerManager')
+    const result = await dns.resolve4(data.host)
+    info(`Got ${result.length} nodes from the DNS server`, 'PlayerManager')
+    this.connect(result.map(x => {
+      return {
+        ...data,
+        host: x
+      }
+    }))
   }
 
   async join (guildID: string, channelID: string, shard: ShardClient): Promise<Player> {
