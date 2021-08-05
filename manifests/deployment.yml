@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wildbeast
+spec:
+  selector:
+    matchLabels:
+      app: wildbeast
+  template:
+    metadata:
+      labels:
+        app: wildbeast
+    spec:
+      containers:
+      - name: wildbeast
+        image: ghcr.io/thesharks/wildbeast:edge
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "600Mi"
+            cpu: "750m"
+          limits:
+            memory: "800Mi"
+            cpu: "1000m"
+        envFrom:
+          - secretRef:
+              name: bot-env
+          - secretRef:
+              name: sentry-env
+          - secretRef:
+              name: db-credentials
+          
