@@ -32,9 +32,10 @@
   "devDependencies": {
     "@lavaclient/types": "^2.0.8",
     "@types/glob": "^7.1.4",
-    "@types/node": "^16.3.3",
-    "@typescript-eslint/eslint-plugin": "^4.28.3",
-    "eslint": "^7.31.0",
+    "@types/node": "^16.4.12",
+    "@typescript-eslint/eslint-plugin": "^4.29.0",
+    "discord-api-types": "^0.22.0",
+    "eslint": "^7.32.0",
     "eslint-config-standard-with-typescript": "^20.0.0",
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-node": "^11.1.0",
@@ -43,16 +44,16 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "@sentry/integrations": "^6.9.0",
-    "@sentry/node": "^6.9.0",
+    "@sentry/integrations": "^6.10.0",
+    "@sentry/node": "^6.10.0",
     "@thesharks/jagtag-js": "^2.0.0",
     "@thesharks/tyr": "^2.1.2",
-    "chalk": "^4.1.1",
-    "date-fns": "^2.22.1",
+    "chalk": "^4.1.2",
+    "date-fns": "^2.23.0",
     "detritus-client": "^0.15.3",
     "dotenv": "^10.0.0",
     "glob": "^7.1.7",
-    "intl-messageformat": "^9.7.1",
+    "intl-messageformat": "^9.8.1",
     "jimp": "^0.16.1",
     "tslib": "^2.3.0"
   }
