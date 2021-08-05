@@ -2,6 +2,7 @@ import client from './client'
 import { cache } from '../cache'
 import { APIApplicationCommand } from 'discord-api-types/v9'
 import { debug, info, trace, warn } from './logger'
+import { deepStrictEqual } from 'assert'
 
 export async function update (): Promise<void> {
   // const current = await client.rest.fetchApplicationCommands(client.applicationId) as APIApplicationCommand[]
@@ -46,7 +47,7 @@ export async function update (): Promise<void> {
     .filter(x =>
       cache.commands.get(x.id)!.description !== x.description ||
       cache.commands.get(x.id)!.toJSON().defaultPermission !== x.default_permission ||
-      JSON.stringify(cache.commands.get(x.id)!.options?.sort()) !== JSON.stringify(x.options?.sort())
+      !equals(cache.commands.get(x.id)!.options, x.options)
     )
   if (toUpdate.length > 0) {
     info(`Updating ${toUpdate.length} command(s)`, 'Interactions')
@@ -57,4 +58,13 @@ export async function update (): Promise<void> {
       debug(`Successfully updated command ${resp.name} with ID ${resp.id}`, 'Interactions')
     })
   } else debug('No commands to update', 'Interactions')
+}
+
+const equals = (a: any, b: any): boolean => {
+  try {
+    deepStrictEqual(a, b)
+    return true
+  } catch (_) {
+    return false
+  }
 }
