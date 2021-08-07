@@ -10,8 +10,9 @@ import { update } from './components/interactions'
 info('Starting up...', 'Preflight');
 
 (async () => {
-  const revision = (await promisify(exec)('git rev-parse HEAD').catch(() => { return { stdout: 'REVISION_UNKNOWN' } })).stdout.toString().trim()
-  info(`Initialzing Sentry, using revision ${revision}`, 'Preflight')
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const revision = (await promisify(exec)('git rev-parse HEAD').catch(() => { return { stdout: require('../package.json').version } })).stdout.toString().trim()
+  info(`Initialzing Sentry, using revision ${revision as string}`, 'Preflight')
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     integrations: function (integrations) {

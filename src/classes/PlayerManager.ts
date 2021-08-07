@@ -4,6 +4,7 @@ import { info, warn, error, debug } from '../components/logger'
 import { PlayerEvent, PlayerUpdate } from '@lavaclient/types'
 import { GatewayClientEvents, ShardClient } from 'detritus-client'
 import { promises as dns } from 'dns'
+import { VoiceConnection } from './VoiceConnection'
 
 declare interface NodeConstructor {
   host: string
@@ -18,7 +19,7 @@ declare interface PendingConnection {
   timeout: NodeJS.Timeout | null
 }
 
-export class PlayerManager extends Map<string, Player> {
+export class PlayerManager extends Map<string, VoiceConnection> {
   nodes: Node[] = []
   pending: Map<string, PendingConnection> = new Map()
 
@@ -62,11 +63,11 @@ export class PlayerManager extends Map<string, Player> {
     }))
   }
 
-  async join (guildID: string, channelID: string, shard: ShardClient): Promise<Player> {
+  async join (guildID: string, channelID: string, shard: ShardClient): Promise<VoiceConnection> {
     debug(`Instatiating a new player for guild ${guildID} and channel ${channelID}`, 'PlayerManager')
     const player = this.get(guildID)
-    if ((player?.connected) === true) {
-      player.switchChannel(channelID)
+    if ((player?.encoder.connected) === true) {
+      player.encoder.switchChannel(channelID)
       return player
     }
     shard.gateway.voiceStateUpdate(guildID, channelID, {
@@ -88,42 +89,42 @@ export class PlayerManager extends Map<string, Player> {
   // we guarantee guildId since detritus has support for running as a user that can take DM calls, wildbeast will always assume its running a bot account
   voiceServerUpdate (data: GatewayClientEvents.ClusterEvent & GatewayClientEvents.VoiceServerUpdate): void {
     if (data.endpoint === null) {
-      return debug('Got a voiceServerUpdate with a null endpoint, discarding')
+      return debug('Got a voiceServerUpdate with a null endpoint, discarding', 'PlayerManager')
     }
     const pending = this.pending.get(data.guildId!)
     if (pending !== undefined) {
       clearTimeout(pending.timeout as NodeJS.Timeout)
       pending.timeout = null
     }
-    let player = this.get(data.guildId!)
+    const player = this.get(data.guildId!)
     if (player === undefined) {
       if (pending === undefined) {
         warn(`Got a voiceServerUpdate for a player we didn't instantiate? Guild ID ${data.guildId!}`, 'PlayerManager')
         return
       }
       debug(`Got a voiceServerUpdate, creating a new player for guild ID ${data.guildId!}`, 'PlayerManager')
-      player = new Player(this.selectBestLavalinkNode(), data.guildId!, (op, ctx) => data.shard.gateway.send(op, ctx))
-      this.set(data.guildId!, player)
+      const encoder = new Player(this.selectBestLavalinkNode(), data.guildId!, (op, ctx) => data.shard.gateway.send(op, ctx))
+      this.set(data.guildId!, new VoiceConnection(encoder))
     }
-    player.once('ready', () => {
-      player?.removeAllListeners('disconnected')
+    player?.encoder.once('ready', () => {
+      player?.encoder.removeAllListeners('disconnected')
       debug(`The player for guild ${data.guildId!} has reported it's ready`, 'Lavalink')
       pending?.res(player)
       this.pending.delete(data.guildId!)
     })
-    player.once('disconnected', ctx => {
+    player?.encoder.once('disconnected', ctx => {
       debug(`The player for guild ${data.guildId!} disconnected prematurely! ${ctx.reason}`, 'Lavalink')
       pending?.rej(new Error(ctx.reason))
       this.pending.delete(data.guildId!)
       this.delete(data.guildId!)
     })
-    player.on('warn', (x) => warn(x, 'Lavalink'))
+    player?.encoder.on('warn', (x) => warn(x, 'Lavalink'))
     const sessionID = data.shard.voiceStates.get(data.guildId!)?.get(client.shards.first()!.userId)?.sessionId
     if (sessionID === undefined) {
       error(`Got a voiceServerUpdate for guild ${data.guildId!}, but this shard is unaware of the voice state!`, 'PlayerManager')
       this.delete(data.guildId!)
     } else {
-      player.connect({
+      player?.encoder.connect({
         sessionId: sessionID,
         event: {
           token: data.token,
@@ -138,7 +139,7 @@ export class PlayerManager extends Map<string, Player> {
     debug(`Destroying player for guild ${guildID}`)
     const player = this.get(guildID)
     if (player == null) return
-    player.disconnect()
+    player.encoder.disconnect()
     this.delete(guildID)
   }
 
@@ -157,6 +158,6 @@ export class PlayerManager extends Map<string, Player> {
     // trace(msg, 'Lavalink message')
     const player = this.get(msg.guildId)
     if (player == null) return
-    player.onNodeMessage(msg)
+    player.encoder.onNodeMessage(msg)
   }
 }

@@ -1,5 +1,5 @@
 import { IntlMessageFormat } from 'intl-messageformat'
-import { error, info } from '../components/logger'
+import { error, fatal, info } from '../components/logger'
 import { cache } from '../cache'
 
 const defaultLang = process.env.WILDBEAST_LANGUAGE ?? 'en-EN'
@@ -7,7 +7,7 @@ const defaultLang = process.env.WILDBEAST_LANGUAGE ?? 'en-EN'
 info(`Cache contains ${Object.keys(cache.languages.size).length} languages, using default language ${defaultLang}`, 'i18n')
 
 if (!cache.languages.has(defaultLang)) {
-  error(`Default language ${defaultLang} not found in cache!`, 'i18n')
+  fatal(`Default language ${defaultLang} not found in cache!`, 'i18n')
 }
 
 export function t (key: string, args?: Record<string, any>, lang?: string): string {
