@@ -1,6 +1,6 @@
 import { ClientEvents } from 'detritus-client/lib/constants'
 import { cache } from '../cache'
-import { info } from '../components/logger'
+import { info } from '../internal/logger'
 
 cache.events.set(ClientEvents.GATEWAY_READY, async function () {
   info('Gateway ready', 'Gateway')

@@ -1,10 +1,8 @@
 import { IntlMessageFormat } from 'intl-messageformat'
-import { error, fatal, info } from '../components/logger'
+import { error, fatal } from './logger'
 import { cache } from '../cache'
 
 const defaultLang = process.env.WILDBEAST_LANGUAGE ?? 'en-EN'
-
-info(`Cache contains ${Object.keys(cache.languages.size).length} languages, using default language ${defaultLang}`, 'i18n')
 
 if (!cache.languages.has(defaultLang)) {
   fatal(`Default language ${defaultLang} not found in cache!`, 'i18n')

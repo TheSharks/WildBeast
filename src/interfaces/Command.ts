@@ -15,7 +15,7 @@ export type CooldownTypes = 'global' | 'user' | 'channel' | 'guild'
 export type CooldownDirective = {
   [k in CooldownTypes]?: number
 }
-export interface Command {
+export interface ICommand {
   name: string
   description: string
   nsfw?: boolean

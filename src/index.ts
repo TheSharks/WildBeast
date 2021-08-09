@@ -1,4 +1,4 @@
-import { fatal, info } from './components/logger'
+import { fatal, info } from './internal/logger'
 import client from './components/client'
 import * as Sentry from '@sentry/node'
 import { RewriteFrames } from '@sentry/integrations'
@@ -24,9 +24,9 @@ info('Starting up...', 'Preflight');
     },
     release: revision
   })
-  dirImport('@(dist|src)/events/**/*.[?jt]s')
-  dirImport('@(dist|src)/languages/**/*.[?jt]s')
-  dirImport('@(dist|src)/interactions/**/*.[?jt]s')
+  await dirImport('@(dist|src)/languages/**/*.[?jt]s')
+  await dirImport('@(dist|src)/events/**/*.[?jt]s')
+  await dirImport('@(dist|src)/interactions/**/*.[?jt]s')
   await client.run()
   await update()
 })().catch(e => fatal(e, 'Startup'))

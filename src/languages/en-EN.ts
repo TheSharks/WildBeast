@@ -15,7 +15,7 @@ cache.languages.set('en-EN',
     },
     commands: {
       common: {
-        failedToRun: 'This command failed to run, if you see my owner please give them this error code: `{errorcode}`',
+        failedToRun: 'Yikes! This command failed, please give my owner this error code: `{uuid}`',
         softFail: 'Something went wrong, try again later',
         attachmentNeeded: 'Please upload an image while using this command',
         notStreaming: "I'm not streaming in this server",

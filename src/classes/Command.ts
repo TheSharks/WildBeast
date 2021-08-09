@@ -1,15 +1,16 @@
 import { ShardClient } from 'detritus-client'
 import { Interaction, InteractionEditOrRespond, Message } from 'detritus-client/lib/structures'
-import { debug, error, info } from '../components/logger'
-import { Command as CmdInterface } from '../interfaces/Command'
+import { debug, error, info } from '../internal/logger'
+import { ICommand } from '../interfaces/Command'
 import { RequestTypes } from 'detritus-client-rest'
+import { t } from '../internal/i18n'
 
-export interface Command extends CmdInterface {}
+export interface Command extends ICommand {}
 
 export class Command {
   #timeouts: Map<string, number> = new Map()
 
-  constructor (ctx: CmdInterface) {
+  constructor (ctx: ICommand) {
     Object.assign(this, ctx)
   }
 
@@ -22,7 +23,10 @@ export class Command {
         this.function.success?.call(this)
       }
     } catch (e) {
-      error(e, 'Command')
+      const uuid = error(e, 'Command')
+      if (!interaction.responded) {
+        await interaction.editOrRespond(t('commands.common.failedToRun', { uuid }))
+      }
       this.function.failed?.call(this, e)
     } finally {
       debug(`Finished processing ${this.name}`, 'Command')

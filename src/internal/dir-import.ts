@@ -1,7 +1,6 @@
 import { sync } from 'glob'
-import { basename, extname } from 'path'
 
-export default function (pattern: string): Record<string, any> {
+export default async function (pattern: string): Promise<void> {
   let files = sync(pattern, {
     absolute: true
   })
@@ -11,10 +10,7 @@ export default function (pattern: string): Record<string, any> {
   } else {
     files = files.filter(x => x.endsWith('.js'))
   }
-  let returnval = {}
-  files.forEach(x => {
-    const base = basename(x, extname(x))
-    returnval = Object.assign(returnval, { [base]: require(x) })
+  files.forEach(async x => {
+    await import(x)
   })
-  return returnval
 }

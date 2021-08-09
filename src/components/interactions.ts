@@ -1,7 +1,7 @@
 import client from './client'
 import { cache } from '../cache'
 import { APIApplicationCommand } from 'discord-api-types/v9'
-import { debug, info, trace, warn } from './logger'
+import { debug, info, trace, warn } from '../internal/logger'
 import { deepStrictEqual } from 'assert'
 
 export async function update (): Promise<void> {

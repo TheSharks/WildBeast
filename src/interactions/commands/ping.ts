@@ -2,6 +2,7 @@ import { ShardClient } from 'detritus-client'
 import { Interaction } from 'detritus-client/lib/structures'
 import { cache } from '../../cache'
 import { Command } from '../../classes/Command'
+import PingButton from '../components/ping_test'
 
 const command = new Command({
   name: 'ping',
@@ -22,12 +23,7 @@ const command = new Command({
           {
             type: 1,
             components: [
-              {
-                type: 2,
-                label: 'Click me!',
-                style: 1,
-                customId: 'ping_test'
-              }
+              PingButton.toJSON()
             ]
           }
         ]

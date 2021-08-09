@@ -1,6 +1,6 @@
 import { Player, Node } from '@thesharks/tyr'
 import client from '../components/client'
-import { info, warn, error, debug } from '../components/logger'
+import { info, warn, error, debug } from '../internal/logger'
 import { PlayerEvent, PlayerUpdate } from '@lavaclient/types'
 import { GatewayClientEvents, ShardClient } from 'detritus-client'
 import { promises as dns } from 'dns'
