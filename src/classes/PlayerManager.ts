@@ -96,8 +96,7 @@ export class PlayerManager extends Map<string, VoiceConnection> {
       clearTimeout(pending.timeout as NodeJS.Timeout)
       pending.timeout = null
     }
-    const player = this.get(data.guildId!)
-    if (player === undefined) {
+    if (this.get(data.guildId!) === undefined) {
       if (pending === undefined) {
         warn(`Got a voiceServerUpdate for a player we didn't instantiate? Guild ID ${data.guildId!}`, 'PlayerManager')
         return
@@ -106,6 +105,7 @@ export class PlayerManager extends Map<string, VoiceConnection> {
       const encoder = new Player(this.selectBestLavalinkNode(), data.guildId!, (op, ctx) => data.shard.gateway.send(op, ctx))
       this.set(data.guildId!, new VoiceConnection(encoder))
     }
+    const player = this.get(data.guildId!)
     player?.encoder.once('ready', () => {
       player?.encoder.removeAllListeners('disconnected')
       debug(`The player for guild ${data.guildId!} has reported it's ready`, 'Lavalink')

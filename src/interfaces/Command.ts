@@ -4,7 +4,7 @@ import { Interaction } from 'detritus-client/lib/structures'
 import { RequestTypes } from 'detritus-client-rest'
 
 export interface SlashFunctionDefenition {
-  before?: (this: CommandClass, interaction: Interaction, shard: ShardClient) => boolean
+  before?: (this: CommandClass, interaction: Interaction, shard: ShardClient) => Promise<boolean> | boolean
   run: (this: CommandClass, interaction: Interaction, shard: ShardClient) => Promise<void> | void
   after?: (this: CommandClass) => void
   success?: (this: CommandClass) => void

@@ -18,7 +18,7 @@ export class Command {
     info(`Got an interaction tagetting ${this.name}`, 'Command')
     try {
       await interaction.respond(5) // ack
-      if (this.function.before?.call(this, interaction, shard) ?? true) {
+      if (await this.function.before?.call(this, interaction, shard) ?? true) {
         await this.function.run.call(this, interaction, shard)
         this.function.success?.call(this)
       }

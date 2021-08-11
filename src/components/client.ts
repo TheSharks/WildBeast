@@ -1,6 +1,8 @@
 import { ClusterClient } from 'detritus-client'
 import { GatewayIntents } from 'detritus-client-socket/lib/constants'
+import { ClientEvents } from 'detritus-client/lib/constants'
 import { cache } from '../cache'
+import { trace } from '../internal/logger'
 
 interface ModClient extends ClusterClient {
   _defaultEmit: (this: ModClient, ...args: any[]) => boolean
@@ -20,10 +22,12 @@ const client = new ClusterClient(process.env.BOT_TOKEN ?? '', {
 }) as ModClient
 
 client._defaultEmit = client.hookedEmit
-client.hookedEmit = function hookedEmit () {
-  if (cache.events.has(arguments[1])) {
+client.hookedEmit = function hookedEmit (shard, name: ClientEvents, data) {
+  if (cache.events.has(name)) {
+    const event = Object.assign({}, data, { shard })
+    trace(data, name)
     // eslint-disable-next-line no-void
-    void cache.events.get(arguments[1])!.apply(arguments[0], Array.from(arguments).slice(2))
+    void cache.events.get(name)!.apply(shard, [event])
   }
   return client._defaultEmit.apply(this, Array.from(arguments))
 }
