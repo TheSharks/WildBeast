@@ -2,6 +2,7 @@ import { ShardClient } from 'detritus-client'
 import { RequestTypes } from 'detritus-client-rest'
 import { Interaction } from 'detritus-client/lib/structures'
 import { ComponentType } from 'discord-api-types'
+import { ComponentBase } from './ComponentBase'
 
 export interface ISelectMenu {
   id: string
@@ -14,8 +15,9 @@ export interface ISelectMenu {
 
 export interface SelectMenuComponent extends ISelectMenu { }
 
-export class SelectMenuComponent {
+export class SelectMenuComponent extends ComponentBase {
   constructor (data: ISelectMenu) {
+    super(data)
     Object.assign(this, data)
   }
 

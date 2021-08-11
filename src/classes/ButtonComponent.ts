@@ -2,6 +2,7 @@ import { ShardClient } from 'detritus-client'
 import { Interaction } from 'detritus-client/lib/structures'
 import { APIButtonComponentWithCustomId, ComponentType } from 'discord-api-types'
 import { RequestTypes } from 'detritus-client-rest'
+import { ComponentBase } from './ComponentBase'
 
 interface IButtonComponent {
   // discord-api-types declares emoji.name as optional but its not >:(
@@ -12,8 +13,9 @@ interface IButtonComponent {
 
 export interface ButtonComponent extends IButtonComponent { }
 
-export class ButtonComponent {
+export class ButtonComponent extends ComponentBase {
   constructor (data: IButtonComponent) {
+    super(data)
     Object.assign(this, data)
   }
 

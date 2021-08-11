@@ -4,11 +4,10 @@ import { cache } from '../cache'
 
 const defaultLang = process.env.WILDBEAST_LANGUAGE ?? 'en-EN'
 
-if (!cache.languages.has(defaultLang)) {
-  fatal(`Default language ${defaultLang} not found in cache!`, 'i18n')
-}
-
 export function t (key: string, args?: Record<string, any>, lang?: string): string {
+  if (!cache.languages.has(defaultLang)) {
+    fatal(`Default language ${defaultLang} not found in cache!`, 'i18n')
+  }
   try {
     const msg = key.split('.').reduce((o, i) => o?.[i], lang !== undefined ? cache.languages.get(lang) : cache.languages.get(defaultLang)) as any
     if (!(typeof msg === 'string')) error(`Translation key ${key} not found in cache!`, 'i18n')

@@ -32,7 +32,8 @@ export async function update (): Promise<void> {
       const command = next.value
       if (!current.some(x => x.name === command.name)) {
         info(`Registering new command ${command.name}`, 'Interactions')
-        const resp = await client.rest.createApplicationCommand(client.applicationId, command) as APIApplicationCommand
+        // const resp = await client.rest.createApplicationCommand(client.applicationId, command) as APIApplicationCommand
+        const resp = await client.rest.createApplicationGuildCommand(client.applicationId, '110462143152803840', command) as APIApplicationCommand
         debug(`Successfully registered new command ${resp.name} with ID ${resp.id}`, 'Interactions')
         const cmd = cache.commands.get(resp.name)
         cache.commands.set(resp.id, cmd!)
@@ -54,7 +55,7 @@ export async function update (): Promise<void> {
     toUpdate.forEach(async x => {
       const command = cache.commands.get(x.id)!
       // const resp = await client.rest.editApplicationCommand(x.application_id, x.id, command) as APIApplicationCommand
-      const resp = await client.rest.editApplicationGuildCommand(x.application_id, '110462143152803840', x.id, command) as APIApplicationCommand
+      const resp = await client.rest.editApplicationGuildCommand(x.application_id, '110462143152803840', x.id, command.toJSON()) as APIApplicationCommand
       debug(`Successfully updated command ${resp.name} with ID ${resp.id}`, 'Interactions')
     })
   } else debug('No commands to update', 'Interactions')
