@@ -1,26 +1,11 @@
-import { PlayerEvent, TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebSocketClosedEvent } from '@lavaclient/types'
+import { PlayerEvent, TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebSocketClosedEvent, Track } from '@lavaclient/types'
 import { Player } from '@thesharks/tyr'
 import { Channel } from 'detritus-client/lib/structures'
+import { cache } from '../cache'
 import { t } from '../internal/i18n'
 
-interface PlaylistItem {
-  track: string
-  info: {
-    title: string
-    author: string
-    length: number
-    uri: string
-    identifier: string
-    isSeekable: boolean
-    isStream: boolean
-    position: number
-    // only available for i7s resolved tracks
-    image?: string
-    authorURL?: string
-    authorImage?: string
-  }
-  i7s: {
-    otf: boolean
+interface PlaylistItem extends Track {
+  extras: {
   }
 }
 
@@ -61,11 +46,8 @@ export class VoiceConnection {
             url: this.nowPlaying.info.uri,
             title: this.nowPlaying.info.title,
             author: {
-              name: this.nowPlaying.info.author,
-              ...(this.nowPlaying.info.authorImage !== undefined ? { iconUrl: this.nowPlaying.info.authorImage } : {}),
-              ...(this.nowPlaying.info.authorURL !== undefined ? { url: this.nowPlaying.info.authorURL } : {})
-            },
-            ...(this.nowPlaying.info.image !== undefined ? { thumbnail: { url: this.nowPlaying.info.image } } : {})
+              name: this.nowPlaying.info.author
+            }
           }
         })
       }
@@ -86,16 +68,13 @@ export class VoiceConnection {
 
   destroy (): void {
     this.encoder.disconnect()
+    cache.lavalink.delete(this.encoder.id)
   }
 
   async next (msg?: PlayerEvent): Promise<PlaylistItem | undefined> {
     if (this.playlist.length > 0) {
-      const { track, i7s } = this.playlist[0]
-      if (i7s.otf) {
-        // todo
-      } else {
-        this.encoder.play(track)
-      }
+      const { track } = this.playlist[0]
+      this.encoder.play(track)
       return this.playlist[0]
     }
   }

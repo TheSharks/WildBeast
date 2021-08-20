@@ -3,9 +3,9 @@ import { Interaction, InteractionDataApplicationCommand } from 'detritus-client/
 import { RequestTypes } from 'detritus-client-rest'
 import { cache } from '../../cache'
 import { Command } from '../../classes/Command'
-import { search } from '../../components/invidious'
 import VoiceSearchMenu from '../components/voice_search_menu'
 import CancelButton from '../components/cancel_button'
+import { LoadType } from '@lavaclient/types'
 
 const command = new Command({
   name: 'voice',
@@ -35,24 +35,45 @@ const command = new Command({
       switch (fullName) {
         case 'voice search': {
           const value = (interaction.data as InteractionDataApplicationCommand).options!.get('search')!.options!.get('query')!.value
-          const data = await search(value as string)
-          const values: RequestTypes.CreateChannelMessageComponentSelectMenuOption[] = data
-            .filter(x => x.type === 'video')
-            .slice(0, 5)
-            .map(x => { return { label: x.title, value: x.videoId, description: x.author, emoji: { name: '📺' } } })
-          const menu = Object.assign(VoiceSearchMenu, { data: values })
-          await this.safeReply(interaction, {
-            content: 'done',
-            components: [
-              { type: 1, components: [menu.toJSON()] },
-              { type: 1, components: [CancelButton.toJSON()] }
-            ]
-          })
+          const encoder = cache.lavalink.get(interaction.guild!.id)
+          // const data = await search(value as string)
+          const data = await encoder?.encoder.node.loadTracks(`ytsearch:${value as string}`)
+          if (data?.loadType === LoadType.SearchResult) {
+            const values: RequestTypes.CreateChannelMessageComponentSelectMenuOption[] = data.tracks
+              .slice(0, 5)
+              .map(x => { return { label: x.info.title, value: x.info.identifier, description: x.info.author, emoji: { name: 'youtube', id: '314349922885566475' } } })
+            const menu = Object.assign(VoiceSearchMenu, { data: values })
+            await this.safeReply(interaction, {
+              content: 'done',
+              components: [
+                { type: 1, components: [menu.toJSON()] },
+                { type: 1, components: [CancelButton.toJSON()] }
+              ]
+            })
+          } else {
+            await this.safeReply(interaction, { content: 'no results' })
+          }
           break
         }
         case 'voice stream start': {
-          await cache.lavalink.join('110462143152803840', '302538492393816086', shard)
+          const channel = shard.voiceStates.get(interaction.guildId!)?.get(interaction.userId)?.channelId
+          if (channel === undefined) {
+            await this.safeReply(interaction, 'You are not connected to a voice channel.')
+            break
+          }
+          await cache.lavalink.join(interaction.guildId!, channel!, shard)
           await this.safeReply(interaction, 'Done')
+          break
+        }
+        case 'voice stream stop': {
+          const channel = cache.lavalink.get(interaction.guildId!)
+          if (channel === undefined) {
+            await this.safeReply(interaction, "I'm not connected to a voice channel.")
+            break
+          }
+          channel.destroy()
+          await this.safeReply(interaction, 'Done')
+          break
         }
       }
     }

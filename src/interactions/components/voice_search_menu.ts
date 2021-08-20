@@ -1,7 +1,7 @@
 import { Interaction, InteractionDataComponent } from 'detritus-client/lib/structures'
 import { cache } from '../../cache'
 import { SelectMenuComponent } from '../../classes/SelectMenuComponent'
-import { authorImg, getVideo } from '../../components/invidious'
+import fetch from 'node-fetch'
 
 const interaction = new SelectMenuComponent({
   id: 'voice_search_menu',
@@ -11,24 +11,13 @@ const interaction = new SelectMenuComponent({
     await payload.respond(6)
     const player = cache.lavalink.get(payload.guildId!)!
     const selected = (payload.data as InteractionDataComponent).values![0]
-    const data = await getVideo(selected)
-    const track = await player.encoder.node.loadTracks(data.formatStreams[0].url)
-    player.playlist.push(Object.assign(track.tracks[0], {
-      info: {
-        ...track.tracks[0].info,
-        author: data.author,
-        title: data.title,
-        uri: `https://youtu.be/${data.videoId}`,
-        image: `https://i.ytimg.com/vi/${data.videoId}/hqdefault.jpg`,
-        authorImage: authorImg(data),
-        authorURL: `https://youtube.com${data.authorUrl}`
-      },
-      i7s: { otf: false }
-    }))
+    const data = await player.encoder.node.loadTracks(`https://youtu.be/${selected}`)
+    const extras = await (await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${selected}&key=${process.env.YOUTUBE_API_KEY!}`)).json()
+    player.playlist.push(Object.assign(data.tracks[0], { extras }))
     player.textChannel = payload.channel!
     await player.next()
     await payload.editOrRespond({
-      content: data.title,
+      content: data.tracks[0].info.title,
       components: []
     })
   }
