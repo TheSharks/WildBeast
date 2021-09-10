@@ -5,7 +5,6 @@ import { RewriteFrames } from '@sentry/integrations'
 import { promisify } from 'util'
 import { exec } from 'child_process'
 import dirImport from './internal/dir-import'
-import { update } from './components/interactions'
 
 info('Starting up...', 'Preflight');
 
@@ -26,7 +25,7 @@ info('Starting up...', 'Preflight');
   })
   await dirImport('@(dist|src)/languages/**/*.[?jt]s')
   await dirImport('@(dist|src)/events/**/*.[?jt]s')
-  await dirImport('@(dist|src)/interactions/**/*.[?jt]s')
+  await client.addMultipleIn('./interactions')
   await client.run()
-  await update()
+  await client.checkAndUploadCommands()
 })().catch(e => fatal(e, 'Startup'))

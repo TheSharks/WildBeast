@@ -1,11 +1,12 @@
 import { sync } from 'glob'
 
+const IS_TS_NODE = Symbol.for('ts-node.register.instance') in process
+
 export default async function (pattern: string): Promise<void> {
   let files = sync(pattern, {
     absolute: true
   })
-  // @ts-expect-error
-  if (process[Symbol.for('ts-node.register.instance')] !== undefined) {
+  if (IS_TS_NODE) {
     files = files.filter(x => x.endsWith('.ts'))
   } else {
     files = files.filter(x => x.endsWith('.js'))
