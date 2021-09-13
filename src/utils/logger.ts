@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { nl } from 'date-fns/locale' // 24h formatting, this is easier
 import { inspect } from 'util'
 import * as Sentry from '@sentry/node'
+import { CaptureContext } from '@sentry/types'
 
 const log = (type: string, ctx: string, msg: any): void => {
   console.log(chalk`{gray ${format(new Date(), 'pp', { locale: nl })}} [${type}] ${ctx}: ${msg}`)
@@ -45,14 +46,21 @@ export function info (message: any, component: string = 'generic'): void {
  * Errors get sent to Sentry (when available) and to the console
  * @param _err The error
  * @param component The component this message originates from
+ * @param captureContext Optional, extra context data to send to Sentry
  * @returns The corresponding Sentry UID
  */
-export function error (_err: Error | string, component: string = 'generic'): string {
+export function error (_err: Error | string, component: string = 'generic', captureContext?: CaptureContext): string {
   let uuid
   if (!(_err instanceof Error)) {
-    uuid = Sentry.captureMessage(_err)
+    uuid = Sentry.captureMessage(_err, {
+      level: Sentry.Severity.Error,
+      ...captureContext
+    })
   } else {
-    uuid = Sentry.captureException(_err)
+    uuid = Sentry.captureException(_err, {
+      level: Sentry.Severity.Error,
+      ...captureContext
+    })
   }
   log(chalk`{red erro}`, chalk`{red ${component}}`, _err instanceof Error ? _err.stack : _err)
   return uuid
@@ -65,12 +73,19 @@ export function error (_err: Error | string, component: string = 'generic'): str
  * calling this method **will** end the process when Sentry has finished processing
  * @param _err The error
  * @param component The component this message originates from
+ * @param captureContext Optional, extra context data to send to Sentry
  */
-export function fatal (_err: Error | string, component: string = 'generic'): void {
+export function fatal (_err: Error | string, component: string = 'generic', captureContext?: CaptureContext): void {
   if (!(_err instanceof Error)) {
-    Sentry.captureMessage(_err)
+    Sentry.captureMessage(_err, {
+      level: Sentry.Severity.Fatal,
+      ...captureContext
+    })
   } else {
-    Sentry.captureException(_err)
+    Sentry.captureException(_err, {
+      level: Sentry.Severity.Fatal,
+      ...captureContext
+    })
   }
   log(chalk`{bgRed fatl}`, chalk`{bgRed ${component}}`, _err instanceof Error ? _err.stack : _err)
   Sentry.close(10000).then(() => process.exit(1)).catch(() => process.exit(1))

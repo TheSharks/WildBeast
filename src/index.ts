@@ -1,10 +1,10 @@
-import { fatal, info } from './internal/logger'
-import client from './components/client'
+import { fatal, info } from './utils/logger'
+import client from './structures/client'
 import * as Sentry from '@sentry/node'
 import { RewriteFrames } from '@sentry/integrations'
 import { promisify } from 'util'
 import { exec } from 'child_process'
-import dirImport from './internal/dir-import'
+import dirImport from './utils/dir-import'
 
 info('Starting up...', 'Preflight');
 

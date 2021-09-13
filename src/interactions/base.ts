@@ -1,6 +1,6 @@
 import { Constants, Interaction, Structures } from 'detritus-client'
-import { t } from '../internal/i18n'
-import { error } from '../internal/logger'
+import { t } from '../utils/i18n'
+import { error } from '../utils/logger'
 const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags } = Constants
 
 export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommand<ParsedArgsFinished> {
@@ -12,10 +12,34 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
   }
 
   async onRunError (context: Interaction.InteractionContext, args: ParsedArgsFinished, err: any): Promise<void> {
-    const uuid = error(err, context.name)
+    const uuid = error(err, context.name, {
+      user: {
+        id: context.user.id,
+        username: context.user.username
+      },
+      contexts: {
+        guild: {
+          id: context.guildId,
+          name: context.guild?.name
+        },
+        args: { args },
+        command: {
+          name: context.command.name
+        }
+      }
+    })
     return await context.editOrRespond({
       content: t('commands.common.failedToRun', { uuid }),
       flags: MessageFlags.EPHEMERAL
+    })
+  }
+
+  async safeReply (context: Interaction.InteractionContext, message: string | Structures.InteractionEditOrRespond): Promise<any> {
+    return await context.editOrRespond({
+      ...((typeof message === 'string') ? { content: message } : message),
+      allowedMentions: {
+        parse: []
+      }
     })
   }
 }

@@ -1,6 +1,6 @@
-import { cache } from '../cache'
+import { languages } from '../cache'
 
-cache.languages.set('en-EN',
+languages.set('en-EN',
   {
     i18n: {
       disclaimer: 'Please note: translations are provided by the community, and we cannot guarantee their correctness, completeness, or quality',
@@ -9,8 +9,7 @@ cache.languages.set('en-EN',
     prereqs: {
       errors: {
         masterUser: 'This command is only for the bot owner',
-        serverOwner: 'You must be the server owner to run this command',
-        musicNoDJ: "You're currently not added as a DJ, ask the one that started streaming to add you with `{command}`"
+        serverOwner: 'You must be the server owner to run this command'
       }
     },
     commands: {
@@ -18,7 +17,6 @@ cache.languages.set('en-EN',
         failedToRun: 'Yikes! This command failed, please give my owner this error code: `{uuid}`',
         softFail: 'Something went wrong, try again later',
         attachmentNeeded: 'Please upload an image while using this command',
-        notStreaming: "I'm not streaming in this server",
         nsfwDisabled: 'This channel needs to be marked as NSFW before this command can be used',
         cooldown: 'This command is on cooldown, try again later',
         dmDisabled: 'This command cannot be used in DMs',
@@ -26,69 +24,32 @@ cache.languages.set('en-EN',
         permsMissingUser: "You're missing the following permissions: `{perms}`",
         working: 'Working on it...'
       },
-      ffrw: {
-        notPlaying: 'Not currently playing anything',
-        noTime: 'Please enter a time',
-        invalidTime: 'The time you entered was invalid',
-        cantSeekTrack: "The track that's currently playing cannot be seeked"
-      },
-      skip: {
-        queueEmpty: "There's nothing to play after this, add something to play after this if you want to skip"
-      },
-      shuffle: {
-        done: 'The playlist has been shuffled'
-      },
-      volume: {
-        outOfRange: 'Volume must be a number between 0 and 100',
-        done: 'Volume adjusted'
-      },
       dice: {
         resultMany: 'You rolled **{result}**\n```{explaination}```',
         resultSingle: 'You rolled **{result}**',
         resultTooLarge: '[result too large to show explaination]',
         badSyntax: 'Please specify how many dice you want to roll like this: `4d6`, `2d12`'
       },
-      remove: {
-        notANumber: 'Your argument must be a number',
-        outOfRange: 'The playlist only has {songs} songs',
-        done: 'Removed this song from the playlist'
-      },
-      play: {
-        playlistAdded: 'Playlist {name} has been added',
-        noResults: 'No search results found',
-        ivPlaylist: 'Your playlist has finished loading',
-        trackAdded: 'Your track has been added',
-        cantPlay: "I'm unable to play that track: `{message}`",
-        cantPlayUnknown: "I'm unable to play that track for unknown reasons",
-        addFailed: 'Something went wrong while adding this track, try again later'
-      },
       booru: {
         noResults: 'No results found for `{query}`',
         badFormatting: 'Your formatting appears to be wrong',
         siteNotSupported: "I don't have support for {site}, currently I support {supported}"
       },
-      joinvoice: {
-        errors: {
-          notConnected: 'Please join a voice channel and try this command again',
-          alreadyStreaming: "I'm already streaming in this server",
-          cantConnect: "I can't connect to the channel you're currently in",
-          failed: 'Failed to join voice channel, try again?'
-        }
-      },
       info: {
         guilds: 'Guilds on this shard',
         uptime: 'Uptime',
-        shard: 'Current shard'
+        shard: 'Current shard',
+        version: 'Version',
+        owner: 'Owner',
+        node: 'Node.js version',
+        ram: 'Memory usage',
+        os: 'Operating system',
+        cpu: 'CPU usage',
+        poweredBy: 'Powered by WildBeast'
       },
       invite: {
         done: 'Use the following link to invite me: {invite}',
         private: 'This bot is marked as private, please ask {owner} to invite me to your server'
-      },
-      newdj: {
-        errors: {
-          noMentions: 'Please mention who you want to add as a DJ'
-        },
-        done: 'Added {new, plural, =0 {no new DJs} =1 {one new DJ} other {# new DJs}}, there {total, plural, =0 {are now no DJs} =1 {is now one DJ} other {are now # DJs}}'
       },
       leetspeak: {
         errors: {
@@ -117,11 +78,6 @@ cache.languages.set('en-EN',
         game: 'Game',
         viewers: 'Viewers',
         views: 'Total Views'
-      },
-      queue: {
-        title: 'Current playlist',
-        count: 'There {songs, plural, =0 {are no songs} =1 {is one song} other {are # songs}} queued',
-        empty: 'There are currently no songs queued, queue something with `{command}`'
       },
       kick: {
         noMentions: "Please provide IDs or mention users you'd like to kick",
@@ -195,15 +151,6 @@ cache.languages.set('en-EN',
           'Possibly',
           'There is a small chance'
         ]
-      }
-    },
-    voice: {
-      events: {
-        queueEmpty: 'The queue is empty, disconnecting',
-        trackBroke: "The track I'm trying to play broke: `{error}`",
-        trackStuck: 'Seems the track got stuck, automatically skipping it...',
-        nowPlaying: 'Now playing:',
-        disconnected: 'I got disconnected from the voice channel, ending playback'
       }
     }
   }

@@ -1,7 +1,7 @@
 import { ClientEvents } from 'detritus-client/lib/constants'
 import { InteractionDataApplicationCommand, InteractionDataComponent } from 'detritus-client/lib/structures'
-import client from '../components/client'
-import { info } from '../internal/logger'
+import client from '../structures/client'
+import { info } from '../utils/logger'
 import * as Sentry from '@sentry/node'
 
 client.client.on(ClientEvents.INTERACTION_CREATE, async function (payload) {
