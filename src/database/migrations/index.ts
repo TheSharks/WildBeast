@@ -33,11 +33,6 @@ export async function create (filename: string = 'unnamed'): Promise<string> {
   return name
 }
 
-export async function createCLI (): Promise<void> {
-  const val = await create(process.argv[1])
-  info(`Created migration ${val}`, 'Migrations')
-}
-
 export async function up (): Promise<string[]> {
   const migrations = await check()
   for (const file of migrations) {
@@ -75,7 +70,7 @@ export async function down (): Promise<string> {
   return file
 }
 
-export async function CLITrap (fun: string): Promise<void> {
+export async function cli (fun: string): Promise<void> {
   try {
     switch (fun) {
       case 'up':
@@ -84,6 +79,11 @@ export async function CLITrap (fun: string): Promise<void> {
       case 'down':
         await down()
         break
+      case 'create': {
+        const val = await create(process.argv[1])
+        info(`Created migration ${val}`, 'Migrations')
+        break
+      }
       default:
         throw new Error(`Unknown function ${fun}`)
     }

@@ -1,5 +1,5 @@
 import { Interaction } from 'detritus-client'
-import { t, unsafeTraverse } from '../../utils/i18n'
+import { t, traverse } from '../../utils/i18n'
 
 import { BaseSlashCommand } from '../base'
 
@@ -8,7 +8,7 @@ export default class EightBallCommand extends BaseSlashCommand {
   name = '8ball'
 
   async run (context: Interaction.InteractionContext): Promise<void> {
-    const length = unsafeTraverse('commands.8ball.choices.length')
+    const length = traverse('commands.8ball.choices.length')
     await this.safeReply(context, t('commands.8ball.prefix', { response: t(`commands.8ball.choices.${Math.floor(Math.random() * length)}`) }))
   }
 }

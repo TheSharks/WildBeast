@@ -9,7 +9,7 @@ export function t (key: string, args?: Record<string, any>, lang?: string): stri
     fatal(`Default language ${defaultLang} not found in cache!`, 'i18n')
   }
   try {
-    const msg = unsafeTraverse(key, lang)
+    const msg = traverse(key, lang)
     if (!(typeof msg === 'string')) error(`Translation key ${key} not found in cache!`, 'i18n')
     return new IntlMessageFormat(typeof msg === 'string' ? msg : '[TRANSLATION FAILED]').format(args)
   } catch (e) {
@@ -19,6 +19,6 @@ export function t (key: string, args?: Record<string, any>, lang?: string): stri
   }
 }
 
-export function unsafeTraverse (key: string, lang?: string): any {
+export function traverse (key: string, lang?: string): any {
   return key.split('.').reduce((o, i) => o?.[i], lang !== undefined ? languages.get(lang) : languages.get(defaultLang)) as any
 }
