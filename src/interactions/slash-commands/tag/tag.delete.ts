@@ -7,12 +7,11 @@ import { BaseCommandOption } from '../../base'
 
 export interface CommandArgs {
   name: string
-  content: string
 }
 
-export class EditTagCommand extends BaseCommandOption {
-  name = 'edit'
-  description = 'Edit a tag you own'
+export class DeleteTagCommand extends BaseCommandOption {
+  name = 'delete'
+  description = 'Delete a tag you own'
   disableDm = true
 
   constructor () {
@@ -30,11 +29,6 @@ export class EditTagCommand extends BaseCommandOption {
             const choices = hits.map((value) => ({ name: value.name, value: value.name }))
             await context.respond({ choices })
           }
-        },
-        {
-          name: 'content',
-          description: 'The content of the tag',
-          required: true
         }
       ]
     })
@@ -53,14 +47,9 @@ export class EditTagCommand extends BaseCommandOption {
 
   async run (context: Interaction.InteractionContext, args: CommandArgs): Promise<void> {
     try {
-      await driver`UPDATE tags SET content = ${args.content} WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
+      await driver`DELETE FROM tags WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
       await context.editOrRespond({
-        content: t('commands.tag.edited'),
-        embed: {
-          title: args.name,
-          description: args.content,
-          color: 0x00ff00
-        },
+        content: t('commands.tag.deleted'),
         flags: MessageFlags.EPHEMERAL
       })
     } catch (e) {

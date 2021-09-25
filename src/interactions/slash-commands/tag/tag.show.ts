@@ -1,3 +1,4 @@
+import Parser from '@thesharks/jagtag-js'
 import { Interaction } from 'detritus-client'
 import { MessageFlags } from 'detritus-client/lib/constants'
 import driver from '../../../database/driver'
@@ -7,12 +8,12 @@ import { BaseCommandOption } from '../../base'
 
 export interface CommandArgs {
   name: string
-  content: string
+  args?: string
 }
 
-export class EditTagCommand extends BaseCommandOption {
-  name = 'edit'
-  description = 'Edit a tag you own'
+export class ShowTagCommand extends BaseCommandOption {
+  name = 'show'
+  description = 'Show a tag'
   disableDm = true
 
   constructor () {
@@ -32,19 +33,19 @@ export class EditTagCommand extends BaseCommandOption {
           }
         },
         {
-          name: 'content',
-          description: 'The content of the tag',
-          required: true
+          name: 'args',
+          description: 'Arguments to pass to the tag',
+          required: false
         }
       ]
     })
   }
 
   async onBeforeRun (context: Interaction.InteractionContext, args: CommandArgs): Promise<boolean> {
-    const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
+    const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND guild = ${context.guildId!}`
     if (tag.length === 0) {
       await context.editOrRespond({
-        content: t('commands.tag.notFound'),
+        content: t('commands.tag.errors.notFound'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
@@ -53,18 +54,18 @@ export class EditTagCommand extends BaseCommandOption {
 
   async run (context: Interaction.InteractionContext, args: CommandArgs): Promise<void> {
     try {
-      await driver`UPDATE tags SET content = ${args.content} WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
+      const tag = await driver`SELECT content FROM tags WHERE name = ${args.name} AND guild = ${context.guildId!} LIMIT 1`
+      const content = tag[0].content
       await context.editOrRespond({
-        content: t('commands.tag.edited'),
-        embed: {
-          title: args.name,
-          description: args.content,
-          color: 0x00ff00
-        },
-        flags: MessageFlags.EPHEMERAL
+        content: Parser(content, {
+          tagArgs: args.args?.split(' ') ?? [],
+          user: context.user,
+          guild: context.guild,
+          channel: context.channel
+        })
       })
     } catch (e) {
-      error(e, this.name)
+      error(e, this.constructor.name)
       await context.editOrRespond({
         content: t('commands.common.softFail'),
         flags: MessageFlags.EPHEMERAL
