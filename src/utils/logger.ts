@@ -49,7 +49,7 @@ export function info (message: any, component: string = 'generic'): void {
  * @param captureContext Optional, extra context data to send to Sentry
  * @returns The corresponding Sentry UID
  */
-export function error (_err: Error | string, component: string = 'generic', captureContext?: CaptureContext): string {
+export function error (_err: any, component: string = 'generic', captureContext?: CaptureContext): string {
   let uuid
   if (!(_err instanceof Error)) {
     uuid = Sentry.captureMessage(_err, {
@@ -75,7 +75,7 @@ export function error (_err: Error | string, component: string = 'generic', capt
  * @param component The component this message originates from
  * @param captureContext Optional, extra context data to send to Sentry
  */
-export function fatal (_err: Error | string, component: string = 'generic', captureContext?: CaptureContext): void {
+export function fatal (_err: any, component: string = 'generic', captureContext?: CaptureContext): void {
   if (!(_err instanceof Error)) {
     Sentry.captureMessage(_err, {
       level: Sentry.Severity.Fatal,

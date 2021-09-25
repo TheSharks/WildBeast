@@ -90,6 +90,7 @@ export async function cli (fun: string): Promise<void> {
   } catch (e) {
     error(e as any, 'Migrations')
   } finally {
+    await SQL.end()
     process.exit(0)
   }
 }
