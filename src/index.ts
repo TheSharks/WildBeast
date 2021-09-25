@@ -1,6 +1,7 @@
 import { fatal, info } from './utils/logger'
 import client from './structures/client'
 import * as Sentry from '@sentry/node'
+import * as Tracing from '@sentry/tracing'
 import { RewriteFrames } from '@sentry/integrations'
 import { promisify } from 'util'
 import { exec } from 'child_process'
@@ -17,6 +18,7 @@ info('Starting up...', 'Preflight');
     integrations: function (integrations) {
       return integrations
         .concat(new RewriteFrames({ root: __dirname ?? process.cwd() }))
+        .concat(new Tracing.Integrations.Postgres())
         .filter(function (integration) {
           return integration.name !== 'Console'
         })
