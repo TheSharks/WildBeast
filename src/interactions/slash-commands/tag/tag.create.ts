@@ -2,7 +2,8 @@ import { Interaction } from 'detritus-client'
 import { MessageFlags } from 'detritus-client/lib/constants'
 import { PostgresError } from 'postgres'
 import driver from '../../../database/driver'
-import { t } from '../../../utils/i18n'
+import { translate } from '../../../utils/i18n'
+import { error } from '../../../utils/logger'
 import { BaseCommandOption } from '../../base'
 
 export interface CommandArgs {
@@ -36,7 +37,7 @@ export class CreateTagCommand extends BaseCommandOption {
     try {
       await driver`INSERT INTO tags (name, content, owner, guild) VALUES (${args.name}, ${args.content}, ${context.userId}, ${context.guildId!})`
       await context.editOrRespond({
-        content: t('commands.tag.created'),
+        content: translate('commands.tag.created'),
         embed: {
           title: args.name,
           description: args.content,
@@ -48,13 +49,14 @@ export class CreateTagCommand extends BaseCommandOption {
       if (e instanceof PostgresError) {
         if (e.code === '23505') {
           await context.editOrRespond({
-            content: t('commands.tag.errors.conflict'),
+            content: translate('commands.tag.errors.conflict'),
             flags: MessageFlags.EPHEMERAL
           })
         }
       } else {
+        error(e, this.constructor.name)
         await context.editOrRespond({
-          content: t('commands.common.softFail'),
+          content: translate('commands.common.softFail'),
           flags: MessageFlags.EPHEMERAL
         })
       }

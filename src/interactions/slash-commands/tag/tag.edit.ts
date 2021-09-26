@@ -1,7 +1,7 @@
 import { Interaction } from 'detritus-client'
 import { MessageFlags } from 'detritus-client/lib/constants'
 import driver from '../../../database/driver'
-import { t } from '../../../utils/i18n'
+import { translate } from '../../../utils/i18n'
 import { error } from '../../../utils/logger'
 import { BaseCommandOption } from '../../base'
 
@@ -44,7 +44,7 @@ export class EditTagCommand extends BaseCommandOption {
     const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
     if (tag.length === 0) {
       await context.editOrRespond({
-        content: t('commands.tag.notFound'),
+        content: translate('commands.tag.notFound'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
@@ -55,7 +55,7 @@ export class EditTagCommand extends BaseCommandOption {
     try {
       await driver`UPDATE tags SET content = ${args.content} WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
       await context.editOrRespond({
-        content: t('commands.tag.edited'),
+        content: translate('commands.tag.edited'),
         embed: {
           title: args.name,
           description: args.content,
@@ -64,9 +64,9 @@ export class EditTagCommand extends BaseCommandOption {
         flags: MessageFlags.EPHEMERAL
       })
     } catch (e) {
-      error(e, this.name)
+      error(e, this.constructor.name)
       await context.editOrRespond({
-        content: t('commands.common.softFail'),
+        content: translate('commands.common.softFail'),
         flags: MessageFlags.EPHEMERAL
       })
     }

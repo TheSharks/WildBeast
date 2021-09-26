@@ -1,6 +1,6 @@
 import { Interaction } from 'detritus-client'
 import { Embed } from 'detritus-client/lib/utils'
-import { t } from '../../utils/i18n'
+import { translate } from '../../utils/i18n'
 
 import { BaseSlashCommand } from '../base'
 
@@ -30,18 +30,18 @@ export default class InfoCommand extends BaseSlashCommand {
     const uptime = sub(new Date(), { seconds: process.uptime() })
     const embed = new Embed()
       .setTitle('Info')
-      .addField(t('commands.info.guilds'), `${context.client.guilds.size}`, true)
-      .addField(t('commands.info.uptime'), `<t:${Math.floor(uptime.getTime() / 1000)}:R>`, true)
-      .addField(t('commands.info.shard'), `${context.client.shardId}/${context.client.shardCount}`, true)
-      .addField(t('commands.info.owner'), `${owner.username}#${owner.discriminator}`, true)
-      .addField(t('commands.info.version'), `v${version as string}`, true)
-      .addField(t('commands.info.node'), `${process.version}`, true)
-      .addField(t('commands.info.os'), `${process.platform}`, true)
-      .addField(t('commands.info.ram'), `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`, true)
-      .addField(t('commands.info.cpu'), `${Math.round(process.cpuUsage().user / 1000 / 1000)}%`, true)
+      .addField(translate('commands.info.guilds'), `${context.client.guilds.size}`, true)
+      .addField(translate('commands.info.uptime'), `<t:${Math.floor(uptime.getTime() / 1000)}:R>`, true)
+      .addField(translate('commands.info.shard'), `${context.client.shardId}/${context.client.shardCount}`, true)
+      .addField(translate('commands.info.owner'), `${owner.username}#${owner.discriminator}`, true)
+      .addField(translate('commands.info.version'), `v${version as string}`, true)
+      .addField(translate('commands.info.node'), `${process.version}`, true)
+      .addField(translate('commands.info.os'), `${process.platform}`, true)
+      .addField(translate('commands.info.ram'), `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`, true)
+      .addField(translate('commands.info.cpu'), `${Math.round(process.cpuUsage().user / 1000 / 1000)}%`, true)
       .setColor(0x00AE86)
       .setThumbnail(context.client.user!.avatarUrl)
-      .setFooter(`${context.client.user!.username} - ${t('commands.info.poweredBy')}`)
+      .setFooter(`${context.client.user!.username} - ${translate('commands.info.poweredBy')}`)
     await this.safeReply(context, {
       embed,
       flags: MessageFlags.EPHEMERAL

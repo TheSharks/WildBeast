@@ -4,7 +4,7 @@ import { languages } from '../cache'
 
 const defaultLang = process.env.WILDBEAST_LANGUAGE ?? 'en-EN'
 
-export function t (key: string, args?: Record<string, any>, lang?: string): string {
+export function translate (key: string, args?: Record<string, any>, lang?: string): string {
   if (!languages.has(defaultLang)) {
     fatal(`Default language ${defaultLang} not found in cache!`, 'i18n')
   }

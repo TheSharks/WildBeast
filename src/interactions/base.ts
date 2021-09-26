@@ -1,12 +1,12 @@
 import { Constants, Interaction, Structures } from 'detritus-client'
-import { t } from '../utils/i18n'
+import { translate } from '../utils/i18n'
 import { error } from '../utils/logger'
 const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags } = Constants
 
 export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommand<ParsedArgsFinished> {
   async onDmBlocked (context: Interaction.InteractionContext): Promise<void> {
     return await context.editOrRespond({
-      content: t('commands.common.dmDisabled'),
+      content: translate('commands.common.dmDisabled'),
       flags: MessageFlags.EPHEMERAL
     })
   }
@@ -22,14 +22,14 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
           id: context.guildId,
           name: context.guild?.name
         },
-        args: { args },
         command: {
-          name: context.command.name
+          name: context.command.name,
+          args
         }
       }
     })
     return await context.editOrRespond({
-      content: t('commands.common.failedToRun', { uuid }),
+      content: translate('commands.common.failedToRun', { uuid }),
       flags: MessageFlags.EPHEMERAL
     })
   }

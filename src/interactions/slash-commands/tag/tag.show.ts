@@ -2,7 +2,7 @@ import Parser from '@thesharks/jagtag-js'
 import { Interaction } from 'detritus-client'
 import { MessageFlags } from 'detritus-client/lib/constants'
 import driver from '../../../database/driver'
-import { t } from '../../../utils/i18n'
+import { translate } from '../../../utils/i18n'
 import { error } from '../../../utils/logger'
 import { BaseCommandOption } from '../../base'
 
@@ -45,7 +45,7 @@ export class ShowTagCommand extends BaseCommandOption {
     const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND guild = ${context.guildId!}`
     if (tag.length === 0) {
       await context.editOrRespond({
-        content: t('commands.tag.errors.notFound'),
+        content: translate('commands.tag.errors.notFound'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
@@ -67,7 +67,7 @@ export class ShowTagCommand extends BaseCommandOption {
     } catch (e) {
       error(e, this.constructor.name)
       await context.editOrRespond({
-        content: t('commands.common.softFail'),
+        content: translate('commands.common.softFail'),
         flags: MessageFlags.EPHEMERAL
       })
     }
