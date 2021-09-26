@@ -6,6 +6,8 @@ import { writeFile } from 'fs/promises'
 import { glob } from 'glob'
 import { debug, error, info, trace } from '../../utils/logger'
 
+const IS_TS_NODE = Symbol.for('ts-node.register.instance') in process
+
 export interface MigrationStep {
   up: (db: typeof SQL) => Promise<void>
   down: (db: typeof SQL) => Promise<void>
@@ -17,7 +19,12 @@ export async function setup (): Promise<RowList<Row[]>> {
 }
 
 export async function check (all = false): Promise<string[]> {
-  const files = glob.sync('src/database/migrations/exec/*.ts').map(x => basename(x, extname(x)))
+  let files = glob.sync('@(dist|src)/database/migrations/exec/*.[?jt]s')
+  if (IS_TS_NODE) {
+    files = files.filter(x => x.endsWith('.ts')).map(x => basename(x, extname(x)))
+  } else {
+    files = files.filter(x => x.endsWith('.js')).map(x => basename(x, extname(x)))
+  }
   const exists = await setup()
   const migrations = files.filter(f => !exists.some(e => e.name === f))
   trace([files, exists, migrations])
@@ -37,7 +44,7 @@ export async function up (): Promise<string[]> {
   const migrations = await check()
   for (const file of migrations) {
     debug(`Trying to 'up' ${file}`, 'Migrations')
-    if (Symbol.for('ts-node.register.instance') in process) {
+    if (IS_TS_NODE) {
       const { up } = await import(resolve(__dirname, `./exec/${file}.ts`)) as MigrationStep
       await up(SQL)
     } else {
@@ -58,7 +65,7 @@ export async function down (): Promise<string> {
     throw new Error(`Migration ${file} not found`)
   }
   debug(`Trying to 'down' ${file}`, 'Migrations')
-  if (Symbol.for('ts-node.register.instance') in process) {
+  if (IS_TS_NODE) {
     const { down } = await import(resolve(__dirname, `./exec/${file}.ts`)) as MigrationStep
     await down(SQL)
   } else {
