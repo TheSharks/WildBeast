@@ -115,10 +115,5 @@ export function warn (message: any, component: string = 'generic'): void {
  * @param component The component this message originates from
  */
 export function trace (message: any, component: string = 'generic'): void {
-  Sentry.addBreadcrumb({
-    category: component,
-    message,
-    level: Sentry.Severity.Debug
-  })
   if (process.env.NODE_ENV === 'debug') log(chalk`{cyan trce}`, chalk`{cyan ${component}}`, inspect(message, { colors: true, depth: null }))
 }
