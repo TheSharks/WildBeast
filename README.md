@@ -4,7 +4,7 @@
     <p align="center" style="margin:0;">
       <a href="https://github.com/TheSharks/Wildbeast/releases"><img src="https://img.shields.io/github/package-json/v/thesharks/wildbeast.svg?label=version&style=for-the-badge&maxAge=300" alt="Version"></a>
       <a href="https://discord.gg/wildbot"><img src="https://img.shields.io/discord/110462143152803840.svg?logo=discord&style=for-the-badge&maxAge=300" alt="Discord server"></a>
-      <a href="https://github.com/sponsors/Dougley"><img src="http://img.shields.io/github/sponsors/Dougley.svg?logo=githubsponsors&style=for-the-badge&maxAge=300" alt="Github Sponsors"></a>
+      <a href="https://github.com/sponsors/Dougley"><img src="https://img.shields.io/github/sponsors/Dougley.svg?logo=githubsponsors&style=for-the-badge&maxAge=300" alt="Github Sponsors"></a>
     </p>
     <p align="center" style="margin:0;">
       <a title="Crowdin" target="_blank" href="https://crowdin.com/project/wildbeast"><img src="https://img.shields.io/badge/Localization-Crowdin-blue?logo=crowdin&style=for-the-badge&maxAge=300"></a>
