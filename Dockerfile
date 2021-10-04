@@ -12,5 +12,5 @@ COPY . /opt/wildbeast
 WORKDIR /opt/wildbeast
 RUN npm ci --production
 # Install optional native modules
-RUN npm i zlib-sync@0.1 abalabahaha/erlpack bufferutil pg
+RUN npm i zlib-sync@0.1 bufferutil pg
 CMD ["node", "index.js"]
