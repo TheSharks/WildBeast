@@ -54,7 +54,7 @@ jobs:
           docker build . --file Dockerfile --tag image
 
       - name: Log into GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Log into Dockerhub
         run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u dougley --password-stdin
