@@ -104,7 +104,7 @@ export function warn (message: any, component: string = 'generic'): void {
     message,
     level: Sentry.Severity.Warning
   })
-  log(chalk`{yellow warn}`, chalk`{yellow ${component}}`, message)
+  log(chalk`{yellow warn}`, chalk`{yellow ${component}}`, message instanceof Error ? message.stack : message)
 }
 
 /**
