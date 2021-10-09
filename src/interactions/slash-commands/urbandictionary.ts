@@ -38,7 +38,7 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
       })
       const row = components.createActionRow()
       const backButton = row.createButton({
-        label: '⏪',
+        emoji: '⏪',
         run: async (componentContext: ComponentContext) => {
           position = position - 1
           const embed = makeEmbed(data.list[position])
@@ -49,7 +49,7 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
         disabled: true
       })
       const forwardButton = row.createButton({
-        label: '⏩',
+        emoji: '⏩',
         run: async (componentContext: ComponentContext) => {
           position = position + 1
           const embed = makeEmbed(data.list[position])
