@@ -7,7 +7,6 @@ export default class BooruBaseCommand extends BaseSlashCommand {
 
   constructor () {
     super({
-      guildIds: ['110462143152803840', '577263837879730195'],
       options: [
         new BooruE621Command()
       ]

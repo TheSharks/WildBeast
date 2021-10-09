@@ -14,7 +14,6 @@ export default class DiceCommand extends BaseSlashCommand {
 
   constructor () {
     super({
-      guildIds: ['110462143152803840'],
       options: [
         {
           type: ApplicationCommandOptionTypes.INTEGER,

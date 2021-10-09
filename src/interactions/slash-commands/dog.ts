@@ -8,12 +8,6 @@ export default class RandomDogCommand extends BaseSlashCommand {
   name = 'dog'
   description = 'Sends a random dog image'
 
-  constructor () {
-    super({
-      guildIds: ['110462143152803840']
-    })
-  }
-
   async run (context: Interaction.InteractionContext | ComponentContext): Promise<void> {
     const components = new Components({
       timeout: 5 * (60 * 1000),

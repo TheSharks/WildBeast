@@ -16,7 +16,6 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
 
   constructor () {
     super({
-      guildIds: ['110462143152803840'],
       options: [
         {
           name: 'query',

@@ -10,7 +10,6 @@ export default class TagBaseCommand extends BaseSlashCommand {
 
   constructor () {
     super({
-      guildIds: ['110462143152803840'],
       options: [
         new CreateTagCommand(),
         new EditTagCommand(),

@@ -14,12 +14,6 @@ export default class InfoCommand extends BaseSlashCommand {
   description = 'Get information about the bot'
   name = 'info'
 
-  constructor () {
-    super({
-      guildIds: ['110462143152803840']
-    })
-  }
-
   async run (context: Interaction.InteractionContext): Promise<void> {
     let owner
     if (context.client.application!.team !== undefined) {
