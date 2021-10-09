@@ -24,8 +24,6 @@ export class ShowTagCommand extends BaseCommandOption {
           description: 'The name of the tag',
           required: true,
           async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
-            // ¯\_(ツ)_/¯
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             const search = `${context.value}%`
             const hits = await driver`SELECT name FROM tags WHERE owner = ${context.userId} AND guild = ${context.guildId!} AND name LIKE ${search} ORDER BY name LIMIT 10`
             const choices = hits.map((value) => ({ name: value.name, value: value.name }))
