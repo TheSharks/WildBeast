@@ -1,6 +1,8 @@
 import { Interaction } from 'detritus-client'
-import { ComponentActionRow, ComponentContext, Components, Embed } from 'detritus-client/lib/utils'
+import { MessageComponentButtonStyles } from 'detritus-client/lib/constants'
+import { ComponentActionRow, ComponentButton, ComponentContext, Components, Embed } from 'detritus-client/lib/utils'
 import fetch from 'node-fetch'
+import { error } from '../../utils/logger'
 
 import { BaseSlashCommand } from '../base'
 
@@ -25,43 +27,61 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
     })
   }
 
-  async run (context: Interaction.InteractionContext, args: CommandArgs): Promise<void> {
-    const { query } = args
-    const url = `https://api.urbandictionary.com/v0/define?term=${query}`
-    const response = await fetch(url)
-    const data = await response.json()
-    if (data.list.length > 0) {
-      let position = 0
+  async run (context: Interaction.InteractionContext | ComponentContext, args: CommandArgs, position: number = 0, data?: any): Promise<void> {
+    const url = `https://api.urbandictionary.com/v0/define?term=${args.query}`
+    const json = data ?? await (await fetch(url, {
+      headers: {
+        Accept: 'application/json'
+      }
+    })).json()
+    if (json.list.length === 0) {
+      await context.editOrRespond('No results found')
+    } else {
+      const post = json.list[position]
+      const embed = new Embed()
+        .setColor(0x6832e3)
+        .setAuthor('Urban Dictionary', 'https://pbs.twimg.com/profile_images/1149416858426081280/uvwDuyqS_400x400.png', 'https://www.urbandictionary.com/')
+        .setTitle(post.word)
+        .setUrl(post.permalink)
+        .setDescription(stylize(post.definition))
+        .addField('Example', stylize(post.example))
+        .addField('👍', post.thumbs_up, true)
+        .addField('👎', post.thumbs_down, true)
       const components = new Components({
         timeout: 5 * (60 * 1000),
-        onTimeout: async () => await context.editOrRespond({ components: [] })
+        onTimeout: async () => await context.editOrRespond({ components: [new ComponentActionRow({ components: [urlButton] })] }),
+        onError: (context: ComponentContext, err: Error) => error(err, this.constructor.name)
       })
-      const row = components.createActionRow()
-      const backButton = row.createButton({
-        emoji: '⏪',
-        run: async (componentContext: ComponentContext) => {
-          position = position - 1
-          const embed = makeEmbed(data.list[position])
-          forwardButton.setDisabled(position === data.list.length - 1)
-          backButton.setDisabled(position === 0)
-          await componentContext.editOrRespond({ embed, components: [new ComponentActionRow({ components: [backButton, forwardButton] })] })
-        },
-        disabled: true
+      components.addButton({
+        emoji: '◀️',
+        disabled: position === 0,
+        run: async (componentContext: ComponentContext) => await this.run(componentContext, args, position - 1, json)
       })
-      const forwardButton = row.createButton({
-        emoji: '⏩',
-        run: async (componentContext: ComponentContext) => {
-          position = position + 1
-          const embed = makeEmbed(data.list[position])
-          forwardButton.setDisabled(position === data.list.length - 1)
-          backButton.setDisabled(position === 0)
-          await componentContext.editOrRespond({ embed, components: [new ComponentActionRow({ components: [backButton, forwardButton] })] })
-        }
+      components.addButton({
+        emoji: '▶️',
+        disabled: position === json.posts.length - 1,
+        run: async (componentContext: ComponentContext) => await this.run(componentContext, args, position + 1, json)
       })
-      const embed = makeEmbed(data.list[0])
+      components.addButton({
+        emoji: '🔀',
+        disabled: position === json.posts.length - 1,
+        run: async (componentContext: ComponentContext) => await this.run(componentContext, args, Math.floor(Math.random() * json.posts.length), json)
+      })
+      components.addButton({
+        emoji: '✖️',
+        style: MessageComponentButtonStyles.DANGER,
+        run: async (componentContext: ComponentContext) => await componentContext.editOrRespond({ components: [new ComponentActionRow({ components: [urlButton] })] })
+      })
+      // workaround: detritus sets customIds even when its not needed
+      const urlButton = new ComponentButton({
+        style: MessageComponentButtonStyles.LINK,
+        label: 'Open',
+        url: post.permalink
+      })
+      delete urlButton.customId
+      components.addButton(urlButton)
+      // end workaround
       await context.editOrRespond({ embed, components })
-    } else {
-      await context.editOrRespond('No results found')
     }
   }
 }
@@ -74,18 +94,4 @@ function stylize (text: string): string {
     text = text.replace(value[0], `${value[0]}(https://www.urbandictionary.com/define.php?term=${encodeURIComponent(value[1])})`)
   }
   return text
-}
-
-function makeEmbed (result: any): Embed {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const { word, definition, example, thumbs_up, thumbs_down, permalink } = result
-  return new Embed()
-    .setColor(0x6832e3)
-    .setAuthor('Urban Dictionary', 'https://pbs.twimg.com/profile_images/1149416858426081280/uvwDuyqS_400x400.png', 'https://www.urbandictionary.com/')
-    .setTitle(word)
-    .setUrl(permalink)
-    .setDescription(stylize(definition))
-    .addField('Example', stylize(example))
-    .addField('👍', thumbs_up, true)
-    .addField('👎', thumbs_down, true)
 }
