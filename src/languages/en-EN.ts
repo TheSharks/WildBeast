@@ -22,18 +22,15 @@ languages.set('en-EN',
         dmDisabled: 'This command cannot be used in DMs',
         permsMissingOwn: "I'm missing the following permissions: `{perms}`",
         permsMissingUser: "You're missing the following permissions: `{perms}`",
-        working: 'Working on it...'
+        working: 'Working on it...',
+        noResults: 'No results found',
+        noResultsFor: 'No results found for `{query}`'
       },
       dice: {
         resultMany: 'You rolled **{result}**\n```{explaination}```',
         resultSingle: 'You rolled **{result}**',
         resultTooLarge: '[result too large to show explaination]',
         badSyntax: 'Please specify how many dice you want to roll like this: `4d6`, `2d12`'
-      },
-      booru: {
-        noResults: 'No results found for `{query}`',
-        badFormatting: 'Your formatting appears to be wrong',
-        siteNotSupported: "I don't have support for {site}, currently I support {supported}"
       },
       info: {
         guilds: 'Guilds on this shard',
@@ -51,11 +48,6 @@ languages.set('en-EN',
         done: 'Use the following link to invite me: {invite}',
         private: 'This bot is marked as private, please ask {owner} to invite me to your server'
       },
-      leetspeak: {
-        errors: {
-          suffixMissing: 'You need to type something to encode your message into l337sp3@K'
-        }
-      },
       tag: {
         errors: {
           notFound: 'No such tag',
@@ -67,17 +59,6 @@ languages.set('en-EN',
         created: 'Your tag was created',
         deleted: 'Your tag was deleted',
         edited: 'Your tag was edited'
-      },
-      twitch: {
-        errors: {
-          noChannel: 'No channel specified',
-          invalidChannel: "{channel} isn't a valid channel"
-        },
-        offline: "{channel} isn't streaming currently",
-        online: '{channel} is currently live at <https://twitch.tv/{channel}>',
-        game: 'Game',
-        viewers: 'Viewers',
-        views: 'Total Views'
       },
       kick: {
         noMentions: "Please provide IDs or mention users you'd like to kick",
@@ -104,24 +85,10 @@ languages.set('en-EN',
       },
       urbandictionary: {
         errors: {
-          noTerm: 'Please enter a search term',
           notFound: "This word is so screwed up, even Urban Dictionary doesn't know it"
         },
         example: 'Example',
         noExample: '[no example provided]'
-      },
-      xkcd: {
-        errors: {
-          limit: 'There are only {num} xkcd comics'
-        }
-      },
-      help: {
-        header: 'See <https://wildbeast.guide/commands> for a full list of commands',
-        title: 'Help for command {cmd}',
-        footer: '{botname} - Powered by WildBeast',
-        errors: {
-          notFound: 'No such command'
-        }
       },
       '8ball': {
         prefix: 'The magic 8 ball says: `{response}`',

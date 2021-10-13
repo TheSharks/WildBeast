@@ -2,6 +2,7 @@ import { Interaction } from 'detritus-client'
 import { MessageComponentButtonStyles } from 'detritus-client/lib/constants'
 import { ComponentActionRow, ComponentButton, ComponentContext, Components, Embed } from 'detritus-client/lib/utils'
 import fetch from 'node-fetch'
+import { translate } from '../../utils/i18n'
 import { error } from '../../utils/logger'
 
 import { BaseSlashCommand } from '../base'
@@ -20,7 +21,16 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
         {
           name: 'query',
           description: 'What to search for',
-          required: true
+          required: true,
+          async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
+            const hits = await (await fetch(`https://api.urbandictionary.com/v0/autocomplete?term=${context.value}`, {
+              headers: {
+                Accept: 'application/json'
+              }
+            })).json()
+            const choices = hits.map((value: string) => ({ name: value, value: value }))
+            await context.respond({ choices })
+          }
         }
       ]
     })
@@ -34,7 +44,7 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
       }
     })).json()
     if (json.list.length === 0) {
-      await context.editOrRespond('No results found')
+      await context.editOrRespond(translate('commands.urbandictionary.errors.notFound'))
     } else {
       const post = json.list[position]
       const embed = new Embed()
@@ -43,7 +53,7 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
         .setTitle(post.word)
         .setUrl(post.permalink)
         .setDescription(stylize(post.definition))
-        .addField('Example', stylize(post.example))
+        .addField(translate('commands.urbandictionary.example'), post.example?.length > 0 ? stylize(post.example) : translate('commands.urbandictionary.noExample'))
         .addField('👍', post.thumbs_up, true)
         .addField('👎', post.thumbs_down, true)
       const components = new Components({
@@ -58,13 +68,13 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
       })
       components.addButton({
         emoji: '▶️',
-        disabled: position === json.posts.length - 1,
+        disabled: position === json.list.length - 1,
         run: async (componentContext: ComponentContext) => await this.run(componentContext, args, position + 1, json)
       })
       components.addButton({
         emoji: '🔀',
-        disabled: position === json.posts.length - 1,
-        run: async (componentContext: ComponentContext) => await this.run(componentContext, args, Math.floor(Math.random() * json.posts.length), json)
+        disabled: position === json.list.length - 1,
+        run: async (componentContext: ComponentContext) => await this.run(componentContext, args, Math.floor(Math.random() * json.list.length), json)
       })
       components.addButton({
         emoji: '✖️',
@@ -74,7 +84,7 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
       // workaround: detritus sets customIds even when its not needed
       const urlButton = new ComponentButton({
         style: MessageComponentButtonStyles.LINK,
-        label: 'Open',
+        label: translate('commands.common.open'),
         url: post.permalink
       })
       delete urlButton.customId

@@ -14,7 +14,7 @@ export default class RandomDogCommand extends BaseSlashCommand {
       onTimeout: async () => await context.editOrRespond({ components: [] })
     })
     components.addButton({
-      label: '🔄',
+      emoji: '🔄',
       run: async (componentContext: ComponentContext) => {
         await this.run(componentContext)
       }

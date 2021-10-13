@@ -44,7 +44,7 @@ export class BooruE621Command extends BaseCommandOption {
       }
     })).json()
     if (json.posts.length === 0) {
-      await context.editOrRespond(translate('commands.booru.noResults', { query: args.query }))
+      await context.editOrRespond(translate('commands.common.noResultsFor', { query: args.query }))
     } else {
       const post = json.posts[position]
       const artist: string = post.tags.artist.filter((x: string) => !['conditional_dnp'].includes(x))[0] ?? 'Unknown'
@@ -82,7 +82,7 @@ export class BooruE621Command extends BaseCommandOption {
       // workaround: detritus sets customIds even when its not needed
       const urlButton = new ComponentButton({
         style: MessageComponentButtonStyles.LINK,
-        label: 'Open',
+        label: translate('commands.common.open'),
         url: `https://e621.net/posts/${post.id as string}`
       })
       delete urlButton.customId
