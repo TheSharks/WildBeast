@@ -24,7 +24,8 @@ languages.set('en-EN',
         permsMissingUser: "You're missing the following permissions: `{perms}`",
         working: 'Working on it...',
         noResults: 'No results found',
-        noResultsFor: 'No results found for `{query}`'
+        noResultsFor: 'No results found for `{query}`',
+        open: 'Open'
       },
       dice: {
         resultMany: 'You rolled **{result}**\n```{explaination}```',
