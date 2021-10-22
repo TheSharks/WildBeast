@@ -1,21 +1,23 @@
-name: Sentry Release
+name: Sentry
 
 on:
   push:
     branches: [ master ]
-  release:
-    types: [ published, prereleased ]
 
 jobs:
-  createSentryRelease:
+  create-sentry-release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2.1.2
+        with:
+          node-version: 16
+      - run: npm i && npx tsc
       - name: Create Sentry release
-        uses: getsentry/action-release@v1
+        uses: getsentry/action-release@v1.1.5
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: dougley
-          SENTRY_PROJECT: wildbeast-v7
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         with:
-          environment: production
+          sourcemaps: ./dist

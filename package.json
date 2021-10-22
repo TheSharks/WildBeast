@@ -1,12 +1,18 @@
 {
   "private": true,
   "name": "@thesharks/wildbeast",
-  "version": "7.1.0",
+  "version": "8.0.0",
   "description": "Discord bot",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "eslint ."
+    "start": "node --enable-source-maps -r dotenv/config dist/index.js",
+    "test": "eslint src/**/*.ts",
+    "lint": "eslint src/**/*.ts --fix",
+    "compile": "tsc",
+    "prepare": "npm run compile",
+    "migrations:create": "node -r ts-node/register -e 'require(\"./src/database/migrations\").cli(\"create\")'",
+    "migrations:up": "node -r ts-node/register -r dotenv/config -e 'require(\"./src/database/migrations\").cli(\"up\")'",
+    "migrations:down": "node -r ts-node/register -r dotenv/config -e 'require(\"./src/database/migrations\").cli(\"down\")'"
   },
   "repository": {
     "type": "git",
@@ -22,33 +28,34 @@
   "bugs": {
     "url": "https://github.com/TheSharks/WildBeast/issues"
   },
+  "engines": {
+    "node": ">=14"
+  },
   "homepage": "https://wildbeast.guide/",
   "devDependencies": {
-    "eslint": "^7.14.0",
-    "eslint-config-standard": "^16.0.2",
-    "eslint-plugin-import": "^2.22.1",
+    "@types/glob": "^7.1.4",
+    "@types/node": "^16.10.2",
+    "@typescript-eslint/eslint-plugin": "^4.32.0",
+    "discord-api-types": "^0.23.1",
+    "eslint": "^7.32.0",
+    "eslint-config-standard-with-typescript": "^21.0.1",
+    "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.1.0",
-    "standard": "^16.0.3"
+    "eslint-plugin-promise": "^5.1.0",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3"
   },
   "dependencies": {
-    "@sentry/integrations": "^5.27.6",
-    "@sentry/node": "^5.28.0",
-    "@thesharks/jagtag-js": "^1.1.0",
-    "@thesharks/tyr": "^1.2.1",
-    "chalk": "^4.1.0",
-    "date-fns": "^2.16.1",
-    "dotenv": "^8.2.0",
-    "eris": "^0.14.0",
-    "eventemitter3": "^4.0.7",
-    "glob": "^7.1.6",
-    "intl-messageformat": "^9.3.20",
-    "jimp": "^0.16.1",
-    "joi": "^17.3.0",
-    "knex": "^0.21.12",
-    "prom-client": "^12.0.0",
-    "sqlite3": "^5.0.0",
-    "superagent": "^6.1.0"
+    "@sentry/integrations": "^6.13.2",
+    "@sentry/node": "^6.13.2",
+    "@thesharks/jagtag-js": "^2.0.0",
+    "chalk": "^4.1.2",
+    "date-fns": "^2.24.0",
+    "detritus-client": "^0.16.4-beta.4",
+    "dotenv": "^10.0.0",
+    "glob": "^7.2.0",
+    "intl-messageformat": "^9.9.2",
+    "postgres": "^2.0.0-beta.9",
+    "tslib": "^2.3.1"
   }
 }

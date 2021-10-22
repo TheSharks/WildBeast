@@ -1,16 +1,15 @@
-FROM node:current
+FROM node:lts-alpine
 
-ARG buildno
-ARG commitsha
+WORKDIR /usr/wildbeast
 
-LABEL maintainer="Remco Jongschaap <hey@dougley.com>" \
-      repository="https://github.com/TheSharks/WildBeast"
+COPY tsconfig.json ./
+COPY package*.json ./
 
-RUN mkdir /opt/wildbeast
-# Copy files and install modules
-COPY . /opt/wildbeast
-WORKDIR /opt/wildbeast
-RUN npm ci --production
-# Install optional native modules
-RUN npm i zlib-sync@0.1 bufferutil pg
-CMD ["node", "index.js"]
+RUN npm install
+
+COPY src ./src
+
+RUN npm run compile
+RUN npm prune --production
+
+CMD ["npm", "start"]

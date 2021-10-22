@@ -1,7 +1,0 @@
-{
-  "extends": "standard",
-  "globals": {
-    "logger": false,
-    "i18n": false
-  }
-}

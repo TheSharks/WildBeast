@@ -28,17 +28,16 @@ To verify your code adheres to our styleguide, run `npm test` in the project roo
 ### Translations
 
 All user-facing text, meaning text that gets send to Discord and is displayed to end-users, needs to be included in the i18n framework.   
-The `i18n` object is globally accessible throughout the project, so don't require it separately.    
 The framework utilises ICU syntax for translations, a primer for this syntax can be found [here](https://formatjs.io/docs/core-concepts/icu-syntax).
 
 ```js
 // ✗ bad
-msg.channel.createMessage(`Hi there ${user.name}!`)
+context.editOrRespond(`Hi there ${user.name}!`)
 ```
 
 ```js
 // ✓ good
-msg.channel.createMessage(i18n.t('user.greeting', { name: user.name }))
+context.editOrRespond(i18n.t('user.greeting', { name: user.name }))
 ```
 
 ### Database operations
@@ -46,24 +45,6 @@ msg.channel.createMessage(i18n.t('user.greeting', { name: user.name }))
 We use Knex as our SQL driver, and we write abstractions in the form of drivers for each moving part that requires database access.   
 When something requires database access and does not already have a driver, **do not directly import Knex, make a driver instead**   
 When writing Knex abstractions, your abstractions should provide support for the databases we support officially, namely SQLite and PostgreSQL
-
-### Sending messages with commands
-
-When sending messages, send them using `<Command>.safeSendMessage()`. This will check whether or not the client has permissions to send messages in the channel before trying to send them. Calling `<TextChannel>.createMessage()` directly is discouraged.
-
-```js
-// ⚠ avoid
-new Command(async function (msg) {
-  await msg.channel.createMessage('Hello world!')
-})
-```
-
-```js
-// ✓ prefered
-new Command(async function (msg) {
-  await this.safeSendMessage(msg.channel, 'Hello world!')
-})
-```
 
 ### Promises and async
 
@@ -106,4 +87,52 @@ aPromise().then(async result => {
     console.error(e) 
   }
 })()
+```
+
+
+## Commands
+
+### Sorting
+
+Commands are sorted first by type, then by base command if the command has subcommands, and then by subcommand.
+If your command doesn't have subcommands or your command is a context menu action, placing the entire command in 1 file is fine.
+
+### Inheritance
+
+All commands must extend a base class. Do **NOT** make new instances the base class, but export the resulting class.
+
+```ts
+// ✗ bad
+export default new BaseSlashCommand({
+  // ...
+}) 
+```
+
+```ts
+// ✓ good
+export default class GreetCommand extends BaseSlashCommand {
+  // ...
+}
+```
+
+### Sending messages
+
+When sending messages, send them using `<BaseInteractionCommand>.safeReply()`. This will disable all mentions in the message making it safe to directly pass user-input. Calling `<InteractionContext>.editOrRespond()` or other methods that return text directly is discouraged.
+
+```ts
+// ⚠ avoid
+export default class GreetCommand extends BaseSlashCommand {
+  async run (context: Interaction.InteractionContext): Promise<void> {
+    await context.awaitOrRespond('Hello world!')
+  }
+}
+```
+
+```ts
+// ✓ prefered
+export default class GreetCommand extends BaseSlashCommand {
+  async run (context: Interaction.InteractionContext): Promise<void> {
+    await this.safeReply(context, 'Hello world!')
+  }
+}
 ```
