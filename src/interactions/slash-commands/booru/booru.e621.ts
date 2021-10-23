@@ -25,7 +25,26 @@ export class BooruE621Command extends BaseCommandOption {
         {
           name: 'query',
           description: 'What to search for',
-          required: true
+          required: true,
+          async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
+            const chunks = context.value.split(' ')
+            const search = chunks.pop()
+            if (search === undefined || search.length < 1) await context.respond({ choices: [] })
+            const q = new URLSearchParams({
+              'search[name_matches]': search!,
+              expiry: '7'
+            })
+            const url = (context.channel !== null && !context.channel.nsfw) ? `https://e926.net/tags/autocomplete.json?${q.toString()}` : `https://e621.net/tags/autocomplete.json?${q.toString()}`
+            const json = await (await fetch(url, {
+              headers: {
+                Accept: 'application/json',
+                'User-Agent': `wildbeast/${version as string} (Dougley, hey@dougley.com)`
+              }
+            })).json()
+            // theres more info in the json, but it's not useful
+            const choices = json.map((x: {name: string}) => ({ name: `${chunks.join(' ')} ${x.name}`.trim(), value: `${chunks.join(' ')} ${x.name}`.trim() }))
+            await context.respond({ choices })
+          }
         }
       ]
     })
