@@ -33,28 +33,28 @@
   },
   "homepage": "https://wildbeast.guide/",
   "devDependencies": {
-    "@types/glob": "^7.1.4",
-    "@types/node": "^16.10.2",
+    "@types/glob": "^7.2.0",
+    "@types/node": "^16.11.4",
     "@typescript-eslint/eslint-plugin": "^4.32.0",
-    "discord-api-types": "^0.23.1",
+    "discord-api-types": "^0.24.0",
     "eslint": "^7.32.0",
     "eslint-config-standard-with-typescript": "^21.0.1",
-    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.0",
-    "ts-node": "^10.2.1",
-    "typescript": "^4.4.3"
+    "eslint-plugin-promise": "^5.1.1",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.4.4"
   },
   "dependencies": {
     "@sentry/integrations": "^6.13.3",
     "@sentry/node": "^6.13.3",
     "@thesharks/jagtag-js": "^2.0.0",
     "chalk": "^4.1.2",
-    "date-fns": "^2.24.0",
+    "date-fns": "^2.25.0",
     "detritus-client": "^0.16.4-beta.4",
     "dotenv": "^10.0.0",
     "glob": "^7.2.0",
-    "intl-messageformat": "^9.9.2",
+    "intl-messageformat": "^9.9.4",
     "postgres": "^2.0.0-beta.9",
     "tslib": "^2.3.1"
   }
