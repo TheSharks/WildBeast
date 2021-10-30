@@ -73,7 +73,6 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
       })
       components.addButton({
         emoji: '🔀',
-        disabled: position === json.list.length - 1,
         run: async (componentContext: ComponentContext) => await this.run(componentContext, args, Math.floor(Math.random() * json.list.length), json)
       })
       components.addButton({

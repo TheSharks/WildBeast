@@ -72,7 +72,8 @@ export class BooruE621Command extends BaseCommandOption {
         .setImage(post.file.url)
         .addField('Score', `${post.score.up as string} 👍 ${post.score.down as string} 👎`, true)
         .addField('Favorites', post.fav_count, true)
-      if (context.channel !== null && !context.channel.nsfw) embed.setFooter('Explicit posts excluded - Mark the channel NSFW to enable')
+      if (context.channel !== null && !context.channel.nsfw) embed.setFooter('e926.net - NSFW disabled', 'https://en.wikifur.com/w/images/d/dd/E621Logo.png')
+      else embed.setFooter('e621.net', 'https://en.wikifur.com/w/images/d/dd/E621Logo.png')
       const components = new Components({
         timeout: 5 * (60 * 1000),
         onTimeout: async () => await context.editOrRespond({ components: [new ComponentActionRow({ components: [urlButton] })] }),
@@ -90,7 +91,6 @@ export class BooruE621Command extends BaseCommandOption {
       })
       components.addButton({
         emoji: '🔀',
-        disabled: position === json.posts.length - 1,
         run: async (componentContext: ComponentContext) => await this.run(componentContext, args, Math.floor(Math.random() * json.posts.length), json)
       })
       components.addButton({
