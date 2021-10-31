@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@thesharks/wildbeast",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "description": "Discord bot",
   "main": "dist/index.js",
   "scripts": {
