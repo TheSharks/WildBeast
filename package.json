@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node --enable-source-maps -r dotenv/config dist/index.js",
+    "start:plain": "node --enable-source-maps -r dotenv/config dist/entry.js",
     "test": "eslint src/**/*.ts",
     "lint": "eslint src/**/*.ts --fix",
     "compile": "tsc",

@@ -15,10 +15,4 @@ const client = new InteractionCommandClient(process.env.BOT_TOKEN ?? '', {
   }
 }) as ModClient
 
-if ((process.env.WILDBEAST_SHARDING_START != null) && (process.env.WILDBEAST_SHARDING_END != null) && (process.env.WILDBEAST_SHARDING_TOTAL != null)) {
-  client.client.setShardCount(+process.env.WILDBEAST_SHARDING_TOTAL)
-  client.client.setShardStart(+process.env.WILDBEAST_SHARDING_START)
-  client.client.setShardEnd(+process.env.WILDBEAST_SHARDING_END)
-}
-
 export default client

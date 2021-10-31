@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Program - TSC Compiled",
+      "name": "Cluster - TSC Compiled",
       "program": "${workspaceFolder}/dist/index.js",
       "request": "launch",
       "skipFiles": [
@@ -19,7 +19,7 @@
       "type": "pwa-node"
     },
     {
-      "name": "Launch Program - ts-node with Debugger",
+      "name": "Cluster - ts-node with Debugger",
       "type": "pwa-node",
       "request": "launch",
       "runtimeArgs": [
@@ -31,6 +31,34 @@
       "args": [
           "${workspaceFolder}/src/index.ts"
       ]
-    }  
+    },
+    {
+      "name": "Plain - TSC Compiled",
+      "program": "${workspaceFolder}/dist/entry.js",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "runtimeArgs": [
+        "-r",
+        "dotenv/config"
+      ],
+      "preLaunchTask": "tsc: build - tsconfig.json",
+      "type": "pwa-node"
+    },
+    {
+      "name": "Plain - ts-node with Debugger",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeArgs": [
+          "-r",
+          "ts-node/register",
+          "-r",
+          "dotenv/config"
+      ],
+      "args": [
+          "${workspaceFolder}/src/entry.ts"
+      ]
+    },
   ]
 }
