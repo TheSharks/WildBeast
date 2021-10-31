@@ -17,6 +17,7 @@ interface EvalReturnType {
     username: string
     discriminator: string
     id: string
+    // theres more data here, but we don't need it
   }
 }
 
@@ -28,11 +29,7 @@ const job = new ScheduledJob(jobName)
       const client = this as unknown as ClusterClient
       return {
         guilds: client.shards.reduce((a: number, b) => a + b.guilds.size, 0),
-        user: {
-          username: client.shards.get(client.shards.size - 1)!.user!.username,
-          discriminator: client.shards.get(client.shards.size - 1)!.user!.discriminator,
-          id: client.shards.get(client.shards.size - 1)!.user!.id
-        }
+        user: client.shards.get(client.shards.size - 1)!.user!
       }
     }))
     const { user } = data[0]
