@@ -10,7 +10,9 @@ const client = new InteractionCommandClient(process.env.BOT_TOKEN ?? '', {
     compress: true,
     guildSubscriptions: false,
     intents: [
-      GatewayIntents.GUILDS
+      GatewayIntents.GUILDS,
+      GatewayIntents.GUILD_MESSAGES,
+      GatewayIntents.DIRECT_MESSAGES
     ]
   }
 }) as ModClient
