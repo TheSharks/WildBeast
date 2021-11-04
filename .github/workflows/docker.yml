@@ -78,4 +78,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            COMMIT:${{ github.sha }}
+            COMMIT=${{ github.sha }}
