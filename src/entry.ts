@@ -9,9 +9,11 @@ import dirImport from './utils/dir-import'
 info('Starting up...', 'Preflight');
 
 (async () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const revision = (await promisify(exec)('git rev-parse HEAD').catch(() => { return { stdout: require('../package.json').version } })).stdout.toString().trim()
-  info(`Initialzing Sentry, using revision ${revision as string}`, 'Preflight')
+  const revision = process.env.GIT_COMMIT ??
+    (await promisify(exec)('git rev-parse HEAD').catch(() => ({ stdout: undefined }))).stdout?.toString().trim() ??
+    process.env.npm_package_version ??
+    'unknown'
+  info(`Initialzing Sentry, using revision ${revision}`, 'Preflight')
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     integrations: function (integrations) {
