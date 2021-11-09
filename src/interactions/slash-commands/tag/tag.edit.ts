@@ -42,7 +42,7 @@ export class EditTagCommand extends BaseCommandOption {
     const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
     if (tag.length === 0) {
       await context.editOrRespond({
-        content: translate('commands.tag.notFound'),
+        content: translate('commands.tag.errors.notFound'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
