@@ -47,7 +47,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "@sentry/integrations": "^6.14.1",
+    "@sentry/integrations": "^6.14.3",
     "@sentry/node": "^6.14.3",
     "@thesharks/jagtag-js": "^2.0.0",
     "chalk": "^4.1.2",
