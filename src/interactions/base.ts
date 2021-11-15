@@ -4,14 +4,14 @@ import { error } from '../utils/logger'
 const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags } = Constants
 
 export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommand<ParsedArgsFinished> {
-  async onDmBlocked (context: Interaction.InteractionContext): Promise<void> {
+  async onDmBlocked (context: Interaction.InteractionContext): Promise<unknown> {
     return await context.editOrRespond({
       content: translate('commands.common.dmDisabled'),
       flags: MessageFlags.EPHEMERAL
     })
   }
 
-  async onRunError (context: Interaction.InteractionContext, args: ParsedArgsFinished, err: any): Promise<void> {
+  async onRunError (context: Interaction.InteractionContext, args: ParsedArgsFinished, err: any): Promise<unknown> {
     const uuid = error(err, context.name, {
       user: {
         id: context.user.id,
