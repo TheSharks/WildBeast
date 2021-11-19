@@ -51,7 +51,7 @@
     "@sentry/node": "^6.15.0",
     "@thesharks/jagtag-js": "^2.0.0",
     "chalk": "^4.1.2",
-    "date-fns": "^2.25.0",
+    "date-fns": "^2.26.0",
     "detritus-client": "^0.16.4-beta.6",
     "dotenv": "^10.0.0",
     "glob": "^7.2.0",
