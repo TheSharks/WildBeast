@@ -1,12 +1,39 @@
 import { Constants, Interaction, Structures } from 'detritus-client'
 import { translate } from '../utils/i18n'
 import { error } from '../utils/logger'
-const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags } = Constants
+const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags, Permissions } = Constants
 
 export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommand<ParsedArgsFinished> {
   async onDmBlocked (context: Interaction.InteractionContext): Promise<unknown> {
     return await context.editOrRespond({
       content: translate('commands.common.dmDisabled'),
+      flags: MessageFlags.EPHEMERAL
+    })
+  }
+
+  async onPermissionsFail (context: Interaction.InteractionContext, falied: Array<bigint>): Promise<void> {
+    const values = Object.entries(Permissions).filter(([key, value]) => falied.includes(BigInt(value)))
+    await context.editOrRespond({
+      content:
+        "You're missing the following permissions for this command to work:\n" +
+        values.map(([key, value]) => `\`${key}\``).join('\n'),
+      flags: MessageFlags.EPHEMERAL
+    })
+  }
+
+  async onPermissionsFailClient (context: Interaction.InteractionContext, falied: Array<bigint>): Promise<void> {
+    const values = Object.entries(Permissions).filter(([key, value]) => falied.includes(BigInt(value)))
+    await context.editOrRespond({
+      content:
+        "I'm missing the following permissions for this command to work:\n" +
+        values.map(([key, value]) => `\`${key}\``).join('\n'),
+      flags: MessageFlags.EPHEMERAL
+    })
+  }
+
+  async onRatelimit (context: Interaction.InteractionContext): Promise<void> {
+    await context.editOrRespond({
+      content: 'You are doing that too much, please wait a bit.',
       flags: MessageFlags.EPHEMERAL
     })
   }

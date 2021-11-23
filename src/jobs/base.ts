@@ -1,3 +1,4 @@
+import { jobs } from '../cache'
 import { debug } from '../utils/logger'
 
 type JobFunction = () => Promise<any>
@@ -8,6 +9,10 @@ export class Job {
   constructor (public name: string, jobFn?: JobFunction) {
     this.name = name
     this.jobFn = jobFn ?? (async () => await Promise.resolve())
+    if (jobs.has(name)) {
+      throw new Error(`Job ${name} already exists`)
+    }
+    jobs.set(name, this)
   }
 
   async run (): Promise<void> {

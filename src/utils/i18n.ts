@@ -19,6 +19,15 @@ export function translate (key: string, args?: Record<string, any>, lang?: strin
   }
 }
 
+// get the translated value for all languages
+export function allForKey (key: string, args?: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {}
+  for (const lang of languages.keys()) {
+    result[lang] = translate(key, args, lang)
+  }
+  return result
+}
+
 export function traverse (key: string, lang?: string): any {
   return key.split('.').reduce((o, i) => o?.[i], lang !== undefined ? languages.get(lang) : languages.get(defaultLang)) as any
 }

@@ -1,7 +1,6 @@
 import { ScheduledJob } from './base'
 import cluster from '../structures/cluster'
 import { ClusterClient } from 'detritus-client'
-import { jobs } from '../cache'
 import fetch from 'node-fetch'
 import { debug } from '../utils/logger'
 
@@ -50,7 +49,6 @@ const job = new ScheduledJob(jobName)
 
 if (process.env.BOTS_GG_TOKEN !== undefined) {
   job.start()
-  jobs.set(jobName, job)
 } else {
   debug('Bots.gg stats disabled, missing BOTS_GG_TOKEN', jobName)
 }
