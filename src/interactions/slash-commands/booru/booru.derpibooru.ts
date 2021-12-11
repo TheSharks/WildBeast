@@ -52,7 +52,7 @@ export class BooruDerpibooruCommand extends BaseCommandOption {
         'User-Agent': `wildbeast/${version as string} (+https://github.com/TheSharks/WildBeast)`
       }
     })).json()
-    if (json.length === 0) {
+    if (json.total === 0) {
       await context.editOrRespond(translate('commands.common.noResultsFor', { query: args.query }))
     } else {
       const post = json.images[position]
