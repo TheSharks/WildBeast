@@ -68,55 +68,60 @@ export class BooruRule34Command extends BaseCommandOption {
       s: 'post',
       q: 'index'
     })
-    const url = `https://rule34.xxx/index.php?${q.toString()}`
-    const json = data ?? await (await fetch(url, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': `wildbeast/${version as string} (+https://github.com/TheSharks/WildBeast)`
+    const url = `https://api.rule34.xxx/index.php?${q.toString()}`
+    if (data === undefined) {
+      const http = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': `wildbeast/${version as string} (+https://github.com/TheSharks/WildBeast)`
+        }
+      })
+      const text = await http.clone().text()
+      if (text.length < 1) {
+        await context.editOrRespond(translate('commands.common.noResultsFor', { query: args.query }))
+        return
+      } else {
+        data = await http.json()
       }
-    })).json()
-    if (json.length === 0) {
-      await context.editOrRespond(translate('commands.common.noResultsFor', { query: args.query }))
-    } else {
-      const post = json[position]
-      const embed = new Embed()
-        .setImage(post.file_url)
-        .addField('Score', post.score, true)
-        .setFooter('rule34.xxx')
-      const components = new Components({
-        timeout: 5 * (60 * 1000),
-        onTimeout: async () => await context.editOrRespond({ components: [new ComponentActionRow({ components: [urlButton] })] }),
-        onError: (context: ComponentContext, err: Error) => error(err, this.constructor.name)
-      })
-      components.addButton({
-        emoji: '◀️',
-        disabled: position === 0,
-        run: async (componentContext: ComponentContext) => await this.run(componentContext, args, position - 1, json)
-      })
-      components.addButton({
-        emoji: '▶️',
-        disabled: position === json.length - 1,
-        run: async (componentContext: ComponentContext) => await this.run(componentContext, args, position + 1, json)
-      })
-      components.addButton({
-        emoji: '🔀',
-        run: async (componentContext: ComponentContext) => await this.run(componentContext, args, Math.floor(Math.random() * json.length), json)
-      })
-      components.addButton({
-        emoji: '✖️',
-        style: MessageComponentButtonStyles.DANGER,
-        run: async (componentContext: ComponentContext) => await componentContext.editOrRespond({ components: [new ComponentActionRow({ components: [urlButton] })] })
-      })
-      // workaround: detritus sets customIds even when its not needed
-      const urlButton = new ComponentButton({
-        style: MessageComponentButtonStyles.LINK,
-        label: translate('commands.common.open'),
-        url: `https://rule34.xxx/index.php?page=post&s=view&id=${post.id as string}`
-      })
-      delete urlButton.customId
-      components.addButton(urlButton)
-      // end workaround
-      await context.editOrRespond({ embed, components })
     }
+    const post = data[position]
+    const embed = new Embed()
+      .setImage(post.file_url)
+      .addField('Score', post.score, true)
+      .setFooter('rule34.xxx')
+    const components = new Components({
+      timeout: 5 * (60 * 1000),
+      onTimeout: async () => await context.editOrRespond({ components: [new ComponentActionRow({ components: [urlButton] })] }),
+      onError: (context: ComponentContext, err: Error) => error(err, this.constructor.name)
+    })
+    components.addButton({
+      emoji: '◀️',
+      disabled: position === 0,
+      run: async (componentContext: ComponentContext) => await this.run(componentContext, args, position - 1, data)
+    })
+    components.addButton({
+      emoji: '▶️',
+      disabled: position === data.length - 1,
+      run: async (componentContext: ComponentContext) => await this.run(componentContext, args, position + 1, data)
+    })
+    components.addButton({
+      emoji: '🔀',
+      run: async (componentContext: ComponentContext) => await this.run(componentContext, args, Math.floor(Math.random() * data.length), data)
+    })
+    components.addButton({
+      emoji: '✖️',
+      style: MessageComponentButtonStyles.DANGER,
+      run: async (componentContext: ComponentContext) => await componentContext.editOrRespond({ components: [new ComponentActionRow({ components: [urlButton] })] })
+    })
+    // workaround: detritus sets customIds even when its not needed
+    const urlButton = new ComponentButton({
+      style: MessageComponentButtonStyles.LINK,
+      label: translate('commands.common.open'),
+      url: `https://rule34.xxx/index.php?page=post&s=view&id=${post.id as string}`
+    })
+    delete urlButton.customId
+    components.addButton(urlButton)
+    // end workaround
+    await context.editOrRespond({ embed, components })
   }
 }
