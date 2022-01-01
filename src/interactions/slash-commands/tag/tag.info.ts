@@ -1,4 +1,3 @@
-import Parser from '@thesharks/jagtag-js'
 import { Interaction } from 'detritus-client'
 import { MessageFlags } from 'detritus-client/lib/constants'
 import driver from '../../../database/driver'
@@ -11,9 +10,9 @@ export interface CommandArgs {
   args?: string
 }
 
-export class ShowTagCommand extends BaseCommandOption {
-  name = 'show'
-  description = 'Show a tag'
+export class TagInfoCommand extends BaseCommandOption {
+  name = 'info'
+  description = 'Show info about a tag'
   disableDm = true
 
   constructor () {
@@ -25,15 +24,10 @@ export class ShowTagCommand extends BaseCommandOption {
           required: true,
           async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
             const search = `${context.value}%`
-            const hits = await driver`SELECT name FROM tags WHERE owner = ${context.userId} AND guild = ${context.guildId!} AND name LIKE ${search} ORDER BY name LIMIT 10`
+            const hits = await driver`SELECT name FROM tags WHERE guild = ${context.guildId!} AND name LIKE ${search} ORDER BY name LIMIT 10`
             const choices = hits.map((value) => ({ name: value.name, value: value.name }))
             await context.respond({ choices })
           }
-        },
-        {
-          name: 'args',
-          description: 'Arguments to pass to the tag',
-          required: false
         }
       ]
     })
@@ -52,17 +46,37 @@ export class ShowTagCommand extends BaseCommandOption {
 
   async run (context: Interaction.InteractionContext, args: CommandArgs): Promise<void> {
     try {
-      const tag = await driver`SELECT content FROM tags WHERE name = ${args.name} AND guild = ${context.guildId!} LIMIT 1`
-      const content = tag[0].content
+      const tag = (await driver`SELECT name, content, owner, created_at, updated_at, uses FROM tags WHERE name = ${args.name} AND guild = ${context.guildId!} LIMIT 1`)[0]
+      const ranking = (await driver`SELECT name FROM tags WHERE guild = ${context.guildId!} ORDER BY uses DESC`).map((value) => value.name)
+      const owner = await context.client.rest.fetchUser(tag.owner)
       await context.editOrRespond({
-        content: Parser(content, {
-          tagArgs: args.args?.split(' ') ?? [],
-          user: context.user,
-          guild: context.guild,
-          channel: context.channel
-        })
+        embed: {
+          title: args.name,
+          description: tag.content,
+          color: 0x00ff00,
+          author: {
+            name: owner.username,
+            iconUrl: owner.avatarUrl
+          },
+          fields: [
+            {
+              name: 'Created At',
+              value: `<t:${Math.round(new Date(tag.created_at).getTime() / 1000)}:D>`,
+              inline: true
+            },
+            {
+              name: 'Updated At',
+              value: `<t:${Math.round(new Date(tag.updated_at).getTime() / 1000)}:D>`,
+              inline: true
+            },
+            {
+              name: 'Ranking',
+              value: `Used ${tag.uses as string} times, ${ranking.indexOf(args.name) + 1}/${ranking.length}`,
+              inline: true
+            }
+          ]
+        }
       })
-      await driver`UPDATE tags SET uses = uses + 1 WHERE name = ${args.name} AND guild = ${context.guildId!}`
     } catch (e) {
       error(e, this.constructor.name)
       await context.editOrRespond({

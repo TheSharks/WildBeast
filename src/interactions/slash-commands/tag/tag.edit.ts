@@ -51,7 +51,7 @@ export class EditTagCommand extends BaseCommandOption {
 
   async run (context: Interaction.InteractionContext, args: CommandArgs): Promise<void> {
     try {
-      await driver`UPDATE tags SET content = ${args.content} WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
+      await driver`UPDATE tags SET content = ${args.content}, updated_at = NOW() WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
       await context.editOrRespond({
         content: translate('commands.tag.edited'),
         embed: {
