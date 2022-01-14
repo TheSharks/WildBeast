@@ -1,6 +1,7 @@
 import { Interaction } from 'detritus-client'
 import { MessageFlags } from 'detritus-client/lib/constants'
 import driver from '../../../database/driver'
+import { Tag } from '../../../database/models/Tag'
 import { translate } from '../../../utils/i18n'
 import { error } from '../../../utils/logger'
 import { BaseCommandOption } from '../../base'
@@ -46,7 +47,7 @@ export class TagInfoCommand extends BaseCommandOption {
 
   async run (context: Interaction.InteractionContext, args: CommandArgs): Promise<void> {
     try {
-      const tag = (await driver`SELECT name, content, owner, created_at, updated_at, uses FROM tags WHERE name = ${args.name} AND guild = ${context.guildId!} LIMIT 1`)[0]
+      const tag = (await driver`SELECT name, content, owner, created_at, updated_at, uses FROM tags WHERE name = ${args.name} AND guild = ${context.guildId!} LIMIT 1`)[0] as Tag
       const ranking = (await driver`SELECT name FROM tags WHERE guild = ${context.guildId!} ORDER BY uses DESC`).map((value) => value.name)
       const owner = await context.client.rest.fetchUser(tag.owner)
       await context.editOrRespond({
@@ -71,7 +72,7 @@ export class TagInfoCommand extends BaseCommandOption {
             },
             {
               name: 'Ranking',
-              value: `Used ${tag.uses as string} times, ${ranking.indexOf(args.name) + 1}/${ranking.length}`,
+              value: `Used ${tag.uses} times, ${ranking.indexOf(args.name) + 1}/${ranking.length}`,
               inline: true
             }
           ]

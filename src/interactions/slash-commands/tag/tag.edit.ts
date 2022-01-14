@@ -1,6 +1,7 @@
 import { Interaction } from 'detritus-client'
 import { MessageFlags } from 'detritus-client/lib/constants'
 import driver from '../../../database/driver'
+import { Tag } from '../../../database/models/Tag'
 import { translate } from '../../../utils/i18n'
 import { error } from '../../../utils/logger'
 import { BaseCommandOption } from '../../base'
@@ -24,7 +25,7 @@ export class EditTagCommand extends BaseCommandOption {
           required: true,
           async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
             const search = `${context.value}%`
-            const hits = await driver`SELECT name FROM tags WHERE owner = ${context.userId} AND guild = ${context.guildId!} AND name LIKE ${search} ORDER BY name LIMIT 10`
+            const hits = await driver`SELECT name FROM tags WHERE owner = ${context.userId} AND guild = ${context.guildId!} AND name LIKE ${search} ORDER BY name LIMIT 10` as Tag[]
             const choices = hits.map((value) => ({ name: value.name, value: value.name }))
             await context.respond({ choices })
           }
@@ -39,7 +40,7 @@ export class EditTagCommand extends BaseCommandOption {
   }
 
   async onBeforeRun (context: Interaction.InteractionContext, args: CommandArgs): Promise<boolean> {
-    const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
+    const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}` as Tag[]
     if (tag.length === 0) {
       await context.editOrRespond({
         content: translate('commands.tag.errors.notFound'),
