@@ -11,7 +11,7 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
     })
   }
 
-  async onPermissionsFail (context: Interaction.InteractionContext, falied: Array<bigint>): Promise<void> {
+  async onPermissionsFail (context: Interaction.InteractionContext, falied: bigint[]): Promise<void> {
     const values = Object.entries(Permissions).filter(([key, value]) => falied.includes(BigInt(value)))
     await context.editOrRespond({
       content:
@@ -21,7 +21,7 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
     })
   }
 
-  async onPermissionsFailClient (context: Interaction.InteractionContext, falied: Array<bigint>): Promise<void> {
+  async onPermissionsFailClient (context: Interaction.InteractionContext, falied: bigint[]): Promise<void> {
     const values = Object.entries(Permissions).filter(([key, value]) => falied.includes(BigInt(value)))
     await context.editOrRespond({
       content:
