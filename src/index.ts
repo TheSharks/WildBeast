@@ -2,12 +2,12 @@ import cluster from './structures/cluster'
 import dirImport from './utils/dir-import'
 import { fatal, info, warn } from './utils/logger'
 
-cluster.on('clusterProcess', (payload) => {
-  payload.clusterProcess.on('ready', () => {
-    info('Cluster has reported ready', `Cluster ${payload.clusterProcess.clusterId}`)
+cluster.on('clusterProcess', ({ clusterProcess }) => {
+  clusterProcess.on('ready', () => {
+    info('Cluster has reported ready', `Cluster ${clusterProcess.clusterId}`)
   })
-  payload.clusterProcess.on('warn', ctx => {
-    warn(ctx.error, `Cluster ${payload.clusterProcess.clusterId}`)
+  clusterProcess.on('warn', ctx => {
+    warn(ctx.error, `Cluster ${clusterProcess.clusterId}`)
   })
 });
 

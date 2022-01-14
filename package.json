@@ -11,9 +11,9 @@
     "lint": "eslint src/**/*.ts --fix",
     "compile": "tsc",
     "prepare": "npm run compile",
-    "migrations:create": "node -r ts-node/register -e 'require(\"./src/database/migrations\").cli(\"create\")'",
-    "migrations:up": "node -r ts-node/register -r dotenv/config -e 'require(\"./src/database/migrations\").cli(\"up\")'",
-    "migrations:down": "node -r ts-node/register -r dotenv/config -e 'require(\"./src/database/migrations\").cli(\"down\")'"
+    "migrations:create": "node -e 'require(\"./src/database/migrations\").cli(\"create\")'",
+    "migrations:up": "node -r dotenv/config -e 'require(\"./src/database/migrations\").cli(\"up\")'",
+    "migrations:down": "node -r dotenv/config -e 'require(\"./src/database/migrations\").cli(\"down\")'"
   },
   "repository": {
     "type": "git",
