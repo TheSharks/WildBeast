@@ -10,10 +10,13 @@
 
 ## Fundamentals
 
-* [Commands](fundamentals/commands.md)
-* [Events](fundamentals/events.md)
-* [Buttons and menus](fundamentals/buttons-and-menus.md)
-* [Context menu actions](fundamentals/context-menu-actions.md)
+* [Commands](fundamentals/commands/README.md)
+  * [Slash commands](fundamentals/commands/slash-commands/README.md)
+    * [Subcommands](fundamentals/commands/slash-commands/subcommands.md)
+    * [Options](fundamentals/commands/slash-commands/options.md)
+    * [Buttons](fundamentals/commands/slash-commands/buttons.md)
+  * [Context menu actions](fundamentals/commands/context-menu-actions.md)
+* [Jobs](fundamentals/jobs.md)
 
 ## Extras
 

@@ -16,18 +16,18 @@ Ready to get your hands dirty? Pick one of these guides to get started with Wild
 
 Looking to write your own commands, or other custom features? Look below for our advanced guides.
 
-{% content-ref url="fundamentals/commands.md" %}
-[commands.md](fundamentals/commands.md)
+{% content-ref url="fundamentals/commands/" %}
+[commands](fundamentals/commands/)
 {% endcontent-ref %}
 
-{% content-ref url="fundamentals/events.md" %}
-[events.md](fundamentals/events.md)
+{% content-ref url="fundamentals/commands/slash-commands/buttons.md" %}
+[buttons.md](fundamentals/commands/slash-commands/buttons.md)
 {% endcontent-ref %}
 
-{% content-ref url="fundamentals/buttons-and-menus.md" %}
-[buttons-and-menus.md](fundamentals/buttons-and-menus.md)
+{% content-ref url="broken-reference" %}
+[Broken link](broken-reference)
 {% endcontent-ref %}
 
-{% content-ref url="fundamentals/context-menu-actions.md" %}
-[context-menu-actions.md](fundamentals/context-menu-actions.md)
+{% content-ref url="broken-reference" %}
+[Broken link](broken-reference)
 {% endcontent-ref %}

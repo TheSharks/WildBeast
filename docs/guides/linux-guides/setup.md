@@ -110,13 +110,13 @@ npm start
 
 You should see something similar to the following if everything went well
 
-`19:11:41 [info] Gateway: Client ready `
+`19:11:41 [info] Gateway: Client ready`&#x20;
 
 `19:11:41 [info] Gateway - shard 0: Gateway ready`
 
 Test if your bot works by running the `/ping` command
 
-![](<../../.gitbook/assets/afbeelding (6).png>)
+![](<../../.gitbook/assets/afbeelding (6) (1).png>)
 
 {% hint style="info" %}
 Slash commands can take a while to appear.

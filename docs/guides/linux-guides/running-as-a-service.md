@@ -47,7 +47,7 @@ Pay attention to the `REPLACE THIS`, as you might've guessed you need to replace
     For example: `/home/wildbeast/WildBeast`
 *   `User` - The user that's going to run WildBeast
 
-    Do **NOT **use `root`, [create a new user](https://www.digitalocean.com/community/tutorials/how-to-create-a-new-sudo-enabled-user-on-ubuntu-20-04-quickstart) for safety.
+    Do **NOT** use `root`, [create a new user](https://www.digitalocean.com/community/tutorials/how-to-create-a-new-sudo-enabled-user-on-ubuntu-20-04-quickstart) for safety.
 {% endhint %}
 
 ## Controlling the service
