@@ -1,9 +1,33 @@
+import { randomUUID } from 'crypto'
 import { Constants, Interaction, Structures } from 'detritus-client'
+import db from '../database/driver'
 import { translate } from '../utils/i18n'
 import { error } from '../utils/logger'
 const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags, Permissions } = Constants
 
 export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommand<ParsedArgsFinished> {
+  async onSuccess (context: Interaction.InteractionContext, args: ParsedArgsFinished): Promise<void> {
+    await db`
+      INSERT INTO analytics (
+        id,
+        timestamp,
+        type,
+        guild_id,
+        user_id,
+        data,
+        name
+      ) VALUES (
+        ${randomUUID()},
+        NOW(),
+        ${context.interaction.type},
+        ${context.guildId ?? 0},
+        ${context.user.id},
+        ${JSON.stringify(args)},
+        ${context.command.name}
+      );
+    `
+  }
+
   async onDmBlocked (context: Interaction.InteractionContext): Promise<unknown> {
     return await context.editOrRespond({
       content: translate('commands.common.dmDisabled'),

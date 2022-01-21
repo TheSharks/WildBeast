@@ -11,9 +11,9 @@
     "lint": "eslint src/**/*.ts --fix",
     "compile": "rimraf dist/ && tsc",
     "prepare": "npm run compile",
-    "migrations:create": "node -e 'require(\"./src/database/migrations\").cli(\"create\")'",
-    "migrations:up": "node -r dotenv/config -e 'require(\"./src/database/migrations\").cli(\"up\")'",
-    "migrations:down": "node -r dotenv/config -e 'require(\"./src/database/migrations\").cli(\"down\")'"
+    "migrations:create": "node -r ts-node/register -e 'require(\"./src/database/migrations\").cli(\"create\")'",
+    "migrations:up": "node -r dotenv/config -e 'require(\"./dist/database/migrations\").cli(\"up\")'",
+    "migrations:down": "node -r dotenv/config -e 'require(\"./dist/database/migrations\").cli(\"down\")'"
   },
   "repository": {
     "type": "git",
@@ -30,7 +30,7 @@
     "url": "https://github.com/TheSharks/WildBeast/issues"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=14.17"
   },
   "homepage": "https://wildbeast.guide/",
   "devDependencies": {
