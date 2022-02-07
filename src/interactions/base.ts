@@ -1,31 +1,23 @@
-import { randomUUID } from 'crypto'
 import { Constants, Interaction, Structures } from 'detritus-client'
-import db from '../database/driver'
+import { add, flush } from '../utils/elastic'
 import { translate } from '../utils/i18n'
 import { error } from '../utils/logger'
 const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags, Permissions } = Constants
 
 export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommand<ParsedArgsFinished> {
   async onSuccess (context: Interaction.InteractionContext, args: ParsedArgsFinished): Promise<void> {
-    await db`
-      INSERT INTO analytics (
-        id,
-        timestamp,
-        type,
-        guild_id,
-        user_id,
-        data,
-        name
-      ) VALUES (
-        ${randomUUID()},
-        NOW(),
-        ${context.interaction.type},
-        ${context.guildId ?? 0},
-        ${context.user.id},
-        ${JSON.stringify(args)},
-        ${context.command.name}
-      );
-    `
+    add({
+      type: 'command',
+      guildId: context.guildId,
+      inDm: context.inDm,
+      userId: context.user.id,
+      data: {
+        args,
+        interaction_id: context.interactionId
+      },
+      name: context.command.name
+    })
+    await flush()
   }
 
   async onDmBlocked (context: Interaction.InteractionContext): Promise<unknown> {
@@ -82,15 +74,6 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
     return await context.editOrRespond({
       content: translate('commands.common.failedToRun', { uuid }),
       flags: MessageFlags.EPHEMERAL
-    })
-  }
-
-  async safeReply (context: Interaction.InteractionContext, message: string | Structures.InteractionEditOrRespond): Promise<any> {
-    return await context.editOrRespond({
-      ...((typeof message === 'string') ? { content: message } : message),
-      allowedMentions: {
-        parse: []
-      }
     })
   }
 }
