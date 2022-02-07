@@ -1,5 +1,5 @@
 import { Constants, Interaction, Structures } from 'detritus-client'
-import { add, flush } from '../utils/elastic'
+import { add } from '../utils/elastic'
 import { translate } from '../utils/i18n'
 import { error } from '../utils/logger'
 const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags, Permissions } = Constants
@@ -17,7 +17,6 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
       },
       name: context.command.name
     })
-    await flush()
   }
 
   async onDmBlocked (context: Interaction.InteractionContext): Promise<unknown> {
