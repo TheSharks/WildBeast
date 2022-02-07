@@ -9,6 +9,6 @@ export default class AdviceCommand extends BaseSlashCommand {
 
   async run (context: Interaction.InteractionContext): Promise<void> {
     const advice = await (await fetch('https://api.adviceslip.com/advice')).json()
-    await this.safeReply(context, advice.slip.advice)
+    await context.editOrRespond(advice.slip.advice)
   }
 }

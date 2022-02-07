@@ -14,7 +14,7 @@ export default class InspirobotCommand extends BaseSlashCommand {
     const url = await (await fetch('https://inspirobot.me/api?generate=true')).text()
     try {
       const ctx = new URL(url)
-      await this.safeReply(context, {
+      await context.editOrRespond( {
         embed: {
           image: {
             url: ctx.href

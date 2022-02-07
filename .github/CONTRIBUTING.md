@@ -114,25 +114,3 @@ export default class GreetCommand extends BaseSlashCommand {
   // ...
 }
 ```
-
-### Sending messages
-
-When sending messages, send them using `<BaseInteractionCommand>.safeReply()`. This will disable all mentions in the message making it safe to directly pass user-input. Calling `<InteractionContext>.editOrRespond()` or other methods that return text directly is discouraged.
-
-```ts
-// ⚠ avoid
-export default class GreetCommand extends BaseSlashCommand {
-  async run (context: Interaction.InteractionContext): Promise<void> {
-    await context.awaitOrRespond('Hello world!')
-  }
-}
-```
-
-```ts
-// ✓ prefered
-export default class GreetCommand extends BaseSlashCommand {
-  async run (context: Interaction.InteractionContext): Promise<void> {
-    await this.safeReply(context, 'Hello world!')
-  }
-}
-```

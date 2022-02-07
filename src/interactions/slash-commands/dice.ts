@@ -41,6 +41,6 @@ export default class DiceCommand extends BaseSlashCommand {
       total += Math.floor(Math.random() * diceSides) + 1
     }
 
-    await this.safeReply(context, `${context.user.username} rolled ${diceCount}d${diceSides} and got ${total}`)
+    await context.editOrRespond(`${context.user.username} rolled ${diceCount}d${diceSides} and got ${total}`)
   }
 }

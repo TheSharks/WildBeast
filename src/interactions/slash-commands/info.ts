@@ -36,7 +36,7 @@ export default class InfoCommand extends BaseSlashCommand {
       .setColor(0x00AE86)
       .setThumbnail(context.client.user!.avatarUrl)
       .setFooter(`${context.client.user!.username} - ${translate('commands.info.poweredBy')}`)
-    await this.safeReply(context, {
+    await context.editOrRespond( {
       embed,
       flags: MessageFlags.EPHEMERAL
     })
