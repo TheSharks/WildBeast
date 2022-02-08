@@ -6,7 +6,7 @@ export default new ScheduledJob('elastic-flush')
   // every hour
   .setInterval(60 * 60 * 1000)
   .setExec(async () => {
-    if (process.env.ELASTIC_URL !== undefined) {
+    if (process.env.ELASTIC_URL === undefined) {
       debug('No elastic url set, skipping elastic flush and resetting cache', 'Elastic')
       drop()
     } else await flush()
