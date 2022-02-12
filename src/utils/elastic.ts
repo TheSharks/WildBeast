@@ -1,5 +1,5 @@
 import { Client } from '@elastic/elasticsearch'
-import { BulkStats } from '@elastic/elasticsearch/lib/Helpers'
+import { BulkStats } from '@elastic/elasticsearch/lib/helpers'
 import { format } from 'date-fns'
 import discord from '../structures/client'
 import { debug, trace, warn } from './logger'
