@@ -6,7 +6,7 @@ import { BaseSlashCommand } from '../base'
 
 export default class RandomDogCommand extends BaseSlashCommand {
   name = 'dog'
-  description = 'Sends a random dog image'
+  description = this.translateThis('metadata.description')
 
   async run (context: Interaction.InteractionContext | ComponentContext): Promise<void> {
     const components = new Components({

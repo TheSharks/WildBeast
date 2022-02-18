@@ -3,7 +3,7 @@ import { Row, RowList } from 'postgres'
 import SQL from '../driver'
 import { basename, extname, join, resolve } from 'path'
 import { writeFile } from 'fs/promises'
-import { glob } from 'glob'
+import glob from 'fast-glob'
 import { debug, error, info, trace } from '../../utils/logger'
 
 const IS_TS_NODE = Symbol.for('ts-node.register.instance') in process

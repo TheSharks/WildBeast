@@ -22,7 +22,7 @@ export class BooruRule34Command extends BaseCommandOption {
   async onBeforeRun (context: Interaction.InteractionContext): Promise<boolean> {
     if (!context.inDm && !context.channel!.nsfw) {
       await context.editOrRespond({
-        content: translate('commands.common.nsfwDisabled'),
+        content: translate('common.nsfwDisabled'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
@@ -34,7 +34,7 @@ export class BooruRule34Command extends BaseCommandOption {
       options: [
         {
           name: 'query',
-          description: 'What to search for',
+          description: translate('slash-commands.booru.metadata.options.query'),
           required: true,
           async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
             const chunks = context.value.split(' ')
@@ -78,7 +78,7 @@ export class BooruRule34Command extends BaseCommandOption {
       })
       const text = await http.clone().text()
       if (text.length < 1) {
-        await context.editOrRespond(translate('commands.common.noResultsFor', { query: args.query }))
+        await context.editOrRespond(translate('common.noResultsFor', { query: args.query }))
         return
       } else {
         data = await http.json()
@@ -87,7 +87,7 @@ export class BooruRule34Command extends BaseCommandOption {
     const post = data[position]
     const embed = new Embed()
       .setImage(post.file_url)
-      .addField('Score', post.score, true)
+      .addField(this.translateThis('score'), post.score, true)
       .setFooter('rule34.xxx')
     const components = new Components({
       timeout: 5 * (60 * 1000),
@@ -116,7 +116,7 @@ export class BooruRule34Command extends BaseCommandOption {
     // workaround: detritus sets customIds even when its not needed
     const urlButton = new ComponentButton({
       style: MessageComponentButtonStyles.LINK,
-      label: translate('commands.common.open'),
+      label: translate('common.open'),
       url: `https://rule34.xxx/index.php?page=post&s=view&id=${post.id as string}`
     })
     delete urlButton.customId

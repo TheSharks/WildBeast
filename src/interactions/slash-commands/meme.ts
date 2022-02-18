@@ -9,7 +9,7 @@ import { BaseSlashCommand } from '../base'
 
 export default class RandomMemeCommand extends BaseSlashCommand {
   name = 'meme'
-  description = 'Get a random meme'
+  description = this.translateThis('metadata.description')
   triggerLoadingAfter = 2000
 
   async run (context: Interaction.InteractionContext | ComponentContext): Promise<void> {
@@ -38,7 +38,7 @@ export default class RandomMemeCommand extends BaseSlashCommand {
     // workaround: detritus sets customIds even when its not needed
     const urlButton = new ComponentButton({
       style: MessageComponentButtonStyles.LINK,
-      label: translate('commands.common.open'),
+      label: translate('common.open'),
       url: `https://reddit.com${post.permalink as string}`
     })
     delete urlButton.customId

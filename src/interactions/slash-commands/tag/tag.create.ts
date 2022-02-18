@@ -13,7 +13,7 @@ export interface CommandArgs {
 
 export class CreateTagCommand extends BaseCommandOption {
   name = 'create'
-  description = 'Create a new tag'
+  description = this.translateThis('metadata.descriptions.create')
   disableDm = true
 
   constructor () {
@@ -21,12 +21,12 @@ export class CreateTagCommand extends BaseCommandOption {
       options: [
         {
           name: 'name',
-          description: 'The name of the tag',
+          description: translate('slash-commands.tag.metadata.options.name'),
           required: true
         },
         {
           name: 'content',
-          description: 'The content of the tag',
+          description: translate('slash-commands.tag.metadata.options.content'),
           required: true
         }
       ]
@@ -37,7 +37,7 @@ export class CreateTagCommand extends BaseCommandOption {
     try {
       await driver`INSERT INTO tags (name, content, owner, guild) VALUES (${args.name}, ${args.content}, ${context.userId}, ${context.guildId!})`
       await context.editOrRespond({
-        content: translate('commands.tag.created'),
+        content: this.translateThis('created'),
         embed: {
           title: args.name,
           description: args.content,
@@ -49,14 +49,14 @@ export class CreateTagCommand extends BaseCommandOption {
       if (e instanceof PostgresError) {
         if (e.code === '23505') {
           await context.editOrRespond({
-            content: translate('commands.tag.errors.conflict'),
+            content: this.translateThis('errors.conflict'),
             flags: MessageFlags.EPHEMERAL
           })
         }
       } else {
         error(e, this.constructor.name)
         await context.editOrRespond({
-          content: translate('commands.common.softFail'),
+          content: translate('common.softFail'),
           flags: MessageFlags.EPHEMERAL
         })
       }

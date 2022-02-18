@@ -6,7 +6,7 @@ import { BaseSlashCommand } from '../base'
 
 export default class RandomCatCommand extends BaseSlashCommand {
   name = 'cat'
-  description = 'Sends a random cat image'
+  description = this.translateThis('metadata.description')
 
   async run (context: Interaction.InteractionContext | ComponentContext): Promise<void> {
     const components = new Components({
@@ -23,7 +23,7 @@ export default class RandomCatCommand extends BaseSlashCommand {
     const embed = new Embed()
       .setDescription(fact)
       .setImage(`https://cataas.com/cat?${context.interaction.id}`) // cache busting
-      .setFooter('Powered by cataas.com')
+      .setFooter('cataas.com')
     await context.editOrRespond({
       embed,
       components

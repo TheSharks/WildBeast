@@ -22,7 +22,7 @@ export class BooruGelbooruCommand extends BaseCommandOption {
   async onBeforeRun (context: Interaction.InteractionContext): Promise<boolean> {
     if (!context.inDm && !context.channel!.nsfw) {
       await context.editOrRespond({
-        content: translate('commands.common.nsfwDisabled'),
+        content: translate('common.nsfwDisabled'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
@@ -34,7 +34,7 @@ export class BooruGelbooruCommand extends BaseCommandOption {
       options: [
         {
           name: 'query',
-          description: 'What to search for',
+          description: translate('slash-commands.booru.metadata.options.query'),
           required: true
         }
       ]
@@ -58,12 +58,12 @@ export class BooruGelbooruCommand extends BaseCommandOption {
       }
     })).json()
     if (json.length === 0) {
-      await context.editOrRespond(translate('commands.common.noResultsFor', { query: args.query }))
+      await context.editOrRespond(translate('common.noResultsFor', { query: args.query }))
     } else {
       const post = json[position]
       const embed = new Embed()
         .setImage(post.file_url)
-        .addField('Score', post.score, true)
+        .addField(this.translateThis('score'), post.score, true)
         .setFooter('gelbooru.com')
       const components = new Components({
         timeout: 5 * (60 * 1000),
@@ -92,7 +92,7 @@ export class BooruGelbooruCommand extends BaseCommandOption {
       // workaround: detritus sets customIds even when its not needed
       const urlButton = new ComponentButton({
         style: MessageComponentButtonStyles.LINK,
-        label: translate('commands.common.open'),
+        label: translate('common.open'),
         url: `https://gelbooru.com/index.php?page=post&s=view&id=${post.id as string}`
       })
       delete urlButton.customId

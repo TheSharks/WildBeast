@@ -12,15 +12,15 @@ export interface CommandArgs {
 }
 
 export default class UrbanDictionaryCommand extends BaseSlashCommand {
-  description = 'Search Urban Dictionary'
   name = 'urbandictionary'
+  description = this.translateThis('metadata.description')
 
   constructor () {
     super({
       options: [
         {
           name: 'query',
-          description: 'What to search for',
+          description: translate('slash-commands.urbandictionary.metadata.options.query'),
           required: true,
           async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
             const hits = await (await fetch(`https://api.urbandictionary.com/v0/autocomplete?term=${context.value}`, {
@@ -44,7 +44,7 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
       }
     })).json()
     if (json.list.length === 0) {
-      await context.editOrRespond(translate('commands.urbandictionary.errors.notFound'))
+      await context.editOrRespond(this.translateThis('errors.notFound'))
     } else {
       const post = json.list[position]
       const embed = new Embed()
@@ -53,7 +53,7 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
         .setTitle(post.word)
         .setUrl(post.permalink)
         .setDescription(stylize(post.definition))
-        .addField(translate('commands.urbandictionary.example'), post.example?.length > 0 ? stylize(post.example) : translate('commands.urbandictionary.noExample'))
+        .addField(this.translateThis('example'), post.example?.length > 0 ? stylize(post.example) : this.translateThis('noExample'))
         .addField('👍', post.thumbs_up, true)
         .addField('👎', post.thumbs_down, true)
       const components = new Components({
@@ -83,7 +83,7 @@ export default class UrbanDictionaryCommand extends BaseSlashCommand {
       // workaround: detritus sets customIds even when its not needed
       const urlButton = new ComponentButton({
         style: MessageComponentButtonStyles.LINK,
-        label: translate('commands.common.open'),
+        label: translate('common.open'),
         url: post.permalink
       })
       delete urlButton.customId

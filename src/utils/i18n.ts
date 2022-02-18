@@ -1,12 +1,16 @@
 import { IntlMessageFormat } from 'intl-messageformat'
-import { error, fatal } from './logger'
+import { error, fatal, warn } from './logger'
 import { languages } from '../cache'
 
-const defaultLang = process.env.WILDBEAST_LANGUAGE ?? 'en-EN'
+const defaultLang = process.env.WILDBEAST_LANGUAGE ?? 'en-US'
 
 export function translate (key: string, args?: Record<string, any>, lang?: string): string {
   if (!languages.has(defaultLang)) {
     fatal(`Default language ${defaultLang} not found in cache!`, 'i18n')
+  }
+  if (lang !== undefined && !languages.has(lang)) {
+    warn(`A translation call requested language ${lang}, but it's not found in cache. Defaulting back to ${defaultLang}`, 'i18n')
+    lang = defaultLang
   }
   try {
     const msg = traverse(key, lang)

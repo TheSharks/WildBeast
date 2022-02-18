@@ -34,7 +34,6 @@
   },
   "homepage": "https://wildbeast.guide/",
   "devDependencies": {
-    "@types/glob": "^7.2.0",
     "@types/node": "^17.0.18",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "discord-api-types": "^0.27.1",
@@ -54,9 +53,10 @@
     "@thesharks/jagtag-js": "^2.0.0",
     "chalk": "^4.1.2",
     "date-fns": "^2.28.0",
+    "deepmerge": "^4.2.2",
     "detritus-client": "^0.17.0-beta.1",
     "dotenv": "^16.0.0",
-    "glob": "^7.2.0",
+    "fast-glob": "^3.2.11",
     "intl-messageformat": "^9.11.4",
     "postgres": "^2.0.0-beta.11",
     "tslib": "^2.3.1"

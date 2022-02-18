@@ -13,7 +13,7 @@ export interface CommandArgs {
 
 export class TagInfoCommand extends BaseCommandOption {
   name = 'info'
-  description = 'Show info about a tag'
+  description = this.translateThis('metadata.descriptions.info')
   disableDm = true
 
   constructor () {
@@ -21,7 +21,7 @@ export class TagInfoCommand extends BaseCommandOption {
       options: [
         {
           name: 'name',
-          description: 'The name of the tag',
+          description: translate('slash-commands.tag.metadata.options.name'),
           required: true,
           async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
             const search = `${context.value}%`
@@ -38,7 +38,7 @@ export class TagInfoCommand extends BaseCommandOption {
     const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND guild = ${context.guildId!}`
     if (tag.length === 0) {
       await context.editOrRespond({
-        content: translate('commands.tag.errors.notFound'),
+        content: this.translateThis('errors.notFound'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
@@ -61,17 +61,17 @@ export class TagInfoCommand extends BaseCommandOption {
           },
           fields: [
             {
-              name: 'Created At',
+              name: this.translateThis('created'),
               value: `<t:${Math.round(new Date(tag.created_at).getTime() / 1000)}:D>`,
               inline: true
             },
             {
-              name: 'Updated At',
+              name: this.translateThis('updated'),
               value: `<t:${Math.round(new Date(tag.updated_at).getTime() / 1000)}:D>`,
               inline: true
             },
             {
-              name: 'Ranking',
+              name: this.translateThis('ranking'),
               value: `Used ${tag.uses} times, ${ranking.indexOf(args.name) + 1}/${ranking.length}`,
               inline: true
             }
@@ -81,7 +81,7 @@ export class TagInfoCommand extends BaseCommandOption {
     } catch (e) {
       error(e, this.constructor.name)
       await context.editOrRespond({
-        content: translate('commands.common.softFail'),
+        content: translate('common.softFail'),
         flags: MessageFlags.EPHEMERAL
       })
     }

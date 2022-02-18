@@ -1,5 +1,6 @@
 import { Interaction } from 'detritus-client'
 import { ApplicationCommandOptionTypes } from 'detritus-client/lib/constants'
+import { translate } from '../../utils/i18n'
 
 import { BaseSlashCommand } from '../base'
 
@@ -9,8 +10,8 @@ export interface CommandArgs {
 }
 
 export default class DiceCommand extends BaseSlashCommand {
-  description = 'Roll some dice'
   name = 'dice'
+  description = this.translateThis('metadata.description')
 
   constructor () {
     super({
@@ -18,13 +19,13 @@ export default class DiceCommand extends BaseSlashCommand {
         {
           type: ApplicationCommandOptionTypes.INTEGER,
           name: 'dice',
-          description: 'The number of dice to roll (default: 1)',
+          description: translate('slash-commands.dice.metadata.options.dice'),
           required: false
         },
         {
           type: ApplicationCommandOptionTypes.INTEGER,
           name: 'sides',
-          description: 'The number of sides on the dice (default: 6)',
+          description: translate('slash-commands.dice.metadata.options.sides'),
           required: false
         }
       ]
@@ -41,6 +42,11 @@ export default class DiceCommand extends BaseSlashCommand {
       total += Math.floor(Math.random() * diceSides) + 1
     }
 
-    await context.editOrRespond(`${context.user.username} rolled ${diceCount}d${diceSides} and got ${total}`)
+    await context.editOrRespond(this.translateThis('response', {
+      username: context.user.username,
+      diceCount,
+      diceSides,
+      total
+    }))
   }
 }

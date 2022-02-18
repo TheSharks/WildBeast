@@ -24,7 +24,7 @@ export class BooruE621Command extends BaseCommandOption {
       options: [
         {
           name: 'query',
-          description: 'What to search for',
+          description: translate('slash-commands.booru.metadata.options.query'),
           required: true,
           async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
             const chunks = context.value.split(' ')
@@ -63,15 +63,15 @@ export class BooruE621Command extends BaseCommandOption {
       }
     })).json()
     if (json.posts.length === 0) {
-      await context.editOrRespond(translate('commands.common.noResultsFor', { query: args.query }))
+      await context.editOrRespond(translate('common.noResultsFor', { query: args.query }))
     } else {
       const post = json.posts[position]
       const artist: string = post.tags.artist.filter((x: string) => !['conditional_dnp'].includes(x))[0] ?? 'Unknown'
       const embed = new Embed()
         .setAuthor(artist, 'https://en.wikifur.com/w/images/d/dd/E621Logo.png', artist === 'Unknown' ? undefined : `https://e621.net/artists/show_or_new?name=${encodeURIComponent(artist)}`)
         .setImage(post.file.url)
-        .addField('Score', `${post.score.up as string} 👍 ${post.score.down as string} 👎`, true)
-        .addField('Favorites', post.fav_count, true)
+        .addField(this.translateThis('score'), `${post.score.up as string} 👍 ${post.score.down as string} 👎`, true)
+        .addField(this.translateThis('favorites'), post.fav_count, true)
       if (context.channel !== null && !context.channel.nsfw) embed.setFooter('e926.net - NSFW disabled', 'https://en.wikifur.com/w/images/d/dd/E621Logo.png')
       else embed.setFooter('e621.net', 'https://en.wikifur.com/w/images/d/dd/E621Logo.png')
       const components = new Components({
@@ -101,7 +101,7 @@ export class BooruE621Command extends BaseCommandOption {
       // workaround: detritus sets customIds even when its not needed
       const urlButton = new ComponentButton({
         style: MessageComponentButtonStyles.LINK,
-        label: translate('commands.common.open'),
+        label: translate('common.open'),
         url: `https://e621.net/posts/${post.id as string}`
       })
       delete urlButton.customId

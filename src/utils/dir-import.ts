@@ -1,4 +1,4 @@
-import { sync } from 'glob'
+import { sync } from 'fast-glob'
 
 const IS_TS_NODE = Symbol.for('ts-node.register.instance') in process
 

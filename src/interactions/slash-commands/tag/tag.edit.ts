@@ -13,7 +13,7 @@ export interface CommandArgs {
 
 export class EditTagCommand extends BaseCommandOption {
   name = 'edit'
-  description = 'Edit a tag you own'
+  description = this.translateThis('metadata.descriptions.edit')
   disableDm = true
 
   constructor () {
@@ -21,7 +21,7 @@ export class EditTagCommand extends BaseCommandOption {
       options: [
         {
           name: 'name',
-          description: 'The name of the tag',
+          description: translate('slash-commands.tag.metadata.options.name'),
           required: true,
           async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
             const search = `${context.value}%`
@@ -32,7 +32,7 @@ export class EditTagCommand extends BaseCommandOption {
         },
         {
           name: 'content',
-          description: 'The content of the tag',
+          description: translate('slash-commands.tag.metadata.options.content'),
           required: true
         }
       ]
@@ -43,7 +43,7 @@ export class EditTagCommand extends BaseCommandOption {
     const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}` as Tag[]
     if (tag.length === 0) {
       await context.editOrRespond({
-        content: translate('commands.tag.errors.notFound'),
+        content: this.translateThis('errors.notFound'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
@@ -54,7 +54,7 @@ export class EditTagCommand extends BaseCommandOption {
     try {
       await driver`UPDATE tags SET content = ${args.content}, updated_at = NOW() WHERE name = ${args.name} AND owner = ${context.userId} AND guild = ${context.guildId!}`
       await context.editOrRespond({
-        content: translate('commands.tag.edited'),
+        content: this.translateThis('edited'),
         embed: {
           title: args.name,
           description: args.content,
@@ -65,7 +65,7 @@ export class EditTagCommand extends BaseCommandOption {
     } catch (e) {
       error(e, this.constructor.name)
       await context.editOrRespond({
-        content: translate('commands.common.softFail'),
+        content: translate('common.softFail'),
         flags: MessageFlags.EPHEMERAL
       })
     }

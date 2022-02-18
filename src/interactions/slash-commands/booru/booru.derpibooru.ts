@@ -22,7 +22,7 @@ export class BooruDerpibooruCommand extends BaseCommandOption {
   async onBeforeRun (context: Interaction.InteractionContext): Promise<boolean> {
     if (!context.inDm && !context.channel!.nsfw) {
       await context.editOrRespond({
-        content: translate('commands.common.nsfwDisabled'),
+        content: translate('common.nsfwDisabled'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
@@ -34,7 +34,7 @@ export class BooruDerpibooruCommand extends BaseCommandOption {
       options: [
         {
           name: 'query',
-          description: 'What to search for',
+          description: translate('slash-commands.booru.metadata.options.query'),
           required: true
         }
       ]
@@ -53,14 +53,14 @@ export class BooruDerpibooruCommand extends BaseCommandOption {
       }
     })).json()
     if (json.total === 0) {
-      await context.editOrRespond(translate('commands.common.noResultsFor', { query: args.query }))
+      await context.editOrRespond(translate('common.noResultsFor', { query: args.query }))
     } else {
       const post = json.images[position]
       const artist: string = post.tags.filter((x: string) => x.startsWith('artist:'))[0].slice('artist:'.length) ?? 'Unknown'
       const embed = new Embed()
         .setAuthor(artist, 'https://i.imgur.com/f556NmB.png', post.source_url)
         .setImage(post.representations.full)
-        .addField('Score', `${post.upvotes as string} 👍 ${post.downvotes as string} 👎`, true)
+        .addField(this.translateThis('score'), `${post.upvotes as string} 👍 ${post.downvotes as string} 👎`, true)
         .setFooter('derpibooru.org', 'https://i.imgur.com/f556NmB.png')
       const components = new Components({
         timeout: 5 * (60 * 1000),
@@ -89,7 +89,7 @@ export class BooruDerpibooruCommand extends BaseCommandOption {
       // workaround: detritus sets customIds even when its not needed
       const urlButton = new ComponentButton({
         style: MessageComponentButtonStyles.LINK,
-        label: translate('commands.common.open'),
+        label: translate('common.open'),
         url: `https://derpibooru.org/images/${post.id as string}`
       })
       delete urlButton.customId

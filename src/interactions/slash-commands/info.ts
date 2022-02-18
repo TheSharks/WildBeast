@@ -1,6 +1,5 @@
 import { Interaction } from 'detritus-client'
 import { Embed } from 'detritus-client/lib/utils'
-import { translate } from '../../utils/i18n'
 
 import { BaseSlashCommand } from '../base'
 
@@ -11,8 +10,8 @@ import { MessageFlags } from 'detritus-client/lib/constants'
 const { version } = require('../../../package.json')
 
 export default class InfoCommand extends BaseSlashCommand {
-  description = 'Get information about the bot'
   name = 'info'
+  description = this.translateThis('metadata.description')
 
   async run (context: Interaction.InteractionContext): Promise<void> {
     let owner
@@ -24,19 +23,19 @@ export default class InfoCommand extends BaseSlashCommand {
     const uptime = sub(new Date(), { seconds: process.uptime() })
     const embed = new Embed()
       .setTitle('Info')
-      .addField(translate('commands.info.guilds'), `${context.client.guilds.size}`, true)
-      .addField(translate('commands.info.uptime'), `<t:${Math.floor(uptime.getTime() / 1000)}:R>`, true)
-      .addField(translate('commands.info.shard'), `${context.client.shardId}/${context.client.shardCount}`, true)
-      .addField(translate('commands.info.owner'), `${owner.username}#${owner.discriminator}`, true)
-      .addField(translate('commands.info.version'), `v${version as string}`, true)
-      .addField(translate('commands.info.node'), `${process.version}`, true)
-      .addField(translate('commands.info.os'), `${process.platform}`, true)
-      .addField(translate('commands.info.ram'), `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`, true)
-      .addField(translate('commands.info.cpu'), `${Math.round(process.cpuUsage().user / 1000 / 1000)}%`, true)
+      .addField(this.translateThis('guilds'), `${context.client.guilds.size}`, true)
+      .addField(this.translateThis('uptime'), `<t:${Math.floor(uptime.getTime() / 1000)}:R>`, true)
+      .addField(this.translateThis('shard'), `${context.client.shardId}/${context.client.shardCount}`, true)
+      .addField(this.translateThis('owner'), `${owner.username}#${owner.discriminator}`, true)
+      .addField(this.translateThis('version'), `v${version as string}`, true)
+      .addField(this.translateThis('node'), `${process.version}`, true)
+      .addField(this.translateThis('os'), `${process.platform}`, true)
+      .addField(this.translateThis('ram'), `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`, true)
+      .addField(this.translateThis('cpu'), `${Math.round(process.cpuUsage().user / 1000 / 1000)}%`, true)
       .setColor(0x00AE86)
       .setThumbnail(context.client.user!.avatarUrl)
-      .setFooter(`${context.client.user!.username} - ${translate('commands.info.poweredBy')}`)
-    await context.editOrRespond( {
+      .setFooter(`${context.client.user!.username} - ${this.translateThis('poweredBy')}`)
+    await context.editOrRespond({
       embed,
       flags: MessageFlags.EPHEMERAL
     })

@@ -14,7 +14,7 @@ export interface CommandArgs {
 
 export class ShowTagCommand extends BaseCommandOption {
   name = 'show'
-  description = 'Show a tag'
+  description = this.translateThis('metadata.descriptions.show')
   disableDm = true
 
   constructor () {
@@ -22,7 +22,7 @@ export class ShowTagCommand extends BaseCommandOption {
       options: [
         {
           name: 'name',
-          description: 'The name of the tag',
+          description: translate('slash-commands.tag.metadata.options.name'),
           required: true,
           async onAutoComplete (context: Interaction.InteractionAutoCompleteContext): Promise<void> {
             const search = `${context.value}%`
@@ -33,7 +33,7 @@ export class ShowTagCommand extends BaseCommandOption {
         },
         {
           name: 'args',
-          description: 'Arguments to pass to the tag',
+          description: translate('slash-commands.tag.metadata.options.args'),
           required: false
         }
       ]
@@ -44,7 +44,7 @@ export class ShowTagCommand extends BaseCommandOption {
     const tag = await driver`SELECT name FROM tags WHERE name = ${args.name} AND guild = ${context.guildId!}` as Tag[]
     if (tag.length === 0) {
       await context.editOrRespond({
-        content: translate('commands.tag.errors.notFound'),
+        content: this.translateThis('errors.notFound'),
         flags: MessageFlags.EPHEMERAL
       })
       return false
@@ -67,7 +67,7 @@ export class ShowTagCommand extends BaseCommandOption {
     } catch (e) {
       error(e, this.constructor.name)
       await context.editOrRespond({
-        content: translate('commands.common.softFail'),
+        content: translate('common.softFail'),
         flags: MessageFlags.EPHEMERAL
       })
     }

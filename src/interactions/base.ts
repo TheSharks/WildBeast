@@ -5,6 +5,17 @@ import { error } from '../utils/logger'
 const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags, Permissions } = Constants
 
 export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommand<ParsedArgsFinished> {
+  translate: typeof translate = translate
+  translateThis: typeof translate = (key, args) =>
+    this.translate(`slash-commands.${this.name.toLowerCase()}.${key}`, args)
+
+  async onBefore (context: Interaction.InteractionContext): Promise<boolean> {
+    if (context.locale !== undefined) {
+      this.translate = (key, args) => translate(key, args, context.locale)
+    }
+    return true
+  }
+
   async onSuccess (context: Interaction.InteractionContext, args: ParsedArgsFinished): Promise<void> {
     add({
       type: 'command',
@@ -21,7 +32,7 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
 
   async onDmBlocked (context: Interaction.InteractionContext): Promise<unknown> {
     return await context.editOrRespond({
-      content: translate('commands.common.dmDisabled'),
+      content: this.translate('common.dmDisabled'),
       flags: MessageFlags.EPHEMERAL
     })
   }
@@ -29,9 +40,9 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
   async onPermissionsFail (context: Interaction.InteractionContext, falied: bigint[]): Promise<void> {
     const values = Object.entries(Permissions).filter(([key, value]) => falied.includes(BigInt(value)))
     await context.editOrRespond({
-      content:
-        "You're missing the following permissions for this command to work:\n" +
-        values.map(([key, value]) => `\`${key}\``).join('\n'),
+      content: this.translate('common.permsMissingUser', {
+        perms: values.map(([key]) => key).join(', ')
+      }),
       flags: MessageFlags.EPHEMERAL
     })
   }
@@ -39,16 +50,16 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
   async onPermissionsFailClient (context: Interaction.InteractionContext, falied: bigint[]): Promise<void> {
     const values = Object.entries(Permissions).filter(([key, value]) => falied.includes(BigInt(value)))
     await context.editOrRespond({
-      content:
-        "I'm missing the following permissions for this command to work:\n" +
-        values.map(([key, value]) => `\`${key}\``).join('\n'),
+      content: this.translate('common.permsMissingOwn', {
+        perms: values.map(([key]) => key).join(', ')
+      }),
       flags: MessageFlags.EPHEMERAL
     })
   }
 
   async onRatelimit (context: Interaction.InteractionContext): Promise<void> {
     await context.editOrRespond({
-      content: 'You are doing that too much, please wait a bit.',
+      content: this.translate('common.cooldown'),
       flags: MessageFlags.EPHEMERAL
     })
   }
@@ -71,17 +82,101 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
       }
     })
     return await context.editOrRespond({
-      content: translate('commands.common.failedToRun', { uuid }),
+      content: translate('common.failedToRun', { uuid }),
       flags: MessageFlags.EPHEMERAL
     })
   }
 }
 
-export class BaseCommandOption<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommandOption<ParsedArgsFinished> {
+class OptionBase<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommandOption<ParsedArgsFinished> {
+  translate: typeof translate = translate
+  translateThis: typeof translate = (key, args) =>
+    this.translate(`context-menu.${this.name.toLowerCase()}.${key}`, args)
+
+  async onBefore (context: Interaction.InteractionContext): Promise<boolean> {
+    if (context.locale !== undefined) {
+      this.translate = (key, args) => translate(key, args, context.locale)
+    }
+    return true
+  }
+
+  async onSuccess (context: Interaction.InteractionContext, args: ParsedArgsFinished): Promise<void> {
+    add({
+      type: 'command',
+      guildId: context.guildId,
+      inDm: context.inDm,
+      userId: context.user.id,
+      data: {
+        args,
+        interaction_id: context.interactionId
+      },
+      name: context.command.name
+    })
+  }
+
+  async onDmBlocked (context: Interaction.InteractionContext): Promise<unknown> {
+    return await context.editOrRespond({
+      content: this.translate('common.dmDisabled'),
+      flags: MessageFlags.EPHEMERAL
+    })
+  }
+
+  async onPermissionsFail (context: Interaction.InteractionContext, falied: bigint[]): Promise<void> {
+    const values = Object.entries(Permissions).filter(([key, value]) => falied.includes(BigInt(value)))
+    await context.editOrRespond({
+      content: this.translate('common.permsMissingUser', {
+        perms: values.map(([key]) => key).join(', ')
+      }),
+      flags: MessageFlags.EPHEMERAL
+    })
+  }
+
+  async onPermissionsFailClient (context: Interaction.InteractionContext, falied: bigint[]): Promise<void> {
+    const values = Object.entries(Permissions).filter(([key, value]) => falied.includes(BigInt(value)))
+    await context.editOrRespond({
+      content: this.translate('common.permsMissingOwn', {
+        perms: values.map(([key]) => key).join(', ')
+      }),
+      flags: MessageFlags.EPHEMERAL
+    })
+  }
+
+  async onRatelimit (context: Interaction.InteractionContext): Promise<void> {
+    await context.editOrRespond({
+      content: this.translate('common.cooldown'),
+      flags: MessageFlags.EPHEMERAL
+    })
+  }
+
+  async onRunError (context: Interaction.InteractionContext, args: ParsedArgsFinished, err: any): Promise<unknown> {
+    const uuid = error(err, context.name, {
+      user: {
+        id: context.user.id,
+        username: context.user.username
+      },
+      contexts: {
+        guild: {
+          id: context.guildId,
+          name: context.guild?.name
+        },
+        command: {
+          name: context.command.name,
+          args
+        }
+      }
+    })
+    return await context.editOrRespond({
+      content: translate('common.failedToRun', { uuid }),
+      flags: MessageFlags.EPHEMERAL
+    })
+  }
+}
+
+export class BaseCommandOption<ParsedArgsFinished = Interaction.ParsedArgs> extends OptionBase<ParsedArgsFinished> {
   type = ApplicationCommandOptionTypes.SUB_COMMAND
 }
 
-export class BaseCommandOptionGroup<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommandOption<ParsedArgsFinished> {
+export class BaseCommandOptionGroup<ParsedArgsFinished = Interaction.ParsedArgs> extends OptionBase<ParsedArgsFinished> {
   type = ApplicationCommandOptionTypes.SUB_COMMAND_GROUP
 }
 
