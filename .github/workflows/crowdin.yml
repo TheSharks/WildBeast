@@ -3,22 +3,57 @@ name: Crowdin Action
 on:
   push:
     branches: [ master ]
+  schedule:
+    - cron: '30 5,17 * * *'
+  workflow_dispatch:
 
 jobs:
-  synchronize-with-crowdin:
+  download-from-crowdin:
+    if: ${{ github.event_name != 'push' }}
     runs-on: ubuntu-latest
-
     steps:
-
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    - name: crowdin action
-      uses: crowdin/github-action@1.4.6
-      with:
-        upload_sources: true
-        download_translations: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-        CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Download from Crowdin
+        uses: crowdin/github-action@1.4.6
+        if: ${{ github.event_name == 'schedule' }}
+        with:
+          upload_sources: false
+          download_translations: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+      - name: Commit changes
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Files have changed"
+            git add .
+            git commit -m "[chore] Update translations" -a
+            git push HEAD:master 
+          else
+            echo "Files have not changed"
+          fi
+      
+  upload-to-crowdin:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Upload to Crowdin
+        uses: crowdin/github-action@1.4.6
+        if: ${{ github.event_name == 'push' }}
+        with:
+          upload_sources: true
+          download_translations: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
