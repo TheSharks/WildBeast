@@ -37,7 +37,7 @@ jobs:
             echo "Files have changed"
             git add .
             git commit -m "[chore] Update translations" -a
-            git push HEAD:master 
+            git push origin master 
           fi
       
   upload-to-crowdin:
