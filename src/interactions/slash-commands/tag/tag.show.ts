@@ -14,6 +14,7 @@ export interface CommandArgs {
 
 export class ShowTagCommand extends BaseCommandOption {
   name = 'show'
+  translationPath = 'tag'
   description = this.translateThis('metadata.descriptions.show')
   disableDm = true
 

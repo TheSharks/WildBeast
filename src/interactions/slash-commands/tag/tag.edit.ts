@@ -13,6 +13,7 @@ export interface CommandArgs {
 
 export class EditTagCommand extends BaseCommandOption {
   name = 'edit'
+  translationPath = 'tag'
   description = this.translateThis('metadata.descriptions.edit')
   disableDm = true
 

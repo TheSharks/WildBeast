@@ -17,7 +17,7 @@ export function translate (key: string, args?: Record<string, any>, lang?: strin
     if (!(typeof msg === 'string') && lang !== defaultLang) {
       warn(`Translation key ${key} for language ${lang ?? defaultLang} not found in cache! Retrying for default language`, 'i18n')
       return translate(key, args, defaultLang)
-    } else error(`Translation key ${key} for default language not found in cache!`, 'i18n')
+    } else if (!(typeof msg === 'string')) error(`Translation key ${key} for default language not found in cache!`, 'i18n')
     return new IntlMessageFormat(typeof msg === 'string' ? msg : '[TRANSLATION FAILED]').format(args)
   } catch (e) {
     error(`Failed to translate ${key}`, 'i18n')

@@ -2,9 +2,14 @@ import deepmerge from 'deepmerge'
 import glob from 'fast-glob'
 import { basename, extname, relative, sep } from 'path'
 import { languages } from '../cache'
-import { debug } from '../utils/logger'
+import { debug, info } from '../utils/logger'
 
 export default async function (): Promise<void> {
+  if (languages.size > 0) {
+    debug('Languages already loaded, skipping', 'Languages')
+    return
+  }
+  info('Loading languages, this may take a while', 'Languages')
   const files = await glob('**/*.strings.[?jt]s', {
     absolute: true,
     cwd: __dirname

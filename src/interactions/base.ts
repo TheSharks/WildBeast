@@ -6,8 +6,13 @@ const { ApplicationCommandTypes, ApplicationCommandOptionTypes, MessageFlags, Pe
 
 export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommand<ParsedArgsFinished> {
   translate: typeof translate = translate
-  translateThis: typeof translate = (key, args) =>
-    this.translate(`slash-commands.${this.name.toLowerCase()}.${key}`, args)
+  translateThis: typeof translate = (key, args) => {
+    if (this.type === ApplicationCommandTypes.CHAT_INPUT) {
+      return this.translate(`slash-commands.${this.name.toLowerCase()}.${key}`, args)
+    } else {
+      return this.translate(`context-menu.${this.name.toLowerCase()}.${key}`, args)
+    }
+  }
 
   async onBefore (context: Interaction.InteractionContext): Promise<boolean> {
     if (context.locale !== undefined) {
@@ -90,8 +95,9 @@ export class BaseInteractionCommand<ParsedArgsFinished = Interaction.ParsedArgs>
 
 class OptionBase<ParsedArgsFinished = Interaction.ParsedArgs> extends Interaction.InteractionCommandOption<ParsedArgsFinished> {
   translate: typeof translate = translate
+  translationPath: string = this.name.toLowerCase()
   translateThis: typeof translate = (key, args) =>
-    this.translate(`context-menu.${this.name.toLowerCase()}.${key}`, args)
+    this.translate(`slash-commands.${this.translationPath}.${key}`, args)
 
   async onBefore (context: Interaction.InteractionContext): Promise<boolean> {
     if (context.locale !== undefined) {

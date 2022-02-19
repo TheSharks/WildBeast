@@ -13,6 +13,7 @@ export interface CommandArgs {
 
 export class TagInfoCommand extends BaseCommandOption {
   name = 'info'
+  translationPath = 'tag'
   description = this.translateThis('metadata.descriptions.info')
   disableDm = true
 

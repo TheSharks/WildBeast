@@ -12,6 +12,7 @@ export interface CommandArgs {
 
 export class DeleteTagCommand extends BaseCommandOption {
   name = 'delete'
+  translationPath = 'tag'
   description = this.translateThis('metadata.descriptions.delete')
   disableDm = true
 
