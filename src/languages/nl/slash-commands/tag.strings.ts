@@ -10,7 +10,7 @@ export default {
     options: {
       name: "De naam van de tag",
       content: "De inhoud van de tag",
-      args: false
+      args: "De argumenten om door te geven aan het commando"
     }
   },
   errors: {

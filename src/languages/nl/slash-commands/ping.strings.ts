@@ -1,6 +1,6 @@
 export default {
   metadata: {
-    description: false
+    description: "Ping de bot"
   },
   response: 'Pong! (gateway: {gateway}ms) (rest: {rest}ms)'
 };
