@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download from Crowdin
-        uses: crowdin/github-action@1.4.6
+        uses: crowdin/github-action@1.4.7
         with:
           upload_sources: false
           download_translations: true
@@ -49,7 +49,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Upload to Crowdin
-        uses: crowdin/github-action@1.4.6
+        uses: crowdin/github-action@1.4.7
         if: ${{ github.event_name == 'push' }}
         with:
           upload_sources: true
