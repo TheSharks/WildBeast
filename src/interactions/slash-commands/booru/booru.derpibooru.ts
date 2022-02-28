@@ -18,6 +18,7 @@ export class BooruDerpibooruCommand extends BaseCommandOption {
   name = 'derpibooru'
   description = 'Query derpibooru.org'
   triggerLoadingAfter = 2000
+  translationPath = 'booru'
 
   async onBeforeRun (context: Interaction.InteractionContext): Promise<boolean> {
     if (!context.inDm && !context.channel!.nsfw) {

@@ -18,6 +18,7 @@ export class BooruGelbooruCommand extends BaseCommandOption {
   name = 'gelbooru'
   description = 'Query gelbooru.com'
   triggerLoadingAfter = 2000
+  translationPath = 'booru'
 
   async onBeforeRun (context: Interaction.InteractionContext): Promise<boolean> {
     if (!context.inDm && !context.channel!.nsfw) {

@@ -18,6 +18,7 @@ export class BooruE621Command extends BaseCommandOption {
   name = 'e621'
   description = 'Query e621'
   triggerLoadingAfter = 2000
+  translationPath = 'booru'
 
   constructor () {
     super({

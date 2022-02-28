@@ -18,6 +18,7 @@ export class BooruRule34Command extends BaseCommandOption {
   name = 'rule34'
   description = 'Query rule34.xxx'
   triggerLoadingAfter = 2000
+  translationPath = 'booru'
 
   async onBeforeRun (context: Interaction.InteractionContext): Promise<boolean> {
     if (!context.inDm && !context.channel!.nsfw) {
