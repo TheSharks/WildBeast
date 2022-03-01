@@ -51,7 +51,7 @@
     "@sentry/integrations": "^6.18.1",
     "@sentry/node": "^6.18.1",
     "@thesharks/jagtag-js": "^2.0.0",
-    "chalk": "^4.1.2",
+    "chalk": "^5.0.0",
     "date-fns": "^2.28.0",
     "deepmerge": "^4.2.2",
     "detritus-client": "^0.17.0-beta.1",
