@@ -90,15 +90,12 @@ export class BooruGelbooruCommand extends BaseCommandOption {
         style: MessageComponentButtonStyles.DANGER,
         run: async (componentContext: ComponentContext) => await componentContext.editOrRespond({ components: [new ComponentActionRow({ components: [urlButton] })] })
       })
-      // workaround: detritus sets customIds even when its not needed
       const urlButton = new ComponentButton({
         style: MessageComponentButtonStyles.LINK,
         label: translate('common.open'),
         url: `https://gelbooru.com/index.php?page=post&s=view&id=${post.id as string}`
       })
-      delete urlButton.customId
       components.addButton(urlButton)
-      // end workaround
       await context.editOrRespond({ embed, components })
     }
   }

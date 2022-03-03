@@ -35,15 +35,12 @@ export default class RandomMemeCommand extends BaseSlashCommand {
       emoji: '🔄',
       run: async (componentContext: ComponentContext) => await this.run(componentContext)
     })
-    // workaround: detritus sets customIds even when its not needed
     const urlButton = new ComponentButton({
       style: MessageComponentButtonStyles.LINK,
       label: translate('common.open'),
       url: `https://reddit.com${post.permalink as string}`
     })
-    delete urlButton.customId
     components.addButton(urlButton)
-    // end workaround
 
     await context.editOrRespond({ embed, components })
   }
