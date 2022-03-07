@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - run: echo "deploying to production with tag ${{ needs.determine-image.outputs.tag }}"
       - name: Authenticate with Kubernetes
@@ -60,7 +60,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - run: echo "deploying to staging with tag ${{ needs.determine-image.outputs.tag }}"
       - name: Authenticate with Kubernetes
