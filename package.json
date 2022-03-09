@@ -47,7 +47,7 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
-    "@elastic/elasticsearch": "^8.0.0",
+    "@elastic/elasticsearch": "^8.1.0",
     "@sentry/integrations": "^6.18.1",
     "@sentry/node": "^6.18.1",
     "@thesharks/jagtag-js": "^2.0.0",
