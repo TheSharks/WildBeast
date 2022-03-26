@@ -23,7 +23,7 @@ export default
   owner: 'The owner of that tag is {user}',
   created: 'Your tag was created',
   deleted: 'Your tag was deleted',
-  edited: 'Your tag was edited',
+  updated: 'Your tag was edited',
   createdAt: 'Created At',
   updatedAt: 'Updated At',
   ranking: 'Ranking'
