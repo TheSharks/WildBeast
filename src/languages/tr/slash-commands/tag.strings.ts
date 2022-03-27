@@ -22,7 +22,7 @@ export default {
   owner: false,
   created: "Etiket oluşturuldu",
   deleted: "Etiket silindi",
-  edited: "Etiket düzenlendi",
+  updated: false,
   createdAt: false,
   updatedAt: false,
   ranking: false

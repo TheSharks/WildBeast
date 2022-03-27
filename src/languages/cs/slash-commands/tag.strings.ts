@@ -22,7 +22,7 @@ export default {
   owner: "Vlastníkem této značky je {user}",
   created: "Vaše značka byla vytvořena",
   deleted: "Vaše značka byla odstraněna",
-  edited: "Vaše značka byla upravena",
+  updated: false,
   createdAt: "Vytvořeno v",
   updatedAt: "Aktualizováno na",
   ranking: "Pořadí"

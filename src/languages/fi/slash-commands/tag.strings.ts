@@ -22,7 +22,7 @@ export default {
   owner: "Tämän tagin omistaja on {user}",
   created: "Tagisi luotiin",
   deleted: "Tagisi poistettiin",
-  edited: "Tagiasi on muokattu",
+  updated: false,
   createdAt: "Created at",
   updatedAt: "Päivitetty osoitteessa",
   ranking: 'Ranking'

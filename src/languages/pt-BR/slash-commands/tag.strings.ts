@@ -22,7 +22,7 @@ export default {
   owner: "O dono dessa etiqueta é {user}",
   created: "A sua etiqueta foi criada",
   deleted: "A sua etiqueta foi apagada.",
-  edited: "A sua etiqueta foi editada",
+  updated: false,
   createdAt: "Criado em",
   updatedAt: "Atualizado em",
   ranking: 'Ranking'

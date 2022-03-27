@@ -22,7 +22,7 @@ export default {
   owner: "Собственикът на този таг е {user}",
   created: "Вашият етикет е създаден",
   deleted: "Вашият етикет е изтрит",
-  edited: "Вашият етикет е редактиран",
+  updated: false,
   createdAt: "Създаден в",
   updatedAt: "Актуализирано в",
   ranking: "Класиране"

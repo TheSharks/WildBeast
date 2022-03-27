@@ -22,7 +22,7 @@ export default {
   owner: "Ägaren till den taggen är {user}",
   created: "Din tagg skapades",
   deleted: "Din tagg togs bort",
-  edited: "Din tagg redigerades",
+  updated: false,
   createdAt: "Skapad på",
   updatedAt: "Uppdaterad på",
   ranking: 'Ranking'

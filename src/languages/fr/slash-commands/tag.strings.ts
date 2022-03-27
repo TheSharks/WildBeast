@@ -22,7 +22,7 @@ export default {
   owner: "Le propriétaire de cette balise est {user}",
   created: "Votre étiquette a été créée",
   deleted: "Votre tag a été supprimé",
-  edited: "Votre tag a été modifié",
+  updated: false,
   createdAt: "Créé à",
   updatedAt: "Mis à jour à",
   ranking: "Classement"

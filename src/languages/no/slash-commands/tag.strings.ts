@@ -22,7 +22,7 @@ export default {
   owner: false,
   created: false,
   deleted: false,
-  edited: false,
+  updated: false,
   createdAt: false,
   updatedAt: false,
   ranking: false

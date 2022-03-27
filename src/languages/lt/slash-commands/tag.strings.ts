@@ -22,7 +22,7 @@ export default {
   owner: "Šios žymės savininkas yra {user}",
   created: "Jūsų žyma buvo sukurta",
   deleted: "Jūsų žyma buvo ištrinta",
-  edited: "Jūsų žyma buvo redaguota",
+  updated: false,
   createdAt: "Sukurta ne",
   updatedAt: "Atnaujinta",
   ranking: "Reitingas"

@@ -22,7 +22,7 @@ export default {
   owner: "De eigenaar van die tag is {user}",
   created: "Je tag is gemaakt",
   deleted: "Je tag is verwijderd",
-  edited: "Je tag is bewerkt",
+  updated: false,
   createdAt: "Aangemaakt op",
   updatedAt: "Bijgewerkt op",
   ranking: "Rangschikking"

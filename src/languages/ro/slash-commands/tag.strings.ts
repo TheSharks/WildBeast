@@ -22,7 +22,7 @@ export default {
   owner: "Proprietarul acestei etichete este {user}",
   created: "Eticheta ta a fost creată",
   deleted: "Eticheta ta a fost ștearsă",
-  edited: "Eticheta ta a fost editată",
+  updated: false,
   createdAt: "Creat la",
   updatedAt: "Actualizat la",
   ranking: "Clasament"

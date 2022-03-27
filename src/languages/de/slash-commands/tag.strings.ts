@@ -22,7 +22,7 @@ export default {
   owner: "Der Eigentümer dieses Tags ist {user}",
   created: "Ihr Tag wurde erstellt",
   deleted: "Ihr Tag wurde gelöscht",
-  edited: "Ihr Tag wurde bearbeitet",
+  updated: false,
   createdAt: "Erstellt am",
   updatedAt: "Aktualisiert am",
   ranking: "Rangliste"

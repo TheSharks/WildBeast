@@ -22,7 +22,7 @@ export default {
   owner: "Ejeren af dette tag er {user}",
   created: "Dit tag blev oprettet",
   deleted: "Dit tag blev slettet",
-  edited: "Dit tag blev redigeret",
+  updated: false,
   createdAt: "Oprettet på",
   updatedAt: "Opdateret på",
   ranking: "Rangordning"

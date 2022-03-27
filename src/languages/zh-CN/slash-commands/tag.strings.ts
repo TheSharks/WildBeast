@@ -22,7 +22,7 @@ export default {
   owner: "该标签的所有者是 {user}",
   created: "您的标签已创建",
   deleted: "您的标签已被删除",
-  edited: "您的标签已被编辑",
+  updated: false,
   createdAt: "创建于",
   updatedAt: "更新于",
   ranking: "排名"

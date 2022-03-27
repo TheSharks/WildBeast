@@ -22,7 +22,7 @@ export default {
   owner: "Владельцем этого тега является {user}",
   created: "Ваша метка была создана",
   deleted: "Ваша метка была удалена",
-  edited: "Ваш тег был отредактирован",
+  updated: false,
   createdAt: "Создано в",
   updatedAt: "Обновлено в",
   ranking: "Рейтинг"

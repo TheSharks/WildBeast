@@ -22,7 +22,7 @@ export default {
   owner: "A címke tulajdonosa {user}",
   created: "A címkét létrehozták",
   deleted: "A címkét törölték",
-  edited: "A címkét szerkesztették",
+  updated: false,
   createdAt: "Létrehozva",
   updatedAt: "Frissítve",
   ranking: "Rangsorolás"

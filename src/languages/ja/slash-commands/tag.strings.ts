@@ -22,7 +22,7 @@ export default {
   owner: "そのタグの所有者は {user} です",
   created: "タグの作成",
   deleted: "あなたのタグは削除されました。",
-  edited: "タグが編集されました。",
+  updated: false,
   createdAt: "作成場所",
   updatedAt: "更新日",
   ranking: "ランキング"
