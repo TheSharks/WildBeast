@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.1.0",
-    "@sentry/integrations": "^6.18.1",
+    "@sentry/integrations": "^6.19.3",
     "@sentry/node": "^6.18.1",
     "@thesharks/jagtag-js": "^2.0.0",
     "chalk": "^4.1.2",
