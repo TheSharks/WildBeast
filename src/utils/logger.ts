@@ -21,7 +21,7 @@ export function debug (message: any, component: string = 'generic'): void {
   Sentry.addBreadcrumb({
     category: component,
     message,
-    level: Sentry.Severity.Debug
+    level: 'debug'
   })
   if (process.env.NODE_ENV === 'debug') log(chalk`{blue dbug}`, chalk`{blue ${component}}`, message)
 }
@@ -35,7 +35,7 @@ export function info (message: any, component: string = 'generic'): void {
   Sentry.addBreadcrumb({
     category: component,
     message,
-    level: Sentry.Severity.Info
+    level: 'info'
   })
   log(chalk`{green info}`, chalk`{green ${component}}`, message)
 }
@@ -53,12 +53,12 @@ export function error (_err: any, component: string = 'generic', captureContext?
   let uuid
   if (!(_err instanceof Error)) {
     uuid = Sentry.captureMessage(_err, {
-      level: Sentry.Severity.Error,
+      level: 'error',
       ...captureContext
     })
   } else {
     uuid = Sentry.captureException(_err, {
-      level: Sentry.Severity.Error,
+      level: 'error',
       ...captureContext
     })
   }
@@ -78,12 +78,12 @@ export function error (_err: any, component: string = 'generic', captureContext?
 export function fatal (_err: any, component: string = 'generic', captureContext?: CaptureContext): void {
   if (!(_err instanceof Error)) {
     Sentry.captureMessage(_err, {
-      level: Sentry.Severity.Fatal,
+      level: 'error',
       ...captureContext
     })
   } else {
     Sentry.captureException(_err, {
-      level: Sentry.Severity.Fatal,
+      level: 'error',
       ...captureContext
     })
   }
@@ -102,7 +102,7 @@ export function warn (message: any, component: string = 'generic'): void {
   Sentry.addBreadcrumb({
     category: component,
     message,
-    level: Sentry.Severity.Warning
+    level: 'warning'
   })
   log(chalk`{yellow warn}`, chalk`{yellow ${component}}`, message instanceof Error ? message.stack : message)
 }
