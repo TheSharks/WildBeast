@@ -6,7 +6,7 @@ import { TagInfoCommand } from './tag.info'
 import { ShowTagCommand } from './tag.show'
 
 export default class TagBaseCommand extends BaseSlashCommand {
-  description = '.' // not shown
+  description = 'Create and manage tags'
   name = 'tag'
 
   constructor () {

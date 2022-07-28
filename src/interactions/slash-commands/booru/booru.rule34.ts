@@ -15,8 +15,8 @@ export interface CommandArgs {
 }
 
 export class BooruRule34Command extends BaseCommandOption {
-  name = 'rule34'
-  description = 'Query rule34.xxx'
+  name = 'r34'
+  description = 'If it exists...'
   triggerLoadingAfter = 2000
   translationPath = 'booru'
 
