@@ -54,7 +54,7 @@
     "chalk": "^4.1.2",
     "date-fns": "^2.29.1",
     "deepmerge": "^4.2.2",
-    "detritus-client": "^0.17.0-beta.1",
+    "detritus-client": "^0.17.0-beta.16",
     "dotenv": "^16.0.1",
     "fast-glob": "^3.2.11",
     "intl-messageformat": "^10.1.1",
