@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "IronGeek.vscode-env",
+    "esbenp.prettier-vscode",
+    "Prisma.prisma",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "private": true,
+  "type": "module",
+  "name": "@thesharks/wildbeast-discord",
+  "version": "9.0.0-dev",
+  "main": "dist/index.mjs",
+  "scripts": {
+    "dev": "npm run build && concurrently \"npm:dev:*\"",
+    "dev:watch": "tsc --watch",
+    "dev:run": "node dist/index.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prestart": "npm run build",
+    "start": "node dist/index.mjs",
+    "build": "rimraf dist && tsc"
+  },
+  "author": "Remco Jongschaap <hey@dougley.com>",
+  "contributors": [
+    "Curtis Fowler <caf203@gmail.com>",
+    "Linus Willner <hello@linuswillner.me>",
+    "Pierce Harriz <pierce.harriz@gmail.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheSharks/WildBeast.git",
+    "directory": "apps/discord"
+  },
+  "license": "SEE LICENSE IN LICENSE.md",
+  "homepage": "https://wildbeast.guide/",
+  "dependencies": {
+    "@sapphire/decorators": "^6.0.0",
+    "@sapphire/discord.js-utilities": "^6.0.1",
+    "@sapphire/framework": "^4.0.2",
+    "@sapphire/plugin-hmr": "^2.0.0",
+    "@sapphire/plugin-logger": "^3.0.1",
+    "discord.js": "14.x",
+    "dotenv-extended": "^2.9.0"
+  },
+  "devDependencies": {
+    "@sapphire/cli": "^1.4.0",
+    "@thesharks/wildbeast-tsconfig": "workspace:^0.0.0",
+    "@types/node": "^18.11.18",
+    "concurrently": "^7.6.0",
+    "rimraf": "^4.1.2"
+  }
+}

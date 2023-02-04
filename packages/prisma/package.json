@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "type": "module",
+  "name": "@thesharks/wildbeast-prisma",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Remco Jongschaap <hey@dougley.com>",
+  "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheSharks/WildBeast.git",
+    "directory": "packages/prisma"
+  },
+  "devDependencies": {
+    "prisma": "^4.9.0"
+  }
+}

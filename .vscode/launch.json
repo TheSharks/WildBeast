@@ -5,60 +5,38 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Cluster - TSC Compiled",
-      "program": "${workspaceFolder}/dist/index.js",
+      "name": "apps/discord: Launch via NPM - Hot Reload",
       "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "dev"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        //"TRACE": "1"
+      },
+      "runtimeExecutable": "npm",
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "runtimeArgs": [
-        "-r",
-        "dotenv/config"
-      ],
-      "preLaunchTask": "tsc: build - tsconfig.json",
-      "type": "pwa-node"
+      "type": "node",
+      "cwd": "${workspaceFolder}/apps/discord",
+      "outputCapture": "std"
     },
     {
-      "name": "Cluster - ts-node with Debugger",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
-      "runtimeArgs": [
-          "-r",
-          "ts-node/register",
-          "-r",
-          "dotenv/config"
+      "name": "apps/discord: Launch - Plain",
+      "program": "${workspaceFolder}/apps/discord/src/index.mts",
+      "preLaunchTask": "npm: build",
+      "env": {
+        "NODE_ENV": "development",
+        //"TRACE": "1"
+      },
+      "outFiles": [
+        "${workspaceFolder}/apps/discord/dist/**/*.mjs"
       ],
-      "args": [
-          "${workspaceFolder}/src/index.ts"
-      ]
-    },
-    {
-      "name": "Plain - TSC Compiled",
-      "program": "${workspaceFolder}/dist/entry.js",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "runtimeArgs": [
-        "-r",
-        "dotenv/config"
-      ],
-      "preLaunchTask": "tsc: build - tsconfig.json",
-      "type": "pwa-node"
-    },
-    {
-      "name": "Plain - ts-node with Debugger",
-      "type": "pwa-node",
-      "request": "launch",
-      "runtimeArgs": [
-          "-r",
-          "ts-node/register",
-          "-r",
-          "dotenv/config"
-      ],
-      "args": [
-          "${workspaceFolder}/src/entry.ts"
-      ]
-    },
+      "outputCapture": "std"
+    }
   ]
 }
