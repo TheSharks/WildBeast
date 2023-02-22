@@ -1,15 +1,29 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { isMessageInstance } from "@sapphire/discord.js-utilities";
 import { Command } from "@sapphire/framework";
+import { resolveKey } from "@sapphire/plugin-i18next";
+import { LocalizationMap } from "discord.js";
 
 @ApplyOptions<Command.Options>({
   name: "ping",
   description: "Ping bot to see if it is alive",
 })
-export class UserCommand extends Command {
+export class PingCommand extends Command {
   public override registerApplicationCommands(registry: Command.Registry) {
     registry.registerChatInputCommand(
       (builder) => {
+        this.container.i18n.languages.forEach((value, key) => {
+          builder.setNameLocalization(
+            key as keyof LocalizationMap,
+            value("ping:command_name")
+          );
+        });
+        this.container.i18n.languages.forEach((value, key) => {
+          builder.setDescriptionLocalization(
+            key as keyof LocalizationMap,
+            value("ping:command_description")
+          );
+        });
         builder //
           .setName(this.name)
           .setDescription(this.description);
@@ -23,7 +37,7 @@ export class UserCommand extends Command {
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
     const msg = await interaction.reply({
-      content: `Ping?`,
+      content: (await resolveKey(interaction, "ping:success")) as string,
       ephemeral: true,
       fetchReply: true,
     });
@@ -32,10 +46,13 @@ export class UserCommand extends Command {
       const diff = msg.createdTimestamp - interaction.createdTimestamp;
       const ping = Math.round(this.container.client.ws.ping);
       return interaction.editReply(
-        `Pong 🏓! (Round trip took: ${diff}ms. Heartbeat: ${ping}ms.)`
+        await resolveKey(interaction, "ping:success_with_args", {
+          diff,
+          ping,
+        })
       );
     }
 
-    return interaction.editReply("Failed to retrieve ping :(");
+    return interaction.editReply(await resolveKey(interaction, "ping:failed"));
   }
 }

@@ -1,11 +1,14 @@
 {
   "private": true,
-  "name": "@wildbeast/tsconfig",
+  "name": "@wildbeast/i18n",
   "version": "0.0.0",
   "author": "Remco Jongschaap <hey@dougley.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheSharks/WildBeast.git",
-    "directory": "packages/tsconfig"
+    "directory": "packages/i18n"
+  },
+  "devDependencies": {
+    "@crowdin/cli": "^3.10.0"
   }
 }

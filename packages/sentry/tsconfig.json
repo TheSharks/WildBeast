@@ -1,11 +1,11 @@
 {
   "extends": "@wildbeast/tsconfig/base.json",
   "include": [
-    "src/**/*",
-    "src/index.mts"
+    "./src/**/*"
   ],
   "compilerOptions": {
-    "rootDir": "./src",
     "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
   }
 }

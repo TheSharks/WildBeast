@@ -5,6 +5,7 @@
     "esbenp.prettier-vscode",
     "Prisma.prisma",
     "mtxr.sqltools",
-    "mtxr.sqltools-driver-pg"
+    "mtxr.sqltools-driver-pg",
+    "mzato0001.sapphire-i18n-ally"
   ]
 }

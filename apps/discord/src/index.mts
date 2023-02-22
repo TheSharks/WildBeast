@@ -1,28 +1,16 @@
-import "@sapphire/plugin-logger/register";
-// the logger needs to be registered before the framework
 import dotEnvExtended from "dotenv-extended";
-import * as path from "path";
+dotEnvExtended.load(); // sure, we load the env again later, but we need to load it here for all our imports to work
+
+import * as Sentry from "@wildbeast/sentry";
 import { client } from "./structures/client.mjs";
 
 try {
-  dotEnvExtended.load({
-    errorOnMissing: true,
-    silent: false,
-    path: path.resolve(import.meta.url.replace("file://", ""), "../../.env"),
-    schema: path.resolve(
-      import.meta.url.replace("file://", ""),
-      "../../.env.schema"
-    ),
-    defaults: path.resolve(
-      import.meta.url.replace("file://", ""),
-      "../../.env.defaults"
-    ),
-  });
-  client.logger.debug("Loaded environment variables");
   await client.login(process.env.DISCORD_TOKEN);
-  client.logger.debug("Logged in");
+  client.logger.info("Logged in");
 } catch (error) {
+  Sentry.captureException(error);
   client.logger.fatal(error);
   client.destroy();
+  await Sentry.flush(2000);
   process.exit(1);
 }

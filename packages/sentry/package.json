@@ -1,7 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "name": "@wildbeast/prisma",
+  "name": "@wildbeast/sentry",
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
@@ -16,13 +16,15 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/TheSharks/WildBeast.git",
-    "directory": "packages/prisma"
-  },
-  "devDependencies": {
-    "@wildbeast/tsconfig": "workspace:^0.0.0",
-    "prisma": "^4.10.1"
+    "directory": "packages/sentry"
   },
   "dependencies": {
-    "@prisma/client": "^4.10.1"
+    "@sentry/integrations": "^7.38.0",
+    "@sentry/node": "^7.38.0",
+    "@sentry/tracing": "^7.38.0",
+    "@wildbeast/prisma": "workspace:^1.0.0"
+  },
+  "devDependencies": {
+    "@wildbeast/tsconfig": "workspace:^0.0.0"
   }
 }

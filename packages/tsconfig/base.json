@@ -9,7 +9,9 @@
     "moduleResolution": "nodenext",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "inlineSources": true,
+    "importHelpers": true
   },
   "exclude": ["node_modules", "dist"]
 }

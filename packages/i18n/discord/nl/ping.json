@@ -1,0 +1,8 @@
+{
+  "command_name": "ping",
+  "command_description": "Ping de bot om te kijken of hij online is",
+
+  "success": "Pong!",
+  "success_with_args": "Pong! Duurde {{diff}}ms, websocket ping is {{ping}}ms",
+  "failed": "Kon niet pingen :("
+}

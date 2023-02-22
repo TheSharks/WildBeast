@@ -3,9 +3,21 @@
 
 generator client {
   provider = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "cockroachdb"
   url      = env("DATABASE_URL")
+}
+
+model Tag {
+  id       Int    @id @default(sequence())
+  name     String @unique
+  content  String
+  authorId BigInt
+}
+
+model Guild {
+  id BigInt @id
 }

@@ -21,13 +21,34 @@
       ],
       "type": "node",
       "cwd": "${workspaceFolder}/apps/discord",
-      "outputCapture": "std"
+      "outputCapture": "std",
+      "outFiles": [
+        "${workspaceFolder}/**/*.mjs",
+        "${workspaceFolder}/**/*.js",
+        "!**/node_modules/**"
+      ]
     },
     {
       "type": "node",
       "request": "launch",
       "name": "apps/discord: Launch - Plain",
       "program": "${workspaceFolder}/apps/discord/src/index.mts",
+      "preLaunchTask": "npm: build",
+      "env": {
+        "NODE_ENV": "development",
+        //"TRACE": "1"
+      },
+      "outFiles": [
+        "${workspaceFolder}/apps/discord/dist/**/*.mjs"
+      ],
+      "outputCapture": "std"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "apps/discord: Launch - Cluster",
+      "program": "${workspaceFolder}/apps/discord/src/cluster.mts",
+      "cwd": "${workspaceFolder}/apps/discord",
       "preLaunchTask": "npm: build",
       "env": {
         "NODE_ENV": "development",

@@ -1,12 +1,22 @@
 {
   "private": true,
   "type": "module",
-  "name": "@wildbeast/prisma",
+  "name": "@wildbeast/logger",
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p tsconfig.json"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": null
+    },
+    "./register": {
+      "import": "./dist/register.js",
+      "require": null
+    }
   },
   "author": "Remco Jongschaap <hey@dougley.com>",
   "license": "MPL-2.0",
@@ -16,13 +26,15 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/TheSharks/WildBeast.git",
-    "directory": "packages/prisma"
-  },
-  "devDependencies": {
-    "@wildbeast/tsconfig": "workspace:^0.0.0",
-    "prisma": "^4.10.1"
+    "directory": "packages/logger"
   },
   "dependencies": {
-    "@prisma/client": "^4.10.1"
+    "@sapphire/framework": "^4.1.1",
+    "@sapphire/plugin-logger": "^3.0.1",
+    "@wildbeast/sentry": "workspace:^1.0.0",
+    "discord.js": "^14.7.1"
+  },
+  "devDependencies": {
+    "@wildbeast/tsconfig": "workspace:^0.0.0"
   }
 }

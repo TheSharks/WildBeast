@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@thesharks/wildbeast",
+  "name": "@wildbeast/wildbeast",
   "version": "0.0.0",
   "workspaces": [
     "packages/*",
@@ -10,17 +10,18 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{mts,tsx,md}\""
+    "format": "prettier --write \"**/*.{mts,tsx,md}\"",
+    "update": "pnpm update -r -i"
   },
   "bugs": {
     "url": "https://github.com/TheSharks/WildBeast/issues"
   },
-  "repository": "github:tTheSharks/WildBeast",
+  "repository": "github:TheSharks/WildBeast",
   "devDependencies": {
     "@changesets/cli": "^2.26.0",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
-    "eslint": "^8.33.0",
+    "@typescript-eslint/eslint-plugin": "^5.53.0",
+    "@typescript-eslint/parser": "^5.53.0",
+    "eslint": "^8.34.0",
     "eslint-config-prettier": "^8.6.0",
     "prettier": "latest",
     "prettier-plugin-organize-imports": "^3.2.2",
@@ -30,5 +31,8 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "packageManager": "pnpm@7.26.3"
+  "packageManager": "pnpm@7.26.3",
+  "dependencies": {
+    "tslib": "^2.5.0"
+  }
 }

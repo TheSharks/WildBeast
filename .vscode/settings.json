@@ -18,5 +18,17 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "editor.formatOnSave": true,
-  "eslint.format.enable": false
+  "eslint.format.enable": false,
+  "i18n-ally.displayLanguage": "en-US",
+  "i18n-ally.pathMatcher": "{locale}/{namespaces}.json", // see https://github.com/lokalise/i18n-ally/wiki/Path-Matcher
+  "i18n-ally.localesPaths": [
+    "packages/i18n/**",
+    "!packages/i18n/node_modules/**"
+  ],
+  "i18n-ally.namespace": true,
+  "i18n-ally.preferredDelimiter": ":",
+  "i18n-ally.enabledFrameworks": [
+    "sapphire-i18next"
+  ],
+  "i18n-ally.extract.autoDetect": true
 }
