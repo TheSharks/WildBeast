@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@wildbeast/wildbeast",
+  "name": "@thesharks/wildbeast",
   "version": "0.0.0",
   "workspaces": [
     "packages/*",

@@ -1,7 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "name": "@wildbeast/sentry",
+  "name": "@thesharks/sentry",
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
@@ -22,9 +22,9 @@
     "@sentry/integrations": "^7.38.0",
     "@sentry/node": "^7.38.0",
     "@sentry/tracing": "^7.38.0",
-    "@wildbeast/prisma": "workspace:^1.0.0"
+    "@thesharks/prisma": "workspace:^1.0.0"
   },
   "devDependencies": {
-    "@wildbeast/tsconfig": "workspace:^0.0.0"
+    "@thesharks/tsconfig": "workspace:^0.0.0"
   }
 }

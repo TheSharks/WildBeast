@@ -2,7 +2,7 @@ import { RewriteFrames } from "@sentry/integrations";
 import * as Sentry from "@sentry/node";
 import * as Tracing from "@sentry/tracing";
 
-import client from "@wildbeast/prisma";
+import client from "@thesharks/prisma";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,

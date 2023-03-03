@@ -1,7 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "name": "@wildbeast/discord",
+  "name": "@thesharks/discord",
   "version": "9.0.0-dev",
   "main": "dist/index.mjs",
   "scripts": {
@@ -9,7 +9,7 @@
     "dev:watch": "tsc --watch",
     "dev:run": "npm run start",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/cluster.mjs",
+    "start": "node -r dotenv-extended/config dist/cluster.mjs",
     "build": "rimraf dist && tsc"
   },
   "author": "Remco Jongschaap <hey@dougley.com>",
@@ -33,10 +33,10 @@
     "@sapphire/plugin-hmr": "^2.0.0",
     "@sapphire/plugin-i18next": "^5.0.1",
     "@sapphire/plugin-logger": "^3.0.1",
-    "@wildbeast/i18n": "workspace:^0.0.0",
-    "@wildbeast/logger": "workspace:^1.0.0",
-    "@wildbeast/prisma": "workspace:^1.0.0",
-    "@wildbeast/sentry": "workspace:^1.0.0",
+    "@thesharks/i18n": "workspace:^0.0.0",
+    "@thesharks/logger": "workspace:^1.0.0",
+    "@thesharks/prisma": "workspace:^1.0.0",
+    "@thesharks/sentry": "workspace:^1.0.0",
     "discord.js": "^14.7.1",
     "dotenv-extended": "^2.9.0",
     "import-meta-resolve": "^2.2.1"
@@ -44,7 +44,7 @@
   "devDependencies": {
     "@sapphire/cli": "^1.4.0",
     "@types/node": "^18.14.0",
-    "@wildbeast/tsconfig": "workspace:^0.0.0",
+    "@thesharks/tsconfig": "workspace:^0.0.0",
     "concurrently": "^7.6.0",
     "rimraf": "^4.1.2"
   }

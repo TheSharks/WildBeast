@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@wildbeast/tsconfig",
+  "name": "@thesharks/tsconfig",
   "version": "0.0.0",
   "author": "Remco Jongschaap <hey@dougley.com>",
   "repository": {

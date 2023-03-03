@@ -1,5 +1,5 @@
 {
-  "extends": "@wildbeast/tsconfig/base.json",
+  "extends": "@thesharks/tsconfig/base.json",
   "include": [
     "src/**/*",
     "src/index.mts"

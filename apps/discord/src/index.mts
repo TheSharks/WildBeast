@@ -1,7 +1,4 @@
-import dotEnvExtended from "dotenv-extended";
-dotEnvExtended.load(); // sure, we load the env again later, but we need to load it here for all our imports to work
-
-import * as Sentry from "@wildbeast/sentry";
+import * as Sentry from "@thesharks/sentry";
 import { client } from "./structures/client.mjs";
 
 try {

@@ -1,3 +1,4 @@
+import "@thesharks/sentry";
 import { ShardingManager } from "discord.js";
 import dotEnvExtended from "dotenv-extended";
 import { dirname, join, resolve } from "path";

@@ -1,7 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "name": "@wildbeast/prisma",
+  "name": "@thesharks/prisma",
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
@@ -19,7 +19,7 @@
     "directory": "packages/prisma"
   },
   "devDependencies": {
-    "@wildbeast/tsconfig": "workspace:^0.0.0",
+    "@thesharks/tsconfig": "workspace:^0.0.0",
     "prisma": "^4.10.1"
   },
   "dependencies": {

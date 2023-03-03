@@ -1,7 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "name": "@wildbeast/logger",
+  "name": "@thesharks/logger",
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
@@ -31,10 +31,11 @@
   "dependencies": {
     "@sapphire/framework": "^4.1.1",
     "@sapphire/plugin-logger": "^3.0.1",
-    "@wildbeast/sentry": "workspace:^1.0.0",
+    "@thesharks/kafka": "workspace:^1.0.0",
+    "@thesharks/sentry": "workspace:^1.0.0",
     "discord.js": "^14.7.1"
   },
   "devDependencies": {
-    "@wildbeast/tsconfig": "workspace:^0.0.0"
+    "@thesharks/tsconfig": "workspace:^0.0.0"
   }
 }
