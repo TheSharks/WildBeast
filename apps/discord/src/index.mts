@@ -1,4 +1,4 @@
-import * as Sentry from "@thesharks/sentry";
+import * as Sentry from "@sentry/node";
 import { client } from "./structures/client.mjs";
 
 try {

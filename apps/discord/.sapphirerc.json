@@ -6,7 +6,10 @@
     "arguments": "arguments",
     "commands": "commands",
     "listeners": "listeners",
-    "preconditions": "preconditions"
+    "preconditions": "preconditions",
+    "tasks": "tasks",
+    "interaction-handlers": "interaction-handlers",
+    "routes": "routes"
   },
   "customFileTemplates": {
     "enabled": true,

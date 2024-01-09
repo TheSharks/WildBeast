@@ -1,6 +1,6 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { Events, Listener, ListenerOptions } from "@sapphire/framework";
-import * as Sentry from "@thesharks/sentry";
+import * as Sentry from "@sentry/node";
 import type { ClientEvents } from "discord.js";
 
 @ApplyOptions<ListenerOptions>({

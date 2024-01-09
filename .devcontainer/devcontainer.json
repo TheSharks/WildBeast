@@ -2,10 +2,11 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
   "name": "Node.js & TypeScript",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:0-18",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/NicoVIII/devcontainer-features/pnpm:1": {}
+    "ghcr.io/devcontainers-contrib/features/pnpm:2": {}
   },
   "customizations": {
     "vscode": {

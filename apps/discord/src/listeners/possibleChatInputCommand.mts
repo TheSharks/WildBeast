@@ -1,6 +1,6 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { Events, Listener, ListenerOptions } from "@sapphire/framework";
-import * as Sentry from "@thesharks/sentry";
+import * as Sentry from "@sentry/node";
 import type { ClientEvents } from "discord.js";
 
 @ApplyOptions<ListenerOptions>({
@@ -9,7 +9,7 @@ import type { ClientEvents } from "discord.js";
 export class ReadyListener extends Listener {
   public run(...[interaction]: ClientEvents["possibleChatInputCommand"]): void {
     this.container.logger.info(
-      `Got an interaction for a chat input command: ${interaction.commandName}`
+      `Got an interaction for a chat input command: ${interaction.commandName}`,
     );
     Sentry.setUser({
       id: interaction.user.id,

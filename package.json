@@ -18,21 +18,21 @@
   },
   "repository": "github:TheSharks/WildBeast",
   "devDependencies": {
-    "@changesets/cli": "^2.26.0",
-    "@typescript-eslint/eslint-plugin": "^5.53.0",
-    "@typescript-eslint/parser": "^5.53.0",
-    "eslint": "^8.34.0",
-    "eslint-config-prettier": "^8.6.0",
-    "prettier": "latest",
-    "prettier-plugin-organize-imports": "^3.2.2",
-    "turbo": "latest",
-    "typescript": "^4.9.5"
+    "@changesets/cli": "^2.27.1",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/parser": "^6.18.1",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.1.1",
+    "prettier-plugin-organize-imports": "^3.2.4",
+    "turbo": "^1.11.3",
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=14.0.0"
   },
   "packageManager": "pnpm@7.26.3",
   "dependencies": {
-    "tslib": "^2.5.0"
+    "tslib": "^2.6.2"
   }
 }

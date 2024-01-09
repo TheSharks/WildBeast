@@ -2,17 +2,17 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
-  engineType = "binary"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native"]
 }
 
 datasource db {
-  provider = "cockroachdb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Tag {
-  id       Int    @id @default(sequence())
+  id       Int    @id @default(autoincrement())
   name     String @unique
   content  String
   authorId BigInt
