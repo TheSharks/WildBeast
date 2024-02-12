@@ -1,13 +1,16 @@
 import { ApplyOptions } from "@sapphire/decorators";
-import { Events, Listener, ListenerOptions } from "@sapphire/framework";
+import type { ListenerOptions } from "@sapphire/framework";
+import { Events, Listener } from "@sapphire/framework";
 import * as Sentry from "@sentry/node";
 import type { ClientEvents } from "discord.js";
 
 @ApplyOptions<ListenerOptions>({
-  event: Events.PossibleChatInputCommand,
+  event: Events.PreContextMenuCommandRun,
 })
-export class ReadyListener extends Listener {
-  public run(...[interaction]: ClientEvents["possibleChatInputCommand"]): void {
+export class SentryBeforeContextCommandListener extends Listener {
+  public run(
+    ...[{ interaction }]: ClientEvents["preContextMenuCommandRun"]
+  ): void {
     this.container.logger.info(
       `Got an interaction for a chat input command: ${interaction.commandName}`,
     );

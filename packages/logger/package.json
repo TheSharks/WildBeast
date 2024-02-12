@@ -29,9 +29,9 @@
     "directory": "packages/logger"
   },
   "dependencies": {
-    "@sapphire/framework": "^5.0.5",
-    "@sapphire/plugin-logger": "^4.0.1",
-    "@sentry/node": "^7.92.0",
+    "@sapphire/framework": "^5.0.7",
+    "@sapphire/plugin-logger": "^4.0.2",
+    "@sentry/node": "^7.100.1",
     "discord.js": "^14.14.1"
   },
   "devDependencies": {

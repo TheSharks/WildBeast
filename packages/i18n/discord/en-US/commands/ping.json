@@ -1,7 +1,4 @@
 {
-  "command_name": "ping",
-  "command_description": "Pings the bot to check if it's alive",
-
   "success": "Pong!",
   "success_with_args": "Pong! Took me {{diff}}ms to reply, websocket took {{ping}}ms",
   "failed": "Couldn't get a ping :("

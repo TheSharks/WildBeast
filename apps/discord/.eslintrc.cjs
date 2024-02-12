@@ -15,5 +15,8 @@ module.exports = {
     sourceType: "module",
   },
   plugins: ["@typescript-eslint"],
-  rules: {},
+  rules: {
+    "@typescript-eslint/consistent-type-imports": "error",
+    "@typescript-eslint/ban-ts-comment": "warn",
+  },
 };
