@@ -1,31 +1,27 @@
-import { describe, it, expect, vi, type Mock } from "vitest";
-
-vi.mock("@sentry/node", () => {
-  return {
-    addBreadcrumb: vi.fn(),
-  };
-});
-
+import { describe, it, expect, vi } from "vitest";
 import * as Sentry from "@sentry/node";
 import { track } from "./index.js";
+import { captureConsoleInfo } from "./testUtils.js";
+
+vi.mock("@sentry/node", () => ({
+  addBreadcrumb: vi.fn(),
+}));
 
 describe("track()", () => {
   it("emits single-line JSON and adds Sentry breadcrumb", () => {
-    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
-    const breadcrumbSpy = Sentry.addBreadcrumb as unknown as Mock;
+    const breadcrumbSpy = Sentry.addBreadcrumb as unknown as import("vitest").Mock;
+    const { output } = captureConsoleInfo(() => track("unit_test", { foo: "bar" }));
 
-    track("unit_test", { foo: "bar" });
-
-    expect(infoSpy).toHaveBeenCalledTimes(1);
-    const arg = infoSpy.mock.calls[0][0] as string;
-
-    const parsed = JSON.parse(arg);
-    expect(parsed).toMatchObject({
-      type: "analytics",
-      event: "unit_test",
-      properties: { foo: "bar" },
-    });
-    expect(typeof parsed.timestamp).toBe("string");
+    const parsed = JSON.parse(output);
+    expect(parsed).toEqual(
+      expect.objectContaining({
+        type: "analytics",
+        event: "unit_test",
+        properties: { foo: "bar" },
+      }),
+    );
+    // timestamp should be valid ISO string
+    expect(new Date(parsed.timestamp).toISOString()).toBe(parsed.timestamp);
 
     expect(breadcrumbSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -34,20 +30,13 @@ describe("track()", () => {
         data: { foo: "bar" },
       }),
     );
+    // spy automatically tracked by vi.mock
   });
 
   it("outputs Vector-compatible JSON (single line, ends with no newline)", () => {
-    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
-
-    track("vector_test", { a: 1 });
-
-    expect(infoSpy).toHaveBeenCalledTimes(1);
-    const arg = infoSpy.mock.calls[0][0] as string;
-
-    // must be single-line JSON (no embedded newlines)
-    expect(arg.includes("\n")).toBe(false);
-
-    const parsed = JSON.parse(arg);
+    const { output } = captureConsoleInfo(() => track("vector_test", { a: 1 }));
+    expect(output.includes("\n")).toBe(false);
+    const parsed = JSON.parse(output);
     expect(parsed).toMatchObject({ type: "analytics", event: "vector_test" });
   });
 });
