@@ -2,6 +2,9 @@
   "private": true,
   "name": "@thesharks/tsconfig",
   "version": "0.0.0",
+  "exports": {
+    "./base.json": "./base.json"
+  },
   "author": "Remco Jongschaap <hey@dougley.com>",
   "repository": {
     "type": "git",
