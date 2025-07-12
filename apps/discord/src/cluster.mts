@@ -1,5 +1,3 @@
-import client from "@prisma/client";
-import { RewriteFrames } from "@sentry/integrations";
 import * as Sentry from "@sentry/node";
 import { ShardingManager } from "discord.js";
 import dotEnvExtended from "dotenv-extended";
@@ -10,23 +8,6 @@ Sentry.init({
   dsn: process.env.SENTRY_DSN,
   tracesSampleRate: process.env.NODE_ENV === "production" ? 0.2 : 1.0,
   release: "dev",
-  integrations: (integrations) => {
-    return integrations
-      .concat(
-        new RewriteFrames({
-          root: process.cwd(),
-          iteratee: (frame) => {
-            frame.filename = frame.filename?.replace(/^.*?\/dist\//, "app:///");
-            return frame;
-          },
-        }),
-      )
-      .concat(new Sentry.Integrations.Prisma({ client }))
-      .concat(new Sentry.Integrations.Http({ tracing: true }))
-      .filter(function (integration) {
-        return integration.name !== "Console";
-      });
-  },
 });
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

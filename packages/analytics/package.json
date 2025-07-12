@@ -27,6 +27,7 @@
     "@sentry/node": "^9.38.0"
   },
   "devDependencies": {
-    "@thesharks/tsconfig": "workspace:^"
+    "@thesharks/tsconfig": "workspace:^",
+    "@types/node": "^24.0.13"
   }
 }
