@@ -35,4 +35,19 @@ describe("track()", () => {
       }),
     );
   });
+
+  it("outputs Vector-compatible JSON (single line, ends with no newline)", () => {
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+
+    track("vector_test", { a: 1 });
+
+    expect(infoSpy).toHaveBeenCalledTimes(1);
+    const arg = infoSpy.mock.calls[0][0] as string;
+
+    // must be single-line JSON (no embedded newlines)
+    expect(arg.includes("\n")).toBe(false);
+
+    const parsed = JSON.parse(arg);
+    expect(parsed).toMatchObject({ type: "analytics", event: "vector_test" });
+  });
 });
