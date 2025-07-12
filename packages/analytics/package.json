@@ -1,0 +1,54 @@
+{
+  "private": true,
+  "type": "module",
+  "name": "@thesharks/analytics",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc --watch"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": null
+    },
+    "./metrics": {
+      "import": "./dist/metrics.js",
+      "require": null
+    },
+    "./events": {
+      "import": "./dist/events.js",
+      "require": null
+    }
+  },
+  "author": "Remco Jongschaap <hey@dougley.com>",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/TheSharks/WildBeast/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheSharks/WildBeast.git",
+    "directory": "packages/analytics"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^0.2.10",
+    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.43.0",
+    "@opentelemetry/exporter-jaeger": "^1.22.0",
+    "@opentelemetry/exporter-prometheus": "^0.49.1",
+    "@opentelemetry/instrumentation": "^0.49.1",
+    "@opentelemetry/sdk-node": "^0.49.1",
+    "@sentry/node": "^7.100.1",
+    "@sentry/tracing": "^7.100.1",
+    "prom-client": "^15.1.0",
+    "bullmq": "^5.1.10",
+    "discord.js": "^14.14.1"
+  },
+  "devDependencies": {
+    "@thesharks/tsconfig": "workspace:^0.0.0",
+    "@types/node": "^20.11.17"
+  }
+}

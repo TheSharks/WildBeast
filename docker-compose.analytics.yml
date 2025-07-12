@@ -1,0 +1,175 @@
+version: '3.8'
+
+name: wildbeast-analytics
+
+services:
+  # ClickHouse for analytics storage
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    container_name: wildbeast-clickhouse
+    environment:
+      - CLICKHOUSE_DB=wildbeast
+      - CLICKHOUSE_USER=wildbeast
+      - CLICKHOUSE_PASSWORD=wildbeast_password
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./config/clickhouse:/etc/clickhouse-server/config.d
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    restart: unless-stopped
+    networks:
+      - analytics
+
+  # Redis for queue management
+  redis:
+    image: redis:7-alpine
+    container_name: wildbeast-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - analytics
+
+  # Vector for log processing and routing
+  vector:
+    image: timberio/vector:0.34.0-alpine
+    container_name: wildbeast-vector
+    volumes:
+      - ./config/vector.toml:/etc/vector/vector.toml:ro
+      - ./logs:/var/log/wildbeast
+      - vector_data:/var/lib/vector
+    ports:
+      - "8686:8686"  # Vector API
+      - "8687:8687"  # HTTP logs input
+      - "9090:9090"  # Prometheus metrics
+      - "9091:9091"  # Vector internal metrics
+      - "9092:9092"  # Extracted metrics
+    environment:
+      - VECTOR_LOG=info
+      - CLICKHOUSE_HOST=clickhouse
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
+    depends_on:
+      - clickhouse
+      - redis
+    restart: unless-stopped
+    networks:
+      - analytics
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: wildbeast-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9093:9090"
+    restart: unless-stopped
+    depends_on:
+      - vector
+    networks:
+      - analytics
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: wildbeast-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - clickhouse
+      - prometheus
+    networks:
+      - analytics
+
+  # Optional: Loki for log storage and search
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: wildbeast-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./config/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    networks:
+      - analytics
+
+  # Optional: Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.49
+    container_name: wildbeast-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger collector
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    restart: unless-stopped
+    networks:
+      - analytics
+
+  # WildBeast Analytics Service
+  analytics-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.analytics
+    container_name: wildbeast-analytics-service
+    environment:
+      - NODE_ENV=production
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - CLICKHOUSE_USERNAME=wildbeast
+      - CLICKHOUSE_PASSWORD=wildbeast_password
+      - CLICKHOUSE_DATABASE=wildbeast
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
+      - SENTRY_DSN=${SENTRY_DSN}
+      - PROMETHEUS_PORT=9094
+      - PROMETHEUS_PATH=/metrics
+    ports:
+      - "9094:9094"  # Analytics service metrics
+    depends_on:
+      - clickhouse
+      - redis
+      - vector
+    restart: unless-stopped
+    networks:
+      - analytics
+
+volumes:
+  clickhouse_data:
+  redis_data:
+  vector_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+
+networks:
+  analytics:
+    driver: bridge

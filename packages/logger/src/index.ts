@@ -27,3 +27,4 @@ export class Logger extends LoggerPlugin.Logger {
 }
 
 export * from "@sapphire/plugin-logger";
+export * from "./enhanced-logger.js";

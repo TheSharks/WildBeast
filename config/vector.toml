@@ -1,0 +1,309 @@
+# Vector configuration for WildBeast analytics
+# This configuration routes logs to ClickHouse, Prometheus, and other destinations
+
+[api]
+enabled = true
+address = "0.0.0.0:8686"
+playground = true
+
+# Data directory for Vector
+data_dir = "/var/lib/vector"
+
+# ============================================================================
+# SOURCES - Where logs come from
+# ============================================================================
+
+# Application logs from stdout/stderr
+[sources.app_logs]
+type = "file"
+include = [
+  "/var/log/wildbeast/*.log",
+  "/var/log/wildbeast/app.log",
+  "/var/log/wildbeast/error.log"
+]
+read_from = "beginning"
+ignore_older_secs = 86400
+
+# Docker logs (if running in Docker)
+[sources.docker_logs]
+type = "docker_logs"
+include_labels = ["com.docker.compose.service=wildbeast"]
+include_images = ["wildbeast/*"]
+
+# System logs
+[sources.system_logs]
+type = "journald"
+include_units = ["wildbeast.service"]
+
+# HTTP logs endpoint for direct log ingestion
+[sources.http_logs]
+type = "http"
+address = "0.0.0.0:8687"
+encoding = "json"
+headers = ["Authorization"]
+
+# ============================================================================
+# TRANSFORMS - Log processing and enrichment
+# ============================================================================
+
+# Parse JSON logs
+[transforms.parse_json]
+type = "json"
+inputs = ["app_logs", "docker_logs", "http_logs"]
+
+# Add metadata and enrich logs
+[transforms.enrich_logs]
+type = "remap"
+inputs = ["parse_json", "system_logs"]
+source = '''
+  .source = "wildbeast"
+  .environment = get_env_var("ENVIRONMENT") ?? "production"
+  .service = "discord-bot"
+  .version = get_env_var("VERSION") ?? "unknown"
+  .hostname = get_hostname!()
+  .timestamp = .timestamp ?? now()
+  
+  # Parse log level
+  if exists(.level) {
+    .log_level = upcase(.level)
+  } else if exists(.severity) {
+    .log_level = upcase(.severity)
+  } else {
+    .log_level = "INFO"
+  }
+  
+  # Extract structured data
+  if exists(.message) && is_string(.message) {
+    if starts_with(.message, "{") || starts_with(.message, "[") {
+      .structured_data = parse_json(.message) ?? {}
+    }
+  }
+  
+  # Extract Discord-specific fields
+  if exists(.guild_id) {
+    .discord.guild_id = .guild_id
+  }
+  if exists(.user_id) {
+    .discord.user_id = .user_id
+  }
+  if exists(.channel_id) {
+    .discord.channel_id = .channel_id
+  }
+  if exists(.command) {
+    .discord.command = .command
+  }
+  
+  # Extract error information
+  if exists(.error) {
+    if is_object(.error) {
+      .error_name = .error.name
+      .error_message = .error.message
+      .error_stack = .error.stack
+    }
+  }
+  
+  # Performance metrics
+  if exists(.duration) {
+    .metrics.duration = .duration
+  }
+  
+  # Clean up redundant fields
+  del(.level)
+  del(.severity)
+'''
+
+# Filter out debug logs in production
+[transforms.filter_debug]
+type = "filter"
+inputs = ["enrich_logs"]
+condition = '''
+  .environment != "production" || .log_level != "DEBUG"
+'''
+
+# Sample high-volume events
+[transforms.sample_events]
+type = "sample"
+inputs = ["filter_debug"]
+rate = 1000
+group_by = ["discord.guild_id", "event_type"]
+
+# Route logs by type
+[transforms.route_logs]
+type = "route"
+inputs = ["sample_events"]
+
+[transforms.route_logs.route.errors]
+type = "remap"
+source = '''
+  .log_level == "ERROR" || .log_level == "FATAL" || exists(.error)
+'''
+
+[transforms.route_logs.route.metrics]
+type = "remap"
+source = '''
+  exists(.metrics) || exists(.duration) || .event_type == "performance"
+'''
+
+[transforms.route_logs.route.discord_events]
+type = "remap"
+source = '''
+  exists(.discord) || exists(.guild_id) || exists(.user_id) || exists(.command)
+'''
+
+[transforms.route_logs.route.general]
+type = "remap"
+source = 'true'
+
+# ============================================================================
+# SINKS - Where logs go
+# ============================================================================
+
+# ClickHouse for analytics storage
+[sinks.clickhouse_analytics]
+type = "clickhouse"
+inputs = ["route_logs.discord_events", "route_logs.general"]
+endpoint = "http://clickhouse:8123"
+database = "wildbeast"
+table = "logs"
+compression = "gzip"
+skip_unknown_fields = true
+batch.max_bytes = 1048576
+batch.timeout_secs = 10
+
+# ClickHouse for error tracking
+[sinks.clickhouse_errors]
+type = "clickhouse"
+inputs = ["route_logs.errors"]
+endpoint = "http://clickhouse:8123"
+database = "wildbeast"
+table = "errors"
+compression = "gzip"
+skip_unknown_fields = true
+batch.max_bytes = 1048576
+batch.timeout_secs = 5
+
+# Prometheus metrics
+[sinks.prometheus_metrics]
+type = "prometheus_exporter"
+inputs = ["route_logs.metrics"]
+address = "0.0.0.0:9090"
+default_namespace = "wildbeast"
+buckets = [0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
+
+# Console output for debugging
+[sinks.console_debug]
+type = "console"
+inputs = ["route_logs.errors"]
+target = "stderr"
+encoding.codec = "json"
+
+# File output for backup
+[sinks.file_backup]
+type = "file"
+inputs = ["enrich_logs"]
+path = "/var/log/wildbeast/vector/processed-%Y-%m-%d.jsonl"
+encoding.codec = "json"
+compression = "gzip"
+
+# Loki for log storage and search (optional)
+[sinks.loki_logs]
+type = "loki"
+inputs = ["route_logs.general"]
+endpoint = "http://loki:3100"
+encoding.codec = "json"
+compression = "gzip"
+labels.service = "wildbeast"
+labels.environment = "{{ environment }}"
+labels.log_level = "{{ log_level }}"
+remove_label_fields = true
+batch.max_bytes = 1048576
+batch.timeout_secs = 10
+
+# Webhook for critical errors
+[sinks.webhook_alerts]
+type = "http"
+inputs = ["route_logs.errors"]
+uri = "{{ WEBHOOK_URL }}"
+method = "POST"
+encoding.codec = "json"
+headers.Content-Type = "application/json"
+batch.max_bytes = 1048576
+batch.timeout_secs = 5
+
+# ============================================================================
+# HEALTH CHECKS
+# ============================================================================
+
+[sinks.clickhouse_analytics.healthcheck]
+enabled = true
+
+[sinks.clickhouse_errors.healthcheck]
+enabled = true
+
+[sinks.loki_logs.healthcheck]
+enabled = true
+
+# ============================================================================
+# INTERNAL METRICS
+# ============================================================================
+
+[sources.vector_metrics]
+type = "internal_metrics"
+
+[sinks.vector_metrics]
+type = "prometheus_exporter"
+inputs = ["vector_metrics"]
+address = "0.0.0.0:9091"
+default_namespace = "vector"
+
+# ============================================================================
+# TRANSFORMS FOR METRICS EXTRACTION
+# ============================================================================
+
+# Extract metrics from logs
+[transforms.extract_metrics]
+type = "log_to_metric"
+inputs = ["enrich_logs"]
+
+# Command execution metrics
+[[transforms.extract_metrics.metrics]]
+type = "counter"
+field = "command"
+name = "discord_commands_total"
+namespace = "wildbeast"
+tags.command = "{{ command }}"
+tags.guild_id = "{{ discord.guild_id }}"
+tags.status = "{{ status }}"
+
+# Error rate metrics
+[[transforms.extract_metrics.metrics]]
+type = "counter"
+field = "error_name"
+name = "errors_total"
+namespace = "wildbeast"
+tags.error_type = "{{ error_name }}"
+tags.source = "{{ source }}"
+
+# Performance metrics
+[[transforms.extract_metrics.metrics]]
+type = "histogram"
+field = "duration"
+name = "operation_duration_seconds"
+namespace = "wildbeast"
+tags.operation = "{{ operation }}"
+
+# Guild activity metrics
+[[transforms.extract_metrics.metrics]]
+type = "counter"
+field = "guild_id"
+name = "guild_events_total"
+namespace = "wildbeast"
+tags.guild_id = "{{ discord.guild_id }}"
+tags.event_type = "{{ event_type }}"
+
+# Route extracted metrics to Prometheus
+[sinks.prometheus_extracted]
+type = "prometheus_exporter"
+inputs = ["extract_metrics"]
+address = "0.0.0.0:9092"
+default_namespace = "wildbeast"
