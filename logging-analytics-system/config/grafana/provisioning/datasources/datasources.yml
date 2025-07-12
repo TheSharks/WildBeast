@@ -1,0 +1,28 @@
+apiVersion: 1
+
+datasources:
+  - name: ClickHouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    url: http://clickhouse:8123
+    isDefault: true
+    jsonData:
+      defaultDatabase: logs
+      username: default
+    secureJsonData:
+      password: ""
+    editable: true
+
+  - name: VictoriaMetrics
+    type: prometheus
+    access: proxy
+    url: http://victoriametrics:8428
+    isDefault: false
+    editable: true
+
+  - name: API Metrics
+    type: prometheus
+    access: proxy
+    url: http://api:3000
+    isDefault: false
+    editable: true

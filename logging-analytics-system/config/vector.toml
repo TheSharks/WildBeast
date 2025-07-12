@@ -1,0 +1,214 @@
+# Vector Configuration for Logging Analytics System
+
+# Global options
+[api]
+enabled = true
+address = "0.0.0.0:8686"
+
+# Sources
+[sources.app_logs]
+type = "file"
+include = ["/var/log/app/*.log"]
+read_from = "end"
+
+[sources.syslog]
+type = "syslog"
+address = "0.0.0.0:514"
+mode = "udp"
+
+[sources.http_logs]
+type = "http"
+address = "0.0.0.0:8080"
+encoding = "json"
+headers = ["Authorization"]
+
+[sources.docker_logs]
+type = "docker_logs"
+docker_host = "unix:///var/run/docker.sock"
+exclude_containers = ["vector"]
+
+[sources.journald]
+type = "journald"
+current_boot_only = true
+exclude_units = ["vector.service"]
+
+# Transforms
+[transforms.parse_logs]
+type = "remap"
+inputs = ["app_logs", "http_logs"]
+source = '''
+# Parse timestamp
+.timestamp = parse_timestamp!(.timestamp || now(), format: "%+")
+
+# Extract service name from path or label
+.service = .service || .kubernetes.pod_labels.app || split(.file, "/")[-2] || "unknown"
+
+# Normalize log level
+.level = downcase(string!(.level || .severity || "info"))
+.level = replace(.level, r'(warning|warn)', "warn")
+.level = replace(.level, r'(critical|fatal)', "error")
+
+# Extract trace context if present
+if exists(.trace_id) { .trace_id = string!(.trace_id) }
+if exists(.span_id) { .span_id = string!(.span_id) }
+if exists(.parent_span_id) { .parent_span_id = string!(.parent_span_id) }
+
+# Extract user context
+if exists(.user_id) { .user_id = string!(.user_id) }
+if exists(.user_email) { .user_email = string!(.user_email) }
+
+# Extract request context
+if exists(.request_id) { .request_id = string!(.request_id) }
+if exists(.method) { .http_method = string!(.method) }
+if exists(.path) { .http_path = string!(.path) }
+if exists(.status_code) { .http_status = to_int!(.status_code) || 0 }
+
+# Set environment
+.environment = .environment || .env || "${ENVIRONMENT:-production}"
+
+# Set host
+.host = .host || get_hostname!()
+
+# Create metadata object
+.metadata = {}
+if exists(.http_method) { .metadata.http_method = .http_method }
+if exists(.http_path) { .metadata.http_path = .http_path }
+if exists(.http_status) { .metadata.http_status = .http_status }
+if exists(.duration_ms) { .metadata.duration_ms = .duration_ms }
+if exists(.user_agent) { .metadata.user_agent = .user_agent }
+if exists(.ip) { .metadata.ip = .ip }
+if exists(.error_type) { .metadata.error_type = .error_type }
+if exists(.stack_trace) { .metadata.stack_trace = .stack_trace }
+
+# Add custom fields to metadata
+for_each(object!(.)) -> |key, value| {
+  if !includes(["timestamp", "level", "message", "service", "host", "environment", "trace_id", "span_id", "user_id", "request_id", "metadata"], key) {
+    .metadata = set!(.metadata, [key], value)
+  }
+}
+'''
+
+[transforms.enrich_sentry]
+type = "remap"
+inputs = ["parse_logs"]
+source = '''
+# Check if this log might be related to a Sentry event
+if contains(string!(.message), "error") || .level == "error" || exists(.exception) {
+  .sentry_fingerprint = [.service, .error_type || "generic", slice!(md5(encode_json(.metadata)), 0, 8)]
+}
+
+# Extract Sentry event ID if present
+if exists(.sentry_event_id) {
+  .sentry_event_id = string!(.sentry_event_id)
+}
+'''
+
+[transforms.filter_noise]
+type = "filter"
+inputs = ["enrich_sentry"]
+condition = '''
+# Filter out noisy logs
+!(
+  # Health check requests
+  (exists(.http_path) && (.http_path == "/health" || .http_path == "/ping" || .http_path == "/metrics"))
+  # Debug logs in production
+  || (.level == "debug" && .environment == "production")
+  # Specific noisy messages
+  || contains(string!(.message), "Connection pool created")
+  || contains(string!(.message), "Metrics scraped")
+)
+'''
+
+[transforms.sample_logs]
+type = "sample"
+inputs = ["filter_noise"]
+rate = 100  # Keep all logs by default, adjust for high-volume services
+key_field = "service"  # Sample per service
+
+[transforms.route_by_level]
+type = "route"
+inputs = ["sample_logs"]
+route = { error = '.level == "error"', warn = '.level == "warn"', info = '.level == "info"', debug = '.level == "debug"' }
+
+# Sinks
+[sinks.clickhouse_all]
+type = "clickhouse"
+inputs = ["route_by_level.info", "route_by_level.warn", "route_by_level.error", "route_by_level.debug"]
+endpoint = "${CLICKHOUSE_ENDPOINT:-http://localhost:8123}"
+database = "logs"
+table = "entries"
+compression = "gzip"
+auth.strategy = "basic"
+auth.user = "${CLICKHOUSE_USER:-default}"
+auth.password = "${CLICKHOUSE_PASSWORD:-}"
+healthcheck.enabled = true
+batch.max_bytes = 10485760  # 10MB
+batch.timeout_secs = 10
+request.timeout_secs = 30
+request.rate_limit_num = 10
+
+[sinks.http_api]
+type = "http"
+inputs = ["route_by_level.info", "route_by_level.warn", "route_by_level.error"]
+uri = "${API_ENDPOINT:-http://localhost:3000}/api/logs/ingest"
+method = "post"
+encoding.codec = "json"
+batch.max_events = 1000
+batch.timeout_secs = 5
+auth.strategy = "bearer"
+auth.token = "${API_TOKEN:-}"
+healthcheck.enabled = true
+
+[sinks.sentry_errors]
+type = "http"
+inputs = ["route_by_level.error"]
+uri = "${SENTRY_ENDPOINT}"
+method = "post"
+encoding.codec = "json"
+headers.X-Sentry-Auth = "Sentry sentry_key=${SENTRY_KEY}, sentry_version=7"
+only_fields = ["timestamp", "level", "message", "service", "environment", "trace_id", "user_id", "metadata"]
+
+# Prometheus metrics
+[sinks.prometheus]
+type = "prometheus_exporter"
+inputs = ["internal_metrics.host"]
+address = "0.0.0.0:9598"
+default_namespace = "vector"
+
+# Internal metrics
+[sources.internal_metrics]
+type = "internal_metrics"
+
+[transforms.internal_metrics]
+type = "tag_cardinality_limit"
+inputs = ["internal_metrics"]
+limit_num_tags = 10
+mode = "probabilistic"
+
+# File backup for critical logs
+[sinks.file_backup]
+type = "file"
+inputs = ["route_by_level.error"]
+path = "/var/log/vector/errors-%Y-%m-%d.log"
+encoding.codec = "json"
+
+# Datadog APM Integration (optional)
+[sinks.datadog_traces]
+type = "datadog_traces"
+inputs = ["parse_logs"]
+endpoint = "https://trace.agent.datadoghq.com"
+api_key = "${DATADOG_API_KEY:-}"
+enabled = "${DATADOG_ENABLED:-false}"
+
+# AWS S3 Archive (optional)
+[sinks.s3_archive]
+type = "aws_s3"
+inputs = ["sample_logs"]
+bucket = "${S3_BUCKET:-}"
+region = "${AWS_REGION:-us-east-1}"
+key_prefix = "logs/year=%Y/month=%m/day=%d/hour=%H/"
+compression = "gzip"
+encoding.codec = "json"
+batch.max_bytes = 52428800  # 50MB
+batch.timeout_secs = 300
+enabled = "${S3_ENABLED:-false}"

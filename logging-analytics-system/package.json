@@ -1,0 +1,36 @@
+{
+  "name": "logging-analytics-system",
+  "version": "1.0.0",
+  "description": "Lightweight logging and analytics system with Sentry integration",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/api/server.ts",
+    "build": "tsc",
+    "start": "node dist/api/server.js",
+    "test": "jest",
+    "vector:generate-config": "ts-node scripts/generate-vector-config.ts"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^0.2.10",
+    "@sentry/node": "^7.114.0",
+    "@sentry/tracing": "^7.114.0",
+    "express": "^4.19.2",
+    "prom-client": "^15.1.2",
+    "winston": "^3.13.0",
+    "dotenv": "^16.4.5",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "helmet": "^7.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.2",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "typescript": "^5.4.5",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.12"
+  }
+}
