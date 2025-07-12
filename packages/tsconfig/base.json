@@ -4,14 +4,20 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "nodenext",
+    "lib": ["esnext"],
+    "moduleResolution": "nodenext",
     "strict": true,
     "experimentalDecorators": true,
-    "moduleResolution": "nodenext",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
     "inlineSources": true,
-    "importHelpers": true
+    "importHelpers": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": false
   },
   "exclude": ["node_modules", "dist"]
 }
