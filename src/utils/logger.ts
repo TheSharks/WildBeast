@@ -23,7 +23,7 @@ export function debug (message: any, component: string = 'generic'): void {
     message,
     level: 'debug'
   })
-  if (process.env.NODE_ENV === 'debug') log(chalk`{blue dbug}`, chalk`{blue ${component}}`, message)
+  if (process.env.NODE_ENV === 'debug') log(chalk`{blue debug}`, chalk`{blue ${component}}`, message)
 }
 
 /**
@@ -62,7 +62,7 @@ export function error (_err: any, component: string = 'generic', captureContext?
       ...captureContext
     })
   }
-  log(chalk`{red erro}`, chalk`{red ${component}}`, _err instanceof Error ? _err.stack : _err)
+  log(chalk`{red error}`, chalk`{red ${component}}`, _err instanceof Error ? _err.stack : _err)
   return uuid
 }
 
@@ -87,7 +87,7 @@ export function fatal (_err: any, component: string = 'generic', captureContext?
       ...captureContext
     })
   }
-  log(chalk`{bgRed fatl}`, chalk`{bgRed ${component}}`, _err instanceof Error ? _err.stack : _err)
+  log(chalk`{bgRed fail}`, chalk`{bgRed ${component}}`, _err instanceof Error ? _err.stack : _err)
   Sentry.close(10000).then(() => process.exit(1)).catch(() => process.exit(1))
 }
 

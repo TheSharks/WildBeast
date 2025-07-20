@@ -14,7 +14,7 @@ info('Starting up...', 'Preflight');
     (await promisify(exec)('git rev-parse HEAD').catch(() => ({ stdout: undefined }))).stdout?.toString().trim() ??
     process.env.npm_package_version ??
     'unknown'
-  info(`Initialzing Sentry, using revision ${revision}`, 'Preflight')
+  info(`Initializing Sentry, using revision ${revision}`, 'Preflight')
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     integrations: function (integrations) {
