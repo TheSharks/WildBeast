@@ -6,7 +6,7 @@
   "service": "app",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "features": {
-    "ghcr.io/devcontainers-contrib/features/pnpm:2": {}
+    "ghcr.io/devcontainers-extra/features/pnpm:2": {}
   },
   "customizations": {
     "vscode": {

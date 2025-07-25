@@ -29,12 +29,12 @@
     "directory": "packages/logger"
   },
   "dependencies": {
-    "@sapphire/framework": "^5.0.7",
-    "@sapphire/plugin-logger": "^4.0.2",
-    "@sentry/node": "^7.100.1",
-    "discord.js": "^14.14.1"
+    "@sapphire/framework": "^5.3.6",
+    "@sapphire/plugin-logger": "^4.1.0",
+    "@sentry/node": "^9.43.0",
+    "discord.js": "^14.21.0"
   },
   "devDependencies": {
-    "@thesharks/tsconfig": "workspace:^0.0.0"
+    "@thesharks/tsconfig": "workspace:^"
   }
 }

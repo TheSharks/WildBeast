@@ -19,10 +19,10 @@
     "directory": "packages/prisma"
   },
   "devDependencies": {
-    "@thesharks/tsconfig": "workspace:^0.0.0",
-    "prisma": "^5.9.1"
+    "@thesharks/tsconfig": "workspace:^",
+    "prisma": "^6.13.0"
   },
   "dependencies": {
-    "@prisma/client": "^5.9.1"
+    "@prisma/client": "^6.13.0"
   }
 }
