@@ -1,58 +1,58 @@
-import { ApplyOptions } from "@sapphire/decorators";
-import type { ListenerOptions } from "@sapphire/framework";
-import { Events, Listener } from "@sapphire/framework";
-import { resolveKey } from "@sapphire/plugin-i18next";
-import * as Sentry from "@sentry/node";
-import { Colors, EmbedBuilder, type ClientEvents } from "discord.js";
+import { ApplyOptions } from '@sapphire/decorators'
+import type { ListenerOptions } from '@sapphire/framework'
+import { Events, Listener } from '@sapphire/framework'
+import { resolveKey } from '@sapphire/plugin-i18next'
+import * as Sentry from '@sentry/node'
+import { type ClientEvents, Colors, EmbedBuilder } from 'discord.js'
 
 @ApplyOptions<ListenerOptions>({
   event: Events.ChatInputCommandError,
 })
 export class SentryChatInputErrorListener extends Listener {
-  public async run(...[error, payload]: ClientEvents["chatInputCommandError"]) {
+  public async run(...[error, payload]: ClientEvents['chatInputCommandError']) {
     const uuid = Sentry.withScope((scope) => {
       scope.addBreadcrumb({
-        category: "command",
-        level: "error",
+        category: 'command',
+        level: 'error',
         message: error instanceof Error ? error.message : String(error),
         data: {
           commandName: payload.interaction.commandName,
           userId: payload.interaction.user.id,
         },
-      });
-      return Sentry.captureException(error);
-    });
+      })
+      return Sentry.captureException(error)
+    })
     const embeds = [
       new EmbedBuilder()
-        .setTitle(await resolveKey(payload.interaction, "system/errors:oops"))
+        .setTitle(await resolveKey(payload.interaction, 'system/errors:oops'))
         .setDescription(
-          await resolveKey(payload.interaction, "system/errors:try_again", {
+          await resolveKey(payload.interaction, 'system/errors:try_again', {
             error: (error as Error).message,
           }),
         )
         .setColor(Colors.Red)
         .setFooter({
-          text: await resolveKey(payload.interaction, "system/errors:report"),
+          text: await resolveKey(payload.interaction, 'system/errors:report'),
         })
         .addFields({
           name: await resolveKey(
             payload.interaction,
-            "system/errors:error_code",
+            'system/errors:error_code',
           ),
           value: uuid,
         }),
-    ];
+    ]
     if (payload.interaction.replied) {
       payload.interaction.editReply({
-        content: "",
+        content: '',
         components: [],
         embeds,
-      });
+      })
     } else {
       payload.interaction.reply({
         embeds,
         ephemeral: true,
-      });
+      })
     }
   }
 }

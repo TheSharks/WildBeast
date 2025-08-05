@@ -15,7 +15,7 @@
 
 ---
 
-Wildbeast is a multifunctional Discord bot, intended to provide a framework that's easy to use, extend, and modify.   
+Wildbeast is a multifunctional Discord bot, intended to provide a framework that's easy to use, extend, and modify.  
 This is also the open source framework for [WildBot#3942 on Discord](https://invite.thesharks.xyz).
 
 ## Main features

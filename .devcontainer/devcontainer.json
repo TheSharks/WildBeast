@@ -9,9 +9,8 @@
     "ghcr.io/devcontainers-extra/features/pnpm:2": {}
   },
   "forwardPorts": [
-    5432,
-    6379,
-    9200,
+    5432, 6379,
+    9200
     // 5601
   ],
   "portsAttributes": {
@@ -23,7 +22,7 @@
     },
     "9200": {
       "label": "Elasticsearch"
-    },
+    }
     // "5601": {
     //   "label": "Kibana"
     // }
@@ -31,9 +30,8 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "dbaeumer.vscode-eslint",
+        "biomejs.biome",
         "IronGeek.vscode-env",
-        "esbenp.prettier-vscode",
         "Prisma.prisma",
         "mtxr.sqltools",
         "mtxr.sqltools-driver-pg",

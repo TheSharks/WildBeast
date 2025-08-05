@@ -1,11 +1,8 @@
 {
   "extends": "@thesharks/tsconfig/base.json",
-  "include": [
-    "src/**/*",
-    "src/index.mts"
-  ],
+  "include": ["src/**/*", "src/index.mts"],
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./dist",
+    "outDir": "./dist"
   }
 }

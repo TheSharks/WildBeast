@@ -1,14 +1,14 @@
-import { ApplyOptions } from "@sapphire/decorators";
-import type { ListenerOptions } from "@sapphire/framework";
-import { Events, Listener } from "@sapphire/framework";
-import type { ClientEvents } from "discord.js";
-import { inspect } from "node:util";
+import { inspect } from 'node:util'
+import { ApplyOptions } from '@sapphire/decorators'
+import type { ListenerOptions } from '@sapphire/framework'
+import { Events, Listener } from '@sapphire/framework'
+import type { ClientEvents } from 'discord.js'
 
 @ApplyOptions<ListenerOptions>({
   event: Events.Raw,
 })
 export class LoggingRawListener extends Listener {
-  public run(...[data]: ClientEvents["raw"]): void {
-    this.container.logger.debug(inspect(data));
+  public run(...[data]: ClientEvents['raw']): void {
+    this.container.logger.debug(inspect(data))
   }
 }

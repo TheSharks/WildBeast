@@ -1,154 +1,154 @@
 export interface MetricLabels {
-  [key: string]: string | number;
+  [key: string]: string | number
 }
 
 export interface MetricSample {
-  value: number;
-  timestamp: Date;
-  labels: MetricLabels;
+  value: number
+  timestamp: Date
+  labels: MetricLabels
 }
 
 export interface CounterSample {
-  value: number;
-  timestamp: Date;
-  labels: MetricLabels;
+  value: number
+  timestamp: Date
+  labels: MetricLabels
 }
 
 export interface CounterMetric {
-  type: "counter";
-  name: string;
-  help: string;
-  samples: CounterSample[];
+  type: 'counter'
+  name: string
+  help: string
+  samples: CounterSample[]
 }
 
 export interface GaugeMetric {
-  type: "gauge";
-  name: string;
-  help: string;
-  samples: MetricSample[];
+  type: 'gauge'
+  name: string
+  help: string
+  samples: MetricSample[]
 }
 
 export interface HistogramBucket {
-  le: number;
-  count: number;
+  le: number
+  count: number
 }
 
 export interface HistogramObservation {
-  value: number;
-  timestamp: Date;
-  labels: MetricLabels;
+  value: number
+  timestamp: Date
+  labels: MetricLabels
 }
 
 export interface HistogramMetric {
-  type: "histogram";
-  name: string;
-  help: string;
-  samples: HistogramObservation[];
-  buckets?: number[]; // Configuration for bucket boundaries
+  type: 'histogram'
+  name: string
+  help: string
+  samples: HistogramObservation[]
+  buckets?: number[] // Configuration for bucket boundaries
 }
 
 export interface SummaryQuantile {
-  quantile: number;
-  value: number;
+  quantile: number
+  value: number
 }
 
 export interface SummaryObservation {
-  value: number;
-  timestamp: Date;
-  labels: MetricLabels;
+  value: number
+  timestamp: Date
+  labels: MetricLabels
 }
 
 export interface SummaryMetric {
-  type: "summary";
-  name: string;
-  help: string;
-  samples: SummaryObservation[];
-  quantiles?: number[]; // Configuration for quantile calculations
+  type: 'summary'
+  name: string
+  help: string
+  samples: SummaryObservation[]
+  quantiles?: number[] // Configuration for quantile calculations
 }
 
 export type Metric =
   | CounterMetric
   | GaugeMetric
   | HistogramMetric
-  | SummaryMetric;
+  | SummaryMetric
 
-export type LogLevel = "debug" | "info" | "warn" | "error" | "fatal";
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 export interface LogEntry {
-  timestamp: Date;
-  level: LogLevel;
-  message: string;
-  context?: any;
-  labels?: MetricLabels;
+  timestamp: Date
+  level: LogLevel
+  message: string
+  context?: Record<string, unknown>
+  labels?: MetricLabels
 }
 
 export interface HealthCheckResult {
-  healthy: boolean;
-  info?: any;
-  error?: string;
+  healthy: boolean
+  info?: Record<string, unknown>
+  error?: string
 }
 
 export interface MetricsBackend {
-  write(metrics: Metric[]): Promise<void>;
+  write(metrics: Metric[]): Promise<void>
   query(
     name: string,
     labels?: MetricLabels,
     timeRange?: { start: Date; end: Date },
-  ): Promise<Metric[]>;
-  healthCheck(): Promise<HealthCheckResult>;
-  close(): Promise<void>;
+  ): Promise<Metric[]>
+  healthCheck(): Promise<HealthCheckResult>
+  close(): Promise<void>
 }
 
 export interface LogsBackend {
-  write(logs: LogEntry[]): Promise<void>;
+  write(logs: LogEntry[]): Promise<void>
   query(filters?: {
-    level?: LogLevel;
-    labels?: MetricLabels;
-    timeRange?: { start: Date; end: Date };
-  }): Promise<LogEntry[]>;
-  healthCheck(): Promise<HealthCheckResult>;
-  close(): Promise<void>;
+    level?: LogLevel
+    labels?: MetricLabels
+    timeRange?: { start: Date; end: Date }
+  }): Promise<LogEntry[]>
+  healthCheck(): Promise<HealthCheckResult>
+  close(): Promise<void>
 }
 
 export interface AnalyticsConfig {
-  backend: MetricsBackend;
-  logsBackend?: LogsBackend;
-  flushInterval?: number;
-  maxBatchSize?: number;
-  defaultLabels?: MetricLabels;
+  backend: MetricsBackend
+  logsBackend?: LogsBackend
+  flushInterval?: number
+  maxBatchSize?: number
+  defaultLabels?: MetricLabels
 }
 
 export interface ElasticsearchConfig {
-  node: string;
+  node: string
   auth?: {
-    username: string;
-    password: string;
-  };
-  apiKey?: string;
-  index?: string;
+    username: string
+    password: string
+  }
+  apiKey?: string
+  index?: string
   cloud?: {
-    id: string;
-  };
+    id: string
+  }
 
   // Index Lifecycle Management
-  logsRetentionDays?: number; // Default: 1 year (365 days)
+  logsRetentionDays?: number // Default: 1 year (365 days)
 }
 
 export interface TimescaleDBConfig {
-  connectionString?: string; // DATABASE_URL
-  host?: string;
-  port?: number;
-  database?: string;
-  user?: string;
-  password?: string;
-  ssl?: boolean | object;
-  maxConnections?: number;
-  idleTimeout?: number;
-  connectionTimeout?: number;
+  connectionString?: string // DATABASE_URL
+  host?: string
+  port?: number
+  database?: string
+  user?: string
+  password?: string
+  ssl?: boolean | object
+  maxConnections?: number
+  idleTimeout?: number
+  connectionTimeout?: number
 
   // Retention policies
-  metricsRetentionDays?: number; // Default: 2 years (730 days)
-  metricsCompressionDays?: number; // Default: 30 days
-  logsRetentionDays?: number; // Default: 1 year (365 days)
-  logsCompressionDays?: number; // Default: 7 days
+  metricsRetentionDays?: number // Default: 2 years (730 days)
+  metricsCompressionDays?: number // Default: 30 days
+  logsRetentionDays?: number // Default: 1 year (365 days)
+  logsCompressionDays?: number // Default: 7 days
 }
