@@ -8,6 +8,26 @@
   "features": {
     "ghcr.io/devcontainers-extra/features/pnpm:2": {}
   },
+  "forwardPorts": [
+    5432,
+    6379,
+    9200,
+    // 5601
+  ],
+  "portsAttributes": {
+    "5432": {
+      "label": "PostgreSQL"
+    },
+    "6379": {
+      "label": "Redis"
+    },
+    "9200": {
+      "label": "Elasticsearch"
+    },
+    // "5601": {
+    //   "label": "Kibana"
+    // }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -21,5 +41,5 @@
       ]
     }
   },
-  "postCreateCommand": "pnpm install --frozen-lockfile"
+  "postCreateCommand": "bash .devcontainer/setup.sh"
 }

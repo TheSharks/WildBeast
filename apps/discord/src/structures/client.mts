@@ -1,12 +1,13 @@
 import "@sapphire/plugin-hmr/register";
 import "@sapphire/plugin-i18next/register";
 import "@sapphire/plugin-scheduled-tasks/register";
-import "@thesharks/logger/register";
+import "@thesharks/analytics/register";
 import { GatewayIntentBits } from "discord.js";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 import { LogLevel, SapphireClient } from "@sapphire/framework";
+import { createAnalyticsConfig } from "@thesharks/analytics";
 
 const loglev = process.env.TRACE
   ? LogLevel.Trace
@@ -42,6 +43,7 @@ const client = new SapphireClient({
     ),
     hmr,
   },
+  analytics: createAnalyticsConfig(),
 });
 
 export { client };

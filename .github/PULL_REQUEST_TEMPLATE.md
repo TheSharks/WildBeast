@@ -1,4 +1,5 @@
 # Please check the following boxes
+
 > All boxes are required
 
 - [ ] I agree to the [Contribution Guidelines](https://github.com/TheSharks/WildBeast/blob/master/.github/CONTRIBUTING.md) and to the [Code of Conduct](https://github.com/TheSharks/WildBeast/blob/master/.github/CODE_OF_CONDUCT.md)

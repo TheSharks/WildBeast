@@ -1,0 +1,45 @@
+{
+  "name": "@thesharks/analytics",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "dev": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "require": null
+    },
+    "./register": {
+      "import": "./dist/register.js",
+      "types": "./dist/register.d.ts",
+      "require": null
+    },
+    "./bridges/sapphire-logger": {
+      "import": "./dist/bridges/sapphire-logger.js",
+      "types": "./dist/bridges/sapphire-logger.d.ts",
+      "require": null
+    }
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.13.0",
+    "@sapphire/framework": "^5.3.6",
+    "@sapphire/pieces": "^4.3.1",
+    "@sapphire/plugin-logger": "^4.1.0",
+    "@sentry/node": "^9.43.0",
+    "discord.js": "^14.21.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@thesharks/tsconfig": "workspace:^",
+    "@types/node": "^24.1.0",
+    "@types/pg": "^8.11.10",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.4.5"
+  }
+}

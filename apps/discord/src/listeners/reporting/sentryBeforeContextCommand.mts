@@ -12,23 +12,32 @@ export class SentryBeforeContextCommandListener extends Listener {
     ...[{ interaction }]: ClientEvents["preContextMenuCommandRun"]
   ): void {
     this.container.logger.info(
-      `Got an interaction for a chat input command: ${interaction.commandName}`,
+      `Got an interaction for a context menu command: ${interaction.commandName}`,
     );
     Sentry.setUser({
       id: interaction.user.id,
       username: interaction.user.tag,
-      discriminator: interaction.user.discriminator,
+    });
+    Sentry.setTag("command", interaction.commandName);
+    Sentry.setContext("interaction", {
+      id: interaction.id,
+      type: interaction.type,
+      commandName: interaction.commandName,
     });
     if (interaction.inGuild()) {
-      Sentry.setExtras({
-        "Guild ID": interaction.guildId,
-        "Guild Name": interaction.guild?.name,
-        "Channel ID": interaction.channelId,
-        "Channel Name": interaction.channel?.name,
+      Sentry.setContext("guild", {
+        id: interaction.guildId,
+        name: interaction.guild?.name,
+      });
+      Sentry.setContext("channel", {
+        id: interaction.channelId,
+        name: interaction.channel?.name,
+        type: interaction.channel?.type,
       });
     } else {
-      Sentry.setExtra("DM Channel ID", interaction.channelId);
+      Sentry.setContext("dm", {
+        channelId: interaction.channelId,
+      });
     }
-    Sentry.setExtra("Interaction ID", interaction.id);
   }
 }

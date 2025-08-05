@@ -12,15 +12,18 @@ export class SentryContextCommandErrorListener extends Listener {
   public async run(
     ...[error, payload]: ClientEvents["contextMenuCommandError"]
   ) {
-    Sentry.addBreadcrumb({
-      category: "command",
-      data: {
-        payload,
-      },
-      level: "error",
-      message: error instanceof Error ? error.message : String(error),
+    const uuid = Sentry.withScope((scope) => {
+      scope.addBreadcrumb({
+        category: "command",
+        level: "error",
+        message: error instanceof Error ? error.message : String(error),
+        data: {
+          commandName: payload.interaction.commandName,
+          userId: payload.interaction.user.id,
+        },
+      });
+      return Sentry.captureException(error);
     });
-    const uuid = Sentry.captureException(error);
     const embeds = [
       new EmbedBuilder()
         .setTitle(await resolveKey(payload.interaction, "system/errors:oops"))
