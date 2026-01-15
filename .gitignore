@@ -132,5 +132,8 @@ dist
 # Turbo
 .turbo
 
+# Worktrees
+.worktrees/
+
 # pnpm
 .pnpm-store/
