@@ -9,6 +9,6 @@
     "directory": "packages/i18n"
   },
   "devDependencies": {
-    "@crowdin/cli": "^4.9.0"
+    "@crowdin/cli": "^4.12.0"
   }
 }

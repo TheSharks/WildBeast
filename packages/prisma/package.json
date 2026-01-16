@@ -20,9 +20,9 @@
   },
   "devDependencies": {
     "@thesharks/tsconfig": "workspace:^",
-    "prisma": "^6.13.0"
+    "prisma": "^7.2.0"
   },
   "dependencies": {
-    "@prisma/client": "^6.13.0"
+    "@prisma/client": "^7.2.0"
   }
 }

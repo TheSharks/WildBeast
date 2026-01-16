@@ -9,3 +9,4 @@ onlyBuiltDependencies:
   - core-js-pure
   - msgpackr-extract
   - prisma
+  - protobufjs
