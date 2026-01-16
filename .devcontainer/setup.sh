@@ -14,14 +14,6 @@ until pg_isready -h db -p 5432 -U postgres > /dev/null 2>&1; do
 done
 echo "✅ TimescaleDB is ready"
 
-# Check Elasticsearch
-echo "🔍 Checking Elasticsearch..."
-until curl -s http://elasticsearch:9200/_cluster/health > /dev/null 2>&1; do
-  echo "⏳ Waiting for Elasticsearch to be ready..."
-  sleep 3
-done
-echo "✅ Elasticsearch is ready"
-
 # Install dependencies
 echo "📦 Installing dependencies..."
 pnpm install --frozen-lockfile

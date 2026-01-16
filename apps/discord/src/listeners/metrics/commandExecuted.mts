@@ -1,5 +1,33 @@
 import type { ChatInputCommandSuccessPayload } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
+import { type Attributes, metrics, resolveShardId } from '@thesharks/analytics'
+
+const meter = metrics.getMeter('@thesharks/discord')
+const commandCounter = meter.createCounter('discord_commands_total', {
+  description: 'Total number of Discord commands executed',
+})
+const executionTime = meter.createHistogram(
+  'discord_command_duration_seconds',
+  {
+    description: 'Time since interaction creation (includes network latency)',
+    unit: 's',
+  },
+)
+
+function resolveScope(payload: ChatInputCommandSuccessPayload): 'guild' | 'dm' {
+  return payload.interaction.inGuild() ? 'guild' : 'dm'
+}
+
+function createLabels(
+  payload: ChatInputCommandSuccessPayload,
+  shardId: string,
+): Attributes {
+  return {
+    command: payload.command.name,
+    shard_id: shardId,
+    scope: resolveScope(payload),
+  }
+}
 
 export class CommandExecutedListener extends Listener {
   public constructor(
@@ -13,34 +41,16 @@ export class CommandExecutedListener extends Listener {
   }
 
   public run(payload: ChatInputCommandSuccessPayload) {
-    const analytics = this.container.analytics
-    if (!analytics) return
+    const shardId = resolveShardId(payload.interaction, this)
+    const labels = createLabels(payload, shardId)
 
-    const shardId = this.container.client.shard?.ids[0] ?? 0
-
-    const commandCounter = analytics.counter(
-      'discord_commands_total',
-      'Total number of Discord commands executed',
-    )
-
-    const executionTime = analytics.histogram(
-      'discord_command_duration_seconds',
-      'Time taken to execute Discord commands',
-      [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
-    )
-
-    commandCounter.inc(1, {
-      command: payload.command.name,
-      guild_id: payload.interaction.guildId || 'dm',
-      user_id: payload.interaction.user.id,
-      shard_id: shardId.toString(),
-    })
+    commandCounter.add(1, labels)
 
     const duration = Date.now() - payload.interaction.createdTimestamp
-    executionTime.observe(duration / 1000, {
-      command: payload.command.name,
-      guild_id: payload.interaction.guildId || 'dm',
-      shard_id: shardId.toString(),
+    const durationSeconds = Math.max(0, duration) / 1000
+    executionTime.record(durationSeconds, {
+      ...labels,
+      duration_scope: 'interaction',
     })
   }
 }

@@ -27,18 +27,30 @@
     }
   },
   "dependencies": {
-    "@elastic/elasticsearch": "^8.13.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": "^0.57.2",
+    "@opentelemetry/exporter-logs-otlp-grpc": "^0.210.0",
+    "@opentelemetry/exporter-metrics-otlp-grpc": "^0.210.0",
+    "@opentelemetry/exporter-trace-otlp-grpc": "^0.210.0",
+    "@opentelemetry/instrumentation": "^0.210.0",
+    "@opentelemetry/instrumentation-pg": "^0.61.2",
+    "@opentelemetry/instrumentation-undici": "^0.19.0",
+    "@opentelemetry/resources": "^2.4.0",
+    "@opentelemetry/sdk-logs": "^0.210.0",
+    "@opentelemetry/sdk-metrics": "^2.4.0",
+    "@opentelemetry/sdk-trace-base": "^2.4.0",
+    "@opentelemetry/sdk-trace-node": "^2.4.0",
+    "@opentelemetry/semantic-conventions": "^1.38.0",
     "@sapphire/framework": "^5.3.6",
     "@sapphire/pieces": "^4.3.1",
     "@sapphire/plugin-logger": "^4.1.0",
     "@sentry/node": "^9.43.0",
-    "discord.js": "^14.21.0",
-    "pg": "^8.13.1"
+    "@sentry/opentelemetry": "^9.43.0",
+    "discord.js": "^14.21.0"
   },
   "devDependencies": {
     "@thesharks/tsconfig": "workspace:^",
     "@types/node": "^24.1.0",
-    "@types/pg": "^8.11.10",
     "rimraf": "^6.0.1",
     "typescript": "^5.4.5"
   }

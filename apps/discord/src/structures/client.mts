@@ -4,7 +4,6 @@ import '@sapphire/plugin-scheduled-tasks/register'
 import '@thesharks/analytics/register'
 
 import { LogLevel, SapphireClient } from '@sapphire/framework'
-import { createAnalyticsConfig } from '@thesharks/analytics'
 import { GatewayIntentBits } from 'discord.js'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
@@ -29,21 +28,32 @@ const client = new SapphireClient({
     bull: {
       connection: {
         host: process.env.REDIS_HOST ?? 'localhost',
-        port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
+        port: (() => {
+          if (!process.env.REDIS_PORT) return 6379
+          const port = Number.parseInt(process.env.REDIS_PORT, 10)
+          return Number.isFinite(port) ? port : 6379
+        })(),
         password: process.env.REDIS_PASSWORD,
-        db: process.env.REDIS_DB ? parseInt(process.env.REDIS_DB) : undefined,
+        db: process.env.REDIS_DB
+          ? Number.parseInt(process.env.REDIS_DB, 10)
+          : undefined,
       },
     },
   },
   hmr,
   i18n: {
-    defaultLanguageDirectory: fileURLToPath(
-      (await import.meta.resolve('@thesharks/i18n/discord', import.meta.url)) ??
-        '',
-    ),
+    defaultLanguageDirectory: (() => {
+      const resolved = import.meta.resolve(
+        '@thesharks/i18n/discord',
+        import.meta.url,
+      )
+      if (!resolved) {
+        throw new Error('Failed to resolve @thesharks/i18n/discord')
+      }
+      return fileURLToPath(resolved)
+    })(),
     hmr,
   },
-  analytics: createAnalyticsConfig(),
 })
 
 export { client }

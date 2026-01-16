@@ -1,5 +1,26 @@
 import type { ChatInputCommandErrorPayload } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
+import { type Attributes, metrics, resolveShardId } from '@thesharks/analytics'
+
+const meter = metrics.getMeter('@thesharks/discord')
+const errorCounter = meter.createCounter('discord_command_errors_total', {
+  description: 'Total number of Discord command errors',
+})
+
+function resolveScope(payload: ChatInputCommandErrorPayload): 'guild' | 'dm' {
+  return payload.interaction.inGuild() ? 'guild' : 'dm'
+}
+
+function createLabels(
+  payload: ChatInputCommandErrorPayload,
+  shardId: string,
+): Attributes {
+  return {
+    command: payload.command?.name,
+    shard_id: shardId,
+    scope: resolveScope(payload),
+  }
+}
 
 export class CommandErrorListener extends Listener {
   public constructor(
@@ -13,21 +34,8 @@ export class CommandErrorListener extends Listener {
   }
 
   public run(payload: ChatInputCommandErrorPayload) {
-    const analytics = this.container.analytics
-    if (!analytics) return
-
-    const shardId = this.container.client.shard?.ids[0] ?? 0
-
-    const errorCounter = analytics.counter(
-      'discord_command_errors_total',
-      'Total number of Discord command errors',
-    )
-
-    errorCounter.inc(1, {
-      command: payload.command.name,
-      guild_id: payload.interaction.guildId || 'dm',
-      shard_id: shardId.toString(),
-      //error_type: payload.error.name || 'UnknownError'
-    })
+    const shardId = resolveShardId(payload.interaction, this)
+    const labels = createLabels(payload, shardId)
+    errorCounter.add(1, labels)
   }
 }

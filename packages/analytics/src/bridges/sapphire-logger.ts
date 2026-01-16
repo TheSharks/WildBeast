@@ -1,63 +1,86 @@
-import { container, LogLevel } from '@sapphire/framework'
+import { logs, SeverityNumber } from '@opentelemetry/api-logs'
+import { LogLevel } from '@sapphire/framework'
 import { Logger as SapphireLogger } from '@sapphire/plugin-logger'
 import * as Sentry from '@sentry/node'
-import type { LogLevel as AnalyticsLogLevel } from '../types.js'
 
 export class AnalyticsLogger extends SapphireLogger {
+  private readonly otelLogger = logs.getLogger('@thesharks/sapphire-logger')
+
   public override write(level: LogLevel, ...values: readonly unknown[]): void {
-    // Map the log level to a Sentry level and add breadcrumb
-    const sentryLevel = {
-      [LogLevel.Trace]: 'debug',
-      [LogLevel.Debug]: 'debug',
-      [LogLevel.Info]: 'info',
-      [LogLevel.Warn]: 'warning',
-      [LogLevel.Error]: 'error',
-      [LogLevel.Fatal]: 'fatal',
-      [LogLevel.None]: 'info',
-    }[level] as Sentry.SeverityLevel
+    const message = values.join(' ')
 
-    Sentry.addBreadcrumb({
-      category: 'log',
-      level: sentryLevel,
-      message: values.join(' '),
-    })
-
-    // Call parent write method to maintain existing functionality
+    // Call parent write method to maintain existing functionality (console output)
     super.write(level, ...values)
 
-    // Send to analytics if available
-    if (container.analytics && typeof container.analytics.log === 'function') {
-      const analyticsLevel = this.mapSapphireLogLevelToAnalytics(level)
-      const message = values.join(' ')
-
-      try {
-        container.analytics.log(analyticsLevel, message, {
+    // Send to OpenTelemetry
+    try {
+      this.otelLogger.emit({
+        severityNumber: this.mapSapphireLogLevelToSeverity(level),
+        severityText: LogLevel[level],
+        body: message,
+        attributes: {
           source: 'sapphire-logger',
           originalLevel: LogLevel[level],
+        },
+      })
+    } catch (error) {
+      // Fail silently to avoid infinite logging loops
+      console.error('Failed to send log to OpenTelemetry:', error)
+    }
+
+    // Send to Sentry using the Logs API
+    try {
+      const sentryLogger = this.getSentryLogMethod(level)
+      if (sentryLogger) {
+        sentryLogger(message, {
+          source: 'sapphire-logger',
+          level: LogLevel[level],
         })
-      } catch (error) {
-        // Fail silently to avoid infinite logging loops
-        console.error('Failed to send log to analytics:', error)
       }
+    } catch (error) {
+      // Fail silently to avoid infinite logging loops
+      console.error('Failed to send log to Sentry:', error)
     }
   }
 
-  private mapSapphireLogLevelToAnalytics(level: LogLevel): AnalyticsLogLevel {
+  private getSentryLogMethod(
+    level: LogLevel,
+  ): ((message: string, attributes?: Record<string, unknown>) => void) | null {
+    switch (level) {
+      case LogLevel.Trace:
+        return Sentry.logger.trace
+      case LogLevel.Debug:
+        return Sentry.logger.debug
+      case LogLevel.Info:
+        return Sentry.logger.info
+      case LogLevel.Warn:
+        return Sentry.logger.warn
+      case LogLevel.Error:
+        return Sentry.logger.error
+      case LogLevel.Fatal:
+        return Sentry.logger.fatal
+      case LogLevel.None:
+      default:
+        return null
+    }
+  }
+
+  private mapSapphireLogLevelToSeverity(level: LogLevel): SeverityNumber {
     switch (level) {
       case LogLevel.Trace:
       case LogLevel.Debug:
-        return 'debug'
+        return SeverityNumber.DEBUG
       case LogLevel.Info:
-        return 'info'
+        return SeverityNumber.INFO
       case LogLevel.Warn:
-        return 'warn'
+        return SeverityNumber.WARN
       case LogLevel.Error:
-        return 'error'
+        return SeverityNumber.ERROR
       case LogLevel.Fatal:
-        return 'fatal'
+        return SeverityNumber.FATAL
       case LogLevel.None:
       default:
-        return 'info'
+        return SeverityNumber.INFO
     }
   }
 }

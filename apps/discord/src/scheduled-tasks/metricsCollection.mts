@@ -1,7 +1,49 @@
 import { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
-import type { AnalyticsClient } from '@thesharks/analytics'
+import { type Attributes, createGauge } from '@thesharks/analytics'
+
+const botUptimeGauge = createGauge(
+  '@thesharks/discord',
+  'discord_bot_uptime_seconds',
+  'Bot uptime in seconds',
+  's',
+)
+const botMemoryGauge = createGauge(
+  '@thesharks/discord',
+  'discord_bot_memory_usage_bytes',
+  'Bot memory usage in bytes',
+  'By',
+)
+const guildGauge = createGauge(
+  '@thesharks/discord',
+  'discord_guilds_total',
+  'Total number of Discord guilds the bot is in',
+)
+const userGauge = createGauge(
+  '@thesharks/discord',
+  'discord_guild_member_total',
+  'Total number of guild member entries the bot can see',
+)
+const channelGauge = createGauge(
+  '@thesharks/discord',
+  'discord_channels_total',
+  'Total number of Discord channels the bot can see',
+)
+const wsLatencyGauge = createGauge(
+  '@thesharks/discord',
+  'discord_websocket_latency_seconds',
+  'Discord WebSocket latency in seconds',
+  's',
+)
+const cpuGauge = createGauge(
+  '@thesharks/discord',
+  'discord_bot_cpu_usage_seconds',
+  'Bot CPU usage in seconds (interval)',
+  's',
+)
 
 export class MetricsCollectionTask extends ScheduledTask {
+  private lastCpuUsage: NodeJS.CpuUsage = process.cpuUsage()
+
   public constructor(
     context: ScheduledTask.LoaderContext,
     options: ScheduledTask.Options,
@@ -12,94 +54,59 @@ export class MetricsCollectionTask extends ScheduledTask {
     })
   }
 
-  public async run() {
-    this.updateAllMetrics()
+  public run() {
+    try {
+      this.updateAllMetrics()
+    } catch (error) {
+      this.container.logger?.warn('Metrics collection failed', error)
+    }
   }
 
   private updateAllMetrics() {
-    const analytics = this.container.analytics
-    if (!analytics) return
+    const cpuUsage = process.cpuUsage(this.lastCpuUsage)
 
-    const shardId = this.container.client.shard?.ids[0] ?? 0
-    const shardLabels = { shard_id: shardId.toString() }
+    this.updateBotMetrics()
+    this.updateDiscordMetrics()
+    this.updateSystemMetrics(cpuUsage)
 
-    this.updateBotMetrics(analytics, shardLabels)
-    this.updateDiscordMetrics(analytics, shardLabels)
-    this.updateSystemMetrics(analytics, shardLabels)
+    this.lastCpuUsage = process.cpuUsage()
   }
 
-  private updateBotMetrics(
-    analytics: AnalyticsClient,
-    shardLabels: { shard_id: string },
-  ) {
-    const uptimeGauge = analytics.gauge(
-      'discord_bot_uptime_seconds',
-      'Bot uptime in seconds',
-    )
+  private updateBotMetrics() {
+    const memory = process.memoryUsage()
+    const labels: Attributes = { scope: 'process' }
 
-    const memoryGauge = analytics.gauge(
-      'discord_bot_memory_usage_bytes',
-      'Bot memory usage in bytes',
-    )
-
-    uptimeGauge.set(process.uptime(), shardLabels)
-    memoryGauge.set(process.memoryUsage().heapUsed, {
-      ...shardLabels,
-      type: 'heap_used',
-    })
-    memoryGauge.set(process.memoryUsage().heapTotal, {
-      ...shardLabels,
-      type: 'heap_total',
-    })
-    memoryGauge.set(process.memoryUsage().rss, { ...shardLabels, type: 'rss' })
+    botUptimeGauge.set(process.uptime(), labels)
+    botMemoryGauge.set(memory.heapUsed, { ...labels, type: 'heap_used' })
+    botMemoryGauge.set(memory.heapTotal, { ...labels, type: 'heap_total' })
+    botMemoryGauge.set(memory.rss, { ...labels, type: 'rss' })
   }
 
-  private updateDiscordMetrics(
-    analytics: AnalyticsClient,
-    shardLabels: { shard_id: string },
-  ) {
-    const guildGauge = analytics.gauge(
-      'discord_guilds_total',
-      'Total number of Discord guilds the bot is in',
-    )
-
-    const userGauge = analytics.gauge(
-      'discord_users_total',
-      'Total number of Discord users the bot can see',
-    )
-
-    const channelGauge = analytics.gauge(
-      'discord_channels_total',
-      'Total number of Discord channels the bot can see',
-    )
-
-    const wsLatencyGauge = analytics.gauge(
-      'discord_websocket_latency_milliseconds',
-      'Discord WebSocket latency in milliseconds',
-    )
-
+  private updateDiscordMetrics() {
+    const labels: Attributes = { scope: 'process' }
     const guilds = this.container.client.guilds.cache
     const channels = this.container.client.channels.cache
     const totalUsers = guilds.reduce((acc, guild) => acc + guild.memberCount, 0)
 
-    guildGauge.set(guilds.size, shardLabels)
-    userGauge.set(totalUsers, shardLabels)
-    channelGauge.set(channels.size, shardLabels)
-    wsLatencyGauge.set(this.container.client.ws.ping, shardLabels)
+    guildGauge.set(guilds.size, labels)
+    userGauge.set(totalUsers, labels)
+    channelGauge.set(channels.size, labels)
+
+    const wsLatency = this.container.client.ws?.ping
+    if (typeof wsLatency === 'number') {
+      // Convert milliseconds to seconds for consistency
+      wsLatencyGauge.set(wsLatency / 1000, labels)
+    } else {
+      wsLatencyGauge.clear(labels)
+    }
   }
 
-  private updateSystemMetrics(
-    analytics: AnalyticsClient,
-    shardLabels: { shard_id: string },
-  ) {
-    const cpuUsage = process.cpuUsage()
-    const cpuGauge = analytics.gauge(
-      'discord_bot_cpu_usage_microseconds',
-      'Bot CPU usage in microseconds',
-    )
+  private updateSystemMetrics(cpuUsage: NodeJS.CpuUsage) {
+    const labels: Attributes = { scope: 'process' }
 
-    cpuGauge.set(cpuUsage.user, { ...shardLabels, type: 'user' })
-    cpuGauge.set(cpuUsage.system, { ...shardLabels, type: 'system' })
+    // Convert microseconds to seconds for consistency
+    cpuGauge.set(cpuUsage.user / 1_000_000, { ...labels, type: 'user' })
+    cpuGauge.set(cpuUsage.system / 1_000_000, { ...labels, type: 'system' })
   }
 }
 

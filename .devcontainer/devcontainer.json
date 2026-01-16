@@ -1,6 +1,5 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
   "name": "Node.js & TypeScript",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
@@ -8,24 +7,13 @@
   "features": {
     "ghcr.io/devcontainers-extra/features/pnpm:2": {}
   },
-  "forwardPorts": [
-    5432, 6379,
-    9200
-    // 5601
-  ],
+  "forwardPorts": [5432, 6379, 9200, 4317, 4318],
   "portsAttributes": {
-    "5432": {
-      "label": "PostgreSQL"
-    },
-    "6379": {
-      "label": "Redis"
-    },
-    "9200": {
-      "label": "Elasticsearch"
-    }
-    // "5601": {
-    //   "label": "Kibana"
-    // }
+    "5432": { "label": "PostgreSQL" },
+    "6379": { "label": "Redis" },
+    "9200": { "label": "Elasticsearch" },
+    "4317": { "label": "OTLP gRPC" },
+    "4318": { "label": "OTLP HTTP" }
   },
   "customizations": {
     "vscode": {
