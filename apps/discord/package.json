@@ -36,7 +36,7 @@
     "@sapphire/plugin-i18next": "^8.0.0",
     "@sapphire/plugin-logger": "^4.1.0",
     "@sapphire/plugin-scheduled-tasks": "^10.0.4",
-    "@sentry/node": "^10.34.0",
+    "@sentry/node": "^10.35.0",
     "@thesharks/analytics": "workspace:^",
     "@thesharks/prisma": "workspace:^",
     "bullmq": "^5.66.5",
