@@ -6,9 +6,12 @@ import {
   metrics,
 } from '@opentelemetry/api'
 import { logs } from '@opentelemetry/api-logs'
-import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http'
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
+import { OTLPLogExporter as OTLPLogGrpcExporter } from '@opentelemetry/exporter-logs-otlp-grpc'
+import { OTLPLogExporter as OTLPLogHttpExporter } from '@opentelemetry/exporter-logs-otlp-http'
+import { OTLPMetricExporter as OTLPMetricGrpcExporter } from '@opentelemetry/exporter-metrics-otlp-grpc'
+import { OTLPMetricExporter as OTLPMetricHttpExporter } from '@opentelemetry/exporter-metrics-otlp-http'
+import { OTLPTraceExporter as OTLPTraceGrpcExporter } from '@opentelemetry/exporter-trace-otlp-grpc'
+import { OTLPTraceExporter as OTLPTraceHttpExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { FsInstrumentation } from '@opentelemetry/instrumentation-fs'
 import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis'
@@ -122,6 +125,11 @@ function resolveInstrumentationSetting(
   return parseOptOutBoolean(envValue, defaultValue)
 }
 
+enum CompressionAlgorithm {
+  NONE = 'none',
+  GZIP = 'gzip',
+}
+
 function parseHeadersFromEnv(
   envString: string | undefined,
 ): Record<string, string> {
@@ -232,14 +240,16 @@ function resolveTransportConfig(
   const exportersFromConfig = config?.exporters?.[signal]
   const exporters: TelemetryExporterConfig[] = []
 
-  const otlpConfig = Array.isArray(config?.exporters?.otlp)
-    ? config.exporters.otlp[0]
-    : config?.exporters?.otlp
+  const otlpConfig = config?.exporters?.otlp
 
   if (exportersFromConfig) {
     const configExporters = Array.isArray(exportersFromConfig)
       ? exportersFromConfig
       : [exportersFromConfig]
+
+    // Only use otlp as fallback if it's a single config
+    // If otlp is an array, it's meant to be used directly, not as fallback
+    const otlpFallback = Array.isArray(otlpConfig) ? otlpConfig[0] : otlpConfig
 
     for (const configExporter of configExporters) {
       const merged: TelemetryExporterConfig = {
@@ -247,11 +257,7 @@ function resolveTransportConfig(
         timeout: configExporter.timeout ?? envExporter.timeout,
         compression: configExporter.compression ?? envExporter.compression,
         protocol: configExporter.protocol,
-        endpoint:
-          configExporter.endpoint ??
-          (otlpConfig?.endpoint
-            ? `${otlpConfig.endpoint}${signalPath}`
-            : envExporter.endpoint),
+        endpoint: configExporter.endpoint ?? otlpFallback?.endpoint,
       }
 
       if (!merged.protocol) {
@@ -260,25 +266,26 @@ function resolveTransportConfig(
 
       exporters.push(merged)
     }
-  } else if (otlpConfig?.endpoint || envExporter.endpoint) {
-    const envOnlyConfig: TelemetryExporterConfig = {
-      headers: { ...envExporter.headers, ...(otlpConfig?.headers ?? {}) },
-      timeout: otlpConfig?.timeout ?? envExporter.timeout,
-      compression: otlpConfig?.compression ?? envExporter.compression,
-      protocol: otlpConfig?.protocol,
-      endpoint: otlpConfig?.endpoint
-        ? `${otlpConfig.endpoint}${signalPath}`
-        : envExporter.endpoint,
-    }
+  } else if (otlpConfig) {
+    const otlpConfigs = Array.isArray(otlpConfig) ? otlpConfig : [otlpConfig]
 
-    if (!envOnlyConfig.protocol) {
-      envOnlyConfig.protocol = resolveProtocol(
-        envOnlyConfig.endpoint || '',
-        protocolEnv,
-      )
-    }
+    for (const otlpExporter of otlpConfigs) {
+      const merged: TelemetryExporterConfig = {
+        headers: { ...envExporter.headers, ...(otlpExporter?.headers ?? {}) },
+        timeout: otlpExporter?.timeout ?? envExporter.timeout,
+        compression: otlpExporter?.compression ?? envExporter.compression,
+        protocol: otlpExporter?.protocol,
+        endpoint: otlpExporter?.endpoint
+          ? `${otlpExporter.endpoint}${signalPath}`
+          : envExporter.endpoint,
+      }
 
-    exporters.push(envOnlyConfig)
+      if (!merged.protocol) {
+        merged.protocol = resolveProtocol(merged.endpoint || '', protocolEnv)
+      }
+
+      exporters.push(merged)
+    }
   }
 
   return exporters
@@ -373,14 +380,23 @@ export function initOpenTelemetry(
         exporterConfig.endpoint,
         'traces',
       )
-      spanProcessors.push(
-        new BatchSpanProcessor(
-          new OTLPTraceExporter({
-            url: normalizedEndpoint,
-            headers: exporterConfig.headers,
-          }),
-        ),
-      )
+      const traceExporter =
+        exporterConfig.protocol === 'grpc'
+          ? new OTLPTraceGrpcExporter({
+              url: normalizedEndpoint,
+              headers: exporterConfig.headers,
+              timeoutMillis: exporterConfig.timeout,
+              compression:
+                exporterConfig.compression === 'gzip'
+                  ? CompressionAlgorithm.GZIP
+                  : CompressionAlgorithm.NONE,
+            })
+          : new OTLPTraceHttpExporter({
+              url: normalizedEndpoint,
+              headers: exporterConfig.headers,
+              timeoutMillis: exporterConfig.timeout,
+            })
+      spanProcessors.push(new BatchSpanProcessor(traceExporter))
     }
   }
 
@@ -402,12 +418,25 @@ export function initOpenTelemetry(
         exporterConfig.endpoint,
         'metrics',
       )
+      const metricExporter =
+        exporterConfig.protocol === 'grpc'
+          ? new OTLPMetricGrpcExporter({
+              url: normalizedEndpoint,
+              headers: exporterConfig.headers,
+              timeoutMillis: exporterConfig.timeout,
+              compression:
+                exporterConfig.compression === 'gzip'
+                  ? CompressionAlgorithm.GZIP
+                  : CompressionAlgorithm.NONE,
+            })
+          : new OTLPMetricHttpExporter({
+              url: normalizedEndpoint,
+              headers: exporterConfig.headers,
+              timeoutMillis: exporterConfig.timeout,
+            })
       readers.push(
         new PeriodicExportingMetricReader({
-          exporter: new OTLPMetricExporter({
-            url: normalizedEndpoint,
-            headers: exporterConfig.headers,
-          }),
+          exporter: metricExporter,
         }),
       )
     }
@@ -430,14 +459,23 @@ export function initOpenTelemetry(
         exporterConfig.endpoint,
         'logs',
       )
-      logProcessors.push(
-        new BatchLogRecordProcessor(
-          new OTLPLogExporter({
-            url: normalizedEndpoint,
-            headers: exporterConfig.headers,
-          }),
-        ),
-      )
+      const logExporter =
+        exporterConfig.protocol === 'grpc'
+          ? new OTLPLogGrpcExporter({
+              url: normalizedEndpoint,
+              headers: exporterConfig.headers,
+              timeoutMillis: exporterConfig.timeout,
+              compression:
+                exporterConfig.compression === 'gzip'
+                  ? CompressionAlgorithm.GZIP
+                  : CompressionAlgorithm.NONE,
+            })
+          : new OTLPLogHttpExporter({
+              url: normalizedEndpoint,
+              headers: exporterConfig.headers,
+              timeoutMillis: exporterConfig.timeout,
+            })
+      logProcessors.push(new BatchLogRecordProcessor(logExporter))
     }
   }
 
