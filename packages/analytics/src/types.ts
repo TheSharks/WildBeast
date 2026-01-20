@@ -1,6 +1,9 @@
 export interface TelemetryExporterConfig {
   endpoint?: string
   headers?: Record<string, string>
+  protocol?: 'http' | 'grpc'
+  timeout?: number
+  compression?: 'gzip' | 'none'
 }
 
 export interface TelemetryInstrumentationConfig {
@@ -28,10 +31,10 @@ export interface TelemetryConfig {
   diagnosticLogLevel?: 'none' | 'debug'
   enableExport?: boolean
   exporters?: {
-    otlp?: TelemetryExporterConfig
-    traces?: TelemetryExporterConfig
-    metrics?: TelemetryExporterConfig
-    logs?: TelemetryExporterConfig
+    otlp?: TelemetryExporterConfig | TelemetryExporterConfig[]
+    traces?: TelemetryExporterConfig | TelemetryExporterConfig[]
+    metrics?: TelemetryExporterConfig | TelemetryExporterConfig[]
+    logs?: TelemetryExporterConfig | TelemetryExporterConfig[]
   }
   instrumentations?: TelemetryInstrumentationConfig
   sentry?: TelemetrySentryConfig

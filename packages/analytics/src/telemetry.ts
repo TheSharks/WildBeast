@@ -18,12 +18,17 @@ import { resourceFromAttributes } from '@opentelemetry/resources'
 import {
   BatchLogRecordProcessor,
   LoggerProvider,
+  type LogRecordProcessor,
 } from '@opentelemetry/sdk-logs'
 import {
   MeterProvider,
+  type MetricReader,
   PeriodicExportingMetricReader,
 } from '@opentelemetry/sdk-metrics'
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
+import {
+  BatchSpanProcessor,
+  type SpanProcessor,
+} from '@opentelemetry/sdk-trace-base'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import {
   ATTR_SERVICE_NAME,
@@ -35,7 +40,7 @@ import {
   SentrySampler,
   SentrySpanProcessor,
 } from '@sentry/opentelemetry'
-import type { TelemetryConfig } from './types.js'
+import type { TelemetryConfig, TelemetryExporterConfig } from './types.js'
 
 // from @opentelemetry/semantic-conventions/incubating
 // recommendation is to copy relevant definitions into code base
@@ -86,17 +91,6 @@ function normalizeOtlpEndpointUrl(
   return value
 }
 
-function shouldExportOtlp(
-  config: TelemetryConfig | undefined,
-  endpoints: Array<string | undefined>,
-): boolean {
-  if (typeof config?.enableExport === 'boolean') {
-    return config.enableExport
-  }
-
-  return endpoints.some((endpoint) => Boolean(endpoint))
-}
-
 function parseOptOutBoolean(
   value: string | undefined,
   defaultValue: boolean,
@@ -126,6 +120,168 @@ function resolveInstrumentationSetting(
   }
 
   return parseOptOutBoolean(envValue, defaultValue)
+}
+
+function parseHeadersFromEnv(
+  envString: string | undefined,
+): Record<string, string> {
+  const headers: Record<string, string> = {}
+
+  if (!envString) {
+    return headers
+  }
+
+  const pairs = envString.split(',')
+  for (const pair of pairs) {
+    const eqIndex = pair.indexOf('=')
+    if (eqIndex === -1) {
+      diag.warn(`Invalid header format, missing '=': "${pair.trim()}"`)
+      continue
+    }
+
+    const key = pair.slice(0, eqIndex).trim()
+    const value = pair.slice(eqIndex + 1).trim()
+
+    if (key) {
+      headers[key] = value
+    }
+  }
+
+  return headers
+}
+
+function resolveProtocol(
+  endpoint: string,
+  protocolEnv?: string,
+  configProtocol?: 'http' | 'grpc',
+): 'http' | 'grpc' {
+  if (configProtocol) {
+    return configProtocol
+  }
+
+  if (protocolEnv) {
+    if (protocolEnv === 'grpc') {
+      return 'grpc'
+    }
+    if (protocolEnv === 'http/protobuf') {
+      return 'http'
+    }
+    diag.warn(`Invalid protocol value: "${protocolEnv}"`)
+  }
+
+  try {
+    const url = new URL(endpoint)
+    if (url.protocol === 'grpc:' || url.protocol === 'grpcs:') {
+      return 'grpc'
+    }
+  } catch {
+    // Invalid URL, fall back to http
+  }
+
+  return 'http'
+}
+
+function resolveTransportConfig(
+  signal: 'traces' | 'metrics' | 'logs',
+  config?: TelemetryConfig,
+): TelemetryExporterConfig[] {
+  const envExporter: TelemetryExporterConfig = {}
+
+  const globalHeaders = parseHeadersFromEnv(
+    process.env.OTEL_EXPORTER_OTLP_HEADERS,
+  )
+  const signalHeadersEnv = `OTEL_EXPORTER_OTLP_${signal.toUpperCase()}_HEADERS`
+  const signalHeaders = parseHeadersFromEnv(process.env[signalHeadersEnv])
+  envExporter.headers = { ...globalHeaders, ...signalHeaders }
+
+  const timeoutStr = process.env.OTEL_EXPORTER_OTLP_TIMEOUT
+  if (timeoutStr) {
+    const timeout = parseInt(timeoutStr, 10)
+    if (!isNaN(timeout)) {
+      envExporter.timeout = timeout
+    } else {
+      diag.warn(`Invalid timeout value: "${timeoutStr}"`)
+    }
+  }
+
+  const compression = process.env.OTEL_EXPORTER_OTLP_COMPRESSION
+  if (compression === 'gzip' || compression === 'none') {
+    envExporter.compression = compression
+  } else if (compression) {
+    diag.warn(
+      `Invalid compression value: "${compression}", defaulting to "gzip"`,
+    )
+    envExporter.compression = 'gzip'
+  }
+
+  const protocolEnv =
+    process.env[`OTEL_EXPORTER_OTLP_${signal.toUpperCase()}_PROTOCOL`] ??
+    process.env.OTEL_EXPORTER_OTLP_PROTOCOL
+
+  const signalPath = `/v1/${signal}`
+  const endpointEnv =
+    process.env[`OTEL_EXPORTER_OTLP_${signal.toUpperCase()}_ENDPOINT`] ??
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+  if (endpointEnv) {
+    const endpoint = endpointEnv.endsWith(signalPath)
+      ? endpointEnv
+      : `${endpointEnv}${signalPath}`
+    envExporter.endpoint = endpoint
+  }
+
+  const exportersFromConfig = config?.exporters?.[signal]
+  const exporters: TelemetryExporterConfig[] = []
+
+  const otlpConfig = Array.isArray(config?.exporters?.otlp)
+    ? config.exporters.otlp[0]
+    : config?.exporters?.otlp
+
+  if (exportersFromConfig) {
+    const configExporters = Array.isArray(exportersFromConfig)
+      ? exportersFromConfig
+      : [exportersFromConfig]
+
+    for (const configExporter of configExporters) {
+      const merged: TelemetryExporterConfig = {
+        headers: { ...envExporter.headers, ...configExporter.headers },
+        timeout: configExporter.timeout ?? envExporter.timeout,
+        compression: configExporter.compression ?? envExporter.compression,
+        protocol: configExporter.protocol,
+        endpoint:
+          configExporter.endpoint ??
+          (otlpConfig?.endpoint
+            ? `${otlpConfig.endpoint}${signalPath}`
+            : envExporter.endpoint),
+      }
+
+      if (!merged.protocol) {
+        merged.protocol = resolveProtocol(merged.endpoint || '', protocolEnv)
+      }
+
+      exporters.push(merged)
+    }
+  } else if (otlpConfig?.endpoint || envExporter.endpoint) {
+    const envOnlyConfig: TelemetryExporterConfig = {
+      headers: { ...envExporter.headers, ...(otlpConfig?.headers ?? {}) },
+      timeout: otlpConfig?.timeout ?? envExporter.timeout,
+      compression: otlpConfig?.compression ?? envExporter.compression,
+      protocol: otlpConfig?.protocol,
+      endpoint: otlpConfig?.endpoint
+        ? `${otlpConfig.endpoint}${signalPath}`
+        : envExporter.endpoint,
+    }
+
+    if (!envOnlyConfig.protocol) {
+      envOnlyConfig.protocol = resolveProtocol(
+        envOnlyConfig.endpoint || '',
+        protocolEnv,
+      )
+    }
+
+    exporters.push(envOnlyConfig)
+  }
+
+  return exporters
 }
 
 export function initOpenTelemetry(
@@ -189,80 +345,19 @@ export function initOpenTelemetry(
   }
 
   const resource = resourceFromAttributes(resourceAttributes)
-  const tracesEndpointRaw = () => {
-    if (config?.exporters?.traces?.endpoint) {
-      return config.exporters.traces.endpoint
-    }
-    if (config?.exporters?.otlp?.endpoint) {
-      return `${config.exporters.otlp.endpoint}/v1/traces`
-    }
-    if (process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT) {
-      return process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-    }
-    if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
-      return `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`
-    }
-    return ''
-  }
-  const metricsEndpointRaw = () => {
-    if (config?.exporters?.metrics?.endpoint) {
-      return config.exporters.metrics.endpoint
-    }
-    if (config?.exporters?.otlp?.endpoint) {
-      return `${config.exporters.otlp.endpoint}/v1/metrics`
-    }
-    if (process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT) {
-      return process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
-    }
-    if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
-      return `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/metrics`
-    }
-    return ''
-  }
-  const logsEndpointRaw = () => {
-    if (config?.exporters?.logs?.endpoint) {
-      return config.exporters.logs.endpoint
-    }
-    if (config?.exporters?.otlp?.endpoint) {
-      return `${config.exporters.otlp.endpoint}/v1/logs`
-    }
-    if (process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT) {
-      return process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
-    }
-    if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
-      return `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/logs`
-    }
-    return ''
-  }
-  const exportingEnabled = shouldExportOtlp(config, [
-    tracesEndpointRaw(),
-    metricsEndpointRaw(),
-    logsEndpointRaw(),
-  ])
+  const tracesConfigs = resolveTransportConfig('traces', config)
+  const metricsConfigs = resolveTransportConfig('metrics', config)
+  const logsConfigs = resolveTransportConfig('logs', config)
 
-  const tracesEndpoint = tracesEndpointRaw()
-    ? normalizeOtlpEndpointUrl(tracesEndpointRaw(), 'traces')
-    : undefined
-  const metricsEndpoint = metricsEndpointRaw()
-    ? normalizeOtlpEndpointUrl(metricsEndpointRaw(), 'metrics')
-    : undefined
-  const logsEndpoint = logsEndpointRaw()
-    ? normalizeOtlpEndpointUrl(logsEndpointRaw(), 'logs')
-    : undefined
+  const hasExporters =
+    tracesConfigs.some((c) => c.endpoint) ||
+    metricsConfigs.some((c) => c.endpoint) ||
+    logsConfigs.some((c) => c.endpoint)
 
-  const otlpHeaders = config?.exporters?.otlp?.headers
-  const tracesHeaders = {
-    ...otlpHeaders,
-    ...config?.exporters?.traces?.headers,
-  }
-  const metricsHeaders = {
-    ...otlpHeaders,
-    ...config?.exporters?.metrics?.headers,
-  }
-  const logsHeaders = {
-    ...otlpHeaders,
-    ...config?.exporters?.logs?.headers,
-  }
+  const exportingEnabled =
+    typeof config?.enableExport === 'boolean'
+      ? config.enableExport
+      : hasExporters
 
   const sentryClient = Sentry.getClient()
   if (!sentryClient) {
@@ -271,21 +366,28 @@ export function initOpenTelemetry(
     )
   }
 
+  const spanProcessors: SpanProcessor[] = [new SentrySpanProcessor()]
+  for (const exporterConfig of tracesConfigs) {
+    if (exporterConfig.endpoint && exportingEnabled) {
+      const normalizedEndpoint = normalizeOtlpEndpointUrl(
+        exporterConfig.endpoint,
+        'traces',
+      )
+      spanProcessors.push(
+        new BatchSpanProcessor(
+          new OTLPTraceExporter({
+            url: normalizedEndpoint,
+            headers: exporterConfig.headers,
+          }),
+        ),
+      )
+    }
+  }
+
   const tracerProvider = new NodeTracerProvider({
     resource,
-    // SentrySampler expects a Sentry client; initOpenTelemetry always runs after Sentry.init
     sampler: new SentrySampler(sentryClient),
-    spanProcessors: exportingEnabled
-      ? [
-          new SentrySpanProcessor(),
-          new BatchSpanProcessor(
-            new OTLPTraceExporter({
-              url: tracesEndpoint,
-              headers: tracesHeaders,
-            }),
-          ),
-        ]
-      : [new SentrySpanProcessor()],
+    spanProcessors,
   })
 
   tracerProvider.register({
@@ -293,35 +395,59 @@ export function initOpenTelemetry(
     contextManager: new Sentry.SentryContextManager(),
   })
 
-  const meterProvider = exportingEnabled
-    ? new MeterProvider({
-        resource,
-        readers: [
-          new PeriodicExportingMetricReader({
-            exporter: new OTLPMetricExporter({
-              url: metricsEndpoint,
-              headers: metricsHeaders,
-            }),
+  const readers: MetricReader[] = []
+  for (const exporterConfig of metricsConfigs) {
+    if (exporterConfig.endpoint && exportingEnabled) {
+      const normalizedEndpoint = normalizeOtlpEndpointUrl(
+        exporterConfig.endpoint,
+        'metrics',
+      )
+      readers.push(
+        new PeriodicExportingMetricReader({
+          exporter: new OTLPMetricExporter({
+            url: normalizedEndpoint,
+            headers: exporterConfig.headers,
           }),
-        ],
-      })
-    : new MeterProvider({ resource })
+        }),
+      )
+    }
+  }
+
+  const meterProvider =
+    readers.length > 0
+      ? new MeterProvider({
+          resource,
+          readers,
+        })
+      : new MeterProvider({ resource })
 
   metrics.setGlobalMeterProvider(meterProvider)
 
-  const loggerProvider = exportingEnabled
-    ? new LoggerProvider({
-        resource,
-        processors: [
-          new BatchLogRecordProcessor(
-            new OTLPLogExporter({
-              url: logsEndpoint,
-              headers: logsHeaders,
-            }),
-          ),
-        ],
-      })
-    : new LoggerProvider({ resource })
+  const logProcessors: LogRecordProcessor[] = []
+  for (const exporterConfig of logsConfigs) {
+    if (exporterConfig.endpoint && exportingEnabled) {
+      const normalizedEndpoint = normalizeOtlpEndpointUrl(
+        exporterConfig.endpoint,
+        'logs',
+      )
+      logProcessors.push(
+        new BatchLogRecordProcessor(
+          new OTLPLogExporter({
+            url: normalizedEndpoint,
+            headers: exporterConfig.headers,
+          }),
+        ),
+      )
+    }
+  }
+
+  const loggerProvider =
+    logProcessors.length > 0
+      ? new LoggerProvider({
+          resource,
+          processors: logProcessors,
+        })
+      : new LoggerProvider({ resource })
 
   logs.setGlobalLoggerProvider(loggerProvider)
 
