@@ -6,6 +6,8 @@ export interface TelemetryExporterConfig {
 export interface TelemetryInstrumentationConfig {
   pg?: boolean
   undici?: boolean
+  ioredis?: boolean
+  fs?: boolean
 }
 
 export interface TelemetrySentryConfig {

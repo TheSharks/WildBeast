@@ -36,6 +36,8 @@
     "@opentelemetry/exporter-trace-otlp-grpc": "^0.210.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.210.0",
     "@opentelemetry/instrumentation": "^0.210.0",
+    "@opentelemetry/instrumentation-fs": "^0.28.0",
+    "@opentelemetry/instrumentation-ioredis": "^0.56.0",
     "@opentelemetry/instrumentation-pg": "^0.62.0",
     "@opentelemetry/instrumentation-undici": "^0.20.0",
     "@opentelemetry/resources": "^2.4.0",

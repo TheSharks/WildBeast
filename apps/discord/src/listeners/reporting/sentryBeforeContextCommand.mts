@@ -3,6 +3,10 @@ import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
 import type { ClientEvents } from 'discord.js'
+import {
+  attributesFromInteraction,
+  updateActiveSpan,
+} from '../../utils/tracing.mjs'
 
 @ApplyOptions<ListenerOptions>({
   event: Events.PreContextMenuCommandRun,
@@ -11,6 +15,21 @@ export class SentryBeforeContextCommandListener extends Listener {
   public run(
     ...[{ interaction }]: ClientEvents['preContextMenuCommandRun']
   ): void {
+    updateActiveSpan({
+      attributes: {
+        ...attributesFromInteraction(
+          interaction as unknown as Parameters<
+            typeof attributesFromInteraction
+          >[0],
+          this,
+        ),
+        'discord.command.name': interaction.commandName,
+      },
+      event: {
+        name: 'context_command.before',
+      },
+    })
+
     this.container.logger.info(
       `Got an interaction for a context menu command: ${interaction.commandName}`,
     )

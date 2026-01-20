@@ -4,6 +4,11 @@ import { Events, Listener } from '@sapphire/framework'
 import { resolveKey } from '@sapphire/plugin-i18next'
 import * as Sentry from '@sentry/node'
 import { type ClientEvents, Colors, EmbedBuilder } from 'discord.js'
+import {
+  attributesFromInteraction,
+  updateActiveSpan,
+  withSpan,
+} from '../../utils/tracing.mjs'
 
 @ApplyOptions<ListenerOptions>({
   event: Events.ContextMenuCommandError,
@@ -12,49 +17,84 @@ export class SentryContextCommandErrorListener extends Listener {
   public async run(
     ...[error, payload]: ClientEvents['contextMenuCommandError']
   ) {
-    const uuid = Sentry.withScope((scope) => {
-      scope.addBreadcrumb({
-        category: 'command',
-        level: 'error',
-        message: error instanceof Error ? error.message : String(error),
-        data: {
-          commandName: payload.interaction.commandName,
-          userId: payload.interaction.user.id,
-        },
-      })
-      return Sentry.captureException(error)
+    updateActiveSpan({
+      attributes: {
+        ...attributesFromInteraction(
+          payload.interaction as unknown as Parameters<
+            typeof attributesFromInteraction
+          >[0],
+          this,
+        ),
+        'discord.command.name': payload.interaction.commandName,
+      },
+      error,
+      event: {
+        name: 'context_command.error',
+      },
     })
-    const embeds = [
-      new EmbedBuilder()
-        .setTitle(await resolveKey(payload.interaction, 'system/errors:oops'))
-        .setDescription(
-          await resolveKey(payload.interaction, 'system/errors:try_again', {
-            error: (error as Error).message,
-          }),
-        )
-        .setColor(Colors.Red)
-        .setFooter({
-          text: await resolveKey(payload.interaction, 'system/errors:report'),
+
+    return withSpan(
+      'discord.context_command.error_reporting',
+      {
+        ...attributesFromInteraction(
+          payload.interaction as unknown as Parameters<
+            typeof attributesFromInteraction
+          >[0],
+          this,
+        ),
+        'discord.command.name': payload.interaction.commandName,
+      },
+      async () => {
+        const uuid = Sentry.withScope((scope) => {
+          scope.addBreadcrumb({
+            category: 'command',
+            level: 'error',
+            message: error instanceof Error ? error.message : String(error),
+            data: {
+              commandName: payload.interaction.commandName,
+              userId: payload.interaction.user.id,
+            },
+          })
+          return Sentry.captureException(error)
         })
-        .addFields({
-          name: await resolveKey(
-            payload.interaction,
-            'system/errors:error_code',
-          ),
-          value: uuid,
-        }),
-    ]
-    if (payload.interaction.replied) {
-      payload.interaction.editReply({
-        content: '',
-        components: [],
-        embeds,
-      })
-    } else {
-      payload.interaction.reply({
-        embeds,
-        ephemeral: true,
-      })
-    }
+        const embeds = [
+          new EmbedBuilder()
+            .setTitle(
+              await resolveKey(payload.interaction, 'system/errors:oops'),
+            )
+            .setDescription(
+              await resolveKey(payload.interaction, 'system/errors:try_again', {
+                error: error instanceof Error ? error.message : String(error),
+              }),
+            )
+            .setColor(Colors.Red)
+            .setFooter({
+              text: await resolveKey(
+                payload.interaction,
+                'system/errors:report',
+              ),
+            })
+            .addFields({
+              name: await resolveKey(
+                payload.interaction,
+                'system/errors:error_code',
+              ),
+              value: uuid,
+            }),
+        ]
+        if (payload.interaction.replied) {
+          payload.interaction.editReply({
+            content: '',
+            components: [],
+            embeds,
+          })
+        } else {
+          payload.interaction.reply({
+            embeds,
+            ephemeral: true,
+          })
+        }
+      },
+    )
   }
 }

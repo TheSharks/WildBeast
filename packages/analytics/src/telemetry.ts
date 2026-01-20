@@ -10,6 +10,8 @@ import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
+import { FsInstrumentation } from '@opentelemetry/instrumentation-fs'
+import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis'
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg'
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici'
 import { resourceFromAttributes } from '@opentelemetry/resources'
@@ -333,11 +335,23 @@ export function initOpenTelemetry(
     process.env.OTEL_INSTRUMENTATION_UNDICI_ENABLED,
     true,
   )
+  const ioredisEnabled = resolveInstrumentationSetting(
+    config?.instrumentations?.ioredis,
+    process.env.OTEL_INSTRUMENTATION_IOREDIS_ENABLED,
+    true,
+  )
+  const fsEnabled = resolveInstrumentationSetting(
+    config?.instrumentations?.fs,
+    process.env.OTEL_INSTRUMENTATION_FS_ENABLED,
+    false,
+  )
 
   registerInstrumentations({
     instrumentations: [
       ...(pgEnabled ? [new PgInstrumentation()] : []),
       ...(undiciEnabled ? [new UndiciInstrumentation()] : []),
+      ...(ioredisEnabled ? [new IORedisInstrumentation()] : []),
+      ...(fsEnabled ? [new FsInstrumentation()] : []),
     ],
   })
 
