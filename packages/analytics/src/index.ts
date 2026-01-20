@@ -1,5 +1,5 @@
-export type { Attributes } from '@opentelemetry/api'
-export { metrics, trace } from '@opentelemetry/api'
+export type { Attributes, Span } from '@opentelemetry/api'
+export { metrics, SpanStatusCode, trace } from '@opentelemetry/api'
 export { logs } from '@opentelemetry/api-logs'
 export { AnalyticsLogger } from './bridges/sapphire-logger.js'
 export * from './telemetry.js'

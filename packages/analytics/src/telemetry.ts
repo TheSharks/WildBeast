@@ -187,37 +187,65 @@ export function initOpenTelemetry(
   }
 
   const resource = resourceFromAttributes(resourceAttributes)
-
-  const tracesEndpointRaw =
-    config?.exporters?.traces?.endpoint ??
-    config?.exporters?.otlp?.endpoint ??
-    process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ??
-    `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`
-  const metricsEndpointRaw =
-    config?.exporters?.metrics?.endpoint ??
-    config?.exporters?.otlp?.endpoint ??
-    process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT ??
-    `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/metrics`
-  const logsEndpointRaw =
-    config?.exporters?.logs?.endpoint ??
-    config?.exporters?.otlp?.endpoint ??
-    process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT ??
-    `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/logs`
-
+  const tracesEndpointRaw = () => {
+    if (config?.exporters?.traces?.endpoint) {
+      return config.exporters.traces.endpoint
+    }
+    if (config?.exporters?.otlp?.endpoint) {
+      return `${config.exporters.otlp.endpoint}/v1/traces`
+    }
+    if (process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT) {
+      return process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+    }
+    if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+      return `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`
+    }
+    return ''
+  }
+  const metricsEndpointRaw = () => {
+    if (config?.exporters?.metrics?.endpoint) {
+      return config.exporters.metrics.endpoint
+    }
+    if (config?.exporters?.otlp?.endpoint) {
+      return `${config.exporters.otlp.endpoint}/v1/metrics`
+    }
+    if (process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT) {
+      return process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+    }
+    if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+      return `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/metrics`
+    }
+    return ''
+  }
+  const logsEndpointRaw = () => {
+    if (config?.exporters?.logs?.endpoint) {
+      return config.exporters.logs.endpoint
+    }
+    if (config?.exporters?.otlp?.endpoint) {
+      return `${config.exporters.otlp.endpoint}/v1/logs`
+    }
+    if (process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT) {
+      return process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
+    }
+    if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+      return `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/logs`
+    }
+    return ''
+  }
   const exportingEnabled = shouldExportOtlp(config, [
-    tracesEndpointRaw,
-    metricsEndpointRaw,
-    logsEndpointRaw,
+    tracesEndpointRaw(),
+    metricsEndpointRaw(),
+    logsEndpointRaw(),
   ])
 
-  const tracesEndpoint = tracesEndpointRaw
-    ? normalizeOtlpEndpointUrl(tracesEndpointRaw, 'traces')
+  const tracesEndpoint = tracesEndpointRaw()
+    ? normalizeOtlpEndpointUrl(tracesEndpointRaw(), 'traces')
     : undefined
-  const metricsEndpoint = metricsEndpointRaw
-    ? normalizeOtlpEndpointUrl(metricsEndpointRaw, 'metrics')
+  const metricsEndpoint = metricsEndpointRaw()
+    ? normalizeOtlpEndpointUrl(metricsEndpointRaw(), 'metrics')
     : undefined
-  const logsEndpoint = logsEndpointRaw
-    ? normalizeOtlpEndpointUrl(logsEndpointRaw, 'logs')
+  const logsEndpoint = logsEndpointRaw()
+    ? normalizeOtlpEndpointUrl(logsEndpointRaw(), 'logs')
     : undefined
 
   const otlpHeaders = config?.exporters?.otlp?.headers
