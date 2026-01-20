@@ -42,16 +42,11 @@ const client = new SapphireClient({
   },
   hmr,
   i18n: {
-    defaultLanguageDirectory: (() => {
-      const resolved = import.meta.resolve(
-        '@thesharks/i18n/discord',
-        import.meta.url,
-      )
-      if (!resolved) {
-        throw new Error('Failed to resolve @thesharks/i18n/discord')
-      }
-      return fileURLToPath(resolved)
-    })(),
+    defaultLanguageDirectory: join(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      'languages',
+    ),
     hmr,
   },
 })

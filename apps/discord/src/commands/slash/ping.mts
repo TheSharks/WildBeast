@@ -1,6 +1,11 @@
 import { isMessageInstance } from '@sapphire/discord.js-utilities'
 import { Command } from '@sapphire/framework'
 import { applyLocalizedBuilder, resolveKey } from '@sapphire/plugin-i18next'
+import {
+  attributesFromInteraction,
+  spanName,
+  withSpan,
+} from '../../utils/tracing.mjs'
 
 export class PingCommand extends Command {
   public override registerApplicationCommands(registry: Command.Registry) {
@@ -20,28 +25,37 @@ export class PingCommand extends Command {
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
-    const msg = await interaction.reply({
-      content: (await resolveKey(
-        interaction,
-        'commands/ping:success',
-      )) as string,
-      ephemeral: true,
-      fetchReply: true,
-    })
+    return withSpan(
+      spanName('command'),
+      {
+        ...attributesFromInteraction(interaction, undefined),
+        'discord.command.name': interaction.commandName,
+      },
+      async () => {
+        const msg = await interaction.reply({
+          content: (await resolveKey(
+            interaction,
+            'commands/ping:success',
+          )) as string,
+          ephemeral: true,
+          fetchReply: true,
+        })
 
-    if (isMessageInstance(msg)) {
-      const diff = msg.createdTimestamp - interaction.createdTimestamp
-      const ping = Math.round(this.container.client.ws.ping)
-      return interaction.editReply(
-        await resolveKey(interaction, 'commands/ping:success_with_args', {
-          diff,
-          ping,
-        }),
-      )
-    }
+        if (isMessageInstance(msg)) {
+          const diff = msg.createdTimestamp - interaction.createdTimestamp
+          const ping = Math.round(this.container.client.ws.ping)
+          return interaction.editReply(
+            await resolveKey(interaction, 'commands/ping:success_with_args', {
+              diff,
+              ping,
+            }),
+          )
+        }
 
-    return interaction.editReply(
-      await resolveKey(interaction, 'commands/ping:failed'),
+        return interaction.editReply(
+          await resolveKey(interaction, 'commands/ping:failed'),
+        )
+      },
     )
   }
 }

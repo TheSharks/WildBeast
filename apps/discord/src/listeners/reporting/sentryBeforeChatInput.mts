@@ -3,6 +3,10 @@ import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
 import type { ClientEvents } from 'discord.js'
+import {
+  attributesFromInteraction,
+  updateActiveSpan,
+} from '../../utils/tracing.mjs'
 
 @ApplyOptions<ListenerOptions>({
   event: Events.PreChatInputCommandRun,
@@ -11,6 +15,16 @@ export class SentryBeforeChatInputListener extends Listener {
   public run(
     ...[{ interaction }]: ClientEvents['preChatInputCommandRun']
   ): void {
+    updateActiveSpan({
+      attributes: {
+        ...attributesFromInteraction(interaction, this),
+        'discord.command.name': interaction.commandName,
+      },
+      event: {
+        name: 'command.before',
+      },
+    })
+
     this.container.logger.info(
       `Got an interaction for a chat input command: ${interaction.commandName}`,
     )

@@ -10,6 +10,7 @@
     "dev:run": "npm run start",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node -r dotenv-extended/config dist/cluster.mjs",
+    "postbuild": "cp -r src/languages dist/languages",
     "build": "rimraf dist && tsc"
   },
   "author": "Remco Jongschaap <hey@dougley.com>",
@@ -37,7 +38,6 @@
     "@sapphire/plugin-scheduled-tasks": "^10.0.4",
     "@sentry/node": "^10.34.0",
     "@thesharks/analytics": "workspace:^",
-    "@thesharks/i18n": "workspace:^",
     "@thesharks/prisma": "workspace:^",
     "bullmq": "^5.66.5",
     "discord.js": "^14.25.1",
