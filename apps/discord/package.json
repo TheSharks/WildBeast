@@ -28,7 +28,6 @@
   "homepage": "https://wildbeast.guide/",
   "dependencies": {
     "@discordjs/builders": "^1.13.1",
-    "@prisma/client": "^7.2.0",
     "@sapphire/decorators": "^6.2.0",
     "@sapphire/discord.js-utilities": "^7.3.3",
     "@sapphire/framework": "^5.5.0",
@@ -38,7 +37,7 @@
     "@sapphire/plugin-scheduled-tasks": "^10.0.4",
     "@sentry/node": "^10.35.0",
     "@thesharks/analytics": "workspace:^",
-    "@thesharks/prisma": "workspace:^",
+    "@thesharks/drizzle": "workspace:^",
     "bullmq": "^5.66.5",
     "discord.js": "^14.25.1",
     "dotenv-extended": "^2.9.0"

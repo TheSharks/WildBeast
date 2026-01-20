@@ -1,12 +1,16 @@
 {
   "private": true,
   "type": "module",
-  "name": "@thesharks/prisma",
+  "name": "@thesharks/drizzle",
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "generate": "drizzle-kit generate",
+    "push": "drizzle-kit push",
+    "migrate": "drizzle-kit migrate",
+    "studio": "drizzle-kit studio"
   },
   "author": "Remco Jongschaap <hey@dougley.com>",
   "license": "MPL-2.0",
@@ -16,13 +20,15 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/TheSharks/WildBeast.git",
-    "directory": "packages/prisma"
+    "directory": "packages/drizzle"
   },
   "devDependencies": {
     "@thesharks/tsconfig": "workspace:^",
-    "prisma": "^7.2.0"
+    "@types/node": "^25.0.9",
+    "drizzle-kit": "^0.31.8"
   },
   "dependencies": {
-    "@prisma/client": "^7.2.0"
+    "drizzle-orm": "^0.45.1",
+    "pg": "^8.17.2"
   }
 }

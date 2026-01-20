@@ -339,7 +339,6 @@ export function initOpenTelemetry(
           return frame
         },
       }),
-      Sentry.prismaIntegration(),
       // Keep Sentry's HTTP integration for request isolation.
       // When we add custom OTEL http instrumentation later, we should set spans: false
       // to avoid duplicate spans.
