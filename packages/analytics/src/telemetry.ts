@@ -264,6 +264,13 @@ function resolveTransportConfig(
         merged.protocol = resolveProtocol(merged.endpoint || '', protocolEnv)
       }
 
+      if (!merged.endpoint) {
+        diag.warn(
+          `Exporter configuration missing endpoint, skipping: ${signal}`,
+        )
+        continue
+      }
+
       exporters.push(merged)
     }
   } else if (otlpConfig) {
@@ -282,6 +289,13 @@ function resolveTransportConfig(
 
       if (!merged.protocol) {
         merged.protocol = resolveProtocol(merged.endpoint || '', protocolEnv)
+      }
+
+      if (!merged.endpoint) {
+        diag.warn(
+          `Exporter configuration missing endpoint, skipping: ${signal}`,
+        )
+        continue
       }
 
       exporters.push(merged)
