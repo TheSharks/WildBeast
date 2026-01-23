@@ -1,0 +1,30 @@
+{
+  "name": "@thesharks/tagscript",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "vitest",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "require": null
+    }
+  },
+  "devDependencies": {
+    "@thesharks/tsconfig": "workspace:^",
+    "@types/node": "^25.0.9",
+    "@vitest/coverage-v8": "^3.2.4",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "recheck": "^4.5.0"
+  }
+}

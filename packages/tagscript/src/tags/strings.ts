@@ -1,0 +1,132 @@
+import { checkSync } from 'recheck'
+import type { Limits, TagHandler } from '../types.js'
+
+export const upperHandler: TagHandler = (_ctx, args) =>
+  (args[0] ?? '').toUpperCase()
+export const lowerHandler: TagHandler = (_ctx, args) =>
+  (args[0] ?? '').toLowerCase()
+export const lengthHandler: TagHandler = (_ctx, args) =>
+  String((args[0] ?? '').length)
+
+export const replaceHandler: TagHandler = (_ctx, args) => {
+  let text: string | undefined
+  let search: string | undefined
+  let replacement: string | undefined
+
+  // Check for JagTag syntax: {replace:search|with:replacement|in:text}
+  const withIndex = args.findIndex((a) => a.startsWith('with:'))
+  const inIndex = args.findIndex((a) => a.startsWith('in:'))
+
+  if (withIndex >= 0 || inIndex >= 0) {
+    // JagTag syntax
+    search = args[0]
+    replacement = withIndex >= 0 ? args[withIndex].slice(5) : undefined
+    text = inIndex >= 0 ? args[inIndex].slice(3) : undefined
+  } else {
+    // TagScript syntax (backwards compatible)
+    ;[text, search, replacement] = args
+  }
+
+  return (text ?? '').replaceAll(search ?? '', replacement ?? '')
+}
+
+const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' })
+
+export const reverseHandler: TagHandler = (_ctx, args) => {
+  const text = args[0] ?? ''
+  return Array.from(segmenter.segment(text))
+    .map((segment) => segment.segment)
+    .reverse()
+    .join('')
+}
+
+export const urlHandler: TagHandler = (_ctx, args) =>
+  encodeURIComponent(args[0] ?? '')
+
+export const substringHandler: TagHandler = (_ctx, args) => {
+  const [text, startStr, endStr] = args
+  const textValue = text ?? ''
+  const start = parseInt(startStr ?? '0', 10)
+  const end = endStr ? parseInt(endStr, 10) : undefined
+  return end !== undefined
+    ? textValue.substring(start, end)
+    : textValue.substring(start)
+}
+
+export const onelineHandler: TagHandler = (_ctx, args) =>
+  (args[0] ?? '').replace(/\\n/g, ' ')
+
+export const hashHandler: TagHandler = (_ctx, args) => {
+  const text = args[0] ?? ''
+  // Java-style hashCode (matches JagTag behavior)
+  let hash = 0
+  for (let i = 0; i < text.length; i++) {
+    hash = (hash << 5) - hash + text.charCodeAt(i)
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  return String(hash)
+}
+
+export const replaceregexHandler: TagHandler = (_ctx, args, limits: Limits) => {
+  // Support both TagScript syntax {replaceregex:text|pattern|replacement}
+  // and JagTag syntax {replaceregex:pattern|with:replacement|in:text}
+  let text: string | undefined
+  let pattern: string | undefined
+  let replacement: string | undefined
+
+  const withIndex = args.findIndex((a) => a.startsWith('with:'))
+  const inIndex = args.findIndex((a) => a.startsWith('in:'))
+
+  if (withIndex >= 0 || inIndex >= 0) {
+    // JagTag syntax
+    pattern = args[0]
+    replacement = withIndex >= 0 ? args[withIndex].slice(5) : undefined
+    text = inIndex >= 0 ? args[inIndex].slice(3) : undefined
+  } else {
+    // TagScript syntax
+    ;[text, pattern, replacement] = args
+  }
+
+  if (!text || !pattern) return text ?? ''
+
+  // Guard against excessively long patterns
+  if (pattern.length > limits.regexPatternLength) {
+    throw new Error('Regex pattern too long')
+  }
+
+  // Guard against excessively long input strings
+  if (text.length > limits.maxRegexInputLength) {
+    throw new Error('Input text too long for regex operation')
+  }
+
+  // Parse pattern string e.g. /search/flags
+  const match = pattern.match(/^\/(.+)\/([gimsuy]*)$/)
+
+  let regex: RegExp
+  try {
+    let patternBody: string
+    let flags: string
+
+    if (match) {
+      ;[, patternBody, flags] = match
+    } else {
+      // Fallback: treat entire string as a global regex pattern
+      patternBody = pattern
+      flags = 'g'
+    }
+
+    // Check for ReDoS vulnerability before executing
+    const diagnostic = checkSync(patternBody, flags)
+    if (diagnostic.status === 'vulnerable') {
+      throw new Error('Potentially unsafe regex pattern')
+    }
+
+    regex = new RegExp(patternBody, flags)
+    return text.replace(regex, replacement ?? '')
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Invalid regex: ${error.message}`)
+    }
+    throw new Error('Invalid regex: Unknown error')
+  }
+}
