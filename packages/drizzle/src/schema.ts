@@ -8,9 +8,7 @@ export const tags = pgTable(
     content: text('content').notNull(),
     authorId: bigint('authorId', { mode: 'number' }).notNull(),
   },
-  (table) => [
-    unique('Tag_name_key').on(table.name),
-  ],
+  (table) => [unique('Tag_name_key').on(table.name)],
 )
 
 export const guilds = pgTable('Guild', {

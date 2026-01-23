@@ -8,7 +8,6 @@
     "dev": "turbo build && concurrently \"npm:dev:*\"",
     "dev:watch": "tsc --watch",
     "dev:run": "npm run start",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node -r dotenv-extended/config dist/cluster.mjs",
     "postbuild": "cp -r src/languages dist/languages",
     "build": "rimraf dist && tsc"

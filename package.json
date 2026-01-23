@@ -2,10 +2,7 @@
   "private": true,
   "name": "@thesharks/wildbeast",
   "version": "0.0.0",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
+  "workspaces": ["packages/*", "apps/*"],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
