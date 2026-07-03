@@ -32,8 +32,22 @@ pnpm build
 pnpm dev
 ```
 
+Create `apps/discord/.env` with at least your bot token (see
+[Configuration](/guides/configuration/) for everything else):
+
+```bash
+DISCORD_TOKEN=your-bot-token
+```
+
 ## Next steps
 
-More documentation is on the way. In the meantime, the
-[GitHub repository](https://github.com/TheSharks/WildBeast) is the best place
-to explore the codebase or ask questions.
+- [Configuration](/guides/configuration/) covers every environment
+  variable.
+- [Clustering](/scaling/clustering/) explains how to scale across multiple
+  processes and machines with autonomous shard rebalancing.
+- [Telemetry](/observability/telemetry/) shows how to wire up OpenTelemetry
+  and Sentry.
+- [Testing](/development/testing/) is the place to start for contributors.
+
+The [GitHub repository](https://github.com/TheSharks/WildBeast) is the best
+place to explore the codebase or ask questions.

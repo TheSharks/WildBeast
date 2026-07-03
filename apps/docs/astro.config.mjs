@@ -38,6 +38,18 @@ export default defineConfig({
           label: 'Guides',
           items: [{ autogenerate: { directory: 'guides' } }],
         },
+        {
+          label: 'Scaling',
+          items: [{ autogenerate: { directory: 'scaling' } }],
+        },
+        {
+          label: 'Observability',
+          items: [{ autogenerate: { directory: 'observability' } }],
+        },
+        {
+          label: 'Development',
+          items: [{ autogenerate: { directory: 'development' } }],
+        },
       ],
     }),
   ],
