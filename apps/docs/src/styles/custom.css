@@ -1,0 +1,86 @@
+/* WildBeast theme — accent palette derived from the wordmark blurple (#5865f2). */
+
+/* Dark mode colors. */
+:root {
+  --sl-color-accent-low: #23285e;
+  --sl-color-accent: #5865f2;
+  --sl-color-accent-high: #c5cafb;
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #eceef8;
+  --sl-color-gray-2: #c1c3d0;
+  --sl-color-gray-3: #898da8;
+  --sl-color-gray-4: #565a73;
+  --sl-color-gray-5: #363a50;
+  --sl-color-gray-6: #25283e;
+  --sl-color-gray-7: #1b1d30;
+  --sl-color-black: #15172a;
+
+  --wb-overlay-blurple: hsla(235, 86%, 65%, 0.2);
+}
+
+/* Light mode colors. */
+:root[data-theme='light'] {
+  --sl-color-accent-low: #d9dcfc;
+  --sl-color-accent: #4553e8;
+  --sl-color-accent-high: #272f94;
+  --sl-color-white: #15172a;
+  --sl-color-gray-1: #25283e;
+  --sl-color-gray-2: #363a50;
+  --sl-color-gray-3: #565a73;
+  --sl-color-gray-4: #898da8;
+  --sl-color-gray-5: #c1c3d0;
+  --sl-color-gray-6: #eceef8;
+  --sl-color-gray-7: #f6f7fc;
+  --sl-color-black: #ffffff;
+
+  --wb-overlay-blurple: hsla(235, 86%, 65%, 0.15);
+}
+
+/* Splash page: blurple glow backdrop and translucent header. */
+[data-has-hero] .page {
+  background:
+    linear-gradient(215deg, var(--wb-overlay-blurple), transparent 40%),
+    radial-gradient(var(--wb-overlay-blurple), transparent 40%) no-repeat -60vw
+      -40vh / 105vw 200vh,
+    radial-gradient(var(--wb-overlay-blurple), transparent 65%) no-repeat 50%
+      calc(100% + 20rem) / 60rem 30rem;
+}
+
+[data-has-hero] header {
+  border-bottom: 1px solid transparent;
+  background-color: transparent;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+/* Hero: pill-shaped action buttons. */
+
+.hero .sl-link-button {
+  border-radius: 999rem;
+}
+
+.hero .sl-link-button.primary {
+  box-shadow: 0 0.25rem 1.5rem var(--wb-overlay-blurple);
+}
+
+/* Cards: rounded, with an accent on hover. */
+.card {
+  border-radius: 0.75rem;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--sl-color-accent);
+  box-shadow: 0 0.5rem 2rem var(--wb-overlay-blurple);
+}
+
+/* Softer corners across UI chrome. */
+.sl-link-button,
+.sidebar-pane,
+search-button,
+button[data-open-modal] {
+  border-radius: 0.5rem;
+}

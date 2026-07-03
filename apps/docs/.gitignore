@@ -1,20 +1,14 @@
-# Dependencies
-/node_modules
+# build output
+dist/
+# generated types
+.astro/
 
-# Production
-/build
+# dependencies
+node_modules/
 
-# Generated files
-.docusaurus
-.cache-loader
+# environment variables
+.env
+.env.production
 
-# Misc
+# macOS-specific files
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*

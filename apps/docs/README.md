@@ -1,41 +1,17 @@
-# Website
+# WildBeast documentation
 
-This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
+Documentation site for WildBeast, built with [Starlight](https://starlight.astro.build/) on [Astro](https://astro.build/).
 
-### Installation
+## Commands
 
-```
-$ yarn
-```
+All commands are run from this directory (or via turbo from the repo root):
 
-### Local Development
+| Command        | Action                                       |
+| -------------- | -------------------------------------------- |
+| `pnpm dev`     | Start the local dev server at `localhost:4321` |
+| `pnpm build`   | Build the production site to `./dist/`       |
+| `pnpm preview` | Preview the production build locally         |
 
-```
-$ yarn start
-```
+## Adding content
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
-
-### Build
-
-```
-$ yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
-
-Using SSH:
-
-```
-$ USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```
-$ GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+Pages are Markdown or MDX files in `src/content/docs/`. Files in `guides/` are picked up automatically by the sidebar. See the [Starlight docs](https://starlight.astro.build/guides/authoring-content/) for authoring details.
