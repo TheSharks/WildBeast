@@ -3,6 +3,46 @@ export interface ShardingConfig {
   shardList: number[] | 'auto'
 }
 
+export type ClusteringConfig =
+  | ({ mode: 'static' } & ShardingConfig)
+  | { mode: 'autonomous'; totalShards: number }
+
+/**
+ * `static` (default): this cluster runs a fixed shard range from
+ * WILDBEAST_SHARDING_*. `autonomous`: clusters sharing a Redis discover each
+ * other and split WILDBEAST_SHARDING_TOTAL shards among themselves,
+ * rebalancing automatically as clusters come and go.
+ */
+export function parseClusteringConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): ClusteringConfig {
+  const mode = env.WILDBEAST_CLUSTERING_MODE ?? 'static'
+
+  if (mode === 'static') {
+    return { mode, ...parseShardingConfig(env) }
+  }
+
+  if (mode !== 'autonomous') {
+    throw new Error(
+      `WILDBEAST_CLUSTERING_MODE must be "static" or "autonomous", got "${mode}"`,
+    )
+  }
+
+  const total = Number.parseInt(env.WILDBEAST_SHARDING_TOTAL ?? '', 10)
+  if (!Number.isInteger(total) || total < 1) {
+    throw new Error(
+      'Autonomous clustering requires WILDBEAST_SHARDING_TOTAL: every cluster in the fleet must agree on a fixed shard total',
+    )
+  }
+  if (env.WILDBEAST_SHARDING_START || env.WILDBEAST_SHARDING_END) {
+    throw new Error(
+      'WILDBEAST_SHARDING_START/END are static-mode options; autonomous clusters compute their own ranges',
+    )
+  }
+
+  return { mode, totalShards: total }
+}
+
 /**
  * Resolve this cluster's shard assignment from the environment.
  *

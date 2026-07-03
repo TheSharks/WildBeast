@@ -11,7 +11,11 @@ import {
 } from '@thesharks/analytics'
 import { type Shard, ShardingManager } from 'discord.js'
 import dotEnvExtended from 'dotenv-extended'
-import { parseShardingConfig } from './sharding/config.mjs'
+import { Redis } from 'ioredis'
+import { parseClusteringConfig } from './sharding/config.mjs'
+import { ClusterCoordinator } from './sharding/coordination.mjs'
+import { type ShardHost, ShardReconciler } from './sharding/reconciler.mjs'
+import { redisConnectionOptions } from './utils/redis.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -67,22 +71,33 @@ const shardUpGauge = createGauge(
   'Whether a shard is ready (1) or down (0), as seen by the manager',
 )
 
-const sharding = parseShardingConfig()
+const clustering = parseClusteringConfig()
 
 const manager = new ShardingManager(join(__dirname, './index.mjs'), {
   token: process.env.DISCORD_TOKEN,
-  totalShards: sharding.totalShards,
-  shardList: sharding.shardList,
+  totalShards: clustering.totalShards,
+  ...(clustering.mode === 'static' ? { shardList: clustering.shardList } : {}),
   mode: 'worker',
 })
 
-logger.info(
-  `Cluster ${clusterId} managing shards [${
-    sharding.shardList === 'auto' ? 'auto' : sharding.shardList.join(', ')
-  }] of ${sharding.totalShards} total`,
-)
+if (clustering.mode === 'autonomous') {
+  // The reconciler is the only respawn authority in autonomous mode: it
+  // restarts crashed shards it still owns and must not fight the manager
+  // over shards that are being handed off.
+  manager.respawn = false
+  logger.info(
+    `Cluster ${clusterId} joining autonomous fleet (${clustering.totalShards} total shards)`,
+  )
+} else {
+  logger.info(
+    `Cluster ${clusterId} managing shards [${
+      clustering.shardList === 'auto' ? 'auto' : clustering.shardList.join(', ')
+    }] of ${clustering.totalShards} total`,
+  )
+}
 
 let shuttingDown = false
+const intentionalStops = new Set<number>()
 
 manager.on('shardCreate', (shard) => {
   const labels = { shard_id: String(shard.id) }
@@ -112,7 +127,7 @@ manager.on('shardCreate', (shard) => {
     shardDeathCounter.add(1, labels)
     shardUpGauge.set(0, labels)
 
-    if (shuttingDown) {
+    if (shuttingDown || intentionalStops.has(shard.id)) {
       logger.info(`Shard ${shard.id} exited`)
       return
     }
@@ -133,6 +148,9 @@ manager.on('shardCreate', (shard) => {
     })
   })
 })
+
+const SHUTDOWN_MESSAGE = { _wildbeast: 'shutdown' }
+const SHARD_STOP_GRACE_MILLIS = 10_000
 
 function shardIsAlive(shard: Shard): boolean {
   return Boolean(shard.process ?? shard.worker)
@@ -155,6 +173,69 @@ async function waitWithTimeout(
   }
 }
 
+async function stopShard(shard: Shard): Promise<void> {
+  if (!shardIsAlive(shard)) return
+
+  intentionalStops.add(shard.id)
+  try {
+    const death = new Promise<void>((resolveDeath) => {
+      shard.once('death', () => resolveDeath())
+    })
+    // Signals are only delivered to the main thread, so worker-mode shards
+    // rely on this message to destroy their client and flush telemetry
+    // before exiting.
+    await shard.send(SHUTDOWN_MESSAGE).catch(() => undefined)
+
+    const graceful = await waitWithTimeout(death, SHARD_STOP_GRACE_MILLIS)
+    if (!graceful) {
+      logger.warn(`Shard ${shard.id} did not exit in time; terminating it`)
+      try {
+        shard.kill()
+      } catch {
+        // already dead
+      }
+    }
+  } finally {
+    intentionalStops.delete(shard.id)
+  }
+}
+
+// Adapts ShardingManager to the reconciler's shard lifecycle interface.
+const shardHost: ShardHost = {
+  currentShards: () => [...manager.shards.keys()],
+  isAlive: (shardId) => {
+    const shard = manager.shards.get(shardId)
+    return shard !== undefined && shardIsAlive(shard)
+  },
+  start: async (shardId) => {
+    const shard = manager.shards.get(shardId) ?? manager.createShard(shardId)
+    if (!shardIsAlive(shard)) {
+      // No ready timeout: identifies queue globally through Redis and can
+      // legitimately take longer than the default 30s.
+      await shard.spawn(-1)
+    }
+  },
+  stop: async (shardId) => {
+    const shard = manager.shards.get(shardId)
+    if (!shard) return
+    await stopShard(shard)
+    manager.shards.delete(shardId)
+  },
+}
+
+const reconciler =
+  clustering.mode === 'autonomous'
+    ? new ShardReconciler(
+        new ClusterCoordinator(new Redis(redisConnectionOptions()), {
+          clusterId,
+          totalShards: clustering.totalShards,
+        }),
+        shardHost,
+        { clusterId, totalShards: clustering.totalShards },
+        logger,
+      )
+    : undefined
+
 async function shutdown() {
   if (shuttingDown) {
     return
@@ -165,37 +246,40 @@ async function shutdown() {
 
   logger.info('Shutting down: asking shards to exit')
 
-  // Signals are only delivered to the main thread, so worker-mode shards
-  // rely on this message to destroy their client and flush telemetry
-  // before exiting.
-  const deaths = Promise.all(
-    [...manager.shards.values()].map(
-      (shard) =>
-        new Promise<void>((resolveDeath) => {
-          if (!shardIsAlive(shard)) {
-            resolveDeath()
-            return
-          }
-          shard.once('death', () => resolveDeath())
-        }),
-    ),
-  )
+  if (reconciler) {
+    // Stops owned shards gracefully, releases their leases and withdraws
+    // from the fleet so survivors rebalance immediately.
+    await reconciler.shutdown()
+  } else {
+    const deaths = Promise.all(
+      [...manager.shards.values()].map(
+        (shard) =>
+          new Promise<void>((resolveDeath) => {
+            if (!shardIsAlive(shard)) {
+              resolveDeath()
+              return
+            }
+            shard.once('death', () => resolveDeath())
+          }),
+      ),
+    )
 
-  for (const shard of manager.shards.values()) {
-    if (!shardIsAlive(shard)) {
-      continue
-    }
-    shard.send({ _wildbeast: 'shutdown' }).catch(() => undefined)
-  }
-
-  const graceful = await waitWithTimeout(deaths, 15_000)
-  if (!graceful) {
-    logger.warn('Shards did not exit in time; terminating them')
     for (const shard of manager.shards.values()) {
-      try {
-        shard.kill()
-      } catch {
-        // already dead
+      if (!shardIsAlive(shard)) {
+        continue
+      }
+      shard.send(SHUTDOWN_MESSAGE).catch(() => undefined)
+    }
+
+    const graceful = await waitWithTimeout(deaths, 15_000)
+    if (!graceful) {
+      logger.warn('Shards did not exit in time; terminating them')
+      for (const shard of manager.shards.values()) {
+        try {
+          shard.kill()
+        } catch {
+          // already dead
+        }
       }
     }
   }
@@ -208,13 +292,18 @@ process.once('SIGINT', () => void shutdown())
 process.once('SIGTERM', () => void shutdown())
 
 try {
-  // No ready timeout: identifies queue globally through Redis, so a shard
-  // can legitimately wait longer than the default 30s when several clusters
-  // start at once. Readiness is tracked via shard events instead.
-  await manager.spawn({ timeout: -1 })
-  logger.info(`Spawned ${manager.shards.size} shard(s)`)
+  if (reconciler) {
+    await reconciler.start()
+    logger.info('Reconciler started; shard ownership follows fleet membership')
+  } else {
+    // No ready timeout: identifies queue globally through Redis, so a shard
+    // can legitimately wait longer than the default 30s when several
+    // clusters start at once. Readiness is tracked via shard events instead.
+    await manager.spawn({ timeout: -1 })
+    logger.info(`Spawned ${manager.shards.size} shard(s)`)
+  }
 } catch (error) {
-  logger.fatal('Failed to spawn shards:', error)
+  logger.fatal('Failed to start cluster:', error)
   Sentry.captureException(error)
   await telemetry.shutdown()
   process.exit(1)
