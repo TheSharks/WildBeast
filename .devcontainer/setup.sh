@@ -1,12 +1,8 @@
 #!/bin/bash
 
-echo "🚀 Setting up analytics for devcontainer..."
+echo "🚀 Setting up devcontainer..."
 
-# Wait for services to be ready
-echo "⏳ Waiting for services to start..."
-sleep 10
-
-# Check TimescaleDB
+# Wait for TimescaleDB to accept connections
 echo "🔍 Checking TimescaleDB..."
 until pg_isready -h db -p 5432 -U postgres > /dev/null 2>&1; do
   echo "⏳ Waiting for TimescaleDB to be ready..."

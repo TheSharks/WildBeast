@@ -1,26 +1,29 @@
 {
   "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
-  "name": "Node.js & TypeScript",
+  "name": "WildBeast",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "features": {
     "ghcr.io/devcontainers-extra/features/pnpm:2": {}
   },
-  "forwardPorts": [5432, 6379, 9200, 4317, 4318],
+  "forwardPorts": [
+    5432,
+    "redis:6379",
+    "otel-collector:4317",
+    "otel-collector:4318"
+  ],
   "portsAttributes": {
     "5432": { "label": "PostgreSQL" },
-    "6379": { "label": "Redis" },
-    "9200": { "label": "Elasticsearch" },
-    "4317": { "label": "OTLP gRPC" },
-    "4318": { "label": "OTLP HTTP" }
+    "redis:6379": { "label": "Redis" },
+    "otel-collector:4317": { "label": "OTLP gRPC" },
+    "otel-collector:4318": { "label": "OTLP HTTP" }
   },
   "customizations": {
     "vscode": {
       "extensions": [
         "biomejs.biome",
         "IronGeek.vscode-env",
-        "Prisma.prisma",
         "mtxr.sqltools",
         "mtxr.sqltools-driver-pg",
         "mzato0001.sapphire-i18n-ally"

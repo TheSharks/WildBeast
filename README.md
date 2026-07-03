@@ -15,24 +15,52 @@
 
 ---
 
-Wildbeast is a multifunctional Discord bot, intended to provide a framework that's easy to use, extend, and modify.  
-This is also the open source framework for [WildBot#3942 on Discord](https://invite.thesharks.xyz).
+WildBeast is a multifunctional Discord bot, intended to provide a framework that's easy to use, extend, and modify.  
+This is also the open source framework for [WildBot on Discord](https://invite.thesharks.xyz).
 
 ## Main features
 
-- Full extendability
-- Easy to modify
-- Built-in command system with permissions and server-unique configurations
+- Modular by design: commands and features are pieces that can be loaded and reloaded independently
+- Built to scale: autonomous sharding and clustering
+- Observable: OpenTelemetry instrumentation throughout, with metrics and traces out of the box
 
 Visit our [documentation](https://wildbeast.guide/) for more information.
 
-### Want to use Wildbeast but don't want to host it yourself?
+### Want to use WildBeast but don't want to host it yourself?
 
 No problem, we maintain a public instance called WildBot that you can invite to your server! Visit https://invite.thesharks.xyz to get started!
 
-### Want to run Wildbeast yourself?
+### Want to run WildBeast yourself?
 
-We've got you covered on that - we provide installation instructions for Windows and Linux. Check out the [Windows installation manual](https://wildbeast.guide/install_windows) or [Linux installation manual](https://wildbeast.guide/install_linux) to get started.
+We've got you covered on that — check out the [getting started guide](https://wildbeast.guide/guides/getting-started/).
+
+## Repository layout
+
+This is a pnpm workspace managed with [Turborepo](https://turborepo.dev/):
+
+| Path                  | Description                                          |
+| --------------------- | ---------------------------------------------------- |
+| `apps/discord`        | The Discord bot, built on [Sapphire](https://sapphirejs.dev/) and [discord.js](https://discord.js.org/) |
+| `apps/docs`           | The documentation site, built with [Starlight](https://starlight.astro.build/) |
+| `packages/analytics`  | OpenTelemetry-based analytics                        |
+| `packages/drizzle`    | Database client and schema ([Drizzle ORM](https://orm.drizzle.team/)) |
+| `packages/tagscript`  | TagScript interpreter                                |
+| `packages/test-utils` | Shared test helpers                                  |
+| `packages/tsconfig`   | Shared TypeScript configuration                      |
+
+## Development
+
+Requirements: Node.js 22 or newer and [pnpm](https://pnpm.io/). A [devcontainer](.devcontainer) is included that provides PostgreSQL (TimescaleDB), Redis, and an OpenTelemetry collector out of the box.
+
+```bash
+pnpm install   # install dependencies
+pnpm dev       # start everything in watch mode
+pnpm build     # build all workspaces
+pnpm test      # run tests
+pnpm lint      # check style and lint rules (Biome)
+```
+
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for contribution guidelines.
 
 ---
 

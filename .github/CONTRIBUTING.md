@@ -6,7 +6,7 @@ Please follow these rules when making contributions to this repository.
 
 ## Unwanted contributions
 
-1. Changes to ESLint configuration without justifiable reason
+1. Changes to lint or formatter configuration without justifiable reason
 2. New commands that are confusing to use for end users
 3. Breaking changes to already existing commands, unless strictly necessary
 4. Unnecessarily large restructurings of code
@@ -18,86 +18,36 @@ Please follow these rules when making contributions to this repository.
 All code contributed to this repository should be verified as working, meaning you've tested the functionality at least once and didn't encounter unexpected behaviour.  
 Please keep in mind that we might ask you to confirm if this is the case.
 
-### ESLint
+### Style enforcement
 
-ESLint handles our style enforcement, when making contributions, **please confirm your code adheres to the style**, your build will fail otherwise and we're less inclined to merge it.  
-To verify your code adheres to our styleguide, run `npm test` in the project root.
+[Biome](https://biomejs.dev/) handles our style enforcement and linting. When making contributions, **please confirm your code adheres to the style**, your build will fail otherwise and we're less inclined to merge it.  
+To verify your code adheres to our styleguide, run `pnpm lint` in the project root. Most issues can be fixed automatically with `pnpm check:fix`.
+
+### Tests
+
+Run `pnpm test` in the project root to run the unit tests. Integration tests (`pnpm test:integration`) require Docker and are also run in CI.
 
 ## Code practices
 
 ### Translations
 
-All user-facing text, meaning text that gets send to Discord and is displayed to end-users, needs to be included in the i18n framework.  
-The framework utilises ICU syntax for translations, a primer for this syntax can be found [here](https://formatjs.io/docs/core-concepts/icu-syntax).
+All user-facing text, meaning text that gets sent to Discord and is displayed to end users, needs to be included in the i18n framework.  
+We use [@sapphire/plugin-i18next](https://github.com/sapphiredev/plugins/tree/main/packages/i18next) for translations; language files live in `apps/discord/src/languages`.
 
-```js
+```ts
 // ✗ bad
-context.editOrRespond(`Hi there ${user.name}!`);
+interaction.reply(`Hi there ${user.name}!`);
 ```
 
-```js
+```ts
 // ✓ good
-context.editOrRespond(i18n.t("user.greeting", { name: user.name }));
+interaction.reply(await resolveKey(interaction, "user/greeting:hello", { name: user.name }));
 ```
 
 ### Database operations
 
-We use Knex as our SQL driver, and we write abstractions in the form of drivers for each moving part that requires database access.  
-When something requires database access and does not already have a driver, **do not directly import Knex, make a driver instead**  
-When writing Knex abstractions, your abstractions should provide support for the databases we support officially, namely SQLite and PostgreSQL
-
-### Promises and async
-
-**Always** chain promises where possible.
-
-```js
-// ✗ bad
-aPromise()
-  .then((result) => {
-    anotherPromise(result)
-      .then((anotherresult) => {
-        console.log(anotherresult);
-      })
-      .catch(console.error);
-  })
-  .catch(console.error);
-```
-
-```js
-// ✓ good
-aPromise()
-  .then((result) => {
-    return anotherPromise(result);
-  })
-  .then((anotherresult) => {
-    console.log(anotherresult);
-  })
-  .catch(console.error);
-```
-
-```js
-// ✓ even better
-aPromise()
-  .then(async (result) => {
-    const anotherresult = await anotherPromise(result);
-    console.log(anotherresult);
-  })
-  .catch(console.error);
-```
-
-```js
-// 💯 great!
-(async () => {
-  // top-level async is used as an example, its not required
-  try {
-    const result = await aPromise();
-    const anotherresult = await anotherPromise(result);
-    console.log(anotherresult);
-  } catch (e) {
-    console.error(e);
-  }
-})();
-```
+We use [Drizzle ORM](https://orm.drizzle.team/) for database access, wrapped in the `@thesharks/drizzle` workspace package.  
+When something requires database access, **do not create your own database connection — use the client and schema exported from `@thesharks/drizzle`**. Schema changes belong in that package, alongside a migration.
 
 ## Commands
 
@@ -108,18 +58,18 @@ If your command doesn't have subcommands or your command is a context menu actio
 
 ### Inheritance
 
-All commands must extend a base class. Do **NOT** make new instances the base class, but export the resulting class.
+All commands must extend a base class (usually `TracedCommand` from `apps/discord/src/structures`) and be exported as a class, so the framework can construct them.
 
 ```ts
 // ✗ bad
-export default new BaseSlashCommand({
+export default new TracedCommand({
   // ...
 });
 ```
 
 ```ts
 // ✓ good
-export default class GreetCommand extends BaseSlashCommand {
+export class GreetCommand extends TracedCommand {
   // ...
 }
 ```
