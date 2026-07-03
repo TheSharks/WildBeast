@@ -1,10 +1,11 @@
 import type { ContextMenuCommandSuccessPayload } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
-import { type Attributes, metrics, resolveShardId } from '@thesharks/analytics'
 import {
-  attributesFromInteraction,
-  updateActiveSpan,
-} from '../../utils/tracing.mjs'
+  type Attributes,
+  DURATION_SECONDS_BOUNDARIES,
+  metrics,
+  resolveShardId,
+} from '@thesharks/analytics'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const commandCounter = meter.createCounter('discord_context_commands_total', {
@@ -16,6 +17,7 @@ const executionTime = meter.createHistogram(
     description:
       'Time since context menu command interaction creation (includes network latency)',
     unit: 's',
+    advice: { explicitBucketBoundaries: DURATION_SECONDS_BOUNDARIES },
   },
 )
 
@@ -58,24 +60,6 @@ export class ContextMenuExecutedListener extends Listener {
     executionTime.record(durationSeconds, {
       ...labels,
       duration_scope: 'interaction',
-    })
-
-    updateActiveSpan({
-      attributes: {
-        ...attributesFromInteraction(
-          payload.interaction as unknown as Parameters<
-            typeof attributesFromInteraction
-          >[0],
-          this,
-        ),
-        'discord.command.name': payload.command.name,
-      },
-      event: {
-        name: 'context_command.success',
-        attributes: {
-          duration_seconds: durationSeconds,
-        },
-      },
     })
   }
 }

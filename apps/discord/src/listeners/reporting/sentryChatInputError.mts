@@ -5,8 +5,8 @@ import { resolveKey } from '@sapphire/plugin-i18next'
 import * as Sentry from '@sentry/node'
 import { type ClientEvents, Colors, EmbedBuilder } from 'discord.js'
 import {
+  applyInteractionScope,
   attributesFromInteraction,
-  updateActiveSpan,
   withSpan,
 } from '../../utils/tracing.mjs'
 
@@ -15,17 +15,6 @@ import {
 })
 export class SentryChatInputErrorListener extends Listener {
   public async run(...[error, payload]: ClientEvents['chatInputCommandError']) {
-    updateActiveSpan({
-      attributes: {
-        ...attributesFromInteraction(payload.interaction, this),
-        'discord.command.name': payload.interaction.commandName,
-      },
-      error,
-      event: {
-        name: 'command.error',
-      },
-    })
-
     return withSpan(
       'discord.command.error_reporting',
       {
@@ -33,14 +22,19 @@ export class SentryChatInputErrorListener extends Listener {
         'discord.command.name': payload.interaction.commandName,
       },
       async () => {
+        const { interaction } = payload
+        // Set everything on a local scope at capture time: the isolation
+        // scope is shared between concurrently running interactions, so
+        // global setUser/setTag would attribute errors to the wrong user.
         const uuid = Sentry.withScope((scope) => {
+          applyInteractionScope(scope, interaction)
           scope.addBreadcrumb({
             category: 'command',
             level: 'error',
             message: error instanceof Error ? error.message : String(error),
             data: {
-              commandName: payload.interaction.commandName,
-              userId: payload.interaction.user.id,
+              commandName: interaction.commandName,
+              userId: interaction.user.id,
             },
           })
           return Sentry.captureException(error)
@@ -70,14 +64,15 @@ export class SentryChatInputErrorListener extends Listener {
               value: uuid,
             }),
         ]
-        if (payload.interaction.replied) {
-          payload.interaction.editReply({
+        // A deferred interaction is acknowledged too; reply() would throw.
+        if (payload.interaction.replied || payload.interaction.deferred) {
+          await payload.interaction.editReply({
             content: '',
             components: [],
             embeds,
           })
         } else {
-          payload.interaction.reply({
+          await payload.interaction.reply({
             embeds,
             ephemeral: true,
           })

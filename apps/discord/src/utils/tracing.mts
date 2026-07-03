@@ -1,11 +1,12 @@
 import type { Listener } from '@sapphire/framework'
+import * as Sentry from '@sentry/node'
 import {
   type Attributes,
   resolveShardId,
   SpanStatusCode,
   trace,
 } from '@thesharks/analytics'
-import type { Interaction } from 'discord.js'
+import type { CommandInteraction, Interaction } from 'discord.js'
 
 export type DiscordScope = 'guild' | 'dm'
 
@@ -16,8 +17,7 @@ export interface DiscordSpanAttributes extends Attributes {
   'discord.interaction.id'?: string
   'discord.interaction.type'?: string
   'discord.command.name'?: string
-  'discord.listener.event'?: string
-  'discord.listener.name'?: string
+  'discord.command.type'?: string
   'discord.task.name'?: string
 }
 
@@ -37,10 +37,10 @@ export function resolveInteractionScope(
 
 export function attributesFromInteraction(
   interaction: Interaction,
-  listener?: Listener,
+  piece?: Pick<Listener, 'container'>,
 ): DiscordSpanAttributes {
   const attributes: DiscordSpanAttributes = {
-    shard_id: resolveShardId(interaction, listener),
+    shard_id: resolveShardId(interaction, piece),
     scope: resolveInteractionScope(interaction),
     'discord.interaction.id': interaction.id,
     'discord.interaction.type': String(interaction.type),
@@ -53,33 +53,40 @@ export function attributesFromInteraction(
   return attributes
 }
 
-export function updateActiveSpan(updates: {
-  attributes?: Attributes
-  status?: SpanStatusCode
-  event?: { name: string; attributes?: Attributes }
-  error?: unknown
-}): boolean {
-  const span = trace.getActiveSpan()
-  if (!span) {
-    return false
+/**
+ * Populate a Sentry scope with everything we know about a command
+ * interaction. Always use a local or isolation scope for this: the shared
+ * global scope leaks user data between concurrently running interactions.
+ */
+export function applyInteractionScope(
+  scope: Sentry.Scope,
+  interaction: CommandInteraction,
+): void {
+  scope.setUser({
+    id: interaction.user.id,
+    username: interaction.user.tag,
+  })
+  scope.setTag('command', interaction.commandName)
+  scope.setContext('interaction', {
+    id: interaction.id,
+    type: interaction.type,
+    commandName: interaction.commandName,
+  })
+  if (interaction.inGuild()) {
+    scope.setContext('guild', {
+      id: interaction.guildId,
+      name: interaction.guild?.name,
+    })
+    scope.setContext('channel', {
+      id: interaction.channelId,
+      name: interaction.channel?.name,
+      type: interaction.channel?.type,
+    })
+  } else {
+    scope.setContext('dm', {
+      channelId: interaction.channelId,
+    })
   }
-
-  if (updates.attributes) {
-    span.setAttributes(updates.attributes)
-  }
-
-  if (updates.event) {
-    span.addEvent(updates.event.name, updates.event.attributes)
-  }
-
-  if (updates.error) {
-    span.recordException(updates.error as Error)
-    span.setStatus({ code: SpanStatusCode.ERROR })
-  } else if (updates.status !== undefined) {
-    span.setStatus({ code: updates.status })
-  }
-
-  return true
 }
 
 export async function withSpan<T>(
@@ -106,4 +113,21 @@ export async function withSpan<T>(
       }
     },
   )
+}
+
+/**
+ * Run `fn` inside a fresh Sentry isolation scope (so breadcrumbs, user and
+ * tags don't bleed between concurrent interactions) and an active span (so
+ * database/HTTP child spans nest under it).
+ */
+export async function withInteractionSpan<T>(
+  name: string,
+  interaction: CommandInteraction,
+  attributes: Attributes,
+  fn: () => Promise<T> | T,
+): Promise<T> {
+  return Sentry.withIsolationScope((scope) => {
+    applyInteractionScope(scope, interaction)
+    return withSpan(name, attributes, fn)
+  })
 }

@@ -1,10 +1,6 @@
 import type { ChatInputCommandErrorPayload } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
 import { type Attributes, metrics, resolveShardId } from '@thesharks/analytics'
-import {
-  attributesFromInteraction,
-  updateActiveSpan,
-} from '../../utils/tracing.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const errorCounter = meter.createCounter('discord_command_errors_total', {
@@ -41,15 +37,5 @@ export class CommandErrorListener extends Listener {
     const shardId = resolveShardId(payload.interaction, this)
     const labels = createLabels(payload, shardId)
     errorCounter.add(1, labels)
-
-    updateActiveSpan({
-      attributes: {
-        ...attributesFromInteraction(payload.interaction, this),
-        'discord.command.name': payload.command?.name,
-      },
-      event: {
-        name: 'command.error',
-      },
-    })
   }
 }

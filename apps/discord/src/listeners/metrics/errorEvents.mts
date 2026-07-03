@@ -1,9 +1,8 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
-import { metrics, SpanStatusCode, trace } from '@thesharks/analytics'
+import { metrics } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
-import { updateActiveSpan } from '../../utils/tracing.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const warnCounter = meter.createCounter('discord_warnings_total', {
@@ -13,36 +12,30 @@ const errorCounter = meter.createCounter('discord_errors_total', {
   description: 'Total number of Discord errors',
 })
 
+// Pieces default their name to the file name; multiple listeners in one file
+// need explicit names or each insert unloads the previous one.
 @ApplyOptions<ListenerOptions>({
+  name: 'warnMetrics',
   event: Events.Warn,
 })
 export class WarnListener extends Listener {
   public run(...[message]: ClientEvents['warn']): void {
-    const span = trace.getActiveSpan()
-    if (span) {
-      span.recordException(new Error(message))
-      span.setStatus({ code: SpanStatusCode.ERROR })
-    }
-
-    warnCounter.add(1, {
-      message: String(message).slice(0, 100),
-    })
+    // The message text goes to logs; a metric label with free-form text would
+    // create a new time series per unique message.
+    warnCounter.add(1)
+    this.container.logger.warn(`Discord client warning: ${message}`)
   }
 }
 
 @ApplyOptions<ListenerOptions>({
+  name: 'errorMetrics',
   event: Events.Error,
 })
 export class ErrorListener extends Listener {
   public run(...[error]: ClientEvents['error']): void {
-    const span = trace.getActiveSpan()
-    if (span) {
-      span.recordException(error)
-      span.setStatus({ code: SpanStatusCode.ERROR })
-    }
-
     errorCounter.add(1, {
       error_type: error?.name ?? 'unknown',
     })
+    this.container.logger.error('Discord client error:', error)
   }
 }

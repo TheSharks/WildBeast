@@ -1,6 +1,6 @@
-import { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
+import type { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
 import { type Attributes, createGauge } from '@thesharks/analytics'
-import { Queue } from 'bullmq'
+import { TracedScheduledTask } from '../structures/task.mjs'
 
 const queueSizeGauge = createGauge(
   '@thesharks/discord',
@@ -33,9 +33,7 @@ const queueCompletedGauge = createGauge(
   'Number of completed jobs in BullMQ queue',
 )
 
-export class BullMQMetricsTask extends ScheduledTask {
-  private queues: Map<string, Queue> = new Map()
-
+export class BullMQMetricsTask extends TracedScheduledTask {
   public constructor(
     context: ScheduledTask.LoaderContext,
     options: ScheduledTask.Options,
@@ -55,52 +53,24 @@ export class BullMQMetricsTask extends ScheduledTask {
   }
 
   private async updateBullMQMetrics() {
-    const config = {
-      host: process.env.REDIS_HOST ?? 'localhost',
-      port: (() => {
-        if (!process.env.REDIS_PORT) return 6379
-        const port = Number.parseInt(process.env.REDIS_PORT, 10)
-        return Number.isFinite(port) ? port : 6379
-      })(),
-      password: process.env.REDIS_PASSWORD,
-      db: process.env.REDIS_DB
-        ? Number.parseInt(process.env.REDIS_DB, 10)
-        : undefined,
+    // All scheduled tasks share the plugin's single queue; reuse its
+    // connection instead of opening a second one.
+    const { client: queue, queue: queueName } = this.container.tasks
+
+    const counts = await queue.getJobCounts()
+    const labels: Attributes = {
+      queue_name: queueName,
     }
 
-    const queueNames = ['metricsCollection']
-
-    for (const queueName of queueNames) {
-      try {
-        if (!this.queues.has(queueName)) {
-          const queue = new Queue(queueName, {
-            connection: config,
-          })
-          this.queues.set(queueName, queue)
-        }
-
-        const queue = this.queues.get(queueName)!
-        const counts = await queue.getJobCounts()
-        const labels: Attributes = {
-          queue_name: queueName,
-        }
-
-        queueSizeGauge.set(
-          (counts.waiting ?? 0) + (counts.active ?? 0) + (counts.delayed ?? 0),
-          labels,
-        )
-        queueActiveGauge.set(counts.active ?? 0, labels)
-        queueWaitingGauge.set(counts.waiting ?? 0, labels)
-        queueDelayedGauge.set(counts.delayed ?? 0, labels)
-        queueFailedGauge.set(counts.failed ?? 0, labels)
-        queueCompletedGauge.set(counts.completed ?? 0, labels)
-      } catch (error) {
-        this.container.logger?.warn(
-          `Failed to get metrics for queue ${queueName}`,
-          error,
-        )
-      }
-    }
+    queueSizeGauge.set(
+      (counts.waiting ?? 0) + (counts.active ?? 0) + (counts.delayed ?? 0),
+      labels,
+    )
+    queueActiveGauge.set(counts.active ?? 0, labels)
+    queueWaitingGauge.set(counts.waiting ?? 0, labels)
+    queueDelayedGauge.set(counts.delayed ?? 0, labels)
+    queueFailedGauge.set(counts.failed ?? 0, labels)
+    queueCompletedGauge.set(counts.completed ?? 0, labels)
   }
 }
 

@@ -1,5 +1,23 @@
-import { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
-import { type Attributes, createGauge } from '@thesharks/analytics'
+import type { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
+import { type Attributes, createGauge, metrics } from '@thesharks/analytics'
+import { TracedScheduledTask } from '../structures/task.mjs'
+
+const meter = metrics.getMeter('@thesharks/discord')
+
+// Cumulative counter (not an interval gauge) so the backend can compute
+// rates over any window and scrape gaps don't lose data.
+const cpuCounter = meter.createObservableCounter('discord_bot_cpu_seconds', {
+  description: 'Cumulative process CPU time',
+  unit: 's',
+})
+cpuCounter.addCallback((result) => {
+  const usage = process.cpuUsage()
+  result.observe(usage.user / 1_000_000, { scope: 'process', type: 'user' })
+  result.observe(usage.system / 1_000_000, {
+    scope: 'process',
+    type: 'system',
+  })
+})
 
 const botUptimeGauge = createGauge(
   '@thesharks/discord',
@@ -34,16 +52,8 @@ const wsLatencyGauge = createGauge(
   'Discord WebSocket latency in seconds',
   's',
 )
-const cpuGauge = createGauge(
-  '@thesharks/discord',
-  'discord_bot_cpu_usage_seconds',
-  'Bot CPU usage in seconds (interval)',
-  's',
-)
 
-export class MetricsCollectionTask extends ScheduledTask {
-  private lastCpuUsage: NodeJS.CpuUsage = process.cpuUsage()
-
+export class MetricsCollectionTask extends TracedScheduledTask {
   public constructor(
     context: ScheduledTask.LoaderContext,
     options: ScheduledTask.Options,
@@ -63,13 +73,8 @@ export class MetricsCollectionTask extends ScheduledTask {
   }
 
   private updateAllMetrics() {
-    const cpuUsage = process.cpuUsage(this.lastCpuUsage)
-
     this.updateBotMetrics()
     this.updateDiscordMetrics()
-    this.updateSystemMetrics(cpuUsage)
-
-    this.lastCpuUsage = process.cpuUsage()
   }
 
   private updateBotMetrics() {
@@ -99,14 +104,6 @@ export class MetricsCollectionTask extends ScheduledTask {
     } else {
       wsLatencyGauge.clear(labels)
     }
-  }
-
-  private updateSystemMetrics(cpuUsage: NodeJS.CpuUsage) {
-    const labels: Attributes = { scope: 'process' }
-
-    // Convert microseconds to seconds for consistency
-    cpuGauge.set(cpuUsage.user / 1_000_000, { ...labels, type: 'user' })
-    cpuGauge.set(cpuUsage.system / 1_000_000, { ...labels, type: 'system' })
   }
 }
 

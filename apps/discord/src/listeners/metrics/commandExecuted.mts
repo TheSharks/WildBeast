@@ -1,10 +1,11 @@
 import type { ChatInputCommandSuccessPayload } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
-import { type Attributes, metrics, resolveShardId } from '@thesharks/analytics'
 import {
-  attributesFromInteraction,
-  updateActiveSpan,
-} from '../../utils/tracing.mjs'
+  type Attributes,
+  DURATION_SECONDS_BOUNDARIES,
+  metrics,
+  resolveShardId,
+} from '@thesharks/analytics'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const commandCounter = meter.createCounter('discord_commands_total', {
@@ -15,6 +16,7 @@ const executionTime = meter.createHistogram(
   {
     description: 'Time since interaction creation (includes network latency)',
     unit: 's',
+    advice: { explicitBucketBoundaries: DURATION_SECONDS_BOUNDARIES },
   },
 )
 
@@ -55,19 +57,6 @@ export class CommandExecutedListener extends Listener {
     executionTime.record(durationSeconds, {
       ...labels,
       duration_scope: 'interaction',
-    })
-
-    updateActiveSpan({
-      attributes: {
-        ...attributesFromInteraction(payload.interaction, this),
-        'discord.command.name': payload.command.name,
-      },
-      event: {
-        name: 'command.success',
-        attributes: {
-          duration_seconds: durationSeconds,
-        },
-      },
     })
   }
 }

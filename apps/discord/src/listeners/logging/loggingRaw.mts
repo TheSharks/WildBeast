@@ -1,24 +1,20 @@
 import { inspect } from 'node:util'
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
-import { Events, Listener } from '@sapphire/framework'
+import { Events, Listener, LogLevel } from '@sapphire/framework'
 import type { ClientEvents } from 'discord.js'
-import { spanName, withSpan } from '../../utils/tracing.mjs'
 
 @ApplyOptions<ListenerOptions>({
   event: Events.Raw,
 })
 export class LoggingRawListener extends Listener {
   public run(...[data]: ClientEvents['raw']): void {
-    void withSpan(
-      spanName('listener'),
-      {
-        'discord.listener.name': this.name,
-        'discord.listener.event': Events.Raw,
-      },
-      () => {
-        this.container.logger.debug(inspect(data))
-      },
-    )
+    // This fires for every gateway packet; skip the inspect() unless debug
+    // logging is actually enabled.
+    if (!this.container.logger.has(LogLevel.Debug)) {
+      return
+    }
+
+    this.container.logger.debug(inspect(data))
   }
 }

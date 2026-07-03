@@ -1,7 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
-import { metrics, SpanStatusCode, trace } from '@thesharks/analytics'
+import { metrics } from '@thesharks/analytics'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const uncaughtExceptionCounter = meter.createCounter(
@@ -27,39 +27,27 @@ export class ProcessErrorListener extends Listener {
   }
 
   private setupProcessHandlers() {
-    process.on('uncaughtException', (error) => {
-      const span = trace.getActiveSpan()
-      if (span) {
-        span.recordException(error)
-        span.setStatus({ code: SpanStatusCode.ERROR })
-      }
-
+    // The monitor hook observes crashes without changing Node's crash
+    // semantics (a plain uncaughtException handler would keep the process
+    // alive in an undefined state). Sentry's own integrations handle the
+    // exception capture and process exit.
+    process.on('uncaughtExceptionMonitor', (error, origin) => {
       uncaughtExceptionCounter.add(1, {
-        error_name: error.name,
-        error_message: String(error.message).slice(0, 100),
+        origin,
+        error_name: error instanceof Error ? error.name : 'unknown',
       })
 
-      this.container.logger?.error('Uncaught exception:', error)
+      this.container.logger?.fatal(`${origin}:`, error)
     })
 
     process.on('unhandledRejection', (reason) => {
       const error = reason instanceof Error ? reason : new Error(String(reason))
-      const span = trace.getActiveSpan()
-      if (span) {
-        span.recordException(error)
-        span.setStatus({ code: SpanStatusCode.ERROR })
-      }
 
       unhandledRejectionCounter.add(1, {
         error_name: error.name,
-        error_message: String(error.message).slice(0, 100),
       })
 
       this.container.logger?.error('Unhandled rejection:', reason)
-    })
-
-    process.on('exit', (code) => {
-      this.container.logger?.info(`Process exiting with code ${code}`)
     })
   }
 }
