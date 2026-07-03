@@ -8,7 +8,7 @@
     "dev": "turbo build && concurrently \"npm:dev:*\"",
     "dev:watch": "tsc --watch",
     "dev:run": "npm run start",
-    "start": "node -r dotenv-extended/config dist/cluster.mjs",
+    "start": "node dist/cluster.mjs",
     "postbuild": "cp -r src/languages dist/languages",
     "build": "rimraf dist && tsc",
     "test": "vitest run"
@@ -40,8 +40,8 @@
     "@thesharks/drizzle": "workspace:^",
     "bullmq": "^5.79.2",
     "discord.js": "^14.26.4",
-    "dotenv-extended": "^3.1.0",
-    "ioredis": "^5.11.1"
+    "ioredis": "^5.11.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@sapphire/cli": "^1.9.3",

@@ -1,5 +1,5 @@
 import { hostname } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LogLevel } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
@@ -10,8 +10,8 @@ import {
   metrics,
 } from '@thesharks/analytics'
 import { type Shard, ShardingManager } from 'discord.js'
-import dotEnvExtended from 'dotenv-extended'
 import { Redis } from 'ioredis'
+import { loadEnv } from './env.mjs'
 import { parseClusteringConfig } from './sharding/config.mjs'
 import { ClusterCoordinator } from './sharding/coordination.mjs'
 import {
@@ -25,13 +25,9 @@ import { redisConnectionOptions } from './utils/redis.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// Load the environment before telemetry so SENTRY_DSN/OTEL_* are picked up.
-dotEnvExtended.load({
-  errorOnMissing: true,
-  path: resolve(__dirname, '../.env'),
-  schema: resolve(__dirname, '../.env.schema'),
-  defaults: resolve(__dirname, '../.env.defaults'),
-})
+// Load and validate the environment before telemetry so SENTRY_DSN/OTEL_*
+// are picked up.
+loadEnv()
 
 // Resolve the cluster identity once and write it back so worker threads
 // (which share this env) and telemetry agree on it.

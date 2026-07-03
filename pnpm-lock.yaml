@@ -66,12 +66,12 @@ importers:
       discord.js:
         specifier: ^14.26.4
         version: 14.26.4
-      dotenv-extended:
-        specifier: ^3.1.0
-        version: 3.1.0
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@sapphire/cli':
         specifier: ^1.9.3
@@ -2717,11 +2717,6 @@ packages:
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
-
-  dotenv-extended@3.1.0:
-    resolution: {integrity: sha512-CwDcUY14/uwBP7MRer48GvKmsqEwhHCRsyxKf2xdF6pzBg+HcnxlfRl0T86MSKVrRuW07Hr8IX2dtqBQsSPNsw==}
-    engines: {node: '>=20'}
-    hasBin: true
 
   dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
@@ -7433,11 +7428,8 @@ snapshots:
       domelementtype: 2.3.0
       domhandler: 5.0.3
 
-  dotenv-extended@3.1.0:
-    dependencies:
-      dotenv: 16.6.1
-
-  dotenv@16.6.1: {}
+  dotenv@16.6.1:
+    optional: true
 
   drizzle-kit@0.31.10:
     dependencies:
