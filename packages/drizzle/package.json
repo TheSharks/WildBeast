@@ -24,6 +24,7 @@
   "devDependencies": {
     "@thesharks/tsconfig": "workspace:^",
     "@types/node": "^25.0.9",
+    "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.8"
   },
   "dependencies": {
