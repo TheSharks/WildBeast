@@ -52,8 +52,7 @@ export class RedisSessionStore {
     this.flushIntervalMillis = options.flushIntervalMillis ?? 1_000
     this.sessionTtlMillis = options.sessionTtlMillis ?? 15 * 60_000
     this.onError =
-      options.onError ??
-      ((error) => console.error('Session store flush failed:', error))
+      options.onError ?? ((error) => console.error('Session store:', error))
   }
 
   private key(shardId: number): string {
@@ -68,7 +67,22 @@ export class RedisSessionStore {
     }
 
     const raw = await this.redis.get(this.key(shardId))
-    const session = raw ? (JSON.parse(raw) as SessionInfo) : null
+    let session: SessionInfo | null = null
+    if (raw) {
+      try {
+        session = JSON.parse(raw) as SessionInfo
+      } catch (error) {
+        // A corrupt persisted session must read as "no session" (falling
+        // back to a fresh identify), not crash the shard: the hook contract
+        // with @discordjs/ws is SessionInfo | null.
+        this.onError(error)
+        try {
+          await this.redis.del(this.key(shardId))
+        } catch {
+          // the corrupt key will age out via its TTL
+        }
+      }
+    }
     this.cache.set(shardId, session)
     return session
   }

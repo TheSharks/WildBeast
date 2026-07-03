@@ -96,6 +96,23 @@ describe('RedisSessionStore', () => {
     await store.close()
   })
 
+  it('treats corrupt persisted sessions as absent instead of throwing', async () => {
+    const kv = new FakeKV()
+    kv.data.set('wildbeast:shard:0:session', { value: 'not-json{{{', ttl: 0 })
+    const errors: unknown[] = []
+    const store = new RedisSessionStore(kv, {
+      onError: (error) => errors.push(error),
+    })
+
+    // The hook contract with @discordjs/ws is SessionInfo | null — an
+    // exception here crashes the shard worker mid-connect.
+    await expect(store.retrieve(0)).resolves.toBeNull()
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toBeInstanceOf(SyntaxError)
+    // The corrupt key is dropped so it cannot poison later boots.
+    expect(kv.data.has('wildbeast:shard:0:session')).toBe(false)
+  })
+
   it('falls back to Redis when the cache is cold', async () => {
     const kv = new FakeKV()
     const donor = new RedisSessionStore(kv, { flushIntervalMillis: 60_000 })
