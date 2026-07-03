@@ -115,7 +115,12 @@ describe('installSessionPersistence', () => {
     const kv = new FakeKV()
     const store = new RedisSessionStore(kv, { flushIntervalMillis: 60_000 })
 
-    const fakeClient = { ws: { _ws: null } }
+    // discord.js's own per-shard in-memory copy, read directly by its
+    // packet handlers (e.g. RESUMED).
+    const djsShard: { sessionInfo: SessionInfo | null } = { sessionInfo: null }
+    const fakeClient = {
+      ws: { _ws: null, shards: new Map([[0, djsShard]]) },
+    }
     installSessionPersistence(
       fakeClient as unknown as Parameters<typeof installSessionPersistence>[0],
       store,
@@ -137,6 +142,24 @@ describe('installSessionPersistence', () => {
       },
     )
     expect(await store.retrieve(0)).toMatchObject({ sequence: 9 })
+    // The in-memory mirror must track updates, or resumes crash discord.js.
+    expect(djsShard.sessionInfo).toMatchObject({ sequence: 9 })
+
+    // A boot-time retrieve (cold cache, session from Redis) must also
+    // populate the mirror before the RESUMED handler can fire.
+    djsShard.sessionInfo = null
+    const successor = new RedisSessionStore(kv)
+    installSessionPersistence(
+      fakeClient as unknown as Parameters<typeof installSessionPersistence>[0],
+      successor,
+    )
+    await store.flush()
+    await (
+      fakeClient.ws._ws as never as {
+        options: { retrieveSessionInfo(shardId: number): unknown }
+      }
+    ).options.retrieveSessionInfo(0)
+    expect(djsShard.sessionInfo).toMatchObject({ sequence: 9 })
     await store.close()
   })
 

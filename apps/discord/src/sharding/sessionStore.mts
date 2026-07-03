@@ -148,11 +148,32 @@ export function installSessionPersistence(
   const ws = client.ws as unknown as { _ws: SessionHookHost | null }
   let backing = ws._ws
 
+  // discord.js keeps its own in-memory copy on each WebSocketShard, which
+  // internal packet handlers (e.g. RESUMED reading sessionInfo.sequence)
+  // consume directly. Our hooks displace the defaults that maintained that
+  // copy, so it must be kept in sync or resumes crash the client.
+  const mirror = (shardId: number, session: SessionInfo | null) => {
+    // sessionInfo is typed private, but discord.js's own hooks assign it
+    // exactly like this (WebSocketManager#connect).
+    const shard = client.ws.shards.get(shardId) as unknown as
+      | { sessionInfo: SessionInfo | null }
+      | undefined
+    if (shard) {
+      shard.sessionInfo = session
+    }
+  }
+
   const wire = (manager: SessionHookHost | null) => {
     if (!manager) return
-    manager.options.retrieveSessionInfo = (shardId) => store.retrieve(shardId)
-    manager.options.updateSessionInfo = (shardId, session) =>
+    manager.options.retrieveSessionInfo = async (shardId) => {
+      const session = await store.retrieve(shardId)
+      mirror(shardId, session)
+      return session
+    }
+    manager.options.updateSessionInfo = (shardId, session) => {
       store.update(shardId, session)
+      mirror(shardId, session)
+    }
   }
 
   wire(backing)

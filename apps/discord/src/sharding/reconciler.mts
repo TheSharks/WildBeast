@@ -31,39 +31,20 @@ export interface ReconcilerOptions {
   fenceAfterMillis?: number
 }
 
-const meter = metrics.getMeter('@thesharks/discord-manager')
-const handoffCounter = meter.createCounter(
-  'discord_cluster_shard_handoffs_total',
-  {
-    description: 'Shard ownership changes performed by this cluster',
-  },
-)
-const coordinationErrorCounter = meter.createCounter(
-  'discord_cluster_coordination_errors_total',
-  {
-    description: 'Failed coordination round trips (heartbeat/lease traffic)',
-  },
-)
-const memberGauge = createGauge(
-  '@thesharks/discord-manager',
-  'discord_cluster_members',
-  'Live clusters in the fleet, as seen by this cluster',
-)
-const desiredShardGauge = createGauge(
-  '@thesharks/discord-manager',
-  'discord_cluster_desired_shards',
-  'Shards this cluster should own under the current assignment',
-)
-const fencedGauge = createGauge(
-  '@thesharks/discord-manager',
-  'discord_cluster_fenced',
-  'Whether this cluster has fenced itself off from coordination (1) or not (0)',
-)
-
 export class ShardReconciler {
   private readonly tickMillis: number
   private readonly settleMillis: number
   private readonly fenceAfterMillis: number
+
+  // Instruments are created at construction, not module scope: the OTEL
+  // metrics API has no proxy provider (unlike traces), so instruments made
+  // before initOpenTelemetry() are permanently bound to the no-op meter —
+  // and this module is imported before telemetry initializes.
+  private readonly handoffCounter
+  private readonly coordinationErrorCounter
+  private readonly memberGauge
+  private readonly desiredShardGauge
+  private readonly fencedGauge
 
   private running = false
   private loop?: Promise<void>
@@ -82,13 +63,43 @@ export class ShardReconciler {
     this.tickMillis = options.tickMillis ?? 5_000
     this.settleMillis = options.settleMillis ?? 10_000
     this.fenceAfterMillis = options.fenceAfterMillis ?? 20_000
+
+    const meter = metrics.getMeter('@thesharks/discord-manager')
+    this.handoffCounter = meter.createCounter(
+      'discord_cluster_shard_handoffs_total',
+      {
+        description: 'Shard ownership changes performed by this cluster',
+      },
+    )
+    this.coordinationErrorCounter = meter.createCounter(
+      'discord_cluster_coordination_errors_total',
+      {
+        description:
+          'Failed coordination round trips (heartbeat/lease traffic)',
+      },
+    )
+    this.memberGauge = createGauge(
+      '@thesharks/discord-manager',
+      'discord_cluster_members',
+      'Live clusters in the fleet, as seen by this cluster',
+    )
+    this.desiredShardGauge = createGauge(
+      '@thesharks/discord-manager',
+      'discord_cluster_desired_shards',
+      'Shards this cluster should own under the current assignment',
+    )
+    this.fencedGauge = createGauge(
+      '@thesharks/discord-manager',
+      'discord_cluster_fenced',
+      'Whether this cluster has fenced itself off from coordination (1) or not (0)',
+    )
   }
 
   public async start(): Promise<void> {
     await this.coordinator.ensureTotalShardsAgreement()
     this.running = true
     this.lastCoordinationSuccess = Date.now()
-    fencedGauge.set(0, {})
+    this.fencedGauge.set(0, {})
     this.loop = this.run()
   }
 
@@ -112,7 +123,7 @@ export class ShardReconciler {
       members = await this.coordinator.liveMembers()
       this.lastCoordinationSuccess = Date.now()
     } catch (error) {
-      coordinationErrorCounter.add(1)
+      this.coordinationErrorCounter.add(1)
       this.logger.warn('Cluster coordination unreachable:', error)
       await this.maybeFence()
       return
@@ -120,11 +131,11 @@ export class ShardReconciler {
 
     if (this.fenced) {
       this.fenced = false
-      fencedGauge.set(0, {})
+      this.fencedGauge.set(0, {})
       this.logger.warn('Coordination recovered; resuming shard ownership')
     }
 
-    memberGauge.set(members.length, {})
+    this.memberGauge.set(members.length, {})
 
     // Only move shards once membership has been stable for the settle
     // window, so a rolling deploy or flapping cluster doesn't cause churn.
@@ -151,7 +162,7 @@ export class ShardReconciler {
       this.desired = next
     }
 
-    desiredShardGauge.set(this.desired.size, {})
+    this.desiredShardGauge.set(this.desired.size, {})
     await this.reconcile()
   }
 
@@ -165,7 +176,7 @@ export class ShardReconciler {
       this.logger.info(`Handing off shard ${shardId}`)
       await this.host.stop(shardId)
       await this.coordinator.releaseLease(shardId)
-      handoffCounter.add(1, { direction: 'released' })
+      this.handoffCounter.add(1, { direction: 'released' })
     }
 
     for (const shardId of this.desired) {
@@ -178,7 +189,7 @@ export class ShardReconciler {
             `Lost the lease for shard ${shardId}; stopping our copy`,
           )
           await this.host.stop(shardId)
-          handoffCounter.add(1, { direction: 'lost' })
+          this.handoffCounter.add(1, { direction: 'lost' })
           continue
         }
         // Crash recovery: the reconciler is the only respawn authority.
@@ -192,7 +203,7 @@ export class ShardReconciler {
       if (await this.coordinator.acquireLease(shardId)) {
         this.logger.info(`Acquired shard ${shardId}`)
         await this.host.start(shardId)
-        handoffCounter.add(1, { direction: 'acquired' })
+        this.handoffCounter.add(1, { direction: 'acquired' })
       } else {
         const holder = await this.coordinator.leaseHolder(shardId)
         this.logger.debug(
@@ -214,7 +225,7 @@ export class ShardReconciler {
     }
 
     this.fenced = true
-    fencedGauge.set(1, {})
+    this.fencedGauge.set(1, {})
     this.logger.error(
       'Coordination unreachable beyond the fencing deadline; stopping all shards',
     )
