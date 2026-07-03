@@ -60,7 +60,12 @@ function buildAttributeKey(attributes: Attributes) {
 }
 
 /**
- * Create an observable gauge with set/clear/reset methods
+ * Create an observable gauge with set/clear/reset methods.
+ *
+ * Note: `clear`/`reset` stop future observations, but readers using
+ * cumulative temporality (the OTLP default) retain a cleared series' last
+ * value until the process restarts. Prefer `set(0, ...)` when downstream
+ * dashboards must see the change.
  */
 export function createGauge(
   meterName: string,

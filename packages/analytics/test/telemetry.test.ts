@@ -1,30 +1,18 @@
+import { snapshotEnv } from '@thesharks/test-utils'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   normalizeOtlpEndpointUrl,
   resolveTransportConfig,
 } from '../src/telemetry.js'
 
-let savedEnv: Record<string, string | undefined>
+let restoreEnv: () => void
 
 beforeEach(() => {
-  savedEnv = {}
-  for (const key of Object.keys(process.env)) {
-    if (key.startsWith('OTEL_')) {
-      savedEnv[key] = process.env[key]
-      delete process.env[key]
-    }
-  }
+  restoreEnv = snapshotEnv(['OTEL_'])
 })
 
 afterEach(() => {
-  for (const key of Object.keys(process.env)) {
-    if (key.startsWith('OTEL_')) {
-      delete process.env[key]
-    }
-  }
-  for (const [key, value] of Object.entries(savedEnv)) {
-    process.env[key] = value
-  }
+  restoreEnv()
 })
 
 describe('resolveTransportConfig', () => {

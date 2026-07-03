@@ -164,3 +164,25 @@ Format: Comma-separated key=value pairs (e.g., `Authorization=Bearer token,X-Cus
 **Sentry (optional):**
 - `SENTRY_DSN`: Sentry DSN for error tracing
 - `SENTRY_VALIDATE_OTEL_SETUP`: Set to `true` to validate OTEL setup on boot (throws if validation fails)
+
+## End-to-end testing
+
+`test/collector.e2e.test.ts` verifies the full pipeline against a real OpenTelemetry collector (both OTLP/HTTP and OTLP/gRPC). The easiest way to run it is the repo-wide integration runner, which provisions the collector (and Redis) in docker automatically:
+
+```sh
+pnpm test:integration # from the repo root
+```
+
+To run it manually instead, it is skipped unless `OTEL_E2E_OUTPUT` is set:
+
+```sh
+mkdir -p /tmp/otel-e2e && chmod 777 /tmp/otel-e2e
+docker run --rm -d --name otel-e2e \
+  -p 14317:4317 -p 14318:4318 \
+  -v $PWD/test/fixtures/otel-collector.yaml:/etc/otelcol-contrib/config.yaml \
+  -v /tmp/otel-e2e:/out \
+  otel/opentelemetry-collector-contrib:latest
+pnpm build # scenarios boot the real pipeline from dist
+OTEL_E2E_OUTPUT=/tmp/otel-e2e/telemetry.json pnpm test
+docker rm -f otel-e2e
+```

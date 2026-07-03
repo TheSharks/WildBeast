@@ -55,6 +55,7 @@
     "discord.js": "^14.25.1"
   },
   "devDependencies": {
+    "@thesharks/test-utils": "workspace:^",
     "@thesharks/tsconfig": "workspace:^",
     "@types/node": "^25.0.9",
     "rimraf": "^6.1.2",

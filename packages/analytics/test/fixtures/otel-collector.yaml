@@ -1,0 +1,26 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  file:
+    path: /out/telemetry.json
+    flush_interval: 500ms
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [file, debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [file, debug]
+    logs:
+      receivers: [otlp]
+      exporters: [file, debug]
