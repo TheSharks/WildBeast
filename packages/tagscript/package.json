@@ -26,5 +26,8 @@
   },
   "dependencies": {
     "recheck": "^4.5.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
