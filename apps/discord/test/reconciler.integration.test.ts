@@ -74,75 +74,71 @@ describe.skipIf(!redisUrl)('ShardReconciler (integration)', () => {
     cleanupRedis.disconnect()
   })
 
-  it(
-    'runs the full lifecycle: solo ownership, join rebalance, graceful leave',
-    { timeout: 20_000 },
-    async () => {
-      const a = createCluster('cluster-a')
-      await a.reconciler.start()
+  it('runs the full lifecycle: solo ownership, join rebalance, graceful leave', {
+    timeout: 20_000,
+  }, async () => {
+    const a = createCluster('cluster-a')
+    await a.reconciler.start()
 
-      // Alone in the fleet, cluster-a should own every shard.
-      await waitUntil(() => a.host.shards.size === TOTAL)
+    // Alone in the fleet, cluster-a should own every shard.
+    await waitUntil(() => a.host.shards.size === TOTAL)
 
-      // A second cluster joins: shards must split along the rendezvous
-      // assignment, and at no point may both clusters run the same shard.
-      const b = createCluster('cluster-b')
-      await b.reconciler.start()
+    // A second cluster joins: shards must split along the rendezvous
+    // assignment, and at no point may both clusters run the same shard.
+    const b = createCluster('cluster-b')
+    await b.reconciler.start()
 
-      const members = ['cluster-a', 'cluster-b']
-      const expectA = new Set(shardsFor('cluster-a', members, TOTAL))
-      const expectB = new Set(shardsFor('cluster-b', members, TOTAL))
-      expect(expectB.size).toBeGreaterThan(0)
+    const members = ['cluster-a', 'cluster-b']
+    const expectA = new Set(shardsFor('cluster-a', members, TOTAL))
+    const expectB = new Set(shardsFor('cluster-b', members, TOTAL))
+    expect(expectB.size).toBeGreaterThan(0)
 
-      await waitUntil(() => {
-        expect(noOverlap(a.host, b.host)).toBe(true)
-        return (
-          a.host.shards.size === expectA.size &&
-          b.host.shards.size === expectB.size &&
-          [...expectB].every((shardId) => b.host.shards.has(shardId))
-        )
-      })
-
-      // Every running shard's lease must be held by the cluster running it.
-      for (const shardId of b.host.shards) {
-        expect(await cleanupRedis.get(`wildbeast:shard:${shardId}:owner`)).toBe(
-          'cluster-b',
-        )
-      }
-
-      // Graceful leave: cluster-b releases its leases and withdraws, so
-      // cluster-a should reclaim everything without waiting for expiry.
-      const reclaimStart = Date.now()
-      await b.reconciler.shutdown()
-      await waitUntil(() => a.host.shards.size === TOTAL)
-      // Well under the lease TTL, proving the release path (not expiry).
-      expect(Date.now() - reclaimStart).toBeLessThan(TIMINGS.leaseTtlMillis)
-    },
-  )
-
-  it(
-    'recovers shards from a crashed cluster after its leases expire',
-    { timeout: 20_000 },
-    async () => {
-      const a = createCluster('cluster-a')
-      const b = createCluster('cluster-b')
-      await a.reconciler.start()
-      await b.reconciler.start()
-
-      await waitUntil(
-        () =>
-          a.host.shards.size + b.host.shards.size === TOTAL &&
-          noOverlap(a.host, b.host) &&
-          b.host.shards.size > 0,
+    await waitUntil(() => {
+      expect(noOverlap(a.host, b.host)).toBe(true)
+      return (
+        a.host.shards.size === expectA.size &&
+        b.host.shards.size === expectB.size &&
+        [...expectB].every((shardId) => b.host.shards.has(shardId))
       )
+    })
 
-      // Crash: no release, no withdrawal — membership and leases just
-      // stop being renewed.
-      await b.reconciler.halt()
+    // Every running shard's lease must be held by the cluster running it.
+    for (const shardId of b.host.shards) {
+      expect(await cleanupRedis.get(`wildbeast:shard:${shardId}:owner`)).toBe(
+        'cluster-b',
+      )
+    }
 
-      await waitUntil(() => a.host.shards.size === TOTAL)
-    },
-  )
+    // Graceful leave: cluster-b releases its leases and withdraws, so
+    // cluster-a should reclaim everything without waiting for expiry.
+    const reclaimStart = Date.now()
+    await b.reconciler.shutdown()
+    await waitUntil(() => a.host.shards.size === TOTAL)
+    // Well under the lease TTL, proving the release path (not expiry).
+    expect(Date.now() - reclaimStart).toBeLessThan(TIMINGS.leaseTtlMillis)
+  })
+
+  it('recovers shards from a crashed cluster after its leases expire', {
+    timeout: 20_000,
+  }, async () => {
+    const a = createCluster('cluster-a')
+    const b = createCluster('cluster-b')
+    await a.reconciler.start()
+    await b.reconciler.start()
+
+    await waitUntil(
+      () =>
+        a.host.shards.size + b.host.shards.size === TOTAL &&
+        noOverlap(a.host, b.host) &&
+        b.host.shards.size > 0,
+    )
+
+    // Crash: no release, no withdrawal — membership and leases just
+    // stop being renewed.
+    await b.reconciler.halt()
+
+    await waitUntil(() => a.host.shards.size === TOTAL)
+  })
 
   it('refuses to start when the fleet disagrees on the shard total', async () => {
     const a = createCluster('cluster-a')

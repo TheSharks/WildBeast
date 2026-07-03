@@ -58,7 +58,7 @@ export interface LogRecordCapture {
 export function captureLogRecords(): LogRecordCapture {
   const exporter = new InMemoryLogRecordExporter()
   const provider = new LoggerProvider({
-    processors: [new SimpleLogRecordProcessor(exporter)],
+    processors: [new SimpleLogRecordProcessor({ exporter })],
   })
   logs.disable()
   logs.setGlobalLoggerProvider(provider)

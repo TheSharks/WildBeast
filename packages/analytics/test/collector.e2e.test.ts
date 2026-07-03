@@ -87,13 +87,27 @@ async function collectFor(serviceName: string): Promise<CollectedTelemetry> {
     if (!line.trim()) continue
     const envelope = JSON.parse(line)
 
-    // biome-ignore lint/suspicious/noExplicitAny: raw OTLP JSON envelopes
-    const groups = (key: string, scopeKey: string, itemKey: string): any[] =>
-      (envelope[key] ?? []).flatMap((resourceGroup: any) => {
-        const resource = attributeMap(resourceGroup.resource?.attributes)
+    type OtlpRecord = Record<string, unknown>
+    const groups = (
+      key: string,
+      scopeKey: string,
+      itemKey: string,
+    ): Array<OtlpRecord & { resource: Record<string, unknown> }> =>
+      ((envelope[key] ?? []) as OtlpRecord[]).flatMap((resourceGroup) => {
+        const resource = attributeMap(
+          (
+            resourceGroup.resource as
+              | { attributes?: OtlpAttribute[] }
+              | undefined
+          )?.attributes,
+        )
         if (resource['service.name'] !== serviceName) return []
-        return (resourceGroup[scopeKey] ?? []).flatMap((scope: any) =>
-          (scope[itemKey] ?? []).map((item: any) => ({ ...item, resource })),
+        return ((resourceGroup[scopeKey] ?? []) as OtlpRecord[]).flatMap(
+          (scope) =>
+            ((scope[itemKey] ?? []) as OtlpRecord[]).map((item) => ({
+              ...item,
+              resource,
+            })),
         )
       })
 

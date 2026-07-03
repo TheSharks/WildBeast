@@ -104,90 +104,88 @@ describe.skipIf(!redisUrl)('EpochCoordinator (integration)', () => {
     })
   })
 
-  it(
-    'migrates a serving fleet to a new shard total without overlap',
-    { timeout: 20_000 },
-    async () => {
-      // Old fleet: one cluster with 8 shards, serving.
-      const oldCoordinator = new ClusterCoordinator(connect(), {
+  it('migrates a serving fleet to a new shard total without overlap', {
+    timeout: 20_000,
+  }, async () => {
+    // Old fleet: one cluster with 8 shards, serving.
+    const oldCoordinator = new ClusterCoordinator(connect(), {
+      clusterId: 'old-cluster',
+      totalShards: 8,
+      keyPrefix: epochKeyPrefix(1),
+      membershipTtlMillis: MEMBERSHIP_TTL,
+    })
+    const oldEpochs = new EpochCoordinator(connect(), {
+      totalShards: 8,
+      membershipTtlMillis: MEMBERSHIP_TTL,
+    })
+    expect((await oldEpochs.resolve()).role).toBe('active')
+
+    const oldHost = new FakeHost()
+    const oldReconciler = new ShardReconciler(
+      oldCoordinator,
+      oldHost,
+      {
         clusterId: 'old-cluster',
         totalShards: 8,
-        keyPrefix: epochKeyPrefix(1),
-        membershipTtlMillis: MEMBERSHIP_TTL,
-      })
-      const oldEpochs = new EpochCoordinator(connect(), {
-        totalShards: 8,
-        membershipTtlMillis: MEMBERSHIP_TTL,
-      })
-      expect((await oldEpochs.resolve()).role).toBe('active')
+        tickMillis: 100,
+        settleMillis: 250,
+      },
+      silentLogger,
+    )
+    await oldReconciler.start()
+    await waitUntil(() => oldHost.shards.size === 8)
 
-      const oldHost = new FakeHost()
-      const oldReconciler = new ShardReconciler(
-        oldCoordinator,
-        oldHost,
-        {
-          clusterId: 'old-cluster',
-          totalShards: 8,
-          tickMillis: 100,
-          settleMillis: 250,
-        },
-        silentLogger,
-      )
-      await oldReconciler.start()
-      await waitUntil(() => oldHost.shards.size === 8)
+    // New fleet arrives with 16 shards: parks as pending epoch 2.
+    const newEpochs = new EpochCoordinator(connect(), {
+      totalShards: 16,
+      membershipTtlMillis: MEMBERSHIP_TTL,
+    })
+    const resolution = await newEpochs.resolve()
+    expect(resolution.role).toBe('pending')
 
-      // New fleet arrives with 16 shards: parks as pending epoch 2.
-      const newEpochs = new EpochCoordinator(connect(), {
-        totalShards: 16,
-        membershipTtlMillis: MEMBERSHIP_TTL,
-      })
-      const resolution = await newEpochs.resolve()
-      expect(resolution.role).toBe('pending')
+    const newCoordinator = new ClusterCoordinator(connect(), {
+      clusterId: 'new-cluster',
+      totalShards: 16,
+      keyPrefix: epochKeyPrefix(2),
+      membershipTtlMillis: MEMBERSHIP_TTL,
+    })
+    const parked = awaitEpochActivation({
+      epochs: newEpochs,
+      pending: resolution.state,
+      heartbeat: () => newCoordinator.heartbeat(),
+      pollMillis: 100,
+    })
 
-      const newCoordinator = new ClusterCoordinator(connect(), {
+    // While the old fleet serves, the new one must stay parked.
+    await new Promise((resolveSleep) => setTimeout(resolveSleep, 500))
+    expect(await newEpochs.activeEpoch()).toEqual({
+      epoch: 1,
+      totalShards: 8,
+    })
+
+    // The old fleet drains (rolling deploy replaces it).
+    await oldReconciler.shutdown()
+    expect(oldHost.shards.size).toBe(0)
+
+    // Promotion happens, and the new fleet takes over all 16 shards.
+    expect(await parked).toBe(true)
+    const newHost = new FakeHost()
+    const newReconciler = new ShardReconciler(
+      newCoordinator,
+      newHost,
+      {
         clusterId: 'new-cluster',
         totalShards: 16,
-        keyPrefix: epochKeyPrefix(2),
-        membershipTtlMillis: MEMBERSHIP_TTL,
-      })
-      const parked = awaitEpochActivation({
-        epochs: newEpochs,
-        pending: resolution.state,
-        heartbeat: () => newCoordinator.heartbeat(),
-        pollMillis: 100,
-      })
+        tickMillis: 100,
+        settleMillis: 250,
+      },
+      silentLogger,
+    )
+    await newReconciler.start()
+    await waitUntil(() => newHost.shards.size === 16)
 
-      // While the old fleet serves, the new one must stay parked.
-      await new Promise((resolveSleep) => setTimeout(resolveSleep, 500))
-      expect(await newEpochs.activeEpoch()).toEqual({
-        epoch: 1,
-        totalShards: 8,
-      })
-
-      // The old fleet drains (rolling deploy replaces it).
-      await oldReconciler.shutdown()
-      expect(oldHost.shards.size).toBe(0)
-
-      // Promotion happens, and the new fleet takes over all 16 shards.
-      expect(await parked).toBe(true)
-      const newHost = new FakeHost()
-      const newReconciler = new ShardReconciler(
-        newCoordinator,
-        newHost,
-        {
-          clusterId: 'new-cluster',
-          totalShards: 16,
-          tickMillis: 100,
-          settleMillis: 250,
-        },
-        silentLogger,
-      )
-      await newReconciler.start()
-      await waitUntil(() => newHost.shards.size === 16)
-
-      await newReconciler.shutdown()
-    },
-  )
+    await newReconciler.shutdown()
+  })
 
   it('stops waiting when aborted', async () => {
     await new EpochCoordinator(redis, { totalShards: 8 }).resolve()

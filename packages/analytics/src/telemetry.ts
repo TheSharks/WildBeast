@@ -549,7 +549,7 @@ export function initOpenTelemetry(
         exporterConfig.protocol === 'grpc'
           ? new OTLPLogGrpcExporter(commonOptions)
           : new OTLPLogHttpExporter(commonOptions)
-      logProcessors.push(new BatchLogRecordProcessor(logExporter))
+      logProcessors.push(new BatchLogRecordProcessor({ exporter: logExporter }))
     }
   }
 

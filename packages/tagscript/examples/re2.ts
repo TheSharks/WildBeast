@@ -214,14 +214,54 @@ export function createRE2Registry() {
   // Get all default eager handlers
   const eagerHandlers: Record<string, TagHandler> = {}
   for (const name of [
-    'args', 'arg', 'argslen', 'set', 'get', 'delete',
-    'upper', 'lower', 'length', 'replace', 'reverse', 'url',
-    'substring', 'oneline', 'hash', 'math', 'abs', 'sin', 'cos',
-    'tan', 'sqrt', 'floor', 'ceil', 'round', 'base', 'pi', 'e',
-    'choose', 'range', 'add', 'subtract', 'multiply', 'divide',
-    'pow', 'mod', 'random', 'now', 'time', 'uuid', 'userid',
-    'usertag', 'mention', 'channelid', 'server', 'serverid',
-    'avatar', 'js', 'javascript',
+    'args',
+    'arg',
+    'argslen',
+    'set',
+    'get',
+    'delete',
+    'upper',
+    'lower',
+    'length',
+    'replace',
+    'reverse',
+    'url',
+    'substring',
+    'oneline',
+    'hash',
+    'math',
+    'abs',
+    'sin',
+    'cos',
+    'tan',
+    'sqrt',
+    'floor',
+    'ceil',
+    'round',
+    'base',
+    'pi',
+    'e',
+    'choose',
+    'range',
+    'add',
+    'subtract',
+    'multiply',
+    'divide',
+    'pow',
+    'mod',
+    'random',
+    'now',
+    'time',
+    'uuid',
+    'userid',
+    'usertag',
+    'mention',
+    'channelid',
+    'server',
+    'serverid',
+    'avatar',
+    'js',
+    'javascript',
   ]) {
     const handler = defaultRegistry.get(name)
     if (handler) eagerHandlers[name] = handler
@@ -248,9 +288,12 @@ async function main() {
   const registry = createRE2Registry()
 
   // Basic replacement - same syntax as default
-  const result1 = await render('{replaceregex:Hello World hello|/hello/gi|Hi}', {
-    registry,
-  })
+  const result1 = await render(
+    '{replaceregex:Hello World hello|/hello/gi|Hi}',
+    {
+      registry,
+    },
+  )
   console.log('Replace result:', result1.output) // "Hi World Hi"
 
   // Conditional with regex - same syntax as default
@@ -267,7 +310,9 @@ async function main() {
     '{if:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!|?|^(a+)+$|match|no match}',
     { registry },
   )
-  console.log(`ReDoS pattern result: "${result3.output}" (${Date.now() - start}ms)`)
+  console.log(
+    `ReDoS pattern result: "${result3.output}" (${Date.now() - start}ms)`,
+  )
   // With standard RegExp this would hang, with RE2 it's instant
 
   // JagTag syntax also works

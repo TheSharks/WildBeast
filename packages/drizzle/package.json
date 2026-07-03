@@ -23,12 +23,12 @@
   },
   "devDependencies": {
     "@thesharks/tsconfig": "workspace:^",
-    "@types/node": "^25.0.9",
+    "@types/node": "^26.1.0",
     "@types/pg": "^8.20.0",
-    "drizzle-kit": "^0.31.8"
+    "drizzle-kit": "^0.31.10"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.1",
-    "pg": "^8.17.2"
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.22.0"
   }
 }
