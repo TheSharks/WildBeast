@@ -14,6 +14,12 @@ import dotEnvExtended from 'dotenv-extended'
 import { Redis } from 'ioredis'
 import { parseClusteringConfig } from './sharding/config.mjs'
 import { ClusterCoordinator } from './sharding/coordination.mjs'
+import {
+  awaitEpochActivation,
+  EpochCoordinator,
+  type EpochState,
+  epochKeyPrefix,
+} from './sharding/epochs.mjs'
 import { type ShardHost, ShardReconciler } from './sharding/reconciler.mjs'
 import { redisConnectionOptions } from './utils/redis.mjs'
 
@@ -69,6 +75,16 @@ const shardUpGauge = createGauge(
   '@thesharks/discord-manager',
   'discord_manager_shard_up',
   'Whether a shard is ready (1) or down (0), as seen by the manager',
+)
+const epochGauge = createGauge(
+  '@thesharks/discord-manager',
+  'discord_cluster_epoch',
+  'The fleet epoch this cluster is serving in',
+)
+const epochParkedGauge = createGauge(
+  '@thesharks/discord-manager',
+  'discord_cluster_epoch_parked',
+  'Whether this cluster is parked waiting for an epoch migration (1) or serving (0)',
 )
 
 const clustering = parseClusteringConfig()
@@ -230,28 +246,106 @@ const shardHost: ShardHost = {
   },
 }
 
-const reconciler =
-  clustering.mode === 'autonomous'
-    ? new ShardReconciler(
-        new ClusterCoordinator(new Redis(redisConnectionOptions()), {
-          clusterId,
-          totalShards: clustering.totalShards,
-        }),
-        shardHost,
-        { clusterId, totalShards: clustering.totalShards },
-        logger,
-      )
-    : undefined
+let reconciler: ShardReconciler | undefined
+let parkedCoordinator: ClusterCoordinator | undefined
+let epochWatchdog: NodeJS.Timeout | undefined
+const shutdownAbort = new AbortController()
 
-async function shutdown() {
+async function startAutonomous(totalShards: number): Promise<void> {
+  const redis = new Redis(redisConnectionOptions())
+  const epochs = new EpochCoordinator(redis, { totalShards })
+  const coordinatorFor = (state: EpochState) =>
+    new ClusterCoordinator(redis, {
+      clusterId,
+      totalShards: state.totalShards,
+      keyPrefix: epochKeyPrefix(state.epoch),
+    })
+
+  const resolution = await epochs.resolve()
+  const epoch = resolution.state
+
+  if (resolution.role === 'pending') {
+    // A migration to a new shard total is in progress: park while the
+    // old-total clusters keep serving, and take over the moment the last
+    // one drains (i.e. when the rolling deploy completes).
+    logger.warn(
+      `Shard total ${totalShards} differs from the active epoch; parked as epoch ${epoch.epoch} member until the old fleet drains`,
+    )
+    epochParkedGauge.set(1, {})
+    parkedCoordinator = coordinatorFor(epoch)
+
+    const activated = await awaitEpochActivation({
+      epochs,
+      pending: epoch,
+      heartbeat: () => (parkedCoordinator as ClusterCoordinator).heartbeat(),
+      signal: shutdownAbort.signal,
+      logger,
+    })
+    parkedCoordinator = undefined
+    if (!activated) {
+      // Shut down while parked.
+      return
+    }
+    logger.info(`Epoch ${epoch.epoch} activated (${totalShards} shards)`)
+  }
+
+  epochParkedGauge.set(0, {})
+  epochGauge.set(epoch.epoch, {})
+  // Workers scope their persisted sessions by epoch: a session from another
+  // shard total must never be resumed.
+  process.env.WILDBEAST_EPOCH = String(epoch.epoch)
+
+  reconciler = new ShardReconciler(
+    coordinatorFor(epoch),
+    shardHost,
+    { clusterId, totalShards: epoch.totalShards },
+    logger,
+  )
+  await reconciler.start()
+  logger.info(
+    `Reconciler started in epoch ${epoch.epoch}; shard ownership follows fleet membership`,
+  )
+
+  // If the fleet moves to a newer epoch, this process's configuration is
+  // stale (promotion requires our membership to be gone, so reaching this
+  // implies we were fenced or expired). Exit and let the supervisor restart
+  // us — with corrected config, we rejoin; otherwise we park harmlessly.
+  epochWatchdog = setInterval(() => {
+    void epochs
+      .activeEpoch()
+      .then((active) => {
+        if (active && active.epoch !== epoch.epoch) {
+          logger.fatal(
+            `Fleet moved to epoch ${active.epoch} (${active.totalShards} shards); this cluster's configuration is stale, exiting`,
+          )
+          void shutdown(1)
+        }
+      })
+      .catch(() => {
+        // coordination loss is handled by the reconciler's fencing
+      })
+  }, 10_000)
+}
+
+async function shutdown(code = 0) {
   if (shuttingDown) {
     return
   }
   shuttingDown = true
   // Don't respawn shards we're deliberately stopping.
   manager.respawn = false
+  shutdownAbort.abort()
+  if (epochWatchdog) {
+    clearInterval(epochWatchdog)
+  }
 
   logger.info('Shutting down: asking shards to exit')
+
+  try {
+    await parkedCoordinator?.withdraw()
+  } catch {
+    // membership entry will expire on its own
+  }
 
   if (reconciler) {
     // Stops owned shards gracefully, releases their leases and withdraws
@@ -292,16 +386,15 @@ async function shutdown() {
   }
 
   await telemetry.shutdown()
-  process.exit(0)
+  process.exit(code)
 }
 
 process.once('SIGINT', () => void shutdown())
 process.once('SIGTERM', () => void shutdown())
 
 try {
-  if (reconciler) {
-    await reconciler.start()
-    logger.info('Reconciler started; shard ownership follows fleet membership')
+  if (clustering.mode === 'autonomous') {
+    await startAutonomous(clustering.totalShards)
   } else {
     // No ready timeout: identifies queue globally through Redis, so a shard
     // can legitimately wait longer than the default 30s when several

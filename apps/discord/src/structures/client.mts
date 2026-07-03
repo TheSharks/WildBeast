@@ -7,6 +7,7 @@ import { LogLevel, SapphireClient } from '@sapphire/framework'
 import { GatewayIntentBits } from 'discord.js'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import { epochKeyPrefix } from '../sharding/epochs.mjs'
 import { buildRedisIdentifyThrottler } from '../sharding/identifyThrottler.mjs'
 import {
   installSessionPersistence,
@@ -55,8 +56,13 @@ const client = new SapphireClient({
 })
 
 // Gateway sessions live in Redis so shard handoffs between clusters can
-// RESUME instead of re-identifying.
-const sessionStore = new RedisSessionStore(getSharedWorkerRedis())
+// RESUME instead of re-identifying. Sessions are scoped to the fleet epoch
+// (set by the manager): a session from another shard total must never be
+// resumed, since shard ids mean different guilds there.
+const epoch = process.env.WILDBEAST_EPOCH
+const sessionStore = new RedisSessionStore(getSharedWorkerRedis(), {
+  keyPrefix: epoch ? epochKeyPrefix(Number(epoch)) : undefined,
+})
 installSessionPersistence(client, sessionStore)
 
 export { client, sessionStore }

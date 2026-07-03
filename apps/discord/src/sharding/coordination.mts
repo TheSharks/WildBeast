@@ -1,5 +1,7 @@
 import type { Redis } from 'ioredis'
 
+export const DEFAULT_MEMBERSHIP_TTL_MILLIS = 15_000
+
 export interface CoordinatorOptions {
   clusterId: string
   totalShards: number
@@ -46,7 +48,8 @@ export class ClusterCoordinator {
   ) {
     this.clusterId = options.clusterId
     this.totalShards = options.totalShards
-    this.membershipTtlMillis = options.membershipTtlMillis ?? 15_000
+    this.membershipTtlMillis =
+      options.membershipTtlMillis ?? DEFAULT_MEMBERSHIP_TTL_MILLIS
     this.leaseTtlMillis = options.leaseTtlMillis ?? 30_000
     this.prefix = options.keyPrefix ?? 'wildbeast'
   }
