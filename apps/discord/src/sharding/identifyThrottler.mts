@@ -1,8 +1,7 @@
 import { setTimeout as sleep } from 'node:timers/promises'
 import { DURATION_SECONDS_BOUNDARIES, metrics } from '@thesharks/analytics'
 import type { IIdentifyThrottler, WebSocketOptions } from 'discord.js'
-import { Redis } from 'ioredis'
-import { redisConnectionOptions } from '../utils/redis.mjs'
+import { getSharedWorkerRedis } from '../utils/redis.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const identifyCounter = meter.createCounter('discord_identifies_total', {
@@ -90,9 +89,8 @@ export const buildRedisIdentifyThrottler: NonNullable<
   WebSocketOptions['buildIdentifyThrottler']
 > = async (manager) => {
   const info = await manager.fetchGatewayInformation()
-  const redis = new Redis(redisConnectionOptions())
   return new RedisIdentifyThrottler(
-    redis,
+    getSharedWorkerRedis(),
     info.session_start_limit.max_concurrency,
   )
 }

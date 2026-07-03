@@ -150,6 +150,9 @@ manager.on('shardCreate', (shard) => {
 })
 
 const SHUTDOWN_MESSAGE = { _wildbeast: 'shutdown' }
+// Handoff exits skip the gateway close so the session stays resumable and
+// the next owner can RESUME instead of identifying.
+const HANDOFF_MESSAGE = { _wildbeast: 'handoff' }
 const SHARD_STOP_GRACE_MILLIS = 10_000
 
 function shardIsAlive(shard: Shard): boolean {
@@ -173,7 +176,10 @@ async function waitWithTimeout(
   }
 }
 
-async function stopShard(shard: Shard): Promise<void> {
+async function stopShard(
+  shard: Shard,
+  message: { _wildbeast: string } = SHUTDOWN_MESSAGE,
+): Promise<void> {
   if (!shardIsAlive(shard)) return
 
   intentionalStops.add(shard.id)
@@ -182,9 +188,8 @@ async function stopShard(shard: Shard): Promise<void> {
       shard.once('death', () => resolveDeath())
     })
     // Signals are only delivered to the main thread, so worker-mode shards
-    // rely on this message to destroy their client and flush telemetry
-    // before exiting.
-    await shard.send(SHUTDOWN_MESSAGE).catch(() => undefined)
+    // rely on this message to flush telemetry before exiting.
+    await shard.send(message).catch(() => undefined)
 
     const graceful = await waitWithTimeout(death, SHARD_STOP_GRACE_MILLIS)
     if (!graceful) {
@@ -218,7 +223,9 @@ const shardHost: ShardHost = {
   stop: async (shardId) => {
     const shard = manager.shards.get(shardId)
     if (!shard) return
-    await stopShard(shard)
+    // Reconciler stops are handoffs: the shard's session must survive so
+    // its next owner can resume it.
+    await stopShard(shard, HANDOFF_MESSAGE)
     manager.shards.delete(shardId)
   },
 }

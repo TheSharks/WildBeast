@@ -63,36 +63,67 @@ async function shutdown() {
   }
 }
 
+/**
+ * Handoff exit: flush the persisted session and leave WITHOUT closing the
+ * gateway. client.destroy() would close with code 1000, which invalidates
+ * the session on Discord's side; a dead socket keeps it resumable, so the
+ * cluster taking this shard over can RESUME (no identify spent, missed
+ * events replayed) instead of starting cold.
+ */
+async function handoffExit() {
+  if (shuttingDown) {
+    return
+  }
+  shuttingDown = true
+
+  try {
+    await sessionStore?.close()
+  } catch (error) {
+    client?.logger?.error(
+      'Failed to flush session store during handoff:',
+      error,
+    )
+  }
+  try {
+    await telemetry.shutdown()
+  } finally {
+    process.exit(0)
+  }
+}
+
 process.once('SIGINT', shutdown)
 process.once('SIGTERM', shutdown)
 
 // Signals are only delivered to the main thread, so in worker mode the
-// sharding manager relays shutdown as a message instead.
-function isShutdownMessage(message: unknown): boolean {
-  return (
-    typeof message === 'object' &&
-    message !== null &&
-    (message as { _wildbeast?: unknown })._wildbeast === 'shutdown'
-  )
+// sharding manager relays lifecycle commands as messages instead.
+function wildbeastCommand(message: unknown): unknown {
+  if (typeof message !== 'object' || message === null) {
+    return undefined
+  }
+  return (message as { _wildbeast?: unknown })._wildbeast
 }
 
-parentPort?.on('message', (message) => {
-  if (isShutdownMessage(message)) {
+function onManagerMessage(message: unknown): void {
+  const command = wildbeastCommand(message)
+  if (command === 'shutdown') {
     void shutdown()
+  } else if (command === 'handoff') {
+    void handoffExit()
   }
-})
+}
 
-process.on('message', (message) => {
-  if (isShutdownMessage(message)) {
-    void shutdown()
-  }
-})
+parentPort?.on('message', onManagerMessage)
+process.on('message', onManagerMessage)
 
 let client: SapphireClient | undefined
+let sessionStore:
+  | import('./sharding/sessionStore.mjs').RedisSessionStore
+  | undefined
 
 try {
   const imported = await import('./structures/client.mjs')
   client = imported.client
+  sessionStore = imported.sessionStore
   await client.login(process.env.DISCORD_TOKEN)
   client.logger.info('Logged in')
 } catch (error) {

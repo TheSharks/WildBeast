@@ -1,3 +1,5 @@
+import { Redis } from 'ioredis'
+
 export interface RedisConnectionOptions {
   host: string
   port: number
@@ -18,4 +20,15 @@ export function redisConnectionOptions(): RedisConnectionOptions {
       ? Number.parseInt(process.env.REDIS_DB, 10)
       : undefined,
   }
+}
+
+let sharedWorkerRedis: Redis | undefined
+
+/**
+ * One connection per shard worker, shared by the identify throttler and the
+ * session store.
+ */
+export function getSharedWorkerRedis(): Redis {
+  sharedWorkerRedis ??= new Redis(redisConnectionOptions())
+  return sharedWorkerRedis
 }

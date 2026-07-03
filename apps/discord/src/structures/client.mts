@@ -8,7 +8,14 @@ import { GatewayIntentBits } from 'discord.js'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { buildRedisIdentifyThrottler } from '../sharding/identifyThrottler.mjs'
-import { redisConnectionOptions } from '../utils/redis.mjs'
+import {
+  installSessionPersistence,
+  RedisSessionStore,
+} from '../sharding/sessionStore.mjs'
+import {
+  getSharedWorkerRedis,
+  redisConnectionOptions,
+} from '../utils/redis.mjs'
 
 const loglev = process.env.TRACE
   ? LogLevel.Trace
@@ -47,4 +54,9 @@ const client = new SapphireClient({
   },
 })
 
-export { client }
+// Gateway sessions live in Redis so shard handoffs between clusters can
+// RESUME instead of re-identifying.
+const sessionStore = new RedisSessionStore(getSharedWorkerRedis())
+installSessionPersistence(client, sessionStore)
+
+export { client, sessionStore }
