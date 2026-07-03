@@ -10,7 +10,8 @@
     "dev:run": "npm run start",
     "start": "node -r dotenv-extended/config dist/cluster.mjs",
     "postbuild": "cp -r src/languages dist/languages",
-    "build": "rimraf dist && tsc"
+    "build": "rimraf dist && tsc",
+    "test": "vitest run"
   },
   "author": "Remco Jongschaap <hey@dougley.com>",
   "contributors": [
@@ -39,13 +40,15 @@
     "@thesharks/drizzle": "workspace:^",
     "bullmq": "^5.66.5",
     "discord.js": "^14.25.1",
-    "dotenv-extended": "^2.9.0"
+    "dotenv-extended": "^2.9.0",
+    "ioredis": "^5.11.1"
   },
   "devDependencies": {
     "@sapphire/cli": "^1.9.3",
     "@thesharks/tsconfig": "workspace:^",
     "@types/node": "^25.0.9",
     "concurrently": "^9.2.1",
-    "rimraf": "^6.1.2"
+    "rimraf": "^6.1.2",
+    "vitest": "^3.2.4"
   }
 }

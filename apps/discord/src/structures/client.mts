@@ -7,6 +7,8 @@ import { LogLevel, SapphireClient } from '@sapphire/framework'
 import { GatewayIntentBits } from 'discord.js'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import { buildRedisIdentifyThrottler } from '../sharding/identifyThrottler.mjs'
+import { redisConnectionOptions } from '../utils/redis.mjs'
 
 const loglev = process.env.TRACE
   ? LogLevel.Trace
@@ -24,20 +26,14 @@ const client = new SapphireClient({
   logger: {
     level: loglev,
   },
+  ws: {
+    // Identifies are rate limited per bot token across all clusters, so the
+    // budget is coordinated through Redis rather than per-process.
+    buildIdentifyThrottler: buildRedisIdentifyThrottler,
+  },
   tasks: {
     bull: {
-      connection: {
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: (() => {
-          if (!process.env.REDIS_PORT) return 6379
-          const port = Number.parseInt(process.env.REDIS_PORT, 10)
-          return Number.isFinite(port) ? port : 6379
-        })(),
-        password: process.env.REDIS_PASSWORD,
-        db: process.env.REDIS_DB
-          ? Number.parseInt(process.env.REDIS_DB, 10)
-          : undefined,
-      },
+      connection: redisConnectionOptions(),
     },
   },
   hmr,

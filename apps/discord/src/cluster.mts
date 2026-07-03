@@ -1,3 +1,4 @@
+import { hostname } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LogLevel } from '@sapphire/framework'
@@ -10,6 +11,7 @@ import {
 } from '@thesharks/analytics'
 import { type Shard, ShardingManager } from 'discord.js'
 import dotEnvExtended from 'dotenv-extended'
+import { parseShardingConfig } from './sharding/config.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -21,9 +23,15 @@ dotEnvExtended.load({
   defaults: resolve(__dirname, '../.env.defaults'),
 })
 
+// Resolve the cluster identity once and write it back so worker threads
+// (which share this env) and telemetry agree on it.
+const clusterId = process.env.WILDBEAST_CLUSTER_ID ?? hostname()
+process.env.WILDBEAST_CLUSTER_ID = clusterId
+
 const telemetry = initOpenTelemetry({
   serviceName: '@thesharks/discord-manager',
   namespace: '@thesharks',
+  resourceAttributes: { 'cluster.id': clusterId },
 })
 
 const logger = new AnalyticsLogger({
@@ -59,11 +67,20 @@ const shardUpGauge = createGauge(
   'Whether a shard is ready (1) or down (0), as seen by the manager',
 )
 
+const sharding = parseShardingConfig()
+
 const manager = new ShardingManager(join(__dirname, './index.mjs'), {
   token: process.env.DISCORD_TOKEN,
-  totalShards: 2,
+  totalShards: sharding.totalShards,
+  shardList: sharding.shardList,
   mode: 'worker',
 })
+
+logger.info(
+  `Cluster ${clusterId} managing shards [${
+    sharding.shardList === 'auto' ? 'auto' : sharding.shardList.join(', ')
+  }] of ${sharding.totalShards} total`,
+)
 
 let shuttingDown = false
 
@@ -191,7 +208,10 @@ process.once('SIGINT', () => void shutdown())
 process.once('SIGTERM', () => void shutdown())
 
 try {
-  await manager.spawn()
+  // No ready timeout: identifies queue globally through Redis, so a shard
+  // can legitimately wait longer than the default 30s when several clusters
+  // start at once. Readiness is tracked via shard events instead.
+  await manager.spawn({ timeout: -1 })
   logger.info(`Spawned ${manager.shards.size} shard(s)`)
 } catch (error) {
   logger.fatal('Failed to spawn shards:', error)

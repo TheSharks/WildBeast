@@ -14,11 +14,15 @@ const shardId =
 const environment = process.env.NODE_ENV ?? 'development'
 const baseTracesSampleRate = environment === 'production' ? 0.2 : 1.0
 
+// The manager resolves the cluster id and shares it via env.
+const clusterId = process.env.WILDBEAST_CLUSTER_ID
+
 // Must run as early as possible.
 const telemetry = initOpenTelemetry({
   serviceName: '@thesharks/discord',
   namespace: '@thesharks',
   shardId,
+  resourceAttributes: clusterId ? { 'cluster.id': clusterId } : undefined,
   sentry: {
     // We can't tail-sample errors client-side, so bias instead: always keep
     // command traces (low volume, where the user-facing errors are), keep a

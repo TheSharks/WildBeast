@@ -1,0 +1,53 @@
+export interface ShardingConfig {
+  totalShards: number | 'auto'
+  shardList: number[] | 'auto'
+}
+
+/**
+ * Resolve this cluster's shard assignment from the environment.
+ *
+ * With none of the WILDBEAST_SHARDING_* variables set, the cluster runs
+ * every shard Discord recommends (single-cluster mode). With them set, the
+ * cluster runs shards START..END (inclusive) of TOTAL — every cluster in the
+ * fleet must agree on TOTAL.
+ */
+export function parseShardingConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): ShardingConfig {
+  const totalRaw = env.WILDBEAST_SHARDING_TOTAL
+  const startRaw = env.WILDBEAST_SHARDING_START
+  const endRaw = env.WILDBEAST_SHARDING_END
+
+  if (!totalRaw && !startRaw && !endRaw) {
+    return { totalShards: 'auto', shardList: 'auto' }
+  }
+
+  const total = Number.parseInt(totalRaw ?? '', 10)
+  if (!Number.isInteger(total) || total < 1) {
+    throw new Error(
+      'WILDBEAST_SHARDING_TOTAL must be a positive integer when shard range variables are set',
+    )
+  }
+
+  const start = startRaw ? Number.parseInt(startRaw, 10) : 0
+  const end = endRaw ? Number.parseInt(endRaw, 10) : total - 1
+  if (
+    !Number.isInteger(start) ||
+    !Number.isInteger(end) ||
+    start < 0 ||
+    start > end ||
+    end >= total
+  ) {
+    throw new Error(
+      `Invalid shard range ${startRaw ?? '0'}..${endRaw ?? total - 1} for ${total} total shards`,
+    )
+  }
+
+  return {
+    totalShards: total,
+    shardList: Array.from(
+      { length: end - start + 1 },
+      (_, index) => start + index,
+    ),
+  }
+}
