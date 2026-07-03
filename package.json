@@ -11,7 +11,9 @@
     "format": "biome format --write .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "update": "pnpm update -r -i"
+    "update": "pnpm update -r -i",
+    "test": "turbo run test",
+    "test:integration": "node scripts/test-integration.mjs"
   },
   "bugs": {
     "url": "https://github.com/TheSharks/WildBeast/issues"

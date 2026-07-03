@@ -1,0 +1,25 @@
+{
+  "name": "@thesharks/test-utils",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Shared testing toolkit for WildBeast packages: in-memory OpenTelemetry capture, env sandboxing, polling helpers",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": "^0.210.0",
+    "@opentelemetry/sdk-logs": "^0.210.0",
+    "@opentelemetry/sdk-metrics": "^2.4.0",
+    "@opentelemetry/sdk-trace-base": "^2.4.0",
+    "@opentelemetry/sdk-trace-node": "^2.4.0"
+  },
+  "devDependencies": {
+    "@sapphire/framework": "^5.5.0",
+    "@thesharks/tsconfig": "workspace:^",
+    "typescript": "^5.9.3"
+  }
+}

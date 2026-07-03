@@ -14,7 +14,12 @@
     },
     "test": {
       "dependsOn": ["build"],
-      "outputs": []
+      "cache": false,
+      "passThroughEnv": ["REDIS_URL", "OTEL_E2E_OUTPUT"]
+    },
+    "@thesharks/docs#test": {
+      "dependsOn": [],
+      "cache": false
     }
   }
 }

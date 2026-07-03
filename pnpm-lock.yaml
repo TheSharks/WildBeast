@@ -76,6 +76,9 @@ importers:
       '@sapphire/cli':
         specifier: ^1.9.3
         version: 1.9.3
+      '@thesharks/test-utils':
+        specifier: workspace:^
+        version: link:../../packages/test-utils
       '@thesharks/tsconfig':
         specifier: workspace:^
         version: link:../../packages/tsconfig
@@ -213,6 +216,9 @@ importers:
         specifier: ^14.25.1
         version: 14.25.1
     devDependencies:
+      '@thesharks/test-utils':
+        specifier: workspace:^
+        version: link:../test-utils
       '@thesharks/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -272,6 +278,37 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@25.0.9)(jiti@2.6.1)(terser@5.46.0)
+
+  packages/test-utils:
+    dependencies:
+      '@opentelemetry/api':
+        specifier: ^1.9.0
+        version: 1.9.0
+      '@opentelemetry/api-logs':
+        specifier: ^0.210.0
+        version: 0.210.0
+      '@opentelemetry/sdk-logs':
+        specifier: ^0.210.0
+        version: 0.210.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-metrics':
+        specifier: ^2.4.0
+        version: 2.4.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base':
+        specifier: ^2.4.0
+        version: 2.4.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-node':
+        specifier: ^2.4.0
+        version: 2.4.0(@opentelemetry/api@1.9.0)
+    devDependencies:
+      '@sapphire/framework':
+        specifier: ^5.5.0
+        version: 5.5.0
+      '@thesharks/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/tsconfig: {}
 
