@@ -45,6 +45,7 @@
   },
   "devDependencies": {
     "@sapphire/cli": "^1.9.3",
+    "@thesharks/test-utils": "workspace:^",
     "@thesharks/tsconfig": "workspace:^",
     "@types/node": "^25.0.9",
     "concurrently": "^9.2.1",

@@ -1,9 +1,10 @@
-import type { ILogger } from '@sapphire/framework'
+import { silentLogger, waitUntil } from '@thesharks/test-utils'
 import { Redis } from 'ioredis'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { shardsFor } from '../src/sharding/assignment.mjs'
 import { ClusterCoordinator } from '../src/sharding/coordination.mjs'
-import { type ShardHost, ShardReconciler } from '../src/sharding/reconciler.mjs'
+import { ShardReconciler } from '../src/sharding/reconciler.mjs'
+import { FakeHost } from './helpers.mjs'
 
 // Runs only when REDIS_URL points at a disposable Redis, e.g.:
 //   docker run --rm -p 16379:6379 redis:7-alpine
@@ -17,37 +18,6 @@ const TIMINGS = {
   tickMillis: 100,
   settleMillis: 250,
   fenceAfterMillis: 800,
-}
-
-class FakeHost implements ShardHost {
-  public readonly shards = new Set<number>()
-
-  public currentShards(): number[] {
-    return [...this.shards]
-  }
-
-  public isAlive(shardId: number): boolean {
-    return this.shards.has(shardId)
-  }
-
-  public async start(shardId: number): Promise<void> {
-    this.shards.add(shardId)
-  }
-
-  public async stop(shardId: number): Promise<void> {
-    this.shards.delete(shardId)
-  }
-}
-
-const silentLogger: ILogger = {
-  has: () => false,
-  trace: () => undefined,
-  debug: () => undefined,
-  info: () => undefined,
-  warn: () => undefined,
-  error: () => undefined,
-  fatal: () => undefined,
-  write: () => undefined,
 }
 
 interface TestCluster {
@@ -86,18 +56,6 @@ describe.skipIf(!redisUrl)('ShardReconciler (integration)', () => {
     return cluster
   }
 
-  async function until(
-    condition: () => boolean | Promise<boolean>,
-    timeoutMillis = 8_000,
-  ): Promise<void> {
-    const deadline = Date.now() + timeoutMillis
-    while (Date.now() < deadline) {
-      if (await condition()) return
-      await new Promise((resolveSleep) => setTimeout(resolveSleep, 50))
-    }
-    throw new Error('condition not met in time')
-  }
-
   function noOverlap(a: FakeHost, b: FakeHost): boolean {
     return [...a.shards].every((shardId) => !b.shards.has(shardId))
   }
@@ -124,7 +82,7 @@ describe.skipIf(!redisUrl)('ShardReconciler (integration)', () => {
       await a.reconciler.start()
 
       // Alone in the fleet, cluster-a should own every shard.
-      await until(() => a.host.shards.size === TOTAL)
+      await waitUntil(() => a.host.shards.size === TOTAL)
 
       // A second cluster joins: shards must split along the rendezvous
       // assignment, and at no point may both clusters run the same shard.
@@ -136,7 +94,7 @@ describe.skipIf(!redisUrl)('ShardReconciler (integration)', () => {
       const expectB = new Set(shardsFor('cluster-b', members, TOTAL))
       expect(expectB.size).toBeGreaterThan(0)
 
-      await until(() => {
+      await waitUntil(() => {
         expect(noOverlap(a.host, b.host)).toBe(true)
         return (
           a.host.shards.size === expectA.size &&
@@ -156,7 +114,7 @@ describe.skipIf(!redisUrl)('ShardReconciler (integration)', () => {
       // cluster-a should reclaim everything without waiting for expiry.
       const reclaimStart = Date.now()
       await b.reconciler.shutdown()
-      await until(() => a.host.shards.size === TOTAL)
+      await waitUntil(() => a.host.shards.size === TOTAL)
       // Well under the lease TTL, proving the release path (not expiry).
       expect(Date.now() - reclaimStart).toBeLessThan(TIMINGS.leaseTtlMillis)
     },
@@ -171,7 +129,7 @@ describe.skipIf(!redisUrl)('ShardReconciler (integration)', () => {
       await a.reconciler.start()
       await b.reconciler.start()
 
-      await until(
+      await waitUntil(
         () =>
           a.host.shards.size + b.host.shards.size === TOTAL &&
           noOverlap(a.host, b.host) &&
@@ -182,7 +140,7 @@ describe.skipIf(!redisUrl)('ShardReconciler (integration)', () => {
       // stop being renewed.
       await b.reconciler.halt()
 
-      await until(() => a.host.shards.size === TOTAL)
+      await waitUntil(() => a.host.shards.size === TOTAL)
     },
   )
 

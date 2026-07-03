@@ -1,4 +1,4 @@
-import type { ILogger } from '@sapphire/framework'
+import { silentLogger, waitUntil } from '@thesharks/test-utils'
 import { Redis } from 'ioredis'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ClusterCoordinator } from '../src/sharding/coordination.mjs'
@@ -7,7 +7,8 @@ import {
   EpochCoordinator,
   epochKeyPrefix,
 } from '../src/sharding/epochs.mjs'
-import { type ShardHost, ShardReconciler } from '../src/sharding/reconciler.mjs'
+import { ShardReconciler } from '../src/sharding/reconciler.mjs'
+import { FakeHost } from './helpers.mjs'
 
 // Runs only when REDIS_URL points at a disposable Redis, e.g.:
 //   docker run --rm -p 16379:6379 redis:7-alpine
@@ -15,37 +16,6 @@ import { type ShardHost, ShardReconciler } from '../src/sharding/reconciler.mjs'
 const redisUrl = process.env.REDIS_URL
 
 const MEMBERSHIP_TTL = 1_000
-
-class FakeHost implements ShardHost {
-  public readonly shards = new Set<number>()
-
-  public currentShards(): number[] {
-    return [...this.shards]
-  }
-
-  public isAlive(shardId: number): boolean {
-    return this.shards.has(shardId)
-  }
-
-  public async start(shardId: number): Promise<void> {
-    this.shards.add(shardId)
-  }
-
-  public async stop(shardId: number): Promise<void> {
-    this.shards.delete(shardId)
-  }
-}
-
-const silentLogger: ILogger = {
-  has: () => false,
-  trace: () => undefined,
-  debug: () => undefined,
-  info: () => undefined,
-  warn: () => undefined,
-  error: () => undefined,
-  fatal: () => undefined,
-  write: () => undefined,
-}
 
 describe.skipIf(!redisUrl)('EpochCoordinator (integration)', () => {
   let redis: Redis
@@ -164,7 +134,7 @@ describe.skipIf(!redisUrl)('EpochCoordinator (integration)', () => {
         silentLogger,
       )
       await oldReconciler.start()
-      await until(() => oldHost.shards.size === 8)
+      await waitUntil(() => oldHost.shards.size === 8)
 
       // New fleet arrives with 16 shards: parks as pending epoch 2.
       const newEpochs = new EpochCoordinator(connect(), {
@@ -213,7 +183,7 @@ describe.skipIf(!redisUrl)('EpochCoordinator (integration)', () => {
         silentLogger,
       )
       await newReconciler.start()
-      await until(() => newHost.shards.size === 16)
+      await waitUntil(() => newHost.shards.size === 16)
 
       await newReconciler.shutdown()
     },
@@ -243,16 +213,4 @@ describe.skipIf(!redisUrl)('EpochCoordinator (integration)', () => {
     abort.abort()
     expect(await waiting).toBe(false)
   })
-
-  async function until(
-    condition: () => boolean | Promise<boolean>,
-    timeoutMillis = 8_000,
-  ): Promise<void> {
-    const deadline = Date.now() + timeoutMillis
-    while (Date.now() < deadline) {
-      if (await condition()) return
-      await new Promise((resolveSleep) => setTimeout(resolveSleep, 50))
-    }
-    throw new Error('condition not met in time')
-  }
 })
