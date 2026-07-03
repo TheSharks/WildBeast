@@ -1,3 +1,4 @@
+import type { Attributes } from '@opentelemetry/api'
 import type { NodeOptions } from '@sentry/node'
 
 export interface TelemetryExporterConfig {
@@ -41,6 +42,11 @@ export interface TelemetryConfig {
   enableExport?: boolean
   /** Upper bound for flushing telemetry on shutdown. Defaults to 10 seconds. */
   shutdownTimeoutMillis?: number
+  /**
+   * Extra resource attributes (e.g. `cluster.id`). Core attributes such as
+   * `service.name` take precedence on conflict.
+   */
+  resourceAttributes?: Attributes
   exporters?: {
     otlp?: TelemetryExporterConfig | TelemetryExporterConfig[]
     traces?: TelemetryExporterConfig | TelemetryExporterConfig[]

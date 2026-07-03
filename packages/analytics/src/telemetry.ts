@@ -417,6 +417,7 @@ export function initOpenTelemetry(
 
   const shardId = config?.shardId ?? process.env.SHARD_ID
   const resourceAttributes: Attributes = {
+    ...config?.resourceAttributes,
     [ATTR_SERVICE_NAME]:
       config?.serviceName ??
       process.env.OTEL_SERVICE_NAME ??
