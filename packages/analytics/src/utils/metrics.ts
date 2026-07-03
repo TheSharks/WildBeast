@@ -5,20 +5,30 @@ import type { Guild } from 'discord.js'
 type AttributeValue = Attributes[keyof Attributes]
 
 /**
- * Resolve shard ID from interaction guild (preferred) or listener container
+ * Bucket boundaries for histograms recorded in seconds. The SDK's default
+ * boundaries (5, 10, 25, ...) are scaled for milliseconds and would collapse
+ * every sub-5-second measurement into the first bucket.
+ */
+export const DURATION_SECONDS_BOUNDARIES = [
+  0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60,
+]
+
+/**
+ * Resolve shard ID from interaction guild (preferred) or the container of any
+ * piece (listener, command, task, ...)
  */
 export function resolveShardId(
   interaction?: { guild?: Guild | null },
-  listener?: Listener,
+  piece?: Pick<Listener, 'container'>,
 ): string {
   // Prefer interaction guild shard ID (most accurate per-interaction)
   if (interaction?.guild?.shardId !== undefined) {
     return interaction.guild.shardId.toString()
   }
 
-  // Fall back to listener container client shard
-  if (listener) {
-    const shardId = listener.container.client.shard?.ids?.[0]
+  // Fall back to the piece's container client shard
+  if (piece) {
+    const shardId = piece.container.client.shard?.ids?.[0]
     if (typeof shardId === 'number') {
       return shardId.toString()
     }

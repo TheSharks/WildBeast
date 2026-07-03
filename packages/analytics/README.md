@@ -7,14 +7,15 @@ OpenTelemetry-first analytics helpers for WildBeast. This package provides:
 
 ## OpenTelemetry Bootstrap
 
-The shared bootstrap configures traces, metrics, and logs via OTLP HTTP or gRPC exporters. The bootstrap automatically configures exporters for all signals when an OTLP endpoint is provided. If no endpoint is set, exporters remain disabled unless `enableExport` is explicitly set to `true`. The bootstrap enables both `pg` and `undici` auto-instrumentations by default (disable via config or environment variables).
+The shared bootstrap configures traces, metrics, and logs via OTLP HTTP or gRPC exporters. The bootstrap automatically configures exporters for all signals when an OTLP endpoint is provided. If no endpoint is set, exporters remain disabled unless `enableExport` is explicitly set to `true`. The bootstrap enables the `pg`, `undici`, `ioredis` and `runtime-node` auto-instrumentations by default (disable via config or environment variables).
 
 Common config knobs in `initOpenTelemetry`:
 - `serviceName`, `serviceVersion`, `namespace`, `environment`, `instanceId`, `shardId`
 - `enableExport` to force exporters on/off
+- `shutdownTimeoutMillis` to bound telemetry flushing on shutdown (default 10s)
 - `exporters` to override OTLP endpoints/headers/protocol/timeout/compression per signal
-- `instrumentations` to toggle `pg` and `undici`
-- `sentry` to override `dsn`, `tracesSampleRate`, `environment`, `release`
+- `instrumentations` to toggle `pg`, `undici`, `ioredis`, `fs` and `runtimeNode`
+- `sentry` to override `dsn`, `tracesSampleRate`, `tracesSampler`, `environment`, `release`
 
 ### Exporter Configuration
 
@@ -23,7 +24,7 @@ Each signal (traces, metrics, logs) can be configured with:
 - `headers`: Custom headers for the exporter
 - `protocol`: Explicitly set `'http'` or `'grpc'` (optional, auto-detected from endpoint URL)
 - `timeout`: Request timeout in milliseconds (optional)
-- `compression`: Compression setting for gRPC exporters only (`'gzip'` or `'none'`, optional)
+- `compression`: Compression setting (`'gzip'` or `'none'`, optional)
 
 **Protocol Selection:**
 Protocol is determined by precedence:
@@ -152,7 +153,7 @@ Format: Comma-separated key=value pairs (e.g., `Authorization=Bearer token,X-Cus
 - `OTEL_EXPORTER_OTLP_TIMEOUT`: Request timeout in milliseconds
 
 **Compression (optional):**
-- `OTEL_EXPORTER_OTLP_COMPRESSION`: Compression setting: `gzip` or `none` (gRPC exporters only)
+- `OTEL_EXPORTER_OTLP_COMPRESSION`: Compression setting: `gzip` or `none`
 
 **Service Configuration (optional):**
 - `OTEL_SERVICE_NAME`: Overrides service name

@@ -16,6 +16,7 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { FsInstrumentation } from '@opentelemetry/instrumentation-fs'
 import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis'
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg'
+import { RuntimeNodeInstrumentation } from '@opentelemetry/instrumentation-runtime-node'
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import {
@@ -53,7 +54,7 @@ export interface TelemetryInitResult {
   shutdown(): Promise<void>
 }
 
-function normalizeOtlpEndpointUrl(
+export function normalizeOtlpEndpointUrl(
   raw: string,
   signal: 'traces' | 'metrics' | 'logs',
 ): string {
@@ -92,6 +93,29 @@ function normalizeOtlpEndpointUrl(
   }
 
   return value
+}
+
+function parseDiagLogLevel(
+  value: string | undefined,
+): DiagLogLevel | undefined {
+  switch (value?.trim().toLowerCase()) {
+    case 'none':
+      return DiagLogLevel.NONE
+    case 'error':
+      return DiagLogLevel.ERROR
+    case 'warn':
+      return DiagLogLevel.WARN
+    case 'info':
+      return DiagLogLevel.INFO
+    case 'debug':
+      return DiagLogLevel.DEBUG
+    case 'verbose':
+      return DiagLogLevel.VERBOSE
+    case 'all':
+      return DiagLogLevel.ALL
+    default:
+      return undefined
+  }
 }
 
 function parseOptOutBoolean(
@@ -158,6 +182,21 @@ function parseHeadersFromEnv(
   return headers
 }
 
+function withSignalPath(
+  endpoint: string,
+  signalPath: string,
+  protocol: 'http' | 'grpc',
+): string {
+  // gRPC OTLP endpoints are host:port only; per-signal paths apply to http/protobuf.
+  if (protocol === 'grpc') {
+    return endpoint
+  }
+  if (endpoint.endsWith(signalPath) || endpoint.endsWith(`${signalPath}/`)) {
+    return endpoint
+  }
+  return `${endpoint.replace(/\/+$/, '')}${signalPath}`
+}
+
 function resolveProtocol(
   endpoint: string,
   protocolEnv?: string,
@@ -189,7 +228,7 @@ function resolveProtocol(
   return 'http'
 }
 
-function resolveTransportConfig(
+export function resolveTransportConfig(
   signal: 'traces' | 'metrics' | 'logs',
   config?: TelemetryConfig,
 ): TelemetryExporterConfig[] {
@@ -227,14 +266,18 @@ function resolveTransportConfig(
     process.env.OTEL_EXPORTER_OTLP_PROTOCOL
 
   const signalPath = `/v1/${signal}`
-  const endpointEnv =
-    process.env[`OTEL_EXPORTER_OTLP_${signal.toUpperCase()}_ENDPOINT`] ??
-    process.env.OTEL_EXPORTER_OTLP_ENDPOINT
-  if (endpointEnv) {
-    const endpoint = endpointEnv.endsWith(signalPath)
-      ? endpointEnv
-      : `${endpointEnv}${signalPath}`
-    envExporter.endpoint = endpoint
+  const signalEndpointEnv =
+    process.env[`OTEL_EXPORTER_OTLP_${signal.toUpperCase()}_ENDPOINT`]
+  const globalEndpointEnv = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+  if (signalEndpointEnv) {
+    // Signal-specific endpoints are used verbatim per the OTLP spec.
+    envExporter.endpoint = signalEndpointEnv
+  } else if (globalEndpointEnv) {
+    envExporter.endpoint = withSignalPath(
+      globalEndpointEnv,
+      signalPath,
+      resolveProtocol(globalEndpointEnv, protocolEnv),
+    )
   }
 
   const exportersFromConfig = config?.exporters?.[signal]
@@ -252,16 +295,28 @@ function resolveTransportConfig(
     const otlpFallback = Array.isArray(otlpConfig) ? otlpConfig[0] : otlpConfig
 
     for (const configExporter of configExporters) {
+      const protocol =
+        configExporter.protocol ??
+        resolveProtocol(
+          configExporter.endpoint ??
+            otlpFallback?.endpoint ??
+            envExporter.endpoint ??
+            '',
+          protocolEnv,
+        )
+      // Explicit per-signal endpoints are used verbatim; the shared otlp
+      // endpoint needs the signal path appended.
+      const endpoint =
+        configExporter.endpoint ??
+        (otlpFallback?.endpoint
+          ? withSignalPath(otlpFallback.endpoint, signalPath, protocol)
+          : envExporter.endpoint)
       const merged: TelemetryExporterConfig = {
         headers: { ...envExporter.headers, ...configExporter.headers },
         timeout: configExporter.timeout ?? envExporter.timeout,
         compression: configExporter.compression ?? envExporter.compression,
-        protocol: configExporter.protocol,
-        endpoint: configExporter.endpoint ?? otlpFallback?.endpoint,
-      }
-
-      if (!merged.protocol) {
-        merged.protocol = resolveProtocol(merged.endpoint || '', protocolEnv)
+        protocol,
+        endpoint,
       }
 
       if (!merged.endpoint) {
@@ -277,18 +332,20 @@ function resolveTransportConfig(
     const otlpConfigs = Array.isArray(otlpConfig) ? otlpConfig : [otlpConfig]
 
     for (const otlpExporter of otlpConfigs) {
+      const protocol =
+        otlpExporter?.protocol ??
+        resolveProtocol(
+          otlpExporter?.endpoint ?? envExporter.endpoint ?? '',
+          protocolEnv,
+        )
       const merged: TelemetryExporterConfig = {
         headers: { ...envExporter.headers, ...(otlpExporter?.headers ?? {}) },
         timeout: otlpExporter?.timeout ?? envExporter.timeout,
         compression: otlpExporter?.compression ?? envExporter.compression,
-        protocol: otlpExporter?.protocol,
+        protocol,
         endpoint: otlpExporter?.endpoint
-          ? `${otlpExporter.endpoint}${signalPath}`
+          ? withSignalPath(otlpExporter.endpoint, signalPath, protocol)
           : envExporter.endpoint,
-      }
-
-      if (!merged.protocol) {
-        merged.protocol = resolveProtocol(merged.endpoint || '', protocolEnv)
       }
 
       if (!merged.endpoint) {
@@ -300,6 +357,11 @@ function resolveTransportConfig(
 
       exporters.push(merged)
     }
+  } else if (envExporter.endpoint) {
+    exporters.push({
+      ...envExporter,
+      protocol: resolveProtocol(envExporter.endpoint, protocolEnv),
+    })
   }
 
   return exporters
@@ -310,11 +372,11 @@ export function initOpenTelemetry(
 ): TelemetryInitResult {
   if (config?.diagnosticLogLevel === 'debug') {
     diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
-  } else if (
-    config?.diagnosticLogLevel !== 'none' &&
-    process.env.OTEL_DIAGNOSTIC_LOG_LEVEL
-  ) {
-    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
+  } else if (config?.diagnosticLogLevel !== 'none') {
+    const envLevel = parseDiagLogLevel(process.env.OTEL_DIAGNOSTIC_LOG_LEVEL)
+    if (envLevel !== undefined && envLevel !== DiagLogLevel.NONE) {
+      diag.setLogger(new DiagConsoleLogger(), envLevel)
+    }
   }
 
   const environment =
@@ -327,6 +389,8 @@ export function initOpenTelemetry(
     tracesSampleRate:
       config?.sentry?.tracesSampleRate ??
       (environment === 'production' ? 0.2 : 1.0),
+    // Takes precedence over tracesSampleRate when provided.
+    tracesSampler: config?.sentry?.tracesSampler,
     environment: config?.sentry?.environment ?? environment,
     release,
     // Enable Sentry Logs API (requires SDK 9.41.0+)
@@ -379,6 +443,14 @@ export function initOpenTelemetry(
       ? config.enableExport
       : hasExporters
 
+  // enableExport: true without any configured endpoint falls back to the
+  // exporter libraries' default endpoints (localhost).
+  if (config?.enableExport === true) {
+    if (tracesConfigs.length === 0) tracesConfigs.push({})
+    if (metricsConfigs.length === 0) metricsConfigs.push({})
+    if (logsConfigs.length === 0) logsConfigs.push({})
+  }
+
   const sentryClient = Sentry.getClient()
   if (!sentryClient) {
     throw new Error(
@@ -388,27 +460,23 @@ export function initOpenTelemetry(
 
   const spanProcessors: SpanProcessor[] = [new SentrySpanProcessor()]
   for (const exporterConfig of tracesConfigs) {
-    if (exporterConfig.endpoint && exportingEnabled) {
-      const normalizedEndpoint = normalizeOtlpEndpointUrl(
-        exporterConfig.endpoint,
-        'traces',
-      )
+    if (exportingEnabled) {
+      const normalizedEndpoint = exporterConfig.endpoint
+        ? normalizeOtlpEndpointUrl(exporterConfig.endpoint, 'traces')
+        : undefined
+      const commonOptions = {
+        ...(normalizedEndpoint ? { url: normalizedEndpoint } : {}),
+        headers: exporterConfig.headers,
+        timeoutMillis: exporterConfig.timeout,
+        compression:
+          exporterConfig.compression === 'gzip'
+            ? CompressionAlgorithm.GZIP
+            : CompressionAlgorithm.NONE,
+      }
       const traceExporter =
         exporterConfig.protocol === 'grpc'
-          ? new OTLPTraceGrpcExporter({
-              url: normalizedEndpoint,
-              headers: exporterConfig.headers,
-              timeoutMillis: exporterConfig.timeout,
-              compression:
-                exporterConfig.compression === 'gzip'
-                  ? CompressionAlgorithm.GZIP
-                  : CompressionAlgorithm.NONE,
-            })
-          : new OTLPTraceHttpExporter({
-              url: normalizedEndpoint,
-              headers: exporterConfig.headers,
-              timeoutMillis: exporterConfig.timeout,
-            })
+          ? new OTLPTraceGrpcExporter(commonOptions)
+          : new OTLPTraceHttpExporter(commonOptions)
       spanProcessors.push(new BatchSpanProcessor(traceExporter))
     }
   }
@@ -426,27 +494,23 @@ export function initOpenTelemetry(
 
   const readers: MetricReader[] = []
   for (const exporterConfig of metricsConfigs) {
-    if (exporterConfig.endpoint && exportingEnabled) {
-      const normalizedEndpoint = normalizeOtlpEndpointUrl(
-        exporterConfig.endpoint,
-        'metrics',
-      )
+    if (exportingEnabled) {
+      const normalizedEndpoint = exporterConfig.endpoint
+        ? normalizeOtlpEndpointUrl(exporterConfig.endpoint, 'metrics')
+        : undefined
+      const commonOptions = {
+        ...(normalizedEndpoint ? { url: normalizedEndpoint } : {}),
+        headers: exporterConfig.headers,
+        timeoutMillis: exporterConfig.timeout,
+        compression:
+          exporterConfig.compression === 'gzip'
+            ? CompressionAlgorithm.GZIP
+            : CompressionAlgorithm.NONE,
+      }
       const metricExporter =
         exporterConfig.protocol === 'grpc'
-          ? new OTLPMetricGrpcExporter({
-              url: normalizedEndpoint,
-              headers: exporterConfig.headers,
-              timeoutMillis: exporterConfig.timeout,
-              compression:
-                exporterConfig.compression === 'gzip'
-                  ? CompressionAlgorithm.GZIP
-                  : CompressionAlgorithm.NONE,
-            })
-          : new OTLPMetricHttpExporter({
-              url: normalizedEndpoint,
-              headers: exporterConfig.headers,
-              timeoutMillis: exporterConfig.timeout,
-            })
+          ? new OTLPMetricGrpcExporter(commonOptions)
+          : new OTLPMetricHttpExporter(commonOptions)
       readers.push(
         new PeriodicExportingMetricReader({
           exporter: metricExporter,
@@ -467,27 +531,23 @@ export function initOpenTelemetry(
 
   const logProcessors: LogRecordProcessor[] = []
   for (const exporterConfig of logsConfigs) {
-    if (exporterConfig.endpoint && exportingEnabled) {
-      const normalizedEndpoint = normalizeOtlpEndpointUrl(
-        exporterConfig.endpoint,
-        'logs',
-      )
+    if (exportingEnabled) {
+      const normalizedEndpoint = exporterConfig.endpoint
+        ? normalizeOtlpEndpointUrl(exporterConfig.endpoint, 'logs')
+        : undefined
+      const commonOptions = {
+        ...(normalizedEndpoint ? { url: normalizedEndpoint } : {}),
+        headers: exporterConfig.headers,
+        timeoutMillis: exporterConfig.timeout,
+        compression:
+          exporterConfig.compression === 'gzip'
+            ? CompressionAlgorithm.GZIP
+            : CompressionAlgorithm.NONE,
+      }
       const logExporter =
         exporterConfig.protocol === 'grpc'
-          ? new OTLPLogGrpcExporter({
-              url: normalizedEndpoint,
-              headers: exporterConfig.headers,
-              timeoutMillis: exporterConfig.timeout,
-              compression:
-                exporterConfig.compression === 'gzip'
-                  ? CompressionAlgorithm.GZIP
-                  : CompressionAlgorithm.NONE,
-            })
-          : new OTLPLogHttpExporter({
-              url: normalizedEndpoint,
-              headers: exporterConfig.headers,
-              timeoutMillis: exporterConfig.timeout,
-            })
+          ? new OTLPLogGrpcExporter(commonOptions)
+          : new OTLPLogHttpExporter(commonOptions)
       logProcessors.push(new BatchLogRecordProcessor(logExporter))
     }
   }
@@ -522,6 +582,11 @@ export function initOpenTelemetry(
     process.env.OTEL_INSTRUMENTATION_FS_ENABLED,
     false,
   )
+  const runtimeNodeEnabled = resolveInstrumentationSetting(
+    config?.instrumentations?.runtimeNode,
+    process.env.OTEL_INSTRUMENTATION_RUNTIME_NODE_ENABLED,
+    true,
+  )
 
   registerInstrumentations({
     instrumentations: [
@@ -529,6 +594,7 @@ export function initOpenTelemetry(
       ...(undiciEnabled ? [new UndiciInstrumentation()] : []),
       ...(ioredisEnabled ? [new IORedisInstrumentation()] : []),
       ...(fsEnabled ? [new FsInstrumentation()] : []),
+      ...(runtimeNodeEnabled ? [new RuntimeNodeInstrumentation()] : []),
     ],
   })
 
@@ -538,20 +604,59 @@ export function initOpenTelemetry(
   }
 
   async function shutdown(): Promise<void> {
-    try {
-      await loggerProvider.shutdown()
-    } finally {
+    // Bound the flush so a slow or unreachable collector can't eat the
+    // process supervisor's termination grace period (exporters retry with
+    // backoff, which we observed taking 15s+ against a dead endpoint).
+    const timeoutMillis = config?.shutdownTimeoutMillis ?? 10_000
+
+    const work = (async () => {
       try {
-        await meterProvider.shutdown()
+        await loggerProvider.shutdown()
       } finally {
         try {
-          await tracerProvider.shutdown()
+          await meterProvider.shutdown()
         } finally {
-          await Sentry.flush(2_000)
+          await tracerProvider.shutdown()
         }
       }
+    })()
+
+    try {
+      await promiseWithDeadline(work, timeoutMillis, 'OpenTelemetry shutdown')
+    } catch (error) {
+      diag.error('OpenTelemetry shutdown failed', error)
+    }
+
+    try {
+      // Sentry.flush applies its own timeout.
+      await Sentry.flush(2_000)
+    } catch (error) {
+      diag.error('Sentry flush failed', error)
     }
   }
 
   return { shutdown }
+}
+
+async function promiseWithDeadline(
+  work: Promise<void>,
+  timeoutMillis: number,
+  what: string,
+): Promise<void> {
+  let timer: NodeJS.Timeout | undefined
+  const deadline = new Promise<'timeout'>((resolve) => {
+    timer = setTimeout(() => resolve('timeout'), timeoutMillis)
+  })
+
+  try {
+    const result = await Promise.race([work, deadline])
+    if (result === 'timeout') {
+      diag.warn(`${what} did not finish within ${timeoutMillis}ms; abandoning`)
+      // Detach the abandoned work so a late rejection can't become an
+      // unhandled rejection after we've moved on.
+      work.catch(() => undefined)
+    }
+  } finally {
+    clearTimeout(timer)
+  }
 }

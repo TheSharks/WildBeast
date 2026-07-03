@@ -1,3 +1,5 @@
+import type { NodeOptions } from '@sentry/node'
+
 export interface TelemetryExporterConfig {
   endpoint?: string
   headers?: Record<string, string>
@@ -11,11 +13,18 @@ export interface TelemetryInstrumentationConfig {
   undici?: boolean
   ioredis?: boolean
   fs?: boolean
+  runtimeNode?: boolean
 }
 
 export interface TelemetrySentryConfig {
   dsn?: string
   tracesSampleRate?: number
+  /**
+   * Per-span sampling decision; takes precedence over `tracesSampleRate`.
+   * Useful for biasing sampling towards interesting spans (commands) and
+   * away from noisy ones (recurring tasks).
+   */
+  tracesSampler?: NodeOptions['tracesSampler']
   environment?: string
   release?: string
   enableLogs?: boolean
@@ -30,6 +39,8 @@ export interface TelemetryConfig {
   shardId?: string
   diagnosticLogLevel?: 'none' | 'debug'
   enableExport?: boolean
+  /** Upper bound for flushing telemetry on shutdown. Defaults to 10 seconds. */
+  shutdownTimeoutMillis?: number
   exporters?: {
     otlp?: TelemetryExporterConfig | TelemetryExporterConfig[]
     traces?: TelemetryExporterConfig | TelemetryExporterConfig[]

@@ -1,3 +1,4 @@
+import { inspect } from 'node:util'
 import { logs, SeverityNumber } from '@opentelemetry/api-logs'
 import { LogLevel } from '@sapphire/framework'
 import { Logger as SapphireLogger } from '@sapphire/plugin-logger'
@@ -7,10 +8,22 @@ export class AnalyticsLogger extends SapphireLogger {
   private readonly otelLogger = logs.getLogger('@thesharks/sapphire-logger')
 
   public override write(level: LogLevel, ...values: readonly unknown[]): void {
-    const message = values.join(' ')
-
     // Call parent write method to maintain existing functionality (console output)
     super.write(level, ...values)
+
+    // The configured level applies to telemetry too, otherwise trace/debug
+    // logging floods OTEL and Sentry regardless of environment.
+    if (level < this.level) {
+      return
+    }
+
+    const message = values
+      .map((value) =>
+        typeof value === 'string'
+          ? value
+          : inspect(value, { colors: false, depth: 3 }),
+      )
+      .join(' ')
 
     // Send to OpenTelemetry
     try {
