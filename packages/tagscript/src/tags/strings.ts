@@ -49,9 +49,11 @@ export const substringHandler: TagHandler = (_ctx, args) => {
   const textValue = text ?? ''
   const start = parseInt(startStr ?? '0', 10)
   const end = endStr ? parseInt(endStr, 10) : undefined
+  // slice semantics: no silent argument swapping when start > end,
+  // and negative indices count from the end
   return end !== undefined
-    ? textValue.substring(start, end)
-    : textValue.substring(start)
+    ? textValue.slice(start, end)
+    : textValue.slice(start)
 }
 
 // Replaces real newlines and the literal \n sequence (JagTag compatibility)

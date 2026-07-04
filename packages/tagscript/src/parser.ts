@@ -104,6 +104,12 @@ function parseTag(input: string, startIndex: number, depth: number): TagResult {
   }
 
   const name = input.slice(nameStart, index)
+
+  // Empty tag names ({} or {:...}) are literal text, not tags
+  if (name === '') {
+    return { index: startIndex, closed: false }
+  }
+
   const args: Segment[] = []
 
   if (input[index] === ':') {

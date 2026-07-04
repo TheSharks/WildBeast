@@ -66,3 +66,20 @@ describe('review fixes', () => {
     })
   })
 })
+
+describe('low-severity fixes', () => {
+  it('substring does not swap arguments when start > end', async () => {
+    expect((await render('{substring:hello|3|1}')).output).toBe('')
+  })
+
+  it('substring supports negative indices', async () => {
+    expect((await render('{substring:hello|-3}')).output).toBe('llo')
+    expect((await render('{substring:hello|0|-2}')).output).toBe('hel')
+  })
+
+  it('empty tag names are literal text in strict mode', async () => {
+    expect((await render('{}', { mode: 'strict' })).output).toBe('{}')
+    expect((await render('{:}', { mode: 'strict' })).output).toBe('{:}')
+    expect((await render('a{}b', { mode: 'strict' })).output).toBe('a{}b')
+  })
+})

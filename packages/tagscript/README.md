@@ -132,7 +132,7 @@ console.log(mathResult.output) // hello
 | `{replaceregex:pattern\|with:replacement\|in:text}` | JagTag-compatible syntax for regex replacement. |
 | `{reverse:text}` | Reverse string. Grapheme-aware. |
 | `{url:text}` | URL encode string. |
-| `{substring:text\|start\|end}` | Extract substring. |
+| `{substring:text\|start\|end}` | Extract substring. Negative indices count from the end. |
 | `{oneline:text}` | Replace newlines with spaces. |
 | `{hash:text}` | Java-style hashCode of string (matches JagTag). |
 
@@ -140,7 +140,7 @@ console.log(mathResult.output) // hello
 
 | Tag | Description |
 |-----|-------------|
-| `{math:a\|op\|b\|op\|c...}` | JagTag-compatible math operations. Supports `+`, `-`, `*`, `/`, `^`, `%`. |
+| `{math:a\|op\|b\|op\|c...}` | JagTag-compatible math operations. Supports `+`, `-`, `*`, `/`, `^`, `%`. Non-numeric operands fall back to string mode: `+` concatenates, `-` removes the first occurrence of the right operand, other operators join the operands literally. |
 | `{abs:value}` | Absolute value. |
 | `{sin:value}` | Sine. |
 | `{cos:value}` | Cosine. |
