@@ -72,6 +72,22 @@ to 1,000 sides each.
 A freshly generated motivational poster from inspirobot.me. Results may
 inspire confusion instead. The 🔄 button generates another.
 
+### /booru
+
+Searches imageboards, with tag autocompletion where the site supports it.
+
+```
+/booru e621 query:wolf
+/booru rule34 query:...
+/booru derpibooru query:pony
+```
+
+Results page with the same ◀️ ▶️ 🔀 buttons as Urban Dictionary, plus ✖️
+to dismiss the image. `rule34` (served by rule34.paheal.net) and
+`derpibooru` only work in NSFW-marked channels and DMs. `e621` works
+anywhere: in channels not marked NSFW it silently switches to e926, the
+safe-rated mirror of the same site.
+
 ### /urbandictionary
 
 Searches Urban Dictionary, with autocompletion while you type. Use the

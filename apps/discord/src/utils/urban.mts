@@ -111,6 +111,10 @@ export async function buildUrbanPage(
           .setStyle(ButtonStyle.Secondary)
           .setEmoji('🔀'),
         new ButtonBuilder()
+          .setCustomId('close')
+          .setStyle(ButtonStyle.Danger)
+          .setEmoji('✖️'),
+        new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel(
             (await resolveKey(interaction, 'commands/fun:open')) as string,

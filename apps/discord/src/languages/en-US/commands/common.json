@@ -1,0 +1,4 @@
+{
+  "nsfwDisabled": "This channel needs to be marked as NSFW before this command can be used",
+  "noResultsFor": "No results found for `{{query}}`"
+}
