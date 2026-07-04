@@ -8,7 +8,7 @@ sidebar:
 WildBeast is configured entirely through environment variables. On startup
 the cluster manager loads `apps/discord/.env` (when present) with Node's
 built-in env-file support and validates the result against a
-[zod](https://zod.dev) schema — misconfiguration fails at boot with a
+[zod](https://zod.dev) schema, so misconfiguration fails at boot with a
 readable error instead of surfacing deep inside discord.js or Redis.
 
 Variables already present in the real environment take precedence over the

@@ -2,7 +2,7 @@
 title: Testing
 description: Running and writing tests for the WildBeast framework.
 sidebar:
-  order: 1
+  order: 5
 ---
 
 WildBeast's suite tests the framework's own infrastructure (piece loading,
@@ -16,7 +16,7 @@ a live bot, and Sapphire already covers the dispatch machinery.
 There are two entry points, depending on whether you have docker available:
 
 ```bash
-# Unit tests only — no external services needed
+# Unit tests only, no external services needed
 pnpm test
 
 # Everything, including the Redis and OpenTelemetry integration suites.
@@ -61,5 +61,5 @@ The `@thesharks/test-utils` workspace package provides the shared toolkit:
 - `connectionPool(factory)` tracks connections for one-call teardown.
 
 Integration test files share one Redis and flush it between tests, so
-vitest is configured to run test files serially — don't move suites to
+vitest is configured to run test files serially. Don't move suites to
 parallel execution without also isolating their state.
