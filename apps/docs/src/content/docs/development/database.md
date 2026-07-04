@@ -26,10 +26,26 @@ The connection string comes from `DATABASE_URL` (a standard
 TimescaleDB service.
 
 :::note
-Nothing in the v9 bot queries the database yet. The schema below carries
-over from v8 and backs the tag system as it's ported; the package exists so
-new features land on a shared client from day one.
+The schema carries over from v8 and currently backs the
+[tag system](/using/commands/#tags); the package exists so new features
+land on a shared client from day one.
 :::
+
+## Extensions
+
+The schema relies on two stock PostgreSQL contrib extensions, enabled by
+the first migration (`CREATE EXTENSION IF NOT EXISTS`), so any user that
+owns the database can apply it:
+
+- **citext** makes `Tag.name` case-insensitive at the type level:
+  `hello` and `Hello` are the same tag, in lookups and in the unique
+  constraint.
+- **pg_trgm** provides trigram matching. A GIN index on `Tag.name` backs
+  substring autocomplete and the `similarity()`-based "did you mean"
+  suggestion when a tag isn't found.
+
+Both ship with every PostgreSQL distribution, including managed ones, so
+they add no hosting constraints.
 
 ## Current schema
 
@@ -37,7 +53,7 @@ Two tables, defined in `packages/drizzle/src/schema.ts`:
 
 | Table | Columns | Purpose |
 | --- | --- | --- |
-| `Tag` | `id`, `name` (unique), `content`, `authorId` | Stored [TagScript](/tagscript/overview/) templates. |
+| `Tag` | `id`, `name` (citext, unique), `content`, `authorId` | Stored [TagScript](/tagscript/overview/) templates. |
 | `Guild` | `id` | Guilds known to the bot. |
 
 The schema module also exports inferred types (`Tag`, `NewTag`, `Guild`,

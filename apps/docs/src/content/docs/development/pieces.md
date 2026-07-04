@@ -53,6 +53,45 @@ subdirectory is organization, not a requirement. User-facing strings come from
 i18next, never inline (see [Localization](#localization)). During a command
 you can reach shared services through `this.container` (`client`, `logger`).
 
+A command with subcommands extends `TracedSubcommand` from
+`structures/subcommand.mjs` instead, built on `@sapphire/plugin-subcommands`.
+Declare the mapping from subcommand name to method with `@ApplyOptions` and
+the same tracing applies, with the matched subcommand recorded on the span.
+The tag command is the pattern to copy.
+
+## Message formatting
+
+Replies are plain text or [Components V2](https://docs.discord.com/developers/components/reference).
+Embeds are the previous generation of message formatting; don't use
+`EmbedBuilder` in new code. When a reply needs structure, a title, an accent
+color, or separated fields, build a `ContainerBuilder` with text display
+components and send it with the `IsComponentsV2` flag:
+
+```ts
+import {
+  Colors,
+  ContainerBuilder,
+  MessageFlags,
+  TextDisplayBuilder,
+} from 'discord.js'
+
+const container = new ContainerBuilder()
+  .setAccentColor(Colors.Red)
+  .addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('## Heading\nBody text'),
+  )
+
+await interaction.reply({
+  components: [container],
+  flags: MessageFlags.IsComponentsV2,
+})
+```
+
+Two constraints to keep in mind: a Components V2 message can't carry
+`content` or `embeds` (clear both when editing an acknowledged reply into
+one), and the flag can't be removed from a message once set. The
+`sendErrorReport` helper in `utils/errorResponse.mjs` is a worked example.
+
 ## Listeners
 
 Listeners extend Sapphire's `Listener` directly and are not traced, since
