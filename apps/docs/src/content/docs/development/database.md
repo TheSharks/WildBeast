@@ -55,6 +55,7 @@ Two tables, defined in `packages/drizzle/src/schema.ts`:
 | --- | --- | --- |
 | `Tag` | `id`, `name` (citext, unique), `content`, `authorId` | Stored [TagScript](/tagscript/overview/) templates. |
 | `Guild` | `id` | Guilds known to the bot. |
+| `ApplicationCommandId` | `commandId`, `name`, `guildId` | Discord-assigned command ids, fed back to Sapphire as `idHints` on the next boot. |
 
 The schema module also exports inferred types (`Tag`, `NewTag`, `Guild`,
 `NewGuild`) for use in application code.
