@@ -1,0 +1,3 @@
+{
+  "result": "You rolled {{dice}}d{{sides}} and got **{{total}}**"
+}

@@ -1,5 +1,15 @@
 {
   "ping": "ping",
+  "8ball": "8ball",
+  "advice": "advice",
+  "cat": "cat",
+  "dice": "dice",
+  "diceOptionDice": "dice",
+  "diceOptionSides": "sides",
+  "dog": "dog",
+  "info": "info",
+  "inspire": "inspire",
+  "invite": "invite",
   "tag": "tag",
   "tagShow": "show",
   "tagCreate": "create",
@@ -11,5 +21,7 @@
   "tagOptionName": "name",
   "tagOptionContent": "content",
   "tagOptionArgs": "args",
-  "tagOptionAuthor": "author"
+  "tagOptionAuthor": "author",
+  "urbandictionary": "urbandictionary",
+  "urbanOptionQuery": "query"
 }

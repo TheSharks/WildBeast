@@ -1,5 +1,15 @@
 {
   "ping": "Check if the bot is still alive",
+  "8ball": "Ask the magic 8-ball for advice",
+  "advice": "Get some helpful advice",
+  "cat": "Sends a random cat image",
+  "dice": "Roll some dice",
+  "diceOptionDice": "The number of dice to roll (default: 1)",
+  "diceOptionSides": "The number of sides on the dice (default: 6)",
+  "dog": "Sends a random dog image",
+  "info": "Get information about the bot",
+  "inspire": "Get a random quote from inspirobot.me",
+  "invite": "Get an invite link for the bot",
   "tag": "Store and recall snippets of text, with TagScript templating",
   "tagShow": "Render a tag and post the result",
   "tagCreate": "Create a new tag",
@@ -11,5 +21,7 @@
   "tagOptionName": "The name of the tag",
   "tagOptionContent": "What the tag should say; TagScript is allowed here",
   "tagOptionArgs": "Space-separated arguments passed to the tag",
-  "tagOptionAuthor": "Only list tags made by this user"
+  "tagOptionAuthor": "Only list tags made by this user",
+  "urbandictionary": "Search Urban Dictionary",
+  "urbanOptionQuery": "What to search for"
 }

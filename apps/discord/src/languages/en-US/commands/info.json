@@ -1,0 +1,11 @@
+{
+  "guilds": "Guilds on this cluster",
+  "uptime": "Up since",
+  "shard": "Shards",
+  "cluster": "Cluster",
+  "version": "Version",
+  "node": "Node.js version",
+  "ram": "Memory usage",
+  "os": "Operating system",
+  "poweredBy": "Powered by WildBeast"
+}
