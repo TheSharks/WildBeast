@@ -36,14 +36,18 @@ export async function fetchStoredIdHints(piece: Piece): Promise<string[]> {
 }
 
 /**
- * Wrap a registry so every register call carries the stored id hints,
- * merged with any the command supplies itself.
+ * Wrap a registry so every register call carries the stored id hints
+ * (merged with any the command supplies itself) and, when
+ * WILDBEAST_DEV_GUILD_ID is set, defaults to registering in that guild
+ * instead of globally. Development environments set it for instant
+ * command updates; production leaves it unset and registers globally.
  */
-export function withIdHints(
+export function withRegistrationDefaults(
   registry: ApplicationCommandRegistry,
   hints: readonly string[],
 ): ApplicationCommandRegistry {
-  if (hints.length === 0) return registry
+  const devGuildId = process.env.WILDBEAST_DEV_GUILD_ID
+  if (hints.length === 0 && !devGuildId) return registry
 
   return new Proxy(registry, {
     get(target, property, receiver) {
@@ -56,6 +60,7 @@ export function withIdHints(
           options?: ApplicationCommandRegistry.RegisterOptions,
         ) => {
           target[property](command, {
+            ...(devGuildId ? { guildIds: [devGuildId] } : {}),
             ...options,
             idHints: [...new Set([...(options?.idHints ?? []), ...hints])],
           })
@@ -81,7 +86,7 @@ export function installIdHintTracking(command: Command): void {
 
   command.registerApplicationCommands = async (registry) =>
     registerApplicationCommands(
-      withIdHints(registry, await fetchStoredIdHints(command)),
+      withRegistrationDefaults(registry, await fetchStoredIdHints(command)),
     )
 }
 

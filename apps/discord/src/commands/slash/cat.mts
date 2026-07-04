@@ -9,18 +9,13 @@ import { buildCatMessage } from '../../utils/funMessages.mjs'
 })
 export class CatCommand extends TracedCommand {
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand(
-      (builder) => {
-        applyLocalizedBuilder(
-          builder,
-          'commands/names:cat',
-          'commands/descriptions:cat',
-        )
-      },
-      {
-        guildIds: ['1034462346908794910'],
-      },
-    )
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(
+        builder,
+        'commands/names:cat',
+        'commands/descriptions:cat',
+      )
+    })
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {

@@ -33,39 +33,34 @@ export class BooruCommand extends TracedSubcommand {
         .setMaxLength(BOORU_QUERY_MAX_LENGTH)
         .setAutocomplete(true)
 
-    registry.registerChatInputCommand(
-      (builder) => {
-        applyLocalizedBuilder(
-          builder,
-          'commands/names:booru',
-          'commands/descriptions:booru',
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(
+        builder,
+        'commands/names:booru',
+        'commands/descriptions:booru',
+      )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:booruE621',
+            'commands/descriptions:booruE621',
+          ).addStringOption(queryOption),
         )
-          .addSubcommand((sub) =>
-            applyLocalizedBuilder(
-              sub,
-              'commands/names:booruE621',
-              'commands/descriptions:booruE621',
-            ).addStringOption(queryOption),
-          )
-          .addSubcommand((sub) =>
-            applyLocalizedBuilder(
-              sub,
-              'commands/names:booruRule34',
-              'commands/descriptions:booruRule34',
-            ).addStringOption(queryOption),
-          )
-          .addSubcommand((sub) =>
-            applyLocalizedBuilder(
-              sub,
-              'commands/names:booruDerpibooru',
-              'commands/descriptions:booruDerpibooru',
-            ).addStringOption(queryOption),
-          )
-      },
-      {
-        guildIds: ['1034462346908794910'],
-      },
-    )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:booruRule34',
+            'commands/descriptions:booruRule34',
+          ).addStringOption(queryOption),
+        )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:booruDerpibooru',
+            'commands/descriptions:booruDerpibooru',
+          ).addStringOption(queryOption),
+        )
+    })
   }
 
   public override async autocompleteRun(

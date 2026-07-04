@@ -9,23 +9,20 @@ import { fetchJson } from '../../utils/http.mjs'
 })
 export class AdviceCommand extends TracedCommand {
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand(
-      (builder) => {
-        applyLocalizedBuilder(
-          builder,
-          'commands/names:advice',
-          'commands/descriptions:advice',
-        )
-      },
-      {
-        guildIds: ['1034462346908794910'],
-      },
-    )
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(
+        builder,
+        'commands/names:advice',
+        'commands/descriptions:advice',
+      )
+    })
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+    // adviceslip serves a cached slip for ~2 seconds; the query string
+    // busts that so back-to-back calls differ.
     const { slip } = await fetchJson<{ slip: { advice: string } }>(
-      'https://api.adviceslip.com/advice',
+      `https://api.adviceslip.com/advice?t=${interaction.id}`,
     )
     return interaction.reply(slip.advice)
   }

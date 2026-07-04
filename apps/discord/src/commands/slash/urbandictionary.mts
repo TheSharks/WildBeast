@@ -15,27 +15,22 @@ import {
 })
 export class UrbanDictionaryCommand extends TracedCommand {
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand(
-      (builder) => {
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(
+        builder,
+        'commands/names:urbandictionary',
+        'commands/descriptions:urbandictionary',
+      ).addStringOption((option) =>
         applyLocalizedBuilder(
-          builder,
-          'commands/names:urbandictionary',
-          'commands/descriptions:urbandictionary',
-        ).addStringOption((option) =>
-          applyLocalizedBuilder(
-            option,
-            'commands/names:urbanOptionQuery',
-            'commands/descriptions:urbanOptionQuery',
-          )
-            .setRequired(true)
-            .setMaxLength(URBAN_QUERY_MAX_LENGTH)
-            .setAutocomplete(true),
+          option,
+          'commands/names:urbanOptionQuery',
+          'commands/descriptions:urbanOptionQuery',
         )
-      },
-      {
-        guildIds: ['1034462346908794910'],
-      },
-    )
+          .setRequired(true)
+          .setMaxLength(URBAN_QUERY_MAX_LENGTH)
+          .setAutocomplete(true),
+      )
+    })
   }
 
   public override async autocompleteRun(

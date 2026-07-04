@@ -5,18 +5,13 @@ import { TracedCommand } from '../../structures/command.mjs'
 
 export class InviteCommand extends TracedCommand {
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand(
-      (builder) => {
-        applyLocalizedBuilder(
-          builder,
-          'commands/names:invite',
-          'commands/descriptions:invite',
-        )
-      },
-      {
-        guildIds: ['1034462346908794910'],
-      },
-    )
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(
+        builder,
+        'commands/names:invite',
+        'commands/descriptions:invite',
+      )
+    })
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {

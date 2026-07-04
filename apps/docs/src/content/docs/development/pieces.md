@@ -59,12 +59,13 @@ Declare the mapping from subcommand name to method with `@ApplyOptions` and
 the same tracing applies, with the matched subcommand recorded on the span.
 The tag command is the pattern to copy.
 
-Never pass `idHints` when registering. The traced base classes load the ids
-Discord assigned on previous boots from the database and inject them
-automatically, and a listener stores them again after every registry sync,
-so Sapphire updates existing commands instead of recreating them. A new
-command needs nothing for this; its ids are tracked from its first
-registration.
+Never pass `idHints` or `guildIds` when registering; both are injected by
+the traced base classes. Ids Discord assigned on previous boots are loaded
+from the database and stored again after every registry sync, so Sapphire
+updates existing commands instead of recreating them. Registration targets
+the guild from `WILDBEAST_DEV_GUILD_ID` when set (instant updates during
+development) and is global otherwise. A new command needs nothing for
+either; it works from its first registration.
 
 ## Message formatting
 

@@ -9,18 +9,13 @@ import { buildDogMessage } from '../../utils/funMessages.mjs'
 })
 export class DogCommand extends TracedCommand {
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand(
-      (builder) => {
-        applyLocalizedBuilder(
-          builder,
-          'commands/names:dog',
-          'commands/descriptions:dog',
-        )
-      },
-      {
-        guildIds: ['1034462346908794910'],
-      },
-    )
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(
+        builder,
+        'commands/names:dog',
+        'commands/descriptions:dog',
+      )
+    })
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {

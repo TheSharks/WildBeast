@@ -25,6 +25,9 @@ export const envSchema = z.object({
     .optional(),
   WILDBEAST_CLUSTER_ID: z.string().optional(),
   WILDBEAST_CLUSTERING_MODE: z.enum(['static', 'autonomous']).optional(),
+  // When set, commands register in this guild instead of globally, so
+  // development iterations show up instantly.
+  WILDBEAST_DEV_GUILD_ID: z.string().regex(/^\d+$/).optional(),
   // Shown by /invite instead of the generated OAuth URL when set.
   WILDBEAST_INVITE_OVERRIDE: z.url().optional(),
   WILDBEAST_SHARDING_START: z.coerce.number().int().nonnegative().optional(),

@@ -25,6 +25,13 @@ The essentials: the token and the runtime mode.
 | `NODE_ENV` | no | `development` enables debug logging and hot module reload. |
 | `TRACE` | no | Any value raises the log level to trace. |
 
+## Commands
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `WILDBEAST_DEV_GUILD_ID` | no | When set, slash commands register in this guild instead of globally. Guild commands update instantly, so development environments want this; production leaves it unset. |
+| `WILDBEAST_INVITE_OVERRIDE` | no | A URL for `/invite` to hand out instead of the generated OAuth link. |
+
 ## Redis
 
 Redis backs the scheduled task queue and, in multi-cluster setups, all

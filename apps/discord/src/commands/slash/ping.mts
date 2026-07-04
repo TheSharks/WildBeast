@@ -5,18 +5,13 @@ import { TracedCommand } from '../../structures/command.mjs'
 
 export class PingCommand extends TracedCommand {
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand(
-      (builder) => {
-        applyLocalizedBuilder(
-          builder,
-          'commands/names:ping',
-          'commands/descriptions:ping',
-        )
-      },
-      {
-        guildIds: ['1034462346908794910'],
-      },
-    )
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(
+        builder,
+        'commands/names:ping',
+        'commands/descriptions:ping',
+      )
+    })
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {

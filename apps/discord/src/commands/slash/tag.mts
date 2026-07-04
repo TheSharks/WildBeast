@@ -39,97 +39,92 @@ export class TagCommand extends TracedSubcommand {
         .setMaxLength(32)
         .setAutocomplete(autocomplete)
 
-    registry.registerChatInputCommand(
-      (builder) => {
-        applyLocalizedBuilder(
-          builder,
-          'commands/names:tag',
-          'commands/descriptions:tag',
-        )
-          .addSubcommand((sub) =>
-            applyLocalizedBuilder(
-              sub,
-              'commands/names:tagShow',
-              'commands/descriptions:tagShow',
-            )
-              .addStringOption((option) => nameOption(option))
-              .addStringOption((option) =>
-                applyLocalizedBuilder(
-                  option,
-                  'commands/names:tagOptionArgs',
-                  'commands/descriptions:tagOptionArgs',
-                ),
-              ),
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(
+        builder,
+        'commands/names:tag',
+        'commands/descriptions:tag',
+      )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:tagShow',
+            'commands/descriptions:tagShow',
           )
-          .addSubcommand((sub) =>
-            applyLocalizedBuilder(
-              sub,
-              'commands/names:tagCreate',
-              'commands/descriptions:tagCreate',
-            )
-              .addStringOption((option) => nameOption(option, false))
-              .addStringOption((option) =>
-                applyLocalizedBuilder(
-                  option,
-                  'commands/names:tagOptionContent',
-                  'commands/descriptions:tagOptionContent',
-                ).setRequired(true),
-              ),
-          )
-          .addSubcommand((sub) =>
-            applyLocalizedBuilder(
-              sub,
-              'commands/names:tagEdit',
-              'commands/descriptions:tagEdit',
-            )
-              .addStringOption((option) => nameOption(option))
-              .addStringOption((option) =>
-                applyLocalizedBuilder(
-                  option,
-                  'commands/names:tagOptionContent',
-                  'commands/descriptions:tagOptionContent',
-                ).setRequired(true),
-              ),
-          )
-          .addSubcommand((sub) =>
-            applyLocalizedBuilder(
-              sub,
-              'commands/names:tagDelete',
-              'commands/descriptions:tagDelete',
-            ).addStringOption((option) => nameOption(option)),
-          )
-          .addSubcommand((sub) =>
-            applyLocalizedBuilder(
-              sub,
-              'commands/names:tagList',
-              'commands/descriptions:tagList',
-            ).addUserOption((option) =>
+            .addStringOption((option) => nameOption(option))
+            .addStringOption((option) =>
               applyLocalizedBuilder(
                 option,
-                'commands/names:tagOptionAuthor',
-                'commands/descriptions:tagOptionAuthor',
+                'commands/names:tagOptionArgs',
+                'commands/descriptions:tagOptionArgs',
               ),
             ),
+        )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:tagCreate',
+            'commands/descriptions:tagCreate',
           )
-          .addSubcommand((sub) =>
+            .addStringOption((option) => nameOption(option, false))
+            .addStringOption((option) =>
+              applyLocalizedBuilder(
+                option,
+                'commands/names:tagOptionContent',
+                'commands/descriptions:tagOptionContent',
+              ).setRequired(true),
+            ),
+        )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:tagEdit',
+            'commands/descriptions:tagEdit',
+          )
+            .addStringOption((option) => nameOption(option))
+            .addStringOption((option) =>
+              applyLocalizedBuilder(
+                option,
+                'commands/names:tagOptionContent',
+                'commands/descriptions:tagOptionContent',
+              ).setRequired(true),
+            ),
+        )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:tagDelete',
+            'commands/descriptions:tagDelete',
+          ).addStringOption((option) => nameOption(option)),
+        )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:tagList',
+            'commands/descriptions:tagList',
+          ).addUserOption((option) =>
             applyLocalizedBuilder(
-              sub,
-              'commands/names:tagInfo',
-              'commands/descriptions:tagInfo',
-            ).addStringOption((option) => nameOption(option)),
-          )
-          .addSubcommand((sub) =>
-            applyLocalizedBuilder(
-              sub,
-              'commands/names:tagRaw',
-              'commands/descriptions:tagRaw',
-            ).addStringOption((option) => nameOption(option)),
-          )
-      },
-      {
-        guildIds: ['1034462346908794910'],
-      },
-    )
+              option,
+              'commands/names:tagOptionAuthor',
+              'commands/descriptions:tagOptionAuthor',
+            ),
+          ),
+        )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:tagInfo',
+            'commands/descriptions:tagInfo',
+          ).addStringOption((option) => nameOption(option)),
+        )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:tagRaw',
+            'commands/descriptions:tagRaw',
+          ).addStringOption((option) => nameOption(option)),
+        )
+    })
   }
 
   public override async autocompleteRun(

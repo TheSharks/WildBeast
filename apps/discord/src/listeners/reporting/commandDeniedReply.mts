@@ -1,6 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators'
-import type { ListenerOptions } from '@sapphire/framework'
-import { Events, Listener } from '@sapphire/framework'
+import type { ListenerOptions, UserError } from '@sapphire/framework'
+import { Events, Identifiers, Listener } from '@sapphire/framework'
+import { resolveKey } from '@sapphire/plugin-i18next'
 import { type ClientEvents, MessageFlags } from 'discord.js'
 
 /**
@@ -19,12 +20,30 @@ export class CommandDeniedReplyListener extends Listener {
     if (Reflect.get(Object(error.context), 'silent')) return
 
     const { interaction } = payload
+    const content = await this.localize(interaction, error)
     if (interaction.replied || interaction.deferred) {
-      return interaction.editReply(error.message)
+      return interaction.editReply(content)
     }
     return interaction.reply({
-      content: error.message,
+      content,
       flags: MessageFlags.Ephemeral,
     })
+  }
+
+  private async localize(
+    interaction: ClientEvents['chatInputCommandDenied'][1]['interaction'],
+    error: UserError,
+  ): Promise<string> {
+    if (error.identifier === Identifiers.PreconditionCooldown) {
+      const remaining = Number(
+        Reflect.get(Object(error.context), 'remaining') ?? 0,
+      )
+      return (await resolveKey(interaction, 'system/errors:cooldown', {
+        resumeAt: `<t:${Math.ceil((Date.now() + remaining) / 1000)}:R>`,
+      })) as string
+    }
+    // Other precondition messages are framework-provided English; they
+    // gain localized keys as preconditions get used.
+    return error.message
   }
 }
