@@ -38,6 +38,21 @@ const result = await render('{upper:hello world}')
 console.log(result.output) // HELLO WORLD
 ```
 
+## Browser usage
+
+Use the `web` subpath when TagScript is bundled for browsers:
+
+```ts
+import { render } from '@thesharks/tagscript/web'
+
+const result = await render('Hello {upper:world}')
+console.log(result.output) // Hello WORLD
+```
+
+The web entrypoint exports the same parser, renderer, registry helpers, and
+browser-safe default tags as the main package, but it does not register the
+Node-only `{fetch}` tag.
+
 ## Use a custom registry
 
 ```ts
@@ -222,7 +237,7 @@ console.log(mathResult.output) // hello
 
 | Tag | Description |
 |-----|-------------|
-| `{fetch:url\|method}` | Fetch content from URL. Requires `enableFetch: true`. |
+| `{fetch:url\|method}` | Fetch content from URL. Requires `enableFetch: true`. Available from the Node entrypoint only. |
 
 ### Fetch safety
 
@@ -234,7 +249,7 @@ The fetch tag can reach network resources, so treat it as attacker-controllable 
 - Each request carries a 10-second `AbortSignal.timeout` unless your `fetchOptions` supplies its own signal.
 - Fetched output is marked inert (see `inertHandlerOutput`) so remote bodies can't inject executable tags.
 
-The IP checks only cover literal addresses in the URL. A hostname that resolves to a private address via DNS (DNS rebinding) is **not** blocked, because pinning the resolved address is out of scope. For untrusted templates, set `fetchAllowedHosts` to an explicit allowlist — this is the recommended safeguard:
+The IP checks only cover literal addresses in the URL. A hostname that resolves to a private address via DNS (DNS rebinding) is **not** blocked, because pinning the resolved address is out of scope. For untrusted templates, set `fetchAllowedHosts` to an explicit allowlist; this is the recommended safeguard:
 
 ```ts
 await render('{fetch:https://api.example.com/data}', {
@@ -332,7 +347,7 @@ Three safeguards bound this recursion:
 
 - `maxIterations` caps the number of render passes. If the output still changes when the cap is reached, rendering throws a `RenderError` instead of returning partially rendered output.
 - `maxDepth` caps nesting depth, including inside lazy tags like `{if}` and `{eval}`.
-- `inertHandlerOutput` lists tags whose output is never re-executed. It defaults to `['fetch', 'js', 'javascript']` so remote responses and sandbox results render as literal text. Pass your own list to change this — including an empty array to re-execute everything.
+- `inertHandlerOutput` lists tags whose output is never re-executed. It defaults to `['fetch', 'js', 'javascript']` so remote responses and sandbox results render as literal text. Pass your own list to change this, including an empty array to re-execute everything.
 
 ## Regular expression safety
 
