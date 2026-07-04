@@ -1,0 +1,21 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    # Promotes resource attributes (cluster.id, service.name,
+    # service.instance.id) to metric labels. The dashboards depend on this.
+    resource_to_telemetry_conversion:
+      enabled: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus]
