@@ -1,0 +1,186 @@
+---
+import TagScriptPlayground from './TagScriptPlayground.astro'
+---
+
+<div class="ts-drawer not-content" data-ts-drawer>
+  <button
+    type="button"
+    class="ts-drawer-toggle"
+    data-drawer-toggle
+    aria-expanded="false"
+    aria-controls="ts-drawer-panel"
+  >
+    <svg
+      class="ts-drawer-chevron"
+      aria-hidden="true"
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+    >
+      <path
+        d="M2 7.5 6 3.5l4 4"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      ></path>
+    </svg>
+    Playground
+  </button>
+
+  <div class="ts-drawer-panel" id="ts-drawer-panel" inert>
+    <TagScriptPlayground />
+  </div>
+</div>
+
+<script>
+  for (const drawer of document.querySelectorAll('[data-ts-drawer]')) {
+    const toggle = drawer.querySelector<HTMLButtonElement>(
+      '[data-drawer-toggle]',
+    )
+    const panel = drawer.querySelector<HTMLElement>('.ts-drawer-panel')
+    if (!toggle || !panel) continue
+
+    // Starlight's sidebars overlap fixed elements that live inside the page
+    // content's stacking context, so hoist the drawer to <body>.
+    document.body.append(drawer)
+
+    const setOpen = (open: boolean) => {
+      drawer.classList.toggle('is-open', open)
+      toggle.setAttribute('aria-expanded', String(open))
+      if (open) {
+        panel.removeAttribute('inert')
+      } else {
+        panel.setAttribute('inert', '')
+      }
+    }
+
+    toggle.addEventListener('click', () => {
+      setOpen(!drawer.classList.contains('is-open'))
+    })
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && drawer.classList.contains('is-open')) {
+        setOpen(false)
+        toggle.focus()
+      }
+    })
+  }
+</script>
+
+<style>
+  .ts-drawer {
+    position: fixed;
+    inset: auto 1rem 0 auto;
+    z-index: var(--sl-z-index-navbar, 10); /* Above the sidebars; the search modal uses the top layer. */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: min(70rem, calc(100vw - 2rem));
+    pointer-events: none;
+  }
+
+  .ts-drawer-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 1.1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-bottom: 0;
+    border-radius: 0.6rem 0.6rem 0 0;
+    background: color-mix(in srgb, var(--sl-color-gray-6) 85%, var(--sl-color-black));
+    color: var(--sl-color-white);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 -0.2rem 1.2rem var(--wb-overlay-blurple, transparent);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .ts-drawer-toggle:hover {
+    border-color: var(--sl-color-accent);
+    color: var(--sl-color-accent-high);
+  }
+
+  .ts-drawer-toggle:focus-visible {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 1px;
+  }
+
+  .ts-drawer-chevron {
+    color: var(--sl-color-accent);
+    transition: transform 0.2s ease;
+  }
+
+  .is-open .ts-drawer-chevron {
+    transform: rotate(180deg);
+  }
+
+  .ts-drawer-panel {
+    width: 100%;
+    max-height: min(34rem, 75vh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid var(--sl-color-gray-5);
+    border-bottom: 0;
+    border-radius: 0.75rem 0 0 0;
+    background: var(--sl-color-black);
+    box-shadow: 0 -0.5rem 2.5rem var(--wb-overlay-blurple, transparent);
+    pointer-events: auto;
+
+    /* Collapsed: keep it in the DOM (so playground state survives) but
+       hidden and out of the layout flow. */
+    display: none;
+  }
+
+  .is-open .ts-drawer-panel {
+    display: block;
+    animation: ts-drawer-rise 0.2s ease;
+  }
+
+  @keyframes ts-drawer-rise {
+    from {
+      transform: translateY(0.75rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Flatten the playground card inside the drawer — the drawer provides
+     the chrome. */
+  .ts-drawer-panel :global(.tagscript-playground) {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  @media (max-width: 50rem) {
+    .ts-drawer {
+      inset: auto 0 0 0;
+      width: 100%;
+      padding: 0;
+    }
+
+    .ts-drawer-toggle {
+      margin-inline-end: 1rem;
+    }
+
+    .ts-drawer-panel {
+      border-radius: 0;
+      border-inline: 0;
+      max-height: 80vh;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .is-open .ts-drawer-panel {
+      animation: none;
+    }
+  }
+</style>

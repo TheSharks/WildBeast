@@ -1,9 +1,19 @@
 // @ts-check
 import starlight from '@astrojs/starlight'
 import { defineConfig } from 'astro/config'
+import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   site: 'https://thesharks.github.io',
+  vite: {
+    resolve: {
+      alias: {
+        '@thesharks/tagscript/web': fileURLToPath(
+          new URL('../../packages/tagscript/src/web.ts', import.meta.url),
+        ),
+      },
+    },
+  },
   integrations: [
     starlight({
       title: 'WildBeast',
@@ -37,6 +47,14 @@ export default defineConfig({
         {
           label: 'Guides',
           items: [{ autogenerate: { directory: 'guides' } }],
+        },
+        {
+          label: 'Using WildBeast',
+          items: [{ autogenerate: { directory: 'using' } }],
+        },
+        {
+          label: 'TagScript',
+          items: [{ autogenerate: { directory: 'tagscript' } }],
         },
         {
           label: 'Scaling',

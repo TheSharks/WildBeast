@@ -1,0 +1,85 @@
+---
+title: TagScript
+description: The templating language for dynamic, user-authored messages.
+sidebar:
+  order: 1
+---
+
+import TagScriptPlayground from '../../../components/TagScriptPlayground.astro'
+
+TagScript is a small templating language for generating messages that change
+based on context: the user, the server, the current time, a bit of math, or a
+stored variable. You write plain text with `{tags}` in it, and TagScript
+replaces each tag with its result.
+
+It's the successor to [JagTag](https://github.com/TheSharks/JagTag-JS), keeps
+most of its syntax, and ships as the standalone package
+[`@thesharks/tagscript`](https://www.npmjs.com/package/@thesharks/tagscript).
+This section documents the language; the [tag reference](/tagscript/tags/)
+lists everything you can use, the [cookbook](/tagscript/cookbook/) has
+ready-made templates, and [embedding](/tagscript/embedding/) covers running
+it in your own code.
+
+<TagScriptPlayground />
+
+## Syntax
+
+A tag is a name in braces, optionally followed by arguments after a colon.
+These examples are live. Edit the left side and watch the output change:
+
+<TagScriptPlayground
+  variant="example"
+  examples={[
+    { template: '{upper:hello}' },
+    { template: '{now}' },
+    { template: '{replace:cat|c|b}' },
+  ]}
+/>
+
+Multiple arguments are separated by `|`:
+
+<TagScriptPlayground
+  variant="example"
+  examples={[{ template: '{if:5|>|3|yes|no}' }]}
+/>
+
+Tags nest: an argument can itself be a tag, and it's rendered first. Here
+`{server}` resolves to the (simulated) server name before `{upper}` runs:
+
+<TagScriptPlayground
+  variant="example"
+  examples={[{ template: '{upper:{server}}' }]}
+/>
+
+To use a literal `{`, `}`, or `|` without it being read as syntax, put a
+backslash in front of it: `\{`, `\}`, `\|`.
+
+## Variables
+
+Store a value with `{set}` and read it back with `{get}`. Variables let you
+compute something once and reuse it:
+
+<TagScriptPlayground
+  variant="example"
+  examples={[{ template: '{set:name|world}{upper:{get:name}}' }]}
+/>
+
+## How rendering works
+
+TagScript renders repeatedly until the output stops changing, so a tag whose
+result contains more tags keeps resolving. This is what makes stored templates
+and variables composable: a variable holding `{upper:hi}` renders to `HI`, not
+the literal text.
+
+That loop is bounded so a template can't run away: there are limits on the
+number of passes, the nesting depth, and the output length (see the
+[reference](/tagscript/tags/#limits)). A few tags, like `{fetch}` and `{js}`,
+have their output treated as literal text and never re-rendered, so a remote
+response or script result can't inject more tags.
+
+## Unknown tags
+
+By default, a tag TagScript doesn't recognize is left in the output exactly as
+written, so a stray `{` never breaks a message. Embedders can switch to a
+strict mode that rejects unknown tags instead, see
+[embedding](/tagscript/embedding/).

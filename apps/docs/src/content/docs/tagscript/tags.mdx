@@ -1,0 +1,130 @@
+---
+title: Tag reference
+description: Every built-in TagScript tag, grouped by what it does.
+sidebar:
+  order: 2
+---
+
+import TagScriptDrawer from '../../../components/TagScriptDrawer.astro'
+
+Every tag available by default, grouped by purpose. Arguments are separated by
+`|`; optional arguments are shown in the descriptions. See
+[Overview](/tagscript/overview/) for the syntax basics, or open the
+playground drawer at the bottom of the page to try tags as you read.
+
+<TagScriptDrawer />
+
+## Text
+
+| Tag | What it does |
+| --- | --- |
+| `{upper:text}` | Uppercase. |
+| `{lower:text}` | Lowercase. |
+| `{length:text}` | Character count. |
+| `{reverse:text}` | Reverse the string (grapheme-aware, so emoji stay intact). |
+| `{oneline:text}` | Replace newlines with spaces. |
+| `{url:text}` | URL-encode the text. |
+| `{hash:text}` | Java-style `hashCode`, matching JagTag. |
+| `{substring:text\|start\|end}` | Slice out part of the text. Negative indices count from the end; `end` is optional. |
+| `{replace:text\|search\|replacement}` | Replace every occurrence of `search`. |
+| `{replaceregex:text\|pattern\|replacement}` | Replace using a regular expression. Also accepts the JagTag form `{replaceregex:pattern\|with:replacement\|in:text}`. |
+
+## Math
+
+`{math}` takes a chain of operands and operators and evaluates it with the
+usual operator precedence (`^` before `*`, `/`, `%` before `+`, `-`), so
+`{math:2|+|3|*|4}` is 14. When an operand isn't a number it falls back to
+string mode: `+` concatenates and `-` removes the first match.
+
+| Tag | What it does |
+| --- | --- |
+| `{math:a\|op\|b\|op\|c...}` | Evaluate a chain, e.g. `{math:2\|+\|3\|*\|4}`. |
+| `{add:a\|b}` `{subtract:a\|b}` `{multiply:a\|b}` `{divide:a\|b}` | Two-operand arithmetic. |
+| `{pow:a\|b}` `{mod:a\|b}` | Power and modulo. |
+| `{abs:n}` `{ceil:n}` `{floor:n}` `{round:n}` | Rounding and absolute value. |
+| `{sqrt:n}` `{sin:n}` `{cos:n}` `{tan:n}` | Roots and trigonometry. |
+| `{pi}` `{e}` | The constants π and e. |
+| `{base:n\|radix}` | Convert `n` to another base (radix 2–36), e.g. `{base:255\|16}` → `ff`. |
+| `{random:min\|max}` | A random integer between `min` and `max`, inclusive. |
+| `{choose:a\|b\|c...}` | Pick one of the values at random. |
+| `{range:start\|end\|step}` | A list of numbers from `start` to `end` (up to 2000 values). |
+
+## Time
+
+Times are handled in UTC. `{time}` formats the current time, or a given
+timestamp, using tokens `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`, or the literal
+`iso` for an ISO 8601 string.
+
+| Tag | What it does |
+| --- | --- |
+| `{now}` | Current time as a Unix timestamp in milliseconds. |
+| `{time}` | Same as `{now}` with no arguments. |
+| `{time:format}` | The current time formatted, e.g. `{time:yyyy-MM-dd}` or `{time:iso}`. |
+| `{time:timestamp\|format}` | A specific millisecond timestamp, formatted. |
+
+## Variables
+
+| Tag | What it does |
+| --- | --- |
+| `{set:name\|value}` | Store a value. Produces no output. |
+| `{get:name}` | Read a stored value. |
+| `{delete:name}` | Remove a stored value. |
+
+## Arguments
+
+When a template is invoked with arguments (for example, words typed after a
+command), these read them:
+
+| Tag | What it does |
+| --- | --- |
+| `{arg:index}` | The argument at `index` (starting from 0). |
+| `{args}` | All arguments, joined. |
+| `{argslen}` | How many arguments were passed. |
+
+## Conditionals and control flow
+
+| Tag | What it does |
+| --- | --- |
+| `{if:a\|operator\|b\|then\|else}` | Compare `a` and `b`; render `then` if true, otherwise the optional `else`. |
+| `{eval:template}` | Render a template built from other tags. |
+| `{ignore:text}` | Render `text` but swallow any errors inside it. |
+| `{note:text}` | A comment. Produces no output. |
+
+`{if}` operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `~` (fuzzy match, close
+spelling counts as equal), and `?` (the left side matches the right side as a
+regular expression).
+
+## Discord
+
+These pull from the context of wherever the template runs. They're empty when
+that context isn't available (for example, `{server}` in a direct message).
+
+| Tag | What it does |
+| --- | --- |
+| `{userid}` `{usertag}` `{mention}` `{avatar}` | The invoking user's id, tag, a mention, and avatar URL. |
+| `{serverid}` `{server}` | The server's id and name. |
+| `{channelid}` | The channel's id. |
+
+## Miscellaneous
+
+| Tag | What it does |
+| --- | --- |
+| `{uuid}` | A random UUID (version 4). |
+
+## Requires opt-in
+
+These two are off unless the person running TagScript enables them, because
+they reach outside the template. See [embedding](/tagscript/embedding/).
+
+| Tag | What it does |
+| --- | --- |
+| `{fetch:url\|method}` | Fetch content from a URL. Restricted to `http`/`https`, blocks private addresses, and is size- and time-limited. |
+| `{js:code}` (alias `{javascript:code}`) | Run JavaScript in a sandbox. |
+
+## Limits
+
+Rendering is bounded so no template can exhaust resources: a maximum number of
+render passes, nesting depth, total output length, fetch requests per render,
+and regex sizes. Reaching the pass limit while the output is still changing
+raises an error rather than returning half-rendered text. Embedders can tune
+every bound, see [embedding](/tagscript/embedding/#limits-and-safety).

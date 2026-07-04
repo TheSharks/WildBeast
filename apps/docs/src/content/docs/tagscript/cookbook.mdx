@@ -1,0 +1,121 @@
+---
+title: Cookbook
+description: Ready-made TagScript templates you can edit live.
+sidebar:
+  order: 3
+---
+
+import TagScriptPlayground from '../../../components/TagScriptPlayground.astro'
+
+Working templates for common situations. Every example on this page is
+live: edit the template and the output updates as you type. The Discord
+context (user, server) is simulated, so tags like `{usertag}` and `{server}`
+produce example values.
+
+If a tag is unfamiliar, look it up in the [tag reference](/tagscript/tags/);
+for bigger experiments, use the full playground on the
+[overview page](/tagscript/overview/).
+
+## Greetings
+
+The Discord tags fill in who triggered the template and where:
+
+<TagScriptPlayground
+  variant="example"
+  examples={[
+    { template: 'Welcome to {server}, {usertag}!' },
+    { template: 'Glad to have you, {mention}!' },
+  ]}
+/>
+
+## Reacting to arguments
+
+When a template is invoked with arguments, `{arg:n}`, `{args}`, and
+`{argslen}` read them. Combine them with `{if}` to handle the case where no
+argument was given (these examples run with the args `pizza sushi`):
+
+<TagScriptPlayground
+  variant="example"
+  args="pizza sushi"
+  examples={[
+    { template: 'Your first choice was {arg:0}.' },
+    { template: '{if:{argslen}|>|0|You said: {args}|You said nothing at all!}' },
+  ]}
+/>
+
+`{if}` only renders the branch it takes, so an expensive tag in the other
+branch never runs.
+
+## Chance and games
+
+`{random}` picks a number, `{choose}` picks one of its arguments:
+
+<TagScriptPlayground
+  variant="example"
+  examples={[
+    { template: 'You rolled a {random:1|6}!' },
+    { template: 'The coin lands on... {choose:heads|tails}!' },
+    { template: '{choose:Yes.|No.|Ask again later.}' },
+  ]}
+/>
+
+## Dates and times
+
+`{time}` formats the current moment in UTC using `yyyy`, `MM`, `dd`, `HH`,
+`mm`, and `ss` tokens, or `iso` for a full ISO 8601 string:
+
+<TagScriptPlayground
+  variant="example"
+  examples={[
+    { template: 'Today is {time:yyyy-MM-dd}.' },
+    { template: 'Generated at {time:HH:mm} UTC.' },
+  ]}
+/>
+
+## A bit of math
+
+`{math}` evaluates a chain of operands and operators. Nest other tags to
+compute with dynamic values (this example runs with the args `7 10`):
+
+<TagScriptPlayground
+  variant="example"
+  args="7 10"
+  examples={[
+    { template: '{math:2|+|3|*|4}' },
+    { template: 'Score: {math:{arg:0}|/|{arg:1}|*|100}%' },
+  ]}
+/>
+
+## Reusing a value
+
+Compute something once with `{set}`, then read it back wherever you need it.
+A stored variable can also be read as a bare `{name}` tag, as long as no
+built-in tag has that name:
+
+<TagScriptPlayground
+  variant="example"
+  args="wildbeast"
+  examples={[
+    { template: '{set:who|{upper:{arg:0}}}{who} says hi. Bye, {who}!' },
+  ]}
+/>
+
+## Literal braces and pipes
+
+`{`, `}`, and `|` are syntax. To output them literally, escape them with a
+backslash:
+
+<TagScriptPlayground
+  variant="example"
+  examples={[
+    { template: 'TagScript reads \\{anything in braces\\} as a tag.' },
+    { template: '{replace:a\\|b\\|c|\\||, }' },
+  ]}
+/>
+
+## Next steps
+
+- The [tag reference](/tagscript/tags/) lists every tag, with a playground
+  drawer at the bottom of the page for testing while you read.
+- [Embedding](/tagscript/embedding/) covers running TagScript in your own
+  code, including custom tags.

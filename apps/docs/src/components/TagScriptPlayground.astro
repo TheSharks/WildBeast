@@ -1,0 +1,1252 @@
+---
+type ExampleRow = {
+  template: string
+}
+
+type Variant = 'full' | 'example'
+
+type Props = {
+  variant?: Variant
+  template?: string
+  args?: string | string[]
+  variables?: Record<string, string>
+  discord?: Record<string, unknown>
+  examples?: ExampleRow[]
+}
+
+const defaultTemplate =
+  'Hello {usertag}, welcome to {server}! There are {spots} spots left. You passed {argslen} args: {args}'
+const defaultArgs = 'red blue'
+const defaultVariables: Record<string, string> = { spots: '3' }
+const defaultDiscord: Record<string, unknown> = {
+  user: {
+    id: '1000',
+    tag: 'shark#0001',
+    mention: '<@1000>',
+  },
+  channelId: '2000',
+  serverId: '3000',
+  server: 'WildBeast Lab',
+}
+
+const presets = [
+  {
+    label: 'Welcome message',
+    template: defaultTemplate,
+    args: defaultArgs,
+    variables: defaultVariables,
+    discord: defaultDiscord,
+  },
+  {
+    label: 'Variables and nesting',
+    template:
+      '{set:target|{arg:0}}Stored {get:target}; uppercase {upper:{get:target}}',
+    args: 'wildbeast',
+    variables: {},
+    discord: {},
+  },
+  {
+    label: 'Conditional branch',
+    template:
+      '{if:{argslen}|>|1|Multiple args: {args}|One arg or none for {usertag}}',
+    args: 'red blue green',
+    variables: {},
+    discord: {
+      user: {
+        id: '1000',
+        tag: 'shark#0001',
+        mention: '<@1000>',
+      },
+    },
+  },
+  {
+    label: 'Escaping syntax',
+    template: String.raw`Literal \{braces\}; pipes become commas: {replace:a\|b\|c|\||, }`,
+    args: '',
+    variables: {},
+    discord: {},
+  },
+]
+
+const props = Astro.props
+const variant = props.variant ?? 'full'
+const variables: Record<string, string> =
+  props.variables ?? (variant === 'full' ? defaultVariables : {})
+const args = Array.isArray(props.args)
+  ? props.args.join(' ')
+  : (props.args ?? (variant === 'full' ? defaultArgs : ''))
+const template = props.template ?? defaultTemplate
+const discord = props.discord ?? defaultDiscord
+const examples: ExampleRow[] =
+  props.examples ??
+  (props.template ? [{ template: props.template }] : [])
+
+const config = {
+  variant,
+  template,
+  args,
+  variables,
+  discord,
+  presets: variant === 'full' ? presets : [],
+}
+
+// Tokenizes a template so tag names and syntax punctuation can be tinted.
+// Colons only count as syntax right after a tag name, so prose colons stay
+// plain. Mirrored client-side for live re-highlighting.
+type Token = { kind: 'text' | 'name' | 'punct' | 'escape'; text: string }
+
+const tokenizeTemplate = (source: string): Token[] => {
+  const tokens: Token[] = []
+  let buffer = ''
+
+  const flush = () => {
+    if (buffer) {
+      tokens.push({ kind: 'text', text: buffer })
+      buffer = ''
+    }
+  }
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i]
+
+    if (char === '\\' && i + 1 < source.length) {
+      flush()
+      tokens.push({ kind: 'escape', text: source.slice(i, i + 2) })
+      i++
+      continue
+    }
+
+    if (char === '{') {
+      flush()
+      tokens.push({ kind: 'punct', text: '{' })
+      let name = ''
+      while (i + 1 < source.length && /[\w-]/.test(source[i + 1])) {
+        name += source[++i]
+      }
+      if (name) tokens.push({ kind: 'name', text: name })
+      continue
+    }
+
+    if (
+      char === '}' ||
+      char === '|' ||
+      (char === ':' && tokens.at(-1)?.kind === 'name' && !buffer)
+    ) {
+      flush()
+      tokens.push({ kind: 'punct', text: char })
+      continue
+    }
+
+    buffer += char
+  }
+
+  flush()
+  return tokens
+}
+---
+
+<section
+  class:list={[
+    'tagscript-playground',
+    'not-content',
+    variant === 'example' && 'tagscript-example',
+  ]}
+  data-tagscript-playground
+>
+  <script
+    is:inline
+    type="application/json"
+    data-config
+    set:html={JSON.stringify(config)}
+  ></script>
+
+  {
+    variant === 'full' ? (
+      <>
+        <header class="playground-header">
+          <span class="playground-title">
+            TagScript playground
+          </span>
+
+          <div class="playground-controls">
+            <label class="example-picker">
+              <span class="sr-only">Example</span>
+              <select data-preset>
+                {presets.map((preset, index) => (
+                  <option value={String(index)}>{preset.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label class="strict-toggle">
+              <input type="checkbox" data-strict />
+              <span>Strict</span>
+            </label>
+
+            <button type="button" class="ghost-button" data-reset>
+              Reset
+            </button>
+          </div>
+        </header>
+
+        <div class="playground-grid">
+          <div class="editor-column">
+            <span class="field-label" id="ts-template-label">Template</span>
+            <div class="hl-editor template-editor">
+              <pre class="hl-backdrop" aria-hidden="true"><code data-backdrop /></pre>
+              <textarea
+                data-template
+                spellcheck="false"
+                autocomplete="off"
+                aria-labelledby="ts-template-label"
+              />
+            </div>
+
+            <div class="tabs" data-tabs>
+              <div class="tab-row">
+                <div class="tab-set" role="tablist" aria-label="Render context">
+                  <button type="button" role="tab" data-tab="args" aria-selected="true">
+                    Args
+                  </button>
+                  <button type="button" role="tab" data-tab="variables" aria-selected="false">
+                    Variables
+                  </button>
+                  <button type="button" role="tab" data-tab="discord" aria-selected="false">
+                    Discord
+                  </button>
+                </div>
+              </div>
+
+              <div class="tab-panel" data-panel="args">
+                <label class="field">
+                  <span class="sr-only">Command args</span>
+                  <input
+                    data-args
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder="Space-separated args, e.g. red blue"
+                  />
+                </label>
+                <p class="tab-hint">
+                  Space-separated words, read by <code>{'{args}'}</code> and{' '}
+                  <code>{'{arg:n}'}</code>.
+                </p>
+              </div>
+
+              <div class="tab-panel" data-panel="variables" hidden>
+                <label class="field">
+                  <span class="sr-only">Variables JSON</span>
+                  <textarea data-variables spellcheck="false" />
+                </label>
+                <p class="tab-hint">
+                  JSON object of preset variables, read by <code>{'{get:name}'}</code>.
+                </p>
+              </div>
+
+              <div class="tab-panel" data-panel="discord" hidden>
+                <label class="field">
+                  <span class="sr-only">Discord context JSON</span>
+                  <textarea data-discord spellcheck="false" />
+                </label>
+                <p class="tab-hint">
+                  Simulated Discord context for tags like <code>{'{usertag}'}</code>{' '}
+                  and <code>{'{server}'}</code>.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="result-column">
+            <div class="tabs" data-tabs>
+              <div class="tab-row">
+                <div class="tab-set" role="tablist" aria-label="Result">
+                  <button type="button" role="tab" data-tab="output" aria-selected="true">
+                    Output
+                  </button>
+                  <button type="button" role="tab" data-tab="ast" aria-selected="false">
+                    AST
+                  </button>
+                </div>
+                <button type="button" class="ghost-button copy-button" data-copy>
+                  Copy
+                </button>
+              </div>
+
+              <div class="tab-panel" data-panel="output">
+                <pre class="result-pre" data-output aria-live="polite" />
+              </div>
+
+              <div class="tab-panel" data-panel="ast" hidden>
+                <pre class="result-pre" data-ast />
+              </div>
+            </div>
+
+            <p class="status-line" data-status role="status" />
+          </div>
+        </div>
+
+        <p class="playground-error" data-error hidden />
+      </>
+    ) : (
+      <>
+        <span class="example-chip" aria-hidden="true">edit me</span>
+        {examples.map((row) => (
+          <div class="example-row">
+            <label class="hl-editor example-editor">
+              <span class="sr-only">Template</span>
+              <pre class="hl-backdrop" aria-hidden="true"><code data-backdrop>{tokenizeTemplate(row.template).map((token) => token.kind === 'text' ? token.text : <span class={`tok-${token.kind}`}>{token.text}</span>)}</code></pre>
+              <input
+                data-row-template
+                spellcheck="false"
+                autocomplete="off"
+                value={row.template}
+              />
+            </label>
+            <span class="example-arrow" aria-hidden="true" />
+            <output class="example-output" data-row-output />
+          </div>
+        ))}
+      </>
+    )
+  }
+</section>
+
+<script>
+  import { parse, render } from '@thesharks/tagscript/web'
+  import type { Ast } from '@thesharks/tagscript/web'
+
+  type JsonRecord = Record<string, unknown>
+  type Preset = {
+    label: string
+    template: string
+    args: string
+    variables: JsonRecord
+    discord: JsonRecord
+  }
+
+  type Config = {
+    variant: 'full' | 'example'
+    template: string
+    args: string
+    variables: Record<string, string>
+    discord: JsonRecord
+    presets: Preset[]
+  }
+
+  type AstSummary = {
+    nodes: Array<
+      | { type: 'text'; value: string; span: string }
+      | { type: 'tag'; name: string; span: string; args: AstSummary[] }
+    >
+  }
+
+  const formatJson = (value: unknown) => JSON.stringify(value, null, 2)
+
+  const summarizeSegment = (segment: Ast): AstSummary => ({
+    nodes: segment.nodes.map((node) => {
+      if (node.type === 'text') {
+        return {
+          type: 'text',
+          value: node.value,
+          span: `${node.span.start}-${node.span.end}`,
+        }
+      }
+
+      return {
+        type: 'tag',
+        name: node.name,
+        span: `${node.span.start}-${node.span.end}`,
+        args: node.args.map(summarizeSegment),
+      }
+    }),
+  })
+
+  const splitArgs = (value: string) =>
+    value.trim() ? value.trim().split(/\s+/) : []
+
+  const parseRecord = (value: string, label: string): JsonRecord => {
+    const trimmed = value.trim()
+    if (!trimmed) return {}
+
+    const parsed = JSON.parse(trimmed)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error(`${label} must be a JSON object.`)
+    }
+
+    return parsed
+  }
+
+  const normalizeVariables = (variables: JsonRecord): Record<string, string> =>
+    Object.fromEntries(
+      Object.entries(variables).map(([key, value]) => [key, String(value)]),
+    )
+
+  const requireElement = <T extends Element>(
+    root: ParentNode,
+    selector: string,
+    constructor: new () => T,
+  ): T => {
+    const element = root.querySelector(selector)
+    if (!(element instanceof constructor)) {
+      throw new Error(`Missing playground element: ${selector}`)
+    }
+
+    return element
+  }
+
+  const readConfig = (playground: Element): Config => {
+    const configScript = requireElement(
+      playground,
+      '[data-config]',
+      HTMLScriptElement,
+    )
+    return JSON.parse(configScript.textContent ?? '{}') as Config
+  }
+
+  // Client-side mirror of the frontmatter tokenizer, used to re-highlight the
+  // editor backdrop as the user types.
+  type Token = { kind: 'text' | 'name' | 'punct' | 'escape'; text: string }
+
+  const tokenizeTemplate = (source: string): Token[] => {
+    const tokens: Token[] = []
+    let buffer = ''
+
+    const flush = () => {
+      if (buffer) {
+        tokens.push({ kind: 'text', text: buffer })
+        buffer = ''
+      }
+    }
+
+    for (let i = 0; i < source.length; i++) {
+      const char = source[i]
+
+      if (char === '\\' && i + 1 < source.length) {
+        flush()
+        tokens.push({ kind: 'escape', text: source.slice(i, i + 2) })
+        i++
+        continue
+      }
+
+      if (char === '{') {
+        flush()
+        tokens.push({ kind: 'punct', text: '{' })
+        let name = ''
+        while (i + 1 < source.length && /[\w-]/.test(source[i + 1])) {
+          name += source[++i]
+        }
+        if (name) tokens.push({ kind: 'name', text: name })
+        continue
+      }
+
+      if (
+        char === '}' ||
+        char === '|' ||
+        (char === ':' && tokens.at(-1)?.kind === 'name' && !buffer)
+      ) {
+        flush()
+        tokens.push({ kind: 'punct', text: char })
+        continue
+      }
+
+      buffer += char
+    }
+
+    flush()
+    return tokens
+  }
+
+  const highlightInto = (backdrop: HTMLElement, source: string) => {
+    const fragment = document.createDocumentFragment()
+    for (const token of tokenizeTemplate(source)) {
+      if (token.kind === 'text') {
+        fragment.append(token.text)
+        continue
+      }
+      const span = document.createElement('span')
+      span.className = `tok-${token.kind}`
+      span.textContent = token.text
+      fragment.append(span)
+    }
+    backdrop.replaceChildren(fragment)
+  }
+
+  // Keeps a highlighted backdrop in sync with a transparent-text field
+  // layered on top of it.
+  const bindHighlightedEditor = (
+    field: HTMLTextAreaElement | HTMLInputElement,
+    backdrop: HTMLElement,
+  ) => {
+    const isMultiline = field instanceof HTMLTextAreaElement
+    const refresh = () => {
+      // A trailing newline keeps the backdrop's last line height in step
+      // with the textarea when the value ends in a newline.
+      highlightInto(backdrop, field.value + (isMultiline ? '\n' : ''))
+    }
+    const syncScroll = () => {
+      const scroller = backdrop.parentElement ?? backdrop
+      scroller.scrollTop = field.scrollTop
+      scroller.scrollLeft = field.scrollLeft
+    }
+
+    field.addEventListener('input', () => {
+      refresh()
+      syncScroll()
+    })
+    field.addEventListener('scroll', syncScroll)
+    refresh()
+    return refresh
+  }
+
+  const initTabs = (playground: Element) => {
+    for (const tabs of playground.querySelectorAll('[data-tabs]')) {
+      const buttons = tabs.querySelectorAll<HTMLButtonElement>('[data-tab]')
+      const panels = tabs.querySelectorAll<HTMLElement>('[data-panel]')
+
+      for (const button of buttons) {
+        button.addEventListener('click', () => {
+          for (const other of buttons) {
+            other.setAttribute(
+              'aria-selected',
+              String(other.dataset.tab === button.dataset.tab),
+            )
+          }
+          for (const panel of panels) {
+            panel.hidden = panel.dataset.panel !== button.dataset.tab
+          }
+        })
+      }
+    }
+  }
+
+  for (const playground of document.querySelectorAll(
+    '[data-tagscript-playground]',
+  )) {
+    const config = readConfig(playground)
+
+    if (config.variant === 'example') {
+      for (const row of playground.querySelectorAll('.example-row')) {
+        const field = requireElement(row, '[data-row-template]', HTMLInputElement)
+        const backdrop = requireElement(row, '[data-backdrop]', HTMLElement)
+        const output = requireElement(row, '[data-row-output]', HTMLOutputElement)
+
+        bindHighlightedEditor(field, backdrop)
+
+        let renderId = 0
+        let timer: number | undefined
+
+        const update = async () => {
+          const currentRender = ++renderId
+          try {
+            const result = await render(field.value, {
+              args: splitArgs(config.args),
+              discord: config.discord,
+              variables: { ...config.variables },
+            })
+            if (currentRender === renderId) {
+              output.textContent = result.output
+              output.classList.remove('is-error')
+            }
+          } catch (caught) {
+            if (currentRender === renderId) {
+              output.textContent =
+                caught instanceof Error ? caught.message : String(caught)
+              output.classList.add('is-error')
+            }
+          }
+        }
+
+        field.addEventListener('input', () => {
+          window.clearTimeout(timer)
+          timer = window.setTimeout(update, 120)
+        })
+        update()
+      }
+      continue
+    }
+
+    initTabs(playground)
+
+    const output = requireElement(playground, '[data-output]', HTMLPreElement)
+    const error = requireElement(
+      playground,
+      '[data-error]',
+      HTMLParagraphElement,
+    )
+    const presetSelect = requireElement(
+      playground,
+      '[data-preset]',
+      HTMLSelectElement,
+    )
+    const strictInput = requireElement(
+      playground,
+      '[data-strict]',
+      HTMLInputElement,
+    )
+    const resetButton = requireElement(
+      playground,
+      '[data-reset]',
+      HTMLButtonElement,
+    )
+    const copyButton = requireElement(
+      playground,
+      '[data-copy]',
+      HTMLButtonElement,
+    )
+    const templateInput = requireElement(
+      playground,
+      '[data-template]',
+      HTMLTextAreaElement,
+    )
+    const templateBackdrop = requireElement(
+      playground,
+      '[data-backdrop]',
+      HTMLElement,
+    )
+    const argsInput = requireElement(
+      playground,
+      '[data-args]',
+      HTMLInputElement,
+    )
+    const variablesInput = requireElement(
+      playground,
+      '[data-variables]',
+      HTMLTextAreaElement,
+    )
+    const discordInput = requireElement(
+      playground,
+      '[data-discord]',
+      HTMLTextAreaElement,
+    )
+    const ast = requireElement(playground, '[data-ast]', HTMLPreElement)
+    const status = requireElement(
+      playground,
+      '[data-status]',
+      HTMLParagraphElement,
+    )
+
+    let renderId = 0
+    let timer: number | undefined
+
+    const refreshHighlight = bindHighlightedEditor(
+      templateInput,
+      templateBackdrop,
+    )
+
+    const hideError = () => {
+      error.hidden = true
+      error.textContent = ''
+    }
+
+    const showError = (caught: unknown) => {
+      output.textContent = ''
+      error.textContent =
+        caught instanceof Error ? caught.message : String(caught)
+      error.hidden = false
+    }
+
+    const queueUpdate = (update: () => Promise<void>) => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(update, 120)
+    }
+
+    const loadPreset = (index: number) => {
+      const preset = config.presets[index] ?? config.presets[0]
+      templateInput.value = preset.template
+      argsInput.value = preset.args
+      variablesInput.value = formatJson(preset.variables)
+      discordInput.value = formatJson(preset.discord)
+      refreshHighlight()
+    }
+
+    const updateFull = async () => {
+      const currentRender = ++renderId
+      const template = templateInput.value
+
+      hideError()
+
+      try {
+        const parsed = parse(template)
+        ast.textContent = formatJson(summarizeSegment(parsed))
+
+        const variables = normalizeVariables(
+          parseRecord(variablesInput.value, 'Variables'),
+        )
+        const discord = parseRecord(discordInput.value, 'Discord context')
+
+        const started = performance.now()
+        const result = await render(template, {
+          args: splitArgs(argsInput.value),
+          discord,
+          mode: strictInput.checked ? 'strict' : 'ignore',
+          variables,
+        })
+        const elapsed = performance.now() - started
+
+        if (currentRender === renderId) {
+          output.textContent = result.output
+          const attachment = result.attachment
+            ? ` · 1 attachment (${result.attachment.type})`
+            : ''
+          status.textContent = `Rendered in ${elapsed < 1 ? '<1' : Math.round(elapsed)} ms · ${result.output.length} chars${attachment}`
+        }
+      } catch (caught) {
+        if (currentRender === renderId) {
+          status.textContent = ''
+          showError(caught)
+        }
+      }
+    }
+
+    presetSelect.addEventListener('change', () => {
+      loadPreset(Number(presetSelect.value))
+      queueUpdate(updateFull)
+    })
+
+    resetButton.addEventListener('click', () => {
+      loadPreset(Number(presetSelect.value))
+      strictInput.checked = false
+      queueUpdate(updateFull)
+    })
+
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(output.textContent ?? '')
+        copyButton.textContent = 'Copied'
+        window.setTimeout(() => {
+          copyButton.textContent = 'Copy'
+        }, 1200)
+      } catch {
+        copyButton.textContent = 'Copy failed'
+      }
+    })
+
+    for (const input of [
+      strictInput,
+      templateInput,
+      argsInput,
+      variablesInput,
+      discordInput,
+    ]) {
+      input.addEventListener('input', () => queueUpdate(updateFull))
+      input.addEventListener('change', () => queueUpdate(updateFull))
+    }
+
+    // Initial values are set here rather than in the markup so Astro's
+    // template indentation never leaks into the textareas.
+    templateInput.value = config.template
+    argsInput.value = config.args
+    variablesInput.value = formatJson(config.variables)
+    discordInput.value = formatJson(config.discord)
+    refreshHighlight()
+
+    updateFull()
+  }
+</script>
+
+<style>
+  .tagscript-playground {
+    --ts-panel: var(--sl-color-gray-7);
+    --ts-surface: color-mix(in srgb, var(--sl-color-gray-6) 55%, var(--sl-color-black));
+    --ts-border: var(--sl-color-gray-5);
+
+    position: relative;
+    margin: 2rem 0;
+    border: 1px solid var(--ts-border);
+    border-radius: 0.75rem;
+    background: var(--ts-surface);
+    overflow: hidden;
+  }
+
+  /* Accent hairline across the top of the full playground. */
+  .tagscript-playground:not(.tagscript-example)::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--sl-color-accent),
+      color-mix(in srgb, var(--sl-color-accent) 20%, transparent) 65%,
+      transparent
+    );
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  code {
+    background: none;
+  }
+
+  /* ---- Monospace + token colors -------------------------------------- */
+
+  .hl-backdrop,
+  .hl-editor input,
+  .hl-editor textarea,
+  .result-pre,
+  .example-output,
+  input:not([type='checkbox']),
+  select,
+  textarea {
+    font-family: var(--sl-font-mono, ui-monospace), ui-monospace, SFMono-Regular,
+      Menlo, Consolas, monospace;
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+
+  /* Token spans are re-created by the client script, so they never carry
+     Astro's scope attribute — style them via :global under the root. */
+  .tagscript-playground :global(.tok-name) {
+    color: var(--sl-color-accent-high);
+    font-weight: 600;
+  }
+
+  .tagscript-playground :global(.tok-punct) {
+    color: color-mix(in srgb, var(--sl-color-accent) 60%, var(--sl-color-gray-3));
+  }
+
+  .tagscript-playground :global(.tok-escape) {
+    color: var(--sl-color-gray-3);
+    font-style: italic;
+  }
+
+  /* ---- Highlighted editor (backdrop + transparent field) -------------- */
+
+  .hl-editor {
+    position: relative;
+    border: 1px solid var(--ts-border);
+    border-radius: 0.5rem;
+    background: var(--sl-color-black);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .hl-editor:focus-within {
+    border-color: var(--sl-color-accent);
+    box-shadow: 0 0 0 3px var(--sl-color-accent-low);
+  }
+
+  .hl-editor .hl-backdrop {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0.6rem 0.75rem;
+    overflow: hidden;
+    border: 0;
+    background: none;
+    color: var(--sl-color-gray-1);
+    pointer-events: none;
+  }
+
+  .hl-editor input,
+  .hl-editor textarea {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--sl-color-white);
+  }
+
+  .hl-editor input::selection,
+  .hl-editor textarea::selection {
+    background: color-mix(in srgb, var(--sl-color-accent) 35%, transparent);
+  }
+
+  .template-editor .hl-backdrop,
+  .template-editor textarea {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
+
+  .template-editor textarea {
+    min-height: 11rem;
+    resize: vertical;
+  }
+
+  .example-editor .hl-backdrop,
+  .example-editor input {
+    white-space: pre;
+  }
+
+  .example-editor .hl-backdrop {
+    overflow-x: hidden;
+  }
+
+  /* ---- Example variant ------------------------------------------------ */
+
+  .tagscript-example {
+    display: grid;
+    gap: 0.5rem;
+    margin: 1.25rem 0 1.75rem;
+    padding: 1rem;
+  }
+
+  .example-chip {
+    position: absolute;
+    top: 0;
+    right: 0.85rem;
+    padding: 0.05rem 0.6rem;
+    border: 1px solid var(--ts-border);
+    border-top: 0;
+    border-radius: 0 0 0.5rem 0.5rem;
+    color: var(--sl-color-gray-3);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .tagscript-example:focus-within .example-chip,
+  .tagscript-example:hover .example-chip {
+    border-color: color-mix(in srgb, var(--sl-color-accent) 50%, transparent);
+    color: var(--sl-color-accent-high);
+  }
+
+  .example-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .example-arrow::before {
+    content: '→';
+    color: var(--sl-color-accent);
+    font-weight: 700;
+  }
+
+  .example-output {
+    display: block;
+    min-height: 2.35rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px dashed var(--ts-border);
+    border-radius: 0.5rem;
+    color: var(--sl-color-gray-1);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .example-output.is-error {
+    border-color: color-mix(in srgb, #ff5d4a 55%, transparent);
+    color: var(--sl-color-red, #ffb4a8);
+  }
+
+  /* ---- Full variant: header ------------------------------------------ */
+
+  .playground-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--ts-border);
+    background: color-mix(in srgb, var(--sl-color-gray-6) 80%, var(--sl-color-black));
+  }
+
+  .playground-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--sl-color-white);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .playground-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .example-picker select {
+    min-height: 2rem;
+    padding: 0 1.8rem 0 0.7rem;
+    border: 1px solid var(--ts-border);
+    border-radius: 0.5rem;
+    background: var(--sl-color-black);
+    color: var(--sl-color-white);
+    font-size: 0.82rem;
+    font-family: var(--sl-font, inherit);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='m1 1 4 4 4-4' stroke='%23898da8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+  }
+
+  .strict-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--sl-color-gray-2);
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .strict-toggle input {
+    width: 0.95rem;
+    height: 0.95rem;
+    accent-color: var(--sl-color-accent);
+  }
+
+  .ghost-button {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--ts-border);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--sl-color-gray-2);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .ghost-button:hover {
+    border-color: var(--sl-color-accent);
+    color: var(--sl-color-white);
+  }
+
+  /* ---- Full variant: body --------------------------------------------- */
+
+  .playground-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 1.25rem;
+    padding: 1rem;
+  }
+
+  .editor-column,
+  .result-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .template-editor {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .template-editor textarea {
+    flex: 1;
+  }
+
+  .field-label {
+    color: var(--sl-color-gray-2);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ---- Tabs ------------------------------------------------------------ */
+
+  .tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .result-column .tabs {
+    flex: 1;
+  }
+
+  .tab-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .tab-set {
+    display: inline-flex;
+    gap: 0.15rem;
+    padding: 0.2rem;
+    border: 1px solid var(--ts-border);
+    border-radius: 0.5rem;
+    background: var(--ts-panel);
+  }
+
+  .tab-set [role='tab'] {
+    padding: 0.25rem 0.75rem;
+    border: 0;
+    border-radius: 0.35rem;
+    background: none;
+    color: var(--sl-color-gray-3);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .tab-set [role='tab']:hover {
+    color: var(--sl-color-gray-1);
+  }
+
+  .tab-set [role='tab'][aria-selected='true'] {
+    background: var(--sl-color-accent-low);
+    color: var(--sl-color-accent-high);
+  }
+
+  .tab-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .tab-panel[hidden] {
+    display: none;
+  }
+
+  .tab-hint {
+    margin: 0;
+    color: var(--sl-color-gray-3);
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .tab-hint code {
+    font-size: 0.95em;
+    color: var(--sl-color-gray-2);
+  }
+
+  .copy-button {
+    margin-inline-start: auto;
+  }
+
+  .status-line {
+    min-height: 1.1rem;
+    margin: 0;
+    color: var(--sl-color-gray-3);
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- Shared form styles ---------------------------------------------- */
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .tab-panel input,
+  .tab-panel textarea {
+    width: 100%;
+    border: 1px solid var(--ts-border);
+    border-radius: 0.5rem;
+    background: var(--sl-color-black);
+    color: var(--sl-color-white);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .tab-panel input {
+    min-height: 2.35rem;
+    padding: 0 0.75rem;
+  }
+
+  .tab-panel textarea {
+    min-height: 7.5rem;
+    padding: 0.6rem 0.75rem;
+    resize: vertical;
+  }
+
+  .tab-panel input:focus-visible,
+  .tab-panel textarea:focus-visible {
+    border-color: var(--sl-color-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--sl-color-accent-low);
+  }
+
+  .tab-panel input::placeholder {
+    color: var(--sl-color-gray-4);
+  }
+
+  select:focus-visible,
+  button:focus-visible,
+  .strict-toggle input:focus-visible {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 1px;
+  }
+
+  .result-pre {
+    flex: 1;
+    min-height: 8rem;
+    max-height: 24rem;
+    margin: 0;
+    padding: 0.75rem;
+    overflow: auto;
+    border: 1px solid var(--ts-border);
+    border-radius: 0.5rem;
+    background: var(--sl-color-black);
+    color: var(--sl-color-gray-1);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .playground-error {
+    margin: 0;
+    padding: 0.7rem 1rem;
+    border-top: 1px solid var(--ts-border);
+    color: #ffb4a8;
+    background: color-mix(in srgb, #ff5d4a 12%, transparent);
+    font-size: 0.85rem;
+  }
+
+  :root[data-theme='light'] .playground-error {
+    color: #8f1f12;
+  }
+
+  :root[data-theme='light'] .example-output.is-error {
+    color: #8f1f12;
+  }
+
+  @media (max-width: 56rem) {
+    .playground-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .playground-controls {
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .example-row {
+      grid-template-columns: 1fr;
+      gap: 0.3rem;
+    }
+
+    .example-arrow {
+      padding-inline-start: 0.25rem;
+    }
+
+    .example-arrow::before {
+      content: '↓';
+    }
+  }
+</style>
