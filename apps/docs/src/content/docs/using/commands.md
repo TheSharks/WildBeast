@@ -11,9 +11,8 @@ are localized, so Discord shows them in your client's language when a
 translation exists.
 
 :::note
-WildBeast 9 is under active development, and its command set is still small
-while features are ported over from version 8. This page grows with each
-release.
+WildBeast 9 is under active development, and commands are still being
+ported over from version 8. This page grows with each release.
 :::
 
 ## General
@@ -31,6 +30,54 @@ The bot first answers "Pong!", then edits the reply with two numbers: how
 long the round trip to Discord took, and the websocket latency of the shard
 serving your server. Useful when the bot feels slow and you want to tell
 whether the delay is on Discord's side.
+
+### /info
+
+Shows what the bot is running: guild count, uptime, shard and cluster,
+version, and resource usage. Ephemeral.
+
+### /invite
+
+Gives you a link to add the bot to your own server. If the bot is marked
+private, it tells you who to ask instead. Ephemeral.
+
+## Fun
+
+### /8ball
+
+Ask the magic 8-ball for advice. All the classic answers are in there.
+
+### /advice
+
+A random piece of life advice, courtesy of adviceslip.com.
+
+### /cat and /dog
+
+A random cat or dog picture with an animal fact attached. The 🔄 button
+under the image fetches a new one.
+
+### /dice
+
+Roll some dice.
+
+```
+/dice dice:2 sides:20
+```
+
+Both options are optional; the default roll is 1d6. Up to 100 dice with up
+to 1,000 sides each.
+
+### /inspire
+
+A freshly generated motivational poster from inspirobot.me. Results may
+inspire confusion instead. The 🔄 button generates another.
+
+### /urbandictionary
+
+Searches Urban Dictionary, with autocompletion while you type. Use the
+◀️ ▶️ buttons to page through definitions and 🔀 to jump to a random one.
+Definitions are community-written and frequently crude; that's the site,
+not the bot.
 
 ## Tags
 
