@@ -32,7 +32,7 @@ No problem, we maintain a public instance called WildBot that you can invite to 
 
 ### Want to run WildBeast yourself?
 
-We've got you covered on that — check out the [getting started guide](https://wildbeast.guide/guides/getting-started/).
+We've got you covered on that, check out the [getting started guide](https://wildbeast.guide/guides/getting-started/).
 
 ## Repository layout
 

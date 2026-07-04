@@ -47,7 +47,7 @@ and the identify rate limit budget.
 | `discord_identify_wait_seconds` | histogram | `bucket` |
 | `discord_rest_rate_limited_total` | counter | `route`, `method`, `global` |
 
-`discord_shard_resume_total` counts resumed sessions — including handoffs
+`discord_shard_resume_total` counts resumed sessions, including handoffs
 between clusters, which resume instead of identifying.
 
 ## Errors and process health

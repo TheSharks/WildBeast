@@ -47,7 +47,7 @@ interaction.reply(await resolveKey(interaction, "user/greeting:hello", { name: u
 ### Database operations
 
 We use [Drizzle ORM](https://orm.drizzle.team/) for database access, wrapped in the `@thesharks/drizzle` workspace package.  
-When something requires database access, **do not create your own database connection — use the client and schema exported from `@thesharks/drizzle`**. Schema changes belong in that package, alongside a migration.
+When something requires database access, **do not create your own database connection, use the client and schema exported from `@thesharks/drizzle`**. Schema changes belong in that package, alongside a migration.
 
 ## Commands
 

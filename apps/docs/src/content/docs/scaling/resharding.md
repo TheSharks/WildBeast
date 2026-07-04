@@ -22,8 +22,8 @@ Changing the total is just a rolling deploy with a new
 2. Old-total clusters keep serving, absorbing shards from drained peers via
    normal rebalancing, so there is no capacity gap during the rollout.
 3. The moment the last old-total cluster is gone, one parked cluster
-   atomically promotes the new epoch, and the parked fleet starts serving —
-   every shard identifies fresh, since sessions cannot cross shard totals.
+   atomically promotes the new epoch, and the parked fleet starts serving.
+   Every shard identifies fresh, since sessions cannot cross shard totals.
 
 The migration completes exactly when the deploy does. Mixed totals never
 serve simultaneously, by construction.
@@ -48,6 +48,6 @@ fleet:
 
 Discord recommends roughly 1,000–2,500 guilds per shard, and large bots are
 assigned a required multiple. Since changing the total costs a full
-re-identify of the fleet, pick a value with headroom — the autonomous
+re-identify of the fleet, pick a value with headroom. The autonomous
 cluster layer makes adding *machines* cheap, so the total only needs to
 change when shards themselves get too heavy.

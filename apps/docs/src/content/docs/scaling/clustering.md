@@ -107,7 +107,7 @@ migrated safely.
 
 - All clusters must share the same Redis (`REDIS_*` variables).
 - Shard readiness, ownership, handoffs and fleet membership are all exported
-  as metrics — see the [metrics reference](/observability/metrics/). The
+  as metrics, see the [metrics reference](/observability/metrics/). The
   `discord_manager_shard_up` gauge is the one to alert on.
 - Identify pacing means a cold fleet start takes roughly 5.5 seconds per
   shard per rate-limit bucket. Resumed handoffs skip this entirely.
