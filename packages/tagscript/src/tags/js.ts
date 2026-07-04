@@ -1,3 +1,4 @@
+import { RenderError } from '../runtime/errors.js'
 import type { RenderContext } from '../types.js'
 
 export async function jsHandler(
@@ -7,7 +8,7 @@ export async function jsHandler(
   const sandbox = ctx.sandbox
 
   if (!sandbox) {
-    throw new Error(
+    throw new RenderError(
       'JavaScript execution is not enabled. Use enableJs: true with a sandbox option.',
     )
   }

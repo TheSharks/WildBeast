@@ -174,11 +174,10 @@ export const chooseHandler: TagHandler = (
   _ctx: RenderContext,
   args: string[],
 ) => {
-  const input = args[0] ?? ''
-  if (!input) return ''
-  const parts = input.split('|')
-  const index = Math.floor(Math.random() * parts.length)
-  return parts[index] ?? ''
+  // The parser already split the options on '|', so pick from args directly
+  if (args.length === 0) return ''
+  const index = Math.floor(Math.random() * args.length)
+  return args[index] ?? ''
 }
 
 export const rangeHandler: TagHandler = (

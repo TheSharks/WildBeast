@@ -1,4 +1,5 @@
 import { checkSync } from 'recheck'
+import { RenderError } from '../runtime/errors.js'
 import type { Limits, TagHandler } from '../types.js'
 
 export const upperHandler: TagHandler = (_ctx, args) =>
@@ -53,8 +54,9 @@ export const substringHandler: TagHandler = (_ctx, args) => {
     : textValue.substring(start)
 }
 
+// Replaces real newlines and the literal \n sequence (JagTag compatibility)
 export const onelineHandler: TagHandler = (_ctx, args) =>
-  (args[0] ?? '').replace(/\\n/g, ' ')
+  (args[0] ?? '').replace(/\r\n|[\r\n]|\\n/g, ' ')
 
 export const hashHandler: TagHandler = (_ctx, args) => {
   const text = args[0] ?? ''
@@ -91,12 +93,12 @@ export const replaceregexHandler: TagHandler = (_ctx, args, limits: Limits) => {
 
   // Guard against excessively long patterns
   if (pattern.length > limits.regexPatternLength) {
-    throw new Error('Regex pattern too long')
+    throw new RenderError('Regex pattern too long')
   }
 
   // Guard against excessively long input strings
   if (text.length > limits.maxRegexInputLength) {
-    throw new Error('Input text too long for regex operation')
+    throw new RenderError('Input text too long for regex operation')
   }
 
   // Parse pattern string e.g. /search/flags
@@ -118,15 +120,15 @@ export const replaceregexHandler: TagHandler = (_ctx, args, limits: Limits) => {
     // Check for ReDoS vulnerability before executing
     const diagnostic = checkSync(patternBody, flags)
     if (diagnostic.status === 'vulnerable') {
-      throw new Error('Potentially unsafe regex pattern')
+      throw new RenderError('Potentially unsafe regex pattern')
     }
 
     regex = new RegExp(patternBody, flags)
     return text.replace(regex, replacement ?? '')
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Invalid regex: ${error.message}`)
+      throw new RenderError(`Invalid regex: ${error.message}`)
     }
-    throw new Error('Invalid regex: Unknown error')
+    throw new RenderError('Invalid regex: Unknown error')
   }
 }

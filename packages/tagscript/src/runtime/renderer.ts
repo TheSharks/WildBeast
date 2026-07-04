@@ -11,6 +11,27 @@ import { RenderError } from './errors.js'
 import { checkLimits, type Limits } from './limits.js'
 import { serializeSegment, serializeTag } from './serialize.js'
 
+// Sentinels for inert tag output. Backslash escapes don't survive the fixpoint
+// loop (the next pass consumes them), so inert output swaps syntax characters
+// for private-use codepoints during rendering and restores them once at the end.
+const INERT_OPEN = '\uE000'
+const INERT_CLOSE = '\uE001'
+const INERT_PIPE = '\uE002'
+
+function makeInert(text: string): string {
+  return text
+    .replaceAll('{', INERT_OPEN)
+    .replaceAll('}', INERT_CLOSE)
+    .replaceAll('|', INERT_PIPE)
+}
+
+function restoreInert(text: string): string {
+  return text
+    .replaceAll(INERT_OPEN, '{')
+    .replaceAll(INERT_CLOSE, '}')
+    .replaceAll(INERT_PIPE, '|')
+}
+
 export async function render(
   input: string,
   context: RenderContext,
@@ -19,7 +40,13 @@ export async function render(
   let output = input
   let iteration = 0
 
-  while (iteration < limits.maxIterations) {
+  while (true) {
+    if (iteration >= limits.maxIterations) {
+      throw new RenderError(
+        `Exceeded maximum iterations of ${limits.maxIterations}`,
+      )
+    }
+
     const ast = parse(output)
     const { output: newOutput, depth } = await renderSegment(
       ast,
@@ -29,7 +56,7 @@ export async function render(
       0,
     )
 
-    checkLimits(newOutput, limits, iteration, depth)
+    checkLimits(newOutput, limits, depth)
 
     if (newOutput === output) {
       break
@@ -39,7 +66,7 @@ export async function render(
     iteration++
   }
 
-  return { output }
+  return { output: restoreInert(output) }
 }
 
 export async function renderSegment(
@@ -88,6 +115,7 @@ async function renderTag(
 
   const registry = context.registry
   const isLazy = registry?.isLazy?.(tag.name)
+  const inert = context.inertTags?.has(tag.name) ?? false
 
   if (isLazy) {
     const lazyHandler = registry?.getLazy?.(tag.name)
@@ -95,8 +123,8 @@ async function renderTag(
       return renderUnknownTag(tag, context, input)
     }
 
-    const result = await lazyHandler(context, tag.args, limits)
-    return { output: result, depth: 1 }
+    const result = await lazyHandler(context, tag.args, limits, depth)
+    return { output: inert ? makeInert(result) : result, depth: 1 }
   }
 
   const handler = registry?.get(tag.name)
@@ -119,7 +147,10 @@ async function renderTag(
     args.map((a) => a.output),
     limits,
   )
-  return { output: result, depth: maxArgDepth + 1 }
+  return {
+    output: inert ? makeInert(result) : result,
+    depth: maxArgDepth + 1,
+  }
 }
 
 export async function renderAst(
@@ -129,7 +160,7 @@ export async function renderAst(
 ): Promise<RenderResult> {
   const input = serializeSegment(ast)
   const { output } = await renderSegment(ast, context, input, limits, 0)
-  return { output }
+  return { output: restoreInert(output) }
 }
 
 function renderUnknownTag(
@@ -138,7 +169,7 @@ function renderUnknownTag(
   input: string,
 ): { output: string; depth: number } {
   if (context.mode === 'strict') {
-    throw new RenderError('Unknown tag')
+    throw new RenderError(`Unknown tag: ${tag.name}`)
   }
 
   const output = renderTagLiteral(tag, input)

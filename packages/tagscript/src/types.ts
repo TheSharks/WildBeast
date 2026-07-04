@@ -43,6 +43,8 @@ export interface RenderContext {
   tagStore?: TagStore
   sandbox?: import('./sandbox/types.js').Sandbox
   fetchRequests: number
+  /** Tags whose output is rendered as literal text instead of being re-executed on later passes. */
+  inertTags?: Set<string>
 }
 
 export type TagHandler = (
@@ -55,6 +57,7 @@ export type LazyTagHandler = (
   ctx: RenderContext,
   args: Segment[],
   limits: Limits,
+  depth?: number,
 ) => Promise<string> | string
 
 export interface TagRegistry {
@@ -76,7 +79,21 @@ export interface RenderOptions extends Partial<Limits> {
   tagStore?: TagStore
   enableJs?: boolean
   enableFetch?: boolean
+  /**
+   * Tags whose output is treated as literal text instead of being re-executed
+   * as TagScript on later render passes. Defaults to ['fetch', 'js', 'javascript']
+   * so remote or sandboxed content can't inject executable tags.
+   */
+  inertHandlerOutput?: string[]
   fetchOptions?: RequestInit
+  /**
+   * Hostnames the fetch tag is allowed to request (exact match,
+   * case-insensitive). When provided, every other host is rejected — this is
+   * the recommended safeguard for attacker-controllable templates. When
+   * omitted, all hosts are allowed except loopback, private, link-local and
+   * metadata IP literals plus `localhost` names.
+   */
+  fetchAllowedHosts?: string[]
   sandbox?: import('./sandbox/types.js').Sandbox
 }
 

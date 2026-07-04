@@ -84,11 +84,11 @@ TagScript maintains compatibility modes for some tags to help with migration:
 import { render } from '@thesharks/tagscript'
 
 const regexResult = await render(
-  '{replaceregex:Hello 123|with:X|in:I have 5 cats and 23 shirts}'
+  String.raw`{replaceregex:\d+|with:X|in:I have 5 cats and 23 shirts}`
 )
-console.log(regexResult.output) // I have X cats and XX shirts
+console.log(regexResult.output) // I have X cats and X shirts
 
-const ifResult = await render('{if:5 > 3|then:Yes|else:No}')
+const ifResult = await render('{if:5|>|3|Yes|No}')
 console.log(ifResult.output) // Yes
 
 const mathResult = await render('{math:hello world|-| world}')
@@ -109,7 +109,9 @@ console.log(mathResult.output) // hello
 | `sandbox` | `Sandbox` | `undefined` | Sandbox for JavaScript execution. |
 | `enableFetch` | `boolean` | `false` | Enable fetch tag. |
 | `fetchOptions` | `RequestInit` | `undefined` | Options to pass to fetch. |
-| `maxIterations` | `number` | `100` | Maximum tag iterations. |
+| `fetchAllowedHosts` | `string[]` | `undefined` | Hostnames the fetch tag may request (exact, case-insensitive). When set, every other host is rejected. See [Fetch safety](#fetch-safety). |
+| `maxIterations` | `number` | `100` | Maximum render passes. Rendering throws if the output still changes after this many passes. |
+| `inertHandlerOutput` | `string[]` | `['fetch', 'js', 'javascript']` | Tags whose output renders as literal text instead of being re-executed as TagScript. |
 | `maxOutputLength` | `number` | `100000` | Maximum output length. |
 | `maxDepth` | `number` | `100` | Maximum nested tag depth. |
 | `maxFetchRequests` | `number` | `3` | Maximum fetch requests per render. |
@@ -132,7 +134,7 @@ console.log(mathResult.output) // hello
 | `{url:text}` | URL encode string. |
 | `{substring:text\|start\|end}` | Extract substring. |
 | `{oneline:text}` | Replace newlines with spaces. |
-| `{hash:text}` | MD5 hash of string. |
+| `{hash:text}` | Java-style hashCode of string (matches JagTag). |
 
 ### Math
 
@@ -186,7 +188,7 @@ console.log(mathResult.output) // hello
 
 | Tag | Description |
 |-----|-------------|
-| `{if:condition\|then\|else}` | Conditional. |
+| `{if:a\|operator\|b\|then\|else}` | Conditional. Operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `~` (fuzzy match), `?` (regex match). |
 | `{note:text}` | Comment. Ignored in output. |
 | `{ignore:text}` | Ignore errors in text. |
 | `{eval:expression}` | Evaluate expression. |
@@ -221,6 +223,25 @@ console.log(mathResult.output) // hello
 | Tag | Description |
 |-----|-------------|
 | `{fetch:url\|method}` | Fetch content from URL. Requires `enableFetch: true`. |
+
+### Fetch safety
+
+The fetch tag can reach network resources, so treat it as attacker-controllable when templates come from untrusted users. TagScript applies several safeguards:
+
+- Only `http:` and `https:` URLs are allowed. Other schemes (`file:`, `ftp:`, ...) are rejected.
+- Requests to loopback, private, link-local and cloud-metadata IP literals are blocked, including `localhost`/`*.localhost` and IPv4-mapped IPv6 forms such as `::ffff:127.0.0.1`.
+- Responses are streamed and aborted once they exceed `maxOutputLength`, so a large remote body can't exhaust memory.
+- Each request carries a 10-second `AbortSignal.timeout` unless your `fetchOptions` supplies its own signal.
+- Fetched output is marked inert (see `inertHandlerOutput`) so remote bodies can't inject executable tags.
+
+The IP checks only cover literal addresses in the URL. A hostname that resolves to a private address via DNS (DNS rebinding) is **not** blocked, because pinning the resolved address is out of scope. For untrusted templates, set `fetchAllowedHosts` to an explicit allowlist — this is the recommended safeguard:
+
+```ts
+await render('{fetch:https://api.example.com/data}', {
+  enableFetch: true,
+  fetchAllowedHosts: ['api.example.com'],
+})
+```
 
 ## Normal tags vs lazy tags
 
@@ -285,16 +306,33 @@ Call the parser with raw strings to avoid this problem:
 ```ts
 import { render } from '@thesharks/tagscript'
 
-// Incorrect: escape sequences are interpreted
-const wrongTemplate = `{replaceregex:I have 5 cats and 23 shirts|\d+/|X}`
+// Incorrect: V8 turns \d into d, so the pattern matches the letter d
+const wrongTemplate = `{replaceregex:I have 5 cats and 23 shirts|\d+|X}`
 const wrongResult = await render(wrongTemplate)
 console.log(wrongResult.output) // "I have 5 cats anX 23 shirts"
 
 // Correct: use String.raw
-const template = String.raw`{replaceregex:I have 5 cats and 23 shirts|\d+/|X}`
+const template = String.raw`{replaceregex:I have 5 cats and 23 shirts|\d+|X}`
 const result = await render(template)
-console.log(result.output) // I have X cats and XX shirts
+console.log(result.output) // I have X cats and X shirts
 ```
+
+## Recursive rendering
+
+TagScript re-renders its output until it stops changing, so tag output containing `{...}` executes on the next pass. This is what makes stored tags and variables composable:
+
+```ts
+const result = await render('{get:greeting}', {
+  variables: { greeting: '{upper:hello}' },
+})
+console.log(result.output) // HELLO
+```
+
+Three safeguards bound this recursion:
+
+- `maxIterations` caps the number of render passes. If the output still changes when the cap is reached, rendering throws a `RenderError` instead of returning partially rendered output.
+- `maxDepth` caps nesting depth, including inside lazy tags like `{if}` and `{eval}`.
+- `inertHandlerOutput` lists tags whose output is never re-executed. It defaults to `['fetch', 'js', 'javascript']` so remote responses and sandbox results render as literal text. Pass your own list to change this — including an empty array to re-execute everything.
 
 ## Regular expression safety
 

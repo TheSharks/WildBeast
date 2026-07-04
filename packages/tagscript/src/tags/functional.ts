@@ -39,6 +39,7 @@ export const ifHandler: LazyTagHandler = async (
   ctx: RenderContext,
   args,
   limits,
+  depth = 0,
 ) => {
   const limitsToUse = limits ?? DEFAULT_LIMITS
 
@@ -49,21 +50,21 @@ export const ifHandler: LazyTagHandler = async (
     ctx,
     '',
     limitsToUse,
-    0,
+    depth + 1,
   )
   const { output: operator } = await renderSegment(
     operatorArg,
     ctx,
     '',
     limitsToUse,
-    0,
+    depth + 1,
   )
   const { output: value } = await renderSegment(
     valueArg,
     ctx,
     '',
     limitsToUse,
-    0,
+    depth + 1,
   )
 
   let conditionResult = false
@@ -131,7 +132,7 @@ export const ifHandler: LazyTagHandler = async (
     ctx,
     '',
     limitsToUse,
-    0,
+    depth + 1,
   )
 
   return output
@@ -152,11 +153,12 @@ export const evalHandler: LazyTagHandler = async (
   ctx: RenderContext,
   args,
   limits,
+  depth = 0,
 ) => {
   const limitsToUse = limits ?? DEFAULT_LIMITS
 
   const [arg] = args
-  const { output } = await renderSegment(arg, ctx, '', limitsToUse, 0)
+  const { output } = await renderSegment(arg, ctx, '', limitsToUse, depth + 1)
 
   return output
 }

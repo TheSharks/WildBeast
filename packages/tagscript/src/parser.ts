@@ -1,3 +1,4 @@
+import { RenderError } from './runtime/errors.js'
 import type { Ast, Segment, Span, TagNode, TextNode } from './types.js'
 
 const ESCAPE_MAP: Record<string, string> = {
@@ -92,7 +93,7 @@ type TagResult =
 
 function parseTag(input: string, startIndex: number, depth: number): TagResult {
   if (depth > 1000) {
-    throw new Error('Recursion limit reached')
+    throw new RenderError('Recursion limit reached')
   }
 
   let index = startIndex + 1

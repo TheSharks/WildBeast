@@ -1,4 +1,5 @@
 import type { Limits } from '../types.js'
+import { RenderError } from './errors.js'
 
 export type { Limits }
 
@@ -14,19 +15,15 @@ export const DEFAULT_LIMITS: Limits = {
 export function checkLimits(
   output: string,
   limits: Limits,
-  iteration: number,
   depth: number,
 ): void {
   if (output.length > limits.maxOutputLength) {
-    throw new Error(
+    throw new RenderError(
       `Output exceeded maximum length of ${limits.maxOutputLength} characters`,
     )
   }
-  if (iteration >= limits.maxIterations) {
-    throw new Error(`Exceeded maximum iterations of ${limits.maxIterations}`)
-  }
   if (depth > limits.maxDepth) {
-    throw new Error(`Exceeded maximum depth of ${limits.maxDepth}`)
+    throw new RenderError(`Exceeded maximum depth of ${limits.maxDepth}`)
   }
 }
 

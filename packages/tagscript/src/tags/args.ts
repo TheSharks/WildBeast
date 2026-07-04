@@ -9,7 +9,7 @@ export const argHandler: TagHandler = (ctx: RenderContext, args: string[]) => {
   const indexArg = args[0]
   if (!indexArg) return 'undefined'
   const index = parseInt(indexArg, 10)
-  if (isNaN(index) || !ctx.args || index >= ctx.args.length) {
+  if (isNaN(index) || index < 0 || !ctx.args || index >= ctx.args.length) {
     return 'undefined'
   }
   return ctx.args[index] ?? 'undefined'

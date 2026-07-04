@@ -153,6 +153,9 @@ export async function render(
     sandbox: enableJs ? sandbox : undefined,
     options,
     fetchRequests: 0,
+    inertTags: new Set(
+      options.inertHandlerOutput ?? ['fetch', 'js', 'javascript'],
+    ),
   }
   const result = await renderInternal(input, context, limits)
 

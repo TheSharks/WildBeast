@@ -1,22 +1,23 @@
 import type { RenderContext, TagHandler } from '../types.js'
 
 function formatDate(date: Date, format: string): string {
-  const year = date.getUTCFullYear()
-  const month = date.getUTCMonth() + 1
-  const day = date.getUTCDate()
-  const hours = date.getUTCHours()
-  const minutes = date.getUTCMinutes()
-  const seconds = date.getUTCSeconds()
+  const tokens: Record<string, string> = {
+    yyyy: String(date.getUTCFullYear()),
+    MM: String(date.getUTCMonth() + 1).padStart(2, '0'),
+    M: String(date.getUTCMonth() + 1),
+    dd: String(date.getUTCDate()).padStart(2, '0'),
+    d: String(date.getUTCDate()),
+    HH: String(date.getUTCHours()).padStart(2, '0'),
+    mm: String(date.getUTCMinutes()).padStart(2, '0'),
+    ss: String(date.getUTCSeconds()).padStart(2, '0'),
+  }
 
-  return format
-    .replace('yyyy', String(year))
-    .replace('MM', String(month).padStart(2, '0'))
-    .replace('dd', String(day).padStart(2, '0'))
-    .replace('d', String(day))
-    .replace('M', String(month))
-    .replace('HH', String(hours).padStart(2, '0'))
-    .replace('mm', String(minutes).padStart(2, '0'))
-    .replace('ss', String(seconds).padStart(2, '0'))
+  // Single pass so substituted values can't be re-matched as tokens,
+  // and repeated tokens are all replaced
+  return format.replace(
+    /yyyy|MM|dd|HH|mm|ss|M|d/g,
+    (token) => tokens[token] ?? token,
+  )
 }
 
 export const nowHandler: TagHandler = () => {

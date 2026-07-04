@@ -193,6 +193,14 @@ describe('math tags comprehensive', () => {
       const result = await render(input)
       expect(options).toContain(result.output)
     })
+
+    it('selects every option over many renders', async () => {
+      const seen = new Set<string>()
+      for (let i = 0; i < 200; i++) {
+        seen.add((await render('{choose:a|b|c}')).output)
+      }
+      expect([...seen].sort()).toEqual(['a', 'b', 'c'])
+    })
   })
 
   describe('range', () => {
