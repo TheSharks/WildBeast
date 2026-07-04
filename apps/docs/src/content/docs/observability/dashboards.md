@@ -5,7 +5,8 @@ sidebar:
   order: 3
 ---
 
-WildBeast ships three premade Grafana dashboards in
+WildBeast ships three premade Grafana dashboards and 14 Prometheus alert
+rules in
 [`contrib/grafana`](https://github.com/TheSharks/WildBeast/tree/master/contrib/grafana),
 covering the fleet, the commands and the runtime. Every query was validated
 against a live collector, so the panels light up as soon as metrics flow.
@@ -13,7 +14,9 @@ against a live collector, so the panels light up as soon as metrics flow.
 ## Try them locally
 
 The directory doubles as a runnable observability stack: an OpenTelemetry
-collector, Prometheus and a provisioned Grafana.
+collector, Prometheus with the alert rules loaded, Tempo for traces, Loki
+for logs and a provisioned Grafana. Traces and logs are cross-linked, so a
+slow span jumps to its log lines and a log line jumps to its trace.
 
 ```bash
 cd contrib/grafana
@@ -39,6 +42,16 @@ gateway event pressure and REST rate limits.
 **Runtime health** watches each worker's Node.js runtime: event loop delay
 and utilization, heap growth against the V8 limit, GC pauses, CPU,
 websocket latency and the BullMQ task queue.
+
+## Alerting
+
+The alert rules encode the failure semantics of
+[autonomous sharding](/scaling/clustering/) and the runtime: a fenced
+cluster, shards assigned but not connected, leases lost without a graceful
+release, crash-looping workers, command error rates above 5%, event loops
+blocked long enough to threaten heartbeats, and heap growth approaching the
+V8 limit. The bundled Prometheus evaluates them out of the box; notification
+routing needs an Alertmanager, which stays environment-specific on purpose.
 
 ## Using your own Grafana
 

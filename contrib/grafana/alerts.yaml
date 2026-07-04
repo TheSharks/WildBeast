@@ -1,0 +1,181 @@
+# Prometheus alerting rules for WildBeast. Loaded by the bundled stack;
+# for your own Prometheus, add this file to rule_files. Routing (where the
+# notifications go) is up to your Alertmanager and not configured here.
+groups:
+  - name: wildbeast-fleet
+    rules:
+      - alert: WildBeastClusterFenced
+        expr: sum(discord_cluster_fenced) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'A cluster fenced itself off from coordination'
+          description: >-
+            A cluster lost Redis for longer than the fence deadline and
+            stopped its shards. Its shards will be picked up by the rest of
+            the fleet, but capacity is reduced until it recovers.
+
+      - alert: WildBeastShardsUnowned
+        expr: sum(discord_cluster_desired_shards) - sum(discord_manager_shard_up) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Fewer shards connected than the fleet assignment expects'
+          description: >-
+            {{ $value }} shard(s) are assigned but not up. Short dips during
+            handoffs are normal; five sustained minutes means shards are
+            failing to start or connect.
+
+      - alert: WildBeastShardLeaseLost
+        expr: sum(increase(discord_cluster_shard_handoffs_total{direction="lost"}[10m])) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: 'A shard lease expired without a graceful release'
+          description: >-
+            Lost leases mean a cluster died or stalled instead of handing
+            off. The shard was recovered, but find out what killed the
+            previous owner.
+
+      - alert: WildBeastCoordinationErrors
+        expr: sum(rate(discord_cluster_coordination_errors_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'The reconciler keeps failing to reach Redis'
+          description: >-
+            Sustained coordination errors lead to fencing once the fence
+            deadline passes. Check Redis health and connectivity first.
+
+      - alert: WildBeastShardCrashLoop
+        expr: sum by (cluster_id) (increase(discord_manager_shard_deaths_total[15m])) > 3
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Shard workers on {{ $labels.cluster_id }} are crash-looping'
+          description: >-
+            More than three worker deaths in 15 minutes on one cluster.
+            Check the cluster logs and recent Sentry events.
+
+      - alert: WildBeastEpochParked
+        expr: max(discord_cluster_epoch_parked) == 1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'A cluster has been parked on a pending epoch for 15 minutes'
+          description: >-
+            Epoch promotion requires the active membership to drain. A
+            cluster stuck parked usually means an old-epoch cluster refuses
+            to shut down.
+
+      - alert: WildBeastIdentifySaturated
+        expr: >-
+          histogram_quantile(0.95,
+            sum by (le) (rate(discord_identify_wait_seconds_bucket[10m]))) > 60
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Shards queue over a minute for the identify rate limit'
+          description: >-
+            The fleet is (re)connecting faster than Discord allows
+            (1 identify per bucket per 5s). Expected briefly after mass
+            restarts; sustained waits mean reconnect churn.
+
+  - name: wildbeast-commands
+    rules:
+      - alert: WildBeastCommandErrorRate
+        expr: >-
+          sum(rate(discord_command_errors_total[5m]))
+            / clamp_min(sum(rate(discord_commands_total[5m])), 1e-9) > 0.05
+          and sum(rate(discord_commands_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'More than 5% of commands are failing'
+          description: >-
+            Error rate is {{ $value | humanizePercentage }} over five
+            minutes. Rates this high usually mean a broken dependency, not
+            bad user input. The failing commands are in Sentry.
+
+      - alert: WildBeastCommandLatency
+        expr: >-
+          histogram_quantile(0.95,
+            sum by (le) (rate(discord_command_duration_seconds_bucket[10m]))) > 2.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Command p95 exceeds 2.5 seconds'
+          description: >-
+            Interactions must be acknowledged within 3 seconds or Discord
+            shows "application did not respond". Check traces for the slow
+            span.
+
+      - alert: WildBeastRestRateLimited
+        expr: sum(rate(discord_rest_rate_limited_total[5m])) * 60 > 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'REST requests keep hitting Discord rate limits'
+          description: >-
+            More than 10 rate-limit hits per minute for 10 minutes. Look at
+            the per-route breakdown on the commands dashboard; a single hot
+            route usually points at a misbehaving feature.
+
+  - name: wildbeast-runtime
+    rules:
+      - alert: WildBeastEventLoopBlocked
+        expr: max by (service_instance_id) (nodejs_eventloop_delay_p99_seconds) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Event loop delay p99 above 200ms on shard {{ $labels.service_instance_id }}'
+          description: >-
+            Something synchronous is hogging the loop. At one second the
+            Sentry block watchdog captures a stack trace; check for a
+            matching event.
+
+      - alert: WildBeastHeapNearLimit
+        expr: >-
+          max by (service_instance_id) (v8js_memory_heap_used_bytes)
+            / on(service_instance_id)
+              max by (service_instance_id) (v8js_memory_heap_limit_bytes) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Shard {{ $labels.service_instance_id }} heap is above 90% of the V8 limit'
+          description: >-
+            The worker is heading for an out-of-memory crash. Session
+            persistence makes the restart cheap, but find the leak.
+
+      - alert: WildBeastGatewayLatency
+        expr: max by (service_instance_id) (discord_websocket_latency_seconds) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Gateway ping above 1s on shard {{ $labels.service_instance_id }}'
+          description: >-
+            Sustained high heartbeat latency risks zombie connections and
+            forced resumes. Usually network, occasionally an overloaded
+            event loop.
+
+      - alert: WildBeastTaskQueueFailures
+        expr: max(bullmq_queue_failed) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Scheduled task jobs are sitting in the failed state'
+          description: >-
+            BullMQ jobs failed and were not retried away. Task errors carry
+            Sentry events and cron check-ins; start there.

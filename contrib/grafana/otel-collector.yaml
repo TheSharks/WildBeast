@@ -13,9 +13,21 @@ exporters:
     # service.instance.id) to metric labels. The dashboards depend on this.
     resource_to_telemetry_conversion:
       enabled: true
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
 
 service:
   pipelines:
     metrics:
       receivers: [otlp]
       exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      exporters: [otlp/tempo]
+    logs:
+      receivers: [otlp]
+      exporters: [otlphttp/loki]

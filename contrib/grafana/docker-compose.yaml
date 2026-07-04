@@ -14,8 +14,21 @@ services:
     image: prom/prometheus:latest
     volumes:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts.yaml:/etc/prometheus/alerts.yaml:ro
     ports:
       - '9090:9090'
+
+  tempo:
+    image: grafana/tempo:latest
+    command: ['-config.file=/etc/tempo.yaml']
+    user: root
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
+
+  loki:
+    image: grafana/loki:latest
+    command: ['-config.file=/etc/loki/local-config.yaml']
 
   grafana:
     image: grafana/grafana:latest
@@ -30,3 +43,8 @@ services:
       - '3000:3000'
     depends_on:
       - prometheus
+      - tempo
+      - loki
+
+volumes:
+  tempo-data:

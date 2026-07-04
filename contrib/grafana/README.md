@@ -1,7 +1,8 @@
 # Grafana dashboards
 
-Premade dashboards for WildBeast's OpenTelemetry metrics, plus a ready-to-run
-local stack (collector, Prometheus, Grafana).
+Premade dashboards and alert rules for WildBeast's OpenTelemetry output,
+plus a ready-to-run local stack: collector, Prometheus (metrics and
+alerting), Tempo (traces), Loki (logs) and a provisioned Grafana.
 
 ## Quick start
 
@@ -17,7 +18,10 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 pnpm start
 ```
 
 Grafana runs at http://localhost:3000 (anonymous admin, no login) with the
-dashboards provisioned into the WildBeast folder.
+dashboards provisioned into the WildBeast folder. All three signals flow:
+metrics into the dashboards, traces into Tempo and logs into Loki (Explore).
+Traces link to their logs and logs back to their trace via the provisioned
+datasource correlation.
 
 ## Dashboards
 
@@ -26,6 +30,22 @@ dashboards provisioned into the WildBeast folder.
 | Fleet & clustering | Are all shards owned and connected? Are handoffs graceful (resumed) or crashes (lost leases)? Is identify pacing healthy? |
 | Commands & interactions | Command throughput, latency percentiles, error and denial rates, component and autocomplete health, gateway and REST pressure. |
 | Runtime health | Event loop, heap against the V8 limit, GC pauses, CPU, websocket latency, BullMQ queue depth. |
+
+## Alert rules
+
+`alerts.yaml` ships 14 Prometheus alerting rules covering the failure modes
+the dashboards visualize: fenced clusters, unowned shards, lost leases,
+crash loops, parked epochs, identify saturation, command error rate and
+latency, sustained REST rate limiting, blocked event loops, heap near the
+V8 limit, gateway latency and failed task jobs. The bundled Prometheus
+loads them automatically; for your own setup, add the file to `rule_files`
+and point Prometheus at your Alertmanager for routing. Validate changes
+with:
+
+```bash
+docker run --rm --entrypoint promtool \
+  -v "$PWD/alerts.yaml:/alerts.yaml:ro" prom/prometheus check rules /alerts.yaml
+```
 
 ## Using an existing Grafana
 
