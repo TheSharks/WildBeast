@@ -1,10 +1,20 @@
 import { createRequire } from 'node:module'
 
-const { version } = createRequire(import.meta.url)('../../package.json') as {
+const pkg = createRequire(import.meta.url)('../../package.json') as {
   version: string
+  homepage: string
+  repository: { url: string }
 }
 
-export const USER_AGENT = `wildbeast/${version} (+https://wildbeast.guide)`
+/**
+ * Verbose on purpose: external API operators should be able to tell at a
+ * glance who is calling them, where the code lives, and who to contact if
+ * the traffic misbehaves.
+ */
+export const USER_AGENT = [
+  `WildBeast/${pkg.version}`,
+  `(+${pkg.homepage}; +${pkg.repository.url.replace(/\.git$/, '')};)`,
+].join(' ')
 
 const REQUEST_TIMEOUT_MS = 10_000
 
