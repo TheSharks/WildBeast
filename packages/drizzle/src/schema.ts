@@ -40,8 +40,29 @@ export const guilds = pgTable('Guild', {
   id: bigint('id', { mode: 'bigint' }).primaryKey(),
 })
 
+/**
+ * Application command ids as Discord assigned them, keyed back to the
+ * Sapphire piece that registered them. Fed to the command registry as
+ * idHints on the next boot so commands are updated instead of recreated.
+ */
+export const applicationCommandIds = pgTable(
+  'ApplicationCommandId',
+  {
+    // Discord's command id; snowflakes exceed Number.MAX_SAFE_INTEGER.
+    commandId: bigint('commandId', { mode: 'bigint' }).primaryKey(),
+    // The Sapphire piece name (registry key), not the localized command name.
+    name: text('name').notNull(),
+    // Null for globally registered commands.
+    guildId: bigint('guildId', { mode: 'bigint' }),
+  },
+  (table) => [index('ApplicationCommandId_name_idx').on(table.name)],
+)
+
 export type Tag = typeof tags.$inferSelect
 export type NewTag = typeof tags.$inferInsert
 
 export type Guild = typeof guilds.$inferSelect
 export type NewGuild = typeof guilds.$inferInsert
+
+export type ApplicationCommandId = typeof applicationCommandIds.$inferSelect
+export type NewApplicationCommandId = typeof applicationCommandIds.$inferInsert

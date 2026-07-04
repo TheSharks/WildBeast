@@ -15,6 +15,13 @@
       "when": 1783198157914,
       "tag": "0001_init",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783198752233,
+      "tag": "0002_command-id-hints",
+      "breakpoints": true
     }
   ]
 }
