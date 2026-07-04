@@ -54,6 +54,9 @@ importers:
       '@sapphire/plugin-scheduled-tasks':
         specifier: ^10.0.4
         version: 10.0.4
+      '@sapphire/plugin-subcommands':
+        specifier: ^7.0.1
+        version: 7.0.1
       '@sentry/node':
         specifier: ^10.63.0
         version: 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.220.0(@opentelemetry/api@1.9.1))
@@ -63,6 +66,9 @@ importers:
       '@thesharks/drizzle':
         specifier: workspace:^
         version: link:../../packages/drizzle
+      '@thesharks/tagscript':
+        specifier: workspace:^
+        version: link:../../packages/tagscript
       bullmq:
         specifier: ^5.79.2
         version: 5.79.2
@@ -2040,6 +2046,10 @@ packages:
 
   '@sapphire/plugin-scheduled-tasks@10.0.4':
     resolution: {integrity: sha512-H0Z9QgDavLDK38GVyKfMDsyruOA4NHSyhNk/LCzewCDqc1d5Nxvoo5PMTB19NvadO9RFvgnPqZk7g4k3HzvAvQ==}
+    engines: {node: '>=v18', npm: '>=7'}
+
+  '@sapphire/plugin-subcommands@7.0.1':
+    resolution: {integrity: sha512-3ngUpfKfcMX4zIlJ4SHLe10N79XU72H+Wdfcnd9ueMf6FOSMJFvVUfqDIp1rb7/iXi7C5dfx0pQqSwqu3UG0KQ==}
     engines: {node: '>=v18', npm: '>=7'}
 
   '@sapphire/ratelimits@2.4.11':
@@ -6704,6 +6714,10 @@ snapshots:
       bullmq: 5.58.7
     transitivePeerDependencies:
       - supports-color
+
+  '@sapphire/plugin-subcommands@7.0.1':
+    dependencies:
+      '@sapphire/utilities': 3.18.2
 
   '@sapphire/ratelimits@2.4.11': {}
 

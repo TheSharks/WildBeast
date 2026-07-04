@@ -1,0 +1,14 @@
+{
+  "created": "Created tag `{{name}}`.",
+  "updated": "Updated tag `{{name}}`.",
+  "deleted": "Deleted tag `{{name}}`.",
+  "notFound": "There's no tag named `{{name}}`.",
+  "notFoundSuggestion": "There's no tag named `{{name}}`. Did you mean `{{suggestion}}`?",
+  "alreadyExists": "A tag named `{{name}}` already exists.",
+  "notOwner": "Only the author of a tag can change or delete it.",
+  "renderFailed": "Couldn't render that tag: {{error}}",
+  "emptyOutput": "That tag rendered to an empty message.",
+  "listEmpty": "No tags found.",
+  "list": "{{count}} tag(s): {{names}}",
+  "info": "`{{name}}` was made by <@{{authorId}}> and is {{length}} characters long."
+}

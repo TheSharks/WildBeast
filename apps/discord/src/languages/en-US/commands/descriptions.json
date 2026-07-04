@@ -1,3 +1,15 @@
 {
-  "ping": "Check if the bot is still alive"
+  "ping": "Check if the bot is still alive",
+  "tag": "Store and recall snippets of text, with TagScript templating",
+  "tagShow": "Render a tag and post the result",
+  "tagCreate": "Create a new tag",
+  "tagEdit": "Change the content of a tag you own",
+  "tagDelete": "Delete a tag you own",
+  "tagList": "List available tags",
+  "tagInfo": "Show who made a tag",
+  "tagRaw": "Show the unrendered content of a tag",
+  "tagOptionName": "The name of the tag",
+  "tagOptionContent": "What the tag should say; TagScript is allowed here",
+  "tagOptionArgs": "Space-separated arguments passed to the tag",
+  "tagOptionAuthor": "Only list tags made by this user"
 }

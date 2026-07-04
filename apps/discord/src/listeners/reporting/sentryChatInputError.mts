@@ -1,9 +1,9 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
-import { resolveKey } from '@sapphire/plugin-i18next'
 import * as Sentry from '@sentry/node'
-import { type ClientEvents, Colors, EmbedBuilder } from 'discord.js'
+import type { ClientEvents } from 'discord.js'
+import { sendErrorReport } from '../../utils/errorResponse.mjs'
 import {
   applyInteractionScope,
   attributesFromInteraction,
@@ -39,44 +39,7 @@ export class SentryChatInputErrorListener extends Listener {
           })
           return Sentry.captureException(error)
         })
-        const embeds = [
-          new EmbedBuilder()
-            .setTitle(
-              await resolveKey(payload.interaction, 'system/errors:oops'),
-            )
-            .setDescription(
-              await resolveKey(payload.interaction, 'system/errors:try_again', {
-                error: error instanceof Error ? error.message : String(error),
-              }),
-            )
-            .setColor(Colors.Red)
-            .setFooter({
-              text: await resolveKey(
-                payload.interaction,
-                'system/errors:report',
-              ),
-            })
-            .addFields({
-              name: await resolveKey(
-                payload.interaction,
-                'system/errors:error_code',
-              ),
-              value: uuid,
-            }),
-        ]
-        // A deferred interaction is acknowledged too; reply() would throw.
-        if (payload.interaction.replied || payload.interaction.deferred) {
-          await payload.interaction.editReply({
-            content: '',
-            components: [],
-            embeds,
-          })
-        } else {
-          await payload.interaction.reply({
-            embeds,
-            ephemeral: true,
-          })
-        }
+        await sendErrorReport(interaction, error, uuid)
       },
     )
   }

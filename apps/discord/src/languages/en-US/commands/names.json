@@ -1,3 +1,15 @@
 {
-  "ping": "ping"
+  "ping": "ping",
+  "tag": "tag",
+  "tagShow": "show",
+  "tagCreate": "create",
+  "tagEdit": "edit",
+  "tagDelete": "delete",
+  "tagList": "list",
+  "tagInfo": "info",
+  "tagRaw": "raw",
+  "tagOptionName": "name",
+  "tagOptionContent": "content",
+  "tagOptionArgs": "args",
+  "tagOptionAuthor": "author"
 }

@@ -1,6 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
-import { Events, Listener } from '@sapphire/framework'
+import { Listener } from '@sapphire/framework'
+import { SubcommandPluginEvents } from '@sapphire/plugin-subcommands'
 import * as Sentry from '@sentry/node'
 import type { ClientEvents } from 'discord.js'
 import { sendErrorReport } from '../../utils/errorResponse.mjs'
@@ -10,23 +11,24 @@ import {
   withSpan,
 } from '../../utils/tracing.mjs'
 
+/**
+ * Same treatment as SentryChatInputErrorListener, for subcommand-based
+ * commands: the subcommands plugin swallows chatInputCommandError and
+ * emits its own event instead.
+ */
 @ApplyOptions<ListenerOptions>({
-  event: Events.ContextMenuCommandError,
+  event: SubcommandPluginEvents.ChatInputSubcommandError,
 })
-export class SentryContextCommandErrorListener extends Listener {
+export class SentrySubcommandErrorListener extends Listener {
   public async run(
-    ...[error, payload]: ClientEvents['contextMenuCommandError']
+    ...[error, payload]: ClientEvents['chatInputSubcommandError']
   ) {
     return withSpan(
-      'discord.context_command.error_reporting',
+      'discord.command.error_reporting',
       {
-        ...attributesFromInteraction(
-          payload.interaction as unknown as Parameters<
-            typeof attributesFromInteraction
-          >[0],
-          this,
-        ),
+        ...attributesFromInteraction(payload.interaction, this),
         'discord.command.name': payload.interaction.commandName,
+        'discord.command.subcommand': payload.matchedSubcommandMapping.name,
       },
       async () => {
         const { interaction } = payload
@@ -41,6 +43,7 @@ export class SentryContextCommandErrorListener extends Listener {
             message: error instanceof Error ? error.message : String(error),
             data: {
               commandName: interaction.commandName,
+              subcommand: payload.matchedSubcommandMapping.name,
               userId: interaction.user.id,
             },
           })
