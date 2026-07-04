@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework'
+import { installIdHintTracking } from '../utils/idHints.mjs'
 import {
   attributesFromInteraction,
   spanName,
@@ -16,6 +17,8 @@ import {
 export abstract class TracedCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
     super(context, options)
+
+    installIdHintTracking(this)
 
     const chatInputRun = this.chatInputRun?.bind(this)
     if (chatInputRun) {

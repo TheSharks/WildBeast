@@ -15,7 +15,6 @@ export class PingCommand extends TracedCommand {
       },
       {
         guildIds: ['1034462346908794910'],
-        idHints: ['1071139291897548902'],
       },
     )
   }
