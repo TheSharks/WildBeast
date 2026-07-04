@@ -47,11 +47,44 @@ Setting `SENTRY_DSN` enables error capture and performance tracing through
 the same OpenTelemetry pipeline. Command failures are reported with the
 interaction's user, guild and channel attached on an isolated scope, and the
 Sentry event id is shown to the user in the error reply for support
-lookups.
+lookups. Every event is tagged with `cluster.id` and `shard.id`, so you can
+filter issues to the cluster or shard that produced them.
 
 Trace sampling is error-biased: command traces are always kept (that's
 where user-facing failures live), recurring scheduled tasks are sampled at
 5% in production, and everything else at 20% (100% outside production).
+
+Beyond errors and traces, the SDK is wired for the rest of the Sentry
+platform:
+
+- Scheduled tasks report [cron check-ins](https://docs.sentry.io/product/crons/)
+  under a monitor named after the task, so a run that never happens alerts
+  just like a run that throws. Monitors are created automatically from the
+  task's interval or cron pattern; BullMQ runs each repeated job on one
+  worker, so a run checks in once fleet-wide.
+- Error events include the local variables of every stack frame and any
+  non-standard properties on the error object. discord.js API errors carry
+  their status code, method and route this way, and `ZodError` issues are
+  flattened into readable context.
+- Continuous profiling attaches CPU profiles to sampled traces in shard
+  workers. `SENTRY_PROFILE_SESSION_SAMPLE_RATE` (0 to 1, default 1) scales
+  it; trace sampling already bounds the volume, since profiles are only
+  collected while a sampled trace is active.
+- A watchdog thread reports when any thread in the cluster process blocks
+  its event loop for more than a second, with a stack trace of where it was
+  stuck.
+- Node runtime metrics (event loop, GC, memory) flow to the Sentry metrics
+  product alongside the OTLP metrics.
+
+Outgoing HTTP requests do not carry `sentry-trace` or `baggage` headers:
+nothing downstream of the bot continues our traces, and user-controlled
+fetches must not see trace metadata. Pass `tracePropagationTargets` to the
+telemetry config if you add an internal service that should join traces.
+
+:::note
+For local development, set `SENTRY_SPOTLIGHT=true` to stream events to a
+[Spotlight](https://spotlightjs.com/) sidecar instead of configuring a DSN.
+:::
 
 ## What is instrumented
 

@@ -57,6 +57,8 @@ See [Telemetry](/observability/telemetry/) for the full story.
 | Variable | Description |
 | --- | --- |
 | `SENTRY_DSN` | Enables Sentry error reporting and tracing. |
+| `SENTRY_PROFILE_SESSION_SAMPLE_RATE` | Continuous profiling session rate for shard workers, 0 to 1. Defaults to 1. |
+| `SENTRY_SPOTLIGHT` | `true` streams events to a local Spotlight sidecar for development. |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Enables OTLP export of traces, metrics and logs. |
 | `OTEL_SERVICE_NAME` | Overrides the reported service name. |
 

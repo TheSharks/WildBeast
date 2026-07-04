@@ -18,6 +18,11 @@ export const envSchema = z.object({
   REDIS_PASSWORD: z.string().optional(),
   REDIS_DB: z.coerce.number().int().nonnegative().optional(),
   SENTRY_DSN: z.url().optional(),
+  SENTRY_PROFILE_SESSION_SAMPLE_RATE: z.coerce
+    .number()
+    .min(0)
+    .max(1)
+    .optional(),
   WILDBEAST_CLUSTER_ID: z.string().optional(),
   WILDBEAST_CLUSTERING_MODE: z.enum(['static', 'autonomous']).optional(),
   WILDBEAST_SHARDING_START: z.coerce.number().int().nonnegative().optional(),

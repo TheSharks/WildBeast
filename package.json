@@ -29,6 +29,12 @@
     "node": ">=22.0.0"
   },
   "packageManager": "pnpm@10.13.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@sentry/node-cpu-profiler",
+      "@sentry/node-native-stacktrace"
+    ]
+  },
   "dependencies": {
     "tslib": "^2.8.1"
   }

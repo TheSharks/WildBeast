@@ -39,11 +39,13 @@ import {
   ATTR_SERVICE_VERSION,
 } from '@opentelemetry/semantic-conventions'
 import * as Sentry from '@sentry/node'
+import { eventLoopBlockIntegration } from '@sentry/node-native'
 import {
   SentryPropagator,
   SentrySampler,
   SentrySpanProcessor,
 } from '@sentry/opentelemetry'
+import { nodeProfilingIntegration } from '@sentry/profiling-node'
 import type { TelemetryConfig, TelemetryExporterConfig } from './types.js'
 
 // from @opentelemetry/semantic-conventions/incubating
@@ -384,6 +386,10 @@ export function initOpenTelemetry(
   const release =
     config?.sentry?.release ?? process.env.npm_package_version ?? 'dev'
 
+  const profileSessionSampleRate = config?.sentry?.profileSessionSampleRate ?? 0
+  const eventLoopBlockThreshold =
+    config?.sentry?.eventLoopBlockThreshold ?? 1_000
+
   Sentry.init({
     dsn: config?.sentry?.dsn ?? process.env.SENTRY_DSN,
     tracesSampleRate:
@@ -395,6 +401,20 @@ export function initOpenTelemetry(
     release,
     // Enable Sentry Logs API (requires SDK 9.41.0+)
     enableLogs: config?.sentry?.enableLogs ?? true,
+    // Capture local variables in exception stack frames.
+    includeLocalVariables: config?.sentry?.includeLocalVariables ?? true,
+    // Nothing downstream continues our traces, and tagscript {fetch:} can
+    // reach arbitrary hosts that must not see sentry-trace/baggage headers.
+    tracePropagationTargets: config?.sentry?.tracePropagationTargets ?? [],
+    spotlight:
+      config?.sentry?.spotlight ?? process.env.SENTRY_SPOTLIGHT === 'true',
+    ...(config?.sentry?.tags
+      ? { initialScope: { tags: config.sentry.tags } }
+      : {}),
+    // Continuous profiling: profile chunks are collected while a sampled
+    // trace is active on this thread.
+    profileSessionSampleRate,
+    profileLifecycle: 'trace',
     integrations: [
       Sentry.rewriteFramesIntegration({
         root: process.cwd(),
@@ -403,10 +423,21 @@ export function initOpenTelemetry(
           return frame
         },
       }),
-      // Keep Sentry's HTTP integration for request isolation.
-      // When we add custom OTEL http instrumentation later, we should set spans: false
-      // to avoid duplicate spans.
+      // Keep Sentry's HTTP integration for request isolation. Under
+      // skipOpenTelemetrySetup it emits no spans, so it doesn't duplicate
+      // our undici instrumentation.
       Sentry.httpIntegration(),
+      // Flattens ZodError issues into readable event context.
+      Sentry.zodErrorsIntegration(),
+      // Captures non-standard error properties (discord.js errors carry
+      // code/status/method/url) as event context.
+      Sentry.extraErrorDataIntegration(),
+      // Event loop, GC and memory metrics via the Sentry metrics product.
+      Sentry.nodeRuntimeMetricsIntegration(),
+      ...(profileSessionSampleRate > 0 ? [nodeProfilingIntegration()] : []),
+      ...(eventLoopBlockThreshold !== false
+        ? [eventLoopBlockIntegration({ threshold: eventLoopBlockThreshold })]
+        : []),
     ],
 
     // We own OpenTelemetry setup.

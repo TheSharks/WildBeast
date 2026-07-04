@@ -38,6 +38,13 @@ const telemetry = initOpenTelemetry({
   serviceName: '@thesharks/discord-manager',
   namespace: '@thesharks',
   resourceAttributes: { 'cluster.id': clusterId },
+  sentry: {
+    tags: { 'cluster.id': clusterId },
+    // The manager's event loop coordinates handoffs and respawns; profiling
+    // it adds nothing, but block detection matters (the watchdog it spawns
+    // also observes the shard worker threads in this process).
+    profileSessionSampleRate: 0,
+  },
 })
 
 const logger = new AnalyticsLogger({

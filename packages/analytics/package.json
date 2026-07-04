@@ -51,7 +51,9 @@
     "@sapphire/pieces": "^4.3.1",
     "@sapphire/plugin-logger": "^4.1.0",
     "@sentry/node": "^10.63.0",
+    "@sentry/node-native": "10.63.0",
     "@sentry/opentelemetry": "^10.63.0",
+    "@sentry/profiling-node": "10.63.0",
     "discord.js": "^14.26.4"
   },
   "devDependencies": {

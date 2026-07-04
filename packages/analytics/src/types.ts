@@ -29,6 +29,31 @@ export interface TelemetrySentryConfig {
   environment?: string
   release?: string
   enableLogs?: boolean
+  /** Capture local variables in exception stack frames. Defaults to true. */
+  includeLocalVariables?: boolean
+  /**
+   * URLs that receive `sentry-trace`/`baggage` headers on outgoing requests.
+   * Defaults to none: nothing downstream of the bot continues our traces,
+   * and user-controlled fetches (tagscript `{fetch:}`) reach arbitrary hosts
+   * that should not see trace headers.
+   */
+  tracePropagationTargets?: NodeOptions['tracePropagationTargets']
+  /** Forward events to a local Spotlight sidecar for development. */
+  spotlight?: boolean
+  /** Tags applied to every event from this process (e.g. cluster.id). */
+  tags?: Record<string, string>
+  /**
+   * Continuous profiling session sample rate (0-1), evaluated once at
+   * startup. Profiles are collected while a sampled trace is active.
+   * Defaults to 0 (profiler off, native addon never loaded).
+   */
+  profileSessionSampleRate?: number
+  /**
+   * Event-loop-block detection threshold in milliseconds, or false to
+   * disable. Defaults to 1000. Only active when a DSN is configured; the
+   * watchdog runs on the main thread and observes worker threads too.
+   */
+  eventLoopBlockThreshold?: number | false
 }
 
 export interface TelemetryConfig {

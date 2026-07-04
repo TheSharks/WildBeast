@@ -24,6 +24,17 @@ const telemetry = initOpenTelemetry({
   shardId,
   resourceAttributes: clusterId ? { 'cluster.id': clusterId } : undefined,
   sentry: {
+    // Make Sentry error events filterable by shard and cluster, matching
+    // the OTel resource attributes.
+    tags: {
+      ...(shardId !== undefined ? { 'shard.id': shardId } : {}),
+      ...(clusterId ? { 'cluster.id': clusterId } : {}),
+    },
+    // Profile chunks are only collected while a sampled trace is active, so
+    // the tracesSampler below already bounds profiling volume.
+    profileSessionSampleRate: process.env.SENTRY_PROFILE_SESSION_SAMPLE_RATE
+      ? Number(process.env.SENTRY_PROFILE_SESSION_SAMPLE_RATE)
+      : 1.0,
     // We can't tail-sample errors client-side, so bias instead: always keep
     // command traces (low volume, where the user-facing errors are), keep a
     // sliver of the always-on scheduled task runs, and sample everything
