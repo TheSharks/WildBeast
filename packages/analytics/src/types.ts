@@ -29,6 +29,13 @@ export interface TelemetrySentryConfig {
   environment?: string
   release?: string
   enableLogs?: boolean
+  /**
+   * Enable the Sentry metrics product. Defaults to true. Sentry metrics are
+   * per-item and trace-associated (no client-side aggregation), so they're
+   * reserved for low-volume measurements that OTel instruments don't cover;
+   * never mirror hot-path OTel counters into them.
+   */
+  enableMetrics?: boolean
   /** Capture local variables in exception stack frames. Defaults to true. */
   includeLocalVariables?: boolean
   /**

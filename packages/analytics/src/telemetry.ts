@@ -401,6 +401,7 @@ export function initOpenTelemetry(
     release,
     // Enable Sentry Logs API (requires SDK 9.41.0+)
     enableLogs: config?.sentry?.enableLogs ?? true,
+    enableMetrics: config?.sentry?.enableMetrics ?? true,
     // Capture local variables in exception stack frames.
     includeLocalVariables: config?.sentry?.includeLocalVariables ?? true,
     // Nothing downstream continues our traces, and tagscript {fetch:} can

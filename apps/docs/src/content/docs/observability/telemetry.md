@@ -75,6 +75,13 @@ platform:
   stuck.
 - Node runtime metrics (event loop, GC, memory) flow to the Sentry metrics
   product alongside the OTLP metrics.
+- A few measurements go to Sentry metrics exclusively: guild joins and
+  leaves (with the guild's size and shard attached) and the wait imposed by
+  each REST rate limit. Sentry metrics are per-item and stamped with the
+  active trace, with no client-side aggregation, so they carry the rare,
+  inspectable events; the aggregated [OTLP metrics](/observability/metrics/)
+  keep the high-volume series, and nothing is reported to both. Set
+  `enableMetrics: false` in the telemetry config to turn them off.
 
 Outgoing HTTP requests do not carry `sentry-trace` or `baggage` headers:
 nothing downstream of the bot continues our traces, and user-controlled

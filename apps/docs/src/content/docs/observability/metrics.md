@@ -7,7 +7,10 @@ sidebar:
 
 All metrics are exported over OTLP once an endpoint is configured (see
 [Telemetry](/observability/telemetry/)). Durations are histograms in
-seconds with bucket boundaries tuned for sub-minute operations.
+seconds with bucket boundaries tuned for sub-minute operations. A handful
+of rare, per-event measurements (guild joins and leaves, rate-limit waits)
+live in [Sentry metrics](/observability/telemetry/#sentry) instead and are
+not listed here.
 
 ## Commands and interactions
 

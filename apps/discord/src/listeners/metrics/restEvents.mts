@@ -1,6 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
+import * as Sentry from '@sentry/node'
 import { metrics } from '@thesharks/analytics'
 import { type RateLimitData, RESTEvents } from 'discord.js'
 
@@ -25,6 +26,21 @@ export class RestRateLimitedListener extends Listener {
       method: rateLimitInfo.method,
       global: String(rateLimitInfo.global),
     })
+    // Severity of the limit, not just its occurrence (the OTel counter has
+    // the count). Sentry metrics are per-item and trace-associated, which
+    // fits this: rate limits are rare and worth inspecting individually.
+    Sentry.metrics.distribution(
+      'discord.rest.rate_limit.wait',
+      rateLimitInfo.retryAfter,
+      {
+        unit: 'millisecond',
+        attributes: {
+          route: rateLimitInfo.route,
+          method: rateLimitInfo.method,
+          global: rateLimitInfo.global,
+        },
+      },
+    )
     this.container.logger.warn(
       `REST rate limit hit: ${rateLimitInfo.method} ${rateLimitInfo.route} ` +
         `(global: ${rateLimitInfo.global}, retry after ${rateLimitInfo.retryAfter}ms)`,
