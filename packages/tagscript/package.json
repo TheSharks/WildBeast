@@ -1,9 +1,35 @@
 {
   "name": "@thesharks/tagscript",
   "version": "1.0.0",
+  "description": "The TagScript templating language: a safe, limit-bounded interpreter for user-authored message templates, in Node and the browser",
+  "keywords": [
+    "tagscript",
+    "jagtag",
+    "template",
+    "templating",
+    "interpreter",
+    "discord",
+    "tags"
+  ],
+  "license": "MIT",
+  "author": "Remco Jongschaap <hey@dougley.com>",
+  "homepage": "https://wildbeast.guide/tagscript/overview/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheSharks/WildBeast.git",
+    "directory": "packages/tagscript"
+  },
+  "bugs": {
+    "url": "https://github.com/TheSharks/WildBeast/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsc",
     "dev": "vitest",
@@ -14,6 +40,11 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts",
+      "require": null
+    },
+    "./web": {
+      "import": "./dist/web.js",
+      "types": "./dist/web.d.ts",
       "require": null
     }
   },

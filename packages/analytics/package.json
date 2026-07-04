@@ -1,9 +1,39 @@
 {
   "name": "@thesharks/analytics",
   "version": "1.0.0",
+  "description": "Opinionated Sentry-on-OpenTelemetry telemetry bootstrap for Sapphire Discord bots: traces, metrics and logs over OTLP, with a Sapphire logger bridge",
+  "keywords": [
+    "opentelemetry",
+    "otel",
+    "sentry",
+    "telemetry",
+    "observability",
+    "sapphire",
+    "discord",
+    "discord.js",
+    "metrics",
+    "tracing",
+    "logging"
+  ],
+  "license": "MIT",
+  "author": "Remco Jongschaap <hey@dougley.com>",
+  "homepage": "https://wildbeast.guide/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheSharks/WildBeast.git",
+    "directory": "packages/analytics"
+  },
+  "bugs": {
+    "url": "https://github.com/TheSharks/WildBeast/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "rimraf dist && tsc",
     "dev": "tsc --watch",

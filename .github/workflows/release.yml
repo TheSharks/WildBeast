@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  # Push the version bump commits and tags.
+  contents: write
+  # Open and update the "Version Packages" PR.
+  pull-requests: write
+  # npm trusted publishing (OIDC) and provenance attestation.
+  id-token: write
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # changeset publish shells out to npm; trusted publishing needs
+      # npm >= 11.5.1, newer than what Node 22 bundles.
+      - name: Update npm for trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # With pending changesets this opens/updates the "Version Packages"
+      # PR; when that PR is merged, it publishes the bumped packages to npm
+      # (authenticated via the OIDC trusted publisher, no token secret) and
+      # creates the release tags.
+      - name: Version or publish
+        uses: changesets/action@v1
+        with:
+          publish: pnpm changeset publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
