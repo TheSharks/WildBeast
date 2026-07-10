@@ -237,37 +237,47 @@ export class TagCommand extends TracedSubcommand {
     const content = interaction.options.getString('content', true)
 
     // Subscription-controlled cap; see the registry in premium/limits.mts.
+    // Serialize creates per guild inside Postgres so concurrent interactions
+    // cannot both observe the last free slot and overshoot the cap.
     const limit = await limitFor(interaction, 'tags.maxPerGuild')
-    if (Number.isFinite(limit)) {
-      const [held] = await db
-        .select({ value: count() })
-        .from(tags)
-        .where(eq(tags.guildId, BigInt(interaction.guildId)))
-      if ((held?.value ?? 0) >= limit) {
-        return interaction.reply({
-          content: (await resolveKey(interaction, 'commands/tag:limitReached', {
-            limit,
-          })) as string,
-          flags: MessageFlags.Ephemeral,
-        })
+    const outcome = await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended(${interaction.guildId}, 0))`,
+      )
+      if (Number.isFinite(limit)) {
+        const [held] = await tx
+          .select({ value: count() })
+          .from(tags)
+          .where(eq(tags.guildId, BigInt(interaction.guildId)))
+        if ((held?.value ?? 0) >= limit) return 'limit' as const
       }
-    }
 
-    const inserted = await db
-      .insert(tags)
-      .values({
-        guildId: BigInt(interaction.guildId),
-        name,
-        content,
-        authorId: BigInt(interaction.user.id),
+      const inserted = await tx
+        .insert(tags)
+        .values({
+          guildId: BigInt(interaction.guildId),
+          name,
+          content,
+          authorId: BigInt(interaction.user.id),
+        })
+        .onConflictDoNothing({ target: [tags.guildId, tags.name] })
+        .returning({ name: tags.name })
+      return inserted.length > 0 ? ('created' as const) : ('exists' as const)
+    })
+
+    if (outcome === 'limit') {
+      return interaction.reply({
+        content: (await resolveKey(interaction, 'commands/tag:limitReached', {
+          limit,
+        })) as string,
+        flags: MessageFlags.Ephemeral,
       })
-      .onConflictDoNothing({ target: [tags.guildId, tags.name] })
-      .returning({ name: tags.name })
+    }
 
     return interaction.reply({
       content: (await resolveKey(
         interaction,
-        inserted.length > 0
+        outcome === 'created'
           ? 'commands/tag:created'
           : 'commands/tag:alreadyExists',
         { name },

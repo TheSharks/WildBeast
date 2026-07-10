@@ -12,7 +12,10 @@ import {
   premiumSkuMap,
   skuIdForTier,
 } from '../src/premium/skus.mjs'
-import { entitlementRow } from '../src/premium/sync.mjs'
+import {
+  entitlementRow,
+  fetchAllEntitlementRows,
+} from '../src/premium/sync.mjs'
 import {
   FREE_TIER,
   highestTier,
@@ -258,5 +261,42 @@ describe('entitlementRow', () => {
       startsAt,
       endsAt: null,
     })
+  })
+
+  it('paginates a newest-first entitlement listing without skipping rows', async () => {
+    const entitlements = Array.from({ length: 150 }, (_, index) => ({
+      id: String(index + 1),
+      skuId: '123',
+      userId: '456',
+      guildId: null,
+      type: 8,
+      deleted: false,
+      startsAt: null,
+      endsAt: null,
+    }))
+    const fetch = async (options: {
+      limit: number
+      before?: string
+      after?: string
+    }) => {
+      const filtered = entitlements
+        .filter(
+          ({ id }) =>
+            (!options.before || BigInt(id) < BigInt(options.before)) &&
+            (!options.after || BigInt(id) > BigInt(options.after)),
+        )
+        .sort((left, right) => Number(BigInt(right.id) - BigInt(left.id)))
+        .slice(0, options.limit)
+      return new Map(filtered.map((row) => [row.id, row]))
+    }
+
+    const rows = await fetchAllEntitlementRows({
+      application: { entitlements: { fetch } },
+    } as never)
+
+    expect(rows).toHaveLength(150)
+    expect(new Set(rows.map((row) => row.id))).toEqual(
+      new Set(entitlements.map((row) => BigInt(row.id))),
+    )
   })
 })
