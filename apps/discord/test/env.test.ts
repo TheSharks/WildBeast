@@ -1,33 +1,89 @@
 import { describe, expect, it } from 'vitest'
 import { validateEnv } from '../src/env.mjs'
 
+const database = { DATABASE_URL: 'postgresql://localhost/wildbeast' }
+
 describe('validateEnv', () => {
   it('requires a token', () => {
-    expect(() => validateEnv({})).toThrow(/DISCORD_TOKEN/)
+    expect(() => validateEnv(database)).toThrow(/DISCORD_TOKEN/)
+  })
+
+  it('requires the database URL at boot', () => {
+    expect(() => validateEnv({ DISCORD_TOKEN: 'token' })).toThrow(
+      /DATABASE_URL/,
+    )
+  })
+
+  it('rejects a database URL that is not postgres', () => {
+    expect(() =>
+      validateEnv({
+        DISCORD_TOKEN: 'token',
+        DATABASE_URL: 'mysql://localhost/wildbeast',
+      }),
+    ).toThrow(/postgres/)
+    expect(
+      validateEnv({
+        DISCORD_TOKEN: 'token',
+        DATABASE_URL: 'postgres://localhost/wildbeast',
+      }),
+    ).toMatchObject({ DATABASE_URL: 'postgres://localhost/wildbeast' })
+  })
+
+  it('refuses a dev guild on a production bot', () => {
+    // Bulk-overwrite registration would remove every global command.
+    expect(() =>
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'token',
+        NODE_ENV: 'production',
+        WILDBEAST_DEV_GUILD_ID: '1315790123456789',
+      }),
+    ).toThrow(/WILDBEAST_DEV_GUILD_ID/)
+    expect(
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'token',
+        NODE_ENV: 'development',
+        WILDBEAST_DEV_GUILD_ID: '1315790123456789',
+      }),
+    ).toMatchObject({ WILDBEAST_DEV_GUILD_ID: '1315790123456789' })
   })
 
   it('accepts the legacy BOT_TOKEN alias', () => {
-    expect(validateEnv({ BOT_TOKEN: 'legacy-token' })).toMatchObject({
+    expect(
+      validateEnv({ ...database, BOT_TOKEN: 'legacy-token' }),
+    ).toMatchObject({
       DISCORD_TOKEN: 'legacy-token',
     })
   })
 
   it('prefers DISCORD_TOKEN over the alias', () => {
     expect(
-      validateEnv({ DISCORD_TOKEN: 'primary', BOT_TOKEN: 'legacy' }),
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'primary',
+        BOT_TOKEN: 'legacy',
+      }),
     ).toMatchObject({ DISCORD_TOKEN: 'primary' })
   })
 
   it('treats empty strings as absent', () => {
-    expect(() => validateEnv({ DISCORD_TOKEN: '' })).toThrow(/DISCORD_TOKEN/)
+    expect(() => validateEnv({ ...database, DISCORD_TOKEN: '' })).toThrow(
+      /DISCORD_TOKEN/,
+    )
     expect(
-      validateEnv({ DISCORD_TOKEN: 'token', REDIS_PORT: '' }).REDIS_PORT,
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'token',
+        REDIS_PORT: '',
+      }).REDIS_PORT,
     ).toBeUndefined()
   })
 
   it('coerces numeric variables', () => {
     expect(
       validateEnv({
+        ...database,
         DISCORD_TOKEN: 'token',
         REDIS_PORT: '16379',
         WILDBEAST_SHARDING_TOTAL: '8',
@@ -37,13 +93,22 @@ describe('validateEnv', () => {
 
   it('rejects malformed values with a readable message', () => {
     expect(() =>
-      validateEnv({ DISCORD_TOKEN: 'token', REDIS_PORT: 'not-a-port' }),
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'token',
+        REDIS_PORT: 'not-a-port',
+      }),
     ).toThrow(/Invalid environment/)
     expect(() =>
-      validateEnv({ DISCORD_TOKEN: 'token', SENTRY_DSN: 'not-a-url' }),
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'token',
+        SENTRY_DSN: 'not-a-url',
+      }),
     ).toThrow(/SENTRY_DSN/)
     expect(() =>
       validateEnv({
+        ...database,
         DISCORD_TOKEN: 'token',
         WILDBEAST_CLUSTERING_MODE: 'chaotic',
       }),
@@ -53,12 +118,14 @@ describe('validateEnv', () => {
   it('validates the premium SKU mapping', () => {
     expect(
       validateEnv({
+        ...database,
         DISCORD_TOKEN: 'token',
         WILDBEAST_PREMIUM_SKUS: '1315790123456789:premium',
       }),
     ).toMatchObject({ WILDBEAST_PREMIUM_SKUS: '1315790123456789:premium' })
     expect(() =>
       validateEnv({
+        ...database,
         DISCORD_TOKEN: 'token',
         WILDBEAST_PREMIUM_SKUS: '1315790123456789:gold',
       }),

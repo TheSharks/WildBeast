@@ -60,6 +60,24 @@ export function featureFlagsActive(): boolean {
  * collapses repeats within the TTL to zero calls, at the cost of remote
  * changes taking up to that long to propagate. Concurrent evaluations of
  * the same flag + context share one in-flight request.
+ *
+ * Three mechanisms cooperate on the hot path, in this order:
+ *
+ *   1. Fresh cache. Consulted first — before the breaker. A cache hit makes
+ *      no provider call, so neither the TTL nor the cooldown has any reason
+ *      to preempt it. This is what keeps a cached OFREP kill switch or a
+ *      remote limit override live through a cooldown window instead of
+ *      snapping back to the in-code default every 30s.
+ *   2. Circuit breaker. Only reached when we would otherwise call the
+ *      provider. During cooldown we serve the last value the provider
+ *      returned successfully for this key (stale-on-error), falling back to
+ *      the in-code default only when nothing good was ever cached.
+ *   3. Live evaluation. An outage result (see OUTAGE_ERROR_CODES) never
+ *      keeps its cache slot: it is evicted the moment it settles so a single
+ *      transient timeout cannot pin the in-code default for a full TTL, and
+ *      so the breaker's failure counter keeps advancing even for hot keys.
+ *      A successful result is cached normally and also remembered as the
+ *      stale-on-error answer for its key.
  */
 const DEFAULT_CACHE_TTL_SECONDS = 30
 const MAX_CACHE_ENTRIES = 10_000
@@ -67,7 +85,8 @@ const MAX_CACHE_ENTRIES = 10_000
 /**
  * Circuit breaker: after this many consecutive provider failures, skip the
  * provider entirely for the cooldown period so a dead flag service costs
- * one timeout per flag instead of stalling every cold interaction.
+ * one timeout per flag instead of stalling every cold interaction. Cooldown
+ * serves the last good cached value per key, not a blanket in-code default.
  */
 const COOLDOWN_AFTER_FAILURES = 3
 const COOLDOWN_MS = 30_000
@@ -87,11 +106,13 @@ const evaluationCache = new Map<
   string,
   { expiresAt: number; details: Promise<EvaluationDetails<FlagValue>> }
 >()
+const lastGoodEvaluations = new Map<string, EvaluationDetails<FlagValue>>()
 let consecutiveFailures = 0
 let cooldownUntil = 0
 
 function resetEvaluationState(env: NodeJS.ProcessEnv = process.env): void {
   evaluationCache.clear()
+  lastGoodEvaluations.clear()
   consecutiveFailures = 0
   cooldownUntil = 0
   const ttl = Number(env.WILDBEAST_OFREP_CACHE_TTL ?? DEFAULT_CACHE_TTL_SECONDS)
@@ -232,6 +253,22 @@ function pruneCache(now: number): void {
   }
 }
 
+function rememberLastGood(
+  key: string,
+  details: EvaluationDetails<FlagValue>,
+): void {
+  if (
+    !lastGoodEvaluations.has(key) &&
+    lastGoodEvaluations.size >= MAX_CACHE_ENTRIES
+  ) {
+    const oldest = lastGoodEvaluations.keys().next().value
+    if (oldest !== undefined) lastGoodEvaluations.delete(oldest)
+  }
+  // Refresh insertion order so recently healthy contexts survive eviction.
+  lastGoodEvaluations.delete(key)
+  lastGoodEvaluations.set(key, details)
+}
+
 function trackProviderHealth(details: EvaluationDetails<FlagValue>): void {
   if (details.errorCode && OUTAGE_ERROR_CODES.has(details.errorCode)) {
     consecutiveFailures += 1
@@ -251,19 +288,8 @@ async function resolveDetails<Value extends FlagValue>(options: {
   evaluate(client: Client): Promise<EvaluationDetails<Value>>
 }): Promise<EvaluationDetails<Value>> {
   const now = Date.now()
-  if (now < cooldownUntil) {
-    return fallbackDetails(
-      options.key,
-      options.fallback,
-      new Error('flag provider is cooling down after repeated failures'),
-    )
-  }
-
-  const cacheKey =
-    cacheTtlMs > 0
-      ? `${options.key}\n${stableContextKey(options.context)}`
-      : undefined
-  if (cacheKey) {
+  const cacheKey = `${options.key}\n${stableContextKey(options.context)}`
+  if (cacheTtlMs > 0) {
     const entry = evaluationCache.get(cacheKey)
     if (entry && entry.expiresAt > now) {
       const details = await entry.details
@@ -277,10 +303,28 @@ async function resolveDetails<Value extends FlagValue>(options: {
     }
   }
 
+  if (now < cooldownUntil) {
+    const stale = lastGoodEvaluations.get(cacheKey)
+    if (stale) {
+      return {
+        ...(stale as EvaluationDetails<Value>),
+        flagMetadata: {
+          ...stale.flagMetadata,
+          [SOURCE_METADATA_KEY]: 'cache',
+        },
+      }
+    }
+    return fallbackDetails(
+      options.key,
+      options.fallback,
+      new Error('flag provider is cooling down after repeated failures'),
+    )
+  }
+
   const pending = options
     .evaluate(featureFlagClient())
     .catch((error) => fallbackDetails(options.key, options.fallback, error))
-  if (cacheKey) {
+  if (cacheTtlMs > 0) {
     pruneCache(now)
     evaluationCache.set(cacheKey, {
       expiresAt: now + cacheTtlMs,
@@ -289,6 +333,21 @@ async function resolveDetails<Value extends FlagValue>(options: {
   }
   const details = await pending
   trackProviderHealth(details)
+  if (details.errorCode) {
+    // Outage fallbacks are not values. Remove only this in-flight entry;
+    // a later evaluation must retry immediately instead of pinning the
+    // default for the cache TTL. Non-outage errors (a missing or mistyped
+    // flag) stay cached: retrying cannot fix them, and evicting would turn
+    // one bad flag key into a provider call on every single evaluation.
+    if (
+      OUTAGE_ERROR_CODES.has(details.errorCode) &&
+      evaluationCache.get(cacheKey)?.details === pending
+    ) {
+      evaluationCache.delete(cacheKey)
+    }
+  } else {
+    rememberLastGood(cacheKey, details)
+  }
   return details
 }
 

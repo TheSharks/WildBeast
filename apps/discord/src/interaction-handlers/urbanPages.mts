@@ -1,10 +1,11 @@
 import { ApplyOptions } from '@sapphire/decorators'
-import {
-  InteractionHandler,
-  InteractionHandlerTypes,
-} from '@sapphire/framework'
+import { InteractionHandlerTypes } from '@sapphire/framework'
 import { resolveKey } from '@sapphire/plugin-i18next'
 import { type ButtonInteraction, TextDisplayBuilder } from 'discord.js'
+import {
+  GatedCommandInteractionHandler,
+  type GatedCommandInteractionHandlerOptions,
+} from '../structures/interactionHandler.mjs'
 import {
   buildUrbanPage,
   fetchDefinitions,
@@ -21,10 +22,11 @@ interface UrbanPageAction {
  * target page (`urban:<page>:<query>`), so paging refetches instead of
  * holding state and works across restarts.
  */
-@ApplyOptions<InteractionHandler.Options>({
+@ApplyOptions<GatedCommandInteractionHandlerOptions>({
   interactionHandlerType: InteractionHandlerTypes.Button,
+  command: 'urbandictionary',
 })
-export class UrbanPagesHandler extends InteractionHandler {
+export class UrbanPagesHandler extends GatedCommandInteractionHandler {
   public override parse(interaction: ButtonInteraction) {
     if (!interaction.customId.startsWith(URBAN_CUSTOM_ID_PREFIX)) {
       return this.none()

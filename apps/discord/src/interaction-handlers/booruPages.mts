@@ -1,10 +1,11 @@
 import { ApplyOptions } from '@sapphire/decorators'
-import {
-  InteractionHandler,
-  InteractionHandlerTypes,
-} from '@sapphire/framework'
+import { InteractionHandlerTypes } from '@sapphire/framework'
 import { resolveKey } from '@sapphire/plugin-i18next'
 import { type ButtonInteraction, TextDisplayBuilder } from 'discord.js'
+import {
+  GatedCommandInteractionHandler,
+  type GatedCommandInteractionHandlerOptions,
+} from '../structures/interactionHandler.mjs'
 import {
   BOORU_CUSTOM_ID_PREFIX,
   type BooruSiteName,
@@ -25,10 +26,11 @@ interface BooruPageAction {
  * custom id (`booru:<site>:<page>:<query>`) carries everything needed to
  * refetch, so buttons work across restarts.
  */
-@ApplyOptions<InteractionHandler.Options>({
+@ApplyOptions<GatedCommandInteractionHandlerOptions>({
   interactionHandlerType: InteractionHandlerTypes.Button,
+  command: 'booru',
 })
-export class BooruPagesHandler extends InteractionHandler {
+export class BooruPagesHandler extends GatedCommandInteractionHandler {
   public override parse(interaction: ButtonInteraction) {
     if (!interaction.customId.startsWith(BOORU_CUSTOM_ID_PREFIX)) {
       return this.none()

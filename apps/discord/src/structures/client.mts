@@ -3,7 +3,12 @@ import '@sapphire/plugin-i18next/register'
 import '@sapphire/plugin-scheduled-tasks/register'
 import '@thesharks/analytics/register'
 
-import { LogLevel, SapphireClient } from '@sapphire/framework'
+import {
+  ApplicationCommandRegistries,
+  LogLevel,
+  RegisterBehavior,
+  SapphireClient,
+} from '@sapphire/framework'
 import { GatewayIntentBits } from 'discord.js'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
@@ -17,6 +22,13 @@ import {
   getSharedWorkerRedis,
   redisConnectionOptions,
 } from '../utils/redis.mjs'
+
+// The registry is the complete desired application-command set. Bulk
+// overwrite updates it atomically and removes commands deleted by a deploy;
+// append/update mode would leave old v8 commands registered forever.
+ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(
+  RegisterBehavior.BulkOverwrite,
+)
 
 const loglev = process.env.TRACE
   ? LogLevel.Trace

@@ -1,0 +1,9 @@
+.git
+.github
+.turbo
+**/node_modules
+**/dist
+**/.env
+**/coverage
+apps/docs
+contrib

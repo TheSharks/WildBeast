@@ -15,7 +15,10 @@ import {
   initFeatureFlags,
   providerFromEnv,
 } from '../src/features/client.mjs'
-import { installCommandFeatureGate } from '../src/features/gates.mjs'
+import {
+  commandComponentEnabled,
+  installCommandFeatureGate,
+} from '../src/features/gates.mjs'
 import {
   commandGateKey,
   expiredFlagKeys,
@@ -258,6 +261,23 @@ describe.sequential('OFREP-backed gates', () => {
     expect(autocompleteRun).not.toHaveBeenCalled()
     expect(respond).toHaveBeenCalledWith([])
   })
+
+  it('keeps stateless command components behind the command gate', async () => {
+    await initFeatureFlags({
+      logger: silentLogger,
+      provider: new InMemoryProvider({
+        'features.commands.booru': {
+          disabled: false,
+          variants: { disabled: false },
+          defaultVariant: 'disabled',
+        },
+      }),
+    })
+
+    await expect(
+      commandComponentEnabled(fakeInteraction('42'), 'booru'),
+    ).resolves.toBe(false)
+  })
 })
 
 class GatedFixtureTask extends TracedScheduledTask {
@@ -389,5 +409,90 @@ describe.sequential('evaluation caching and provider health', () => {
     // The breaker trips after three consecutive failures; the fourth
     // evaluation is served from cooldown without touching the provider.
     expect(contextEvaluator).toHaveBeenCalledTimes(3)
+  })
+
+  it('does not cache provider failures for the full value TTL', async () => {
+    const contextEvaluator = vi.fn((): string => {
+      throw new Error('temporary flag service failure')
+    })
+    await initFeatureFlags({
+      logger: silentLogger,
+      provider: gateProvider(contextEvaluator),
+    })
+
+    const context = { targetingKey: 'guild:1', guildId: '1' }
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await expect(
+        booleanFlagValue('features.commands.booru', context),
+      ).resolves.toBe(true)
+    }
+
+    // Three live failures trip the breaker. The fourth call is cooldown,
+    // proving the first fallback was evicted instead of cached for 30s.
+    expect(contextEvaluator).toHaveBeenCalledTimes(3)
+  })
+
+  it('serves a fresh cached kill switch while the breaker is cooling down', async () => {
+    const contextEvaluator = vi.fn((context: { guildId?: string }) => {
+      if (context.guildId === 'kill-switched') return 'disabled'
+      throw new Error('flag service is down')
+    })
+    await initFeatureFlags({
+      logger: silentLogger,
+      provider: gateProvider(contextEvaluator as never),
+    })
+
+    const killed = {
+      targetingKey: 'guild:kill-switched',
+      guildId: 'kill-switched',
+    }
+    await expect(
+      booleanFlagValue('features.commands.booru', killed),
+    ).resolves.toBe(false)
+    for (const guildId of ['2', '3', '4']) {
+      await booleanFlagValue('features.commands.booru', {
+        targetingKey: `guild:${guildId}`,
+        guildId,
+      })
+    }
+
+    await expect(
+      booleanFlagValue('features.commands.booru', killed),
+    ).resolves.toBe(false)
+    expect(contextEvaluator).toHaveBeenCalledTimes(4)
+  })
+
+  it('serves the last good value during cooldown when no fresh cache exists', async () => {
+    // TTL 0 disables the fresh cache entirely, so the second kill-switch
+    // read below can only be answered by the stale-on-error store.
+    process.env.WILDBEAST_OFREP_CACHE_TTL = '0'
+    const contextEvaluator = vi.fn((context: { guildId?: string }) => {
+      if (context.guildId === 'kill-switched') return 'disabled'
+      throw new Error('flag service is down')
+    })
+    await initFeatureFlags({
+      logger: silentLogger,
+      provider: gateProvider(contextEvaluator as never),
+    })
+    delete process.env.WILDBEAST_OFREP_CACHE_TTL
+
+    const killed = {
+      targetingKey: 'guild:kill-switched',
+      guildId: 'kill-switched',
+    }
+    await expect(
+      booleanFlagValue('features.commands.booru', killed),
+    ).resolves.toBe(false)
+    for (const guildId of ['2', '3', '4']) {
+      await booleanFlagValue('features.commands.booru', {
+        targetingKey: `guild:${guildId}`,
+        guildId,
+      })
+    }
+
+    await expect(
+      booleanFlagValue('features.commands.booru', killed),
+    ).resolves.toBe(false)
+    expect(contextEvaluator).toHaveBeenCalledTimes(4)
   })
 })

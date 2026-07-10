@@ -7,6 +7,8 @@ import {
   Command,
   CommandStore,
   container,
+  InteractionHandler,
+  InteractionHandlerStore,
   Listener,
   ListenerStore,
   type Piece,
@@ -56,6 +58,7 @@ container.logger = silentLogger
 const listenerStore = new ListenerStore()
 const taskStore = new ScheduledTaskStore()
 const commandStore = new CommandStore()
+const interactionHandlerStore = new InteractionHandlerStore()
 
 /** Count classes extending `base` across all compiled modules in `dir`. */
 async function exportedPieceCount(
@@ -91,6 +94,9 @@ beforeAll(async () => {
   await listenerStore.registerPath(join(dist, 'listeners')).loadAll()
   await taskStore.registerPath(join(dist, 'scheduled-tasks')).loadAll()
   await commandStore.registerPath(join(dist, 'commands')).loadAll()
+  await interactionHandlerStore
+    .registerPath(join(dist, 'interaction-handlers'))
+    .loadAll()
 })
 
 describe('piece loading', () => {
@@ -141,6 +147,23 @@ describe('piece loading', () => {
         taskGateKey(task.name),
         `${task.name} should have a registered runtime gate`,
       ).toBeDefined()
+    }
+  })
+
+  it('keeps command-backed component handlers behind the framework gate', async () => {
+    const exported = await exportedPieceCount(
+      join(dist, 'interaction-handlers'),
+      InteractionHandler,
+    )
+    expect(interactionHandlerStore.size).toBe(exported)
+
+    for (const handler of interactionHandlerStore.values()) {
+      // Closing an existing UI has no command work or external side effect.
+      if (handler.name === 'closeButtons') continue
+      expect(
+        Object.hasOwn(handler, 'run'),
+        `${handler.name} must have the framework command-gate wrapper`,
+      ).toBe(true)
     }
   })
 
@@ -299,5 +322,19 @@ describe('traced task wrapper', () => {
       .find((candidate) => candidate.name === 'discord.task.fixtureTask')
     expect(span, 'task span should be recorded').toBeDefined()
     expect(span!.status.code).toBe(SpanStatusCode.ERROR)
+  })
+})
+
+describe('application command registries', () => {
+  it('defaults to bulk overwrite so removed commands are deregistered', async () => {
+    // The side effect lives at module scope in structures/client.mts; any
+    // refactor that drops it silently re-introduces stale v8 commands.
+    await import('../src/structures/client.mjs')
+    const { ApplicationCommandRegistries, RegisterBehavior } = await import(
+      '@sapphire/framework'
+    )
+    expect(
+      ApplicationCommandRegistries.getDefaultBehaviorWhenNotIdentical(),
+    ).toBe(RegisterBehavior.BulkOverwrite)
   })
 })

@@ -1,9 +1,10 @@
 import { ApplyOptions } from '@sapphire/decorators'
-import {
-  InteractionHandler,
-  InteractionHandlerTypes,
-} from '@sapphire/framework'
+import { InteractionHandlerTypes } from '@sapphire/framework'
 import type { ButtonInteraction } from 'discord.js'
+import {
+  GatedCommandInteractionHandler,
+  type GatedCommandInteractionHandlerOptions,
+} from '../structures/interactionHandler.mjs'
 import {
   type RefreshableKind,
   refreshableBuilders,
@@ -13,10 +14,11 @@ import {
  * The 🔄 button under cat/dog/inspire messages: rebuild the same message
  * with a fresh image. Stateless, so the buttons keep working forever.
  */
-@ApplyOptions<InteractionHandler.Options>({
+@ApplyOptions<GatedCommandInteractionHandlerOptions>({
   interactionHandlerType: InteractionHandlerTypes.Button,
+  command: (kind) => kind as RefreshableKind,
 })
-export class RefreshButtonHandler extends InteractionHandler {
+export class RefreshButtonHandler extends GatedCommandInteractionHandler {
   public override parse(interaction: ButtonInteraction) {
     const [prefix, kind] = interaction.customId.split(':')
     if (prefix !== 'refresh' || !(kind in refreshableBuilders)) {

@@ -8,59 +8,83 @@ import { parsePremiumSkus } from './premium/skus.mjs'
  * through untouched; empty strings are treated as absent (a commented-out
  * or blank line in .env must not count as a value).
  */
-export const envSchema = z.object({
-  DISCORD_TOKEN: z
-    .string()
-    .min(1, 'DISCORD_TOKEN (or its legacy alias BOT_TOKEN) is required'),
-  NODE_ENV: z.string().optional(),
-  TRACE: z.string().optional(),
-  REDIS_HOST: z.string().optional(),
-  REDIS_PORT: z.coerce.number().int().min(1).max(65_535).optional(),
-  REDIS_PASSWORD: z.string().optional(),
-  REDIS_DB: z.coerce.number().int().nonnegative().optional(),
-  SENTRY_DSN: z.url().optional(),
-  SENTRY_PROFILE_SESSION_SAMPLE_RATE: z.coerce
-    .number()
-    .min(0)
-    .max(1)
-    .optional(),
-  WILDBEAST_CLUSTER_ID: z.string().optional(),
-  WILDBEAST_CLUSTERING_MODE: z.enum(['static', 'autonomous']).optional(),
-  // When set, commands register in this guild instead of globally, so
-  // development iterations show up instantly.
-  WILDBEAST_DEV_GUILD_ID: z.string().regex(/^\d+$/).optional(),
-  // Shown by /invite instead of the generated OAuth URL when set.
-  WILDBEAST_INVITE_OVERRIDE: z.url().optional(),
-  // Comma-separated `skuId:tier` or `skuId:tier:scope` entries mapping the
-  // app's monetization SKUs to premium tiers, with scope (user/guild)
-  // matching the kind of subscription the SKU is sold as, e.g.
-  // "1315790123456789:premium:guild". Unset means premium is off:
-  // everything runs at the free tier.
-  WILDBEAST_PREMIUM_SKUS: z
-    .string()
-    .optional()
-    .superRefine((value, ctx) => {
-      if (value === undefined) return
-      try {
-        parsePremiumSkus(value)
-      } catch (error) {
-        ctx.addIssue({ code: 'custom', message: (error as Error).message })
-      }
-    }),
-  // Base URL of an OFREP-compatible feature flag service (flagd, GO
-  // Feature Flag, ...). Optional: without it, command/task gates,
-  // experiments and remote limit overrides use their in-code defaults.
-  WILDBEAST_OFREP_URL: z.url().optional(),
-  // Bearer token sent to the OFREP service, for providers that need auth.
-  WILDBEAST_OFREP_TOKEN: z.string().optional(),
-  // Seconds a flag evaluation is reused before asking the OFREP service
-  // again (default 30). Remote changes take up to this long to apply;
-  // 0 evaluates every time.
-  WILDBEAST_OFREP_CACHE_TTL: z.coerce.number().int().nonnegative().optional(),
-  WILDBEAST_SHARDING_START: z.coerce.number().int().nonnegative().optional(),
-  WILDBEAST_SHARDING_END: z.coerce.number().int().nonnegative().optional(),
-  WILDBEAST_SHARDING_TOTAL: z.coerce.number().int().positive().optional(),
-})
+export const envSchema = z
+  .object({
+    DISCORD_TOKEN: z
+      .string()
+      .min(1, 'DISCORD_TOKEN (or its legacy alias BOT_TOKEN) is required'),
+    DATABASE_URL: z
+      .string()
+      .min(1, 'DATABASE_URL is required (for example postgresql://...)')
+      .refine(
+        (value) =>
+          value.startsWith('postgres://') || value.startsWith('postgresql://'),
+        'DATABASE_URL must be a postgres:// or postgresql:// URL',
+      ),
+    NODE_ENV: z.string().optional(),
+    TRACE: z.string().optional(),
+    REDIS_HOST: z.string().optional(),
+    REDIS_PORT: z.coerce.number().int().min(1).max(65_535).optional(),
+    REDIS_PASSWORD: z.string().optional(),
+    REDIS_DB: z.coerce.number().int().nonnegative().optional(),
+    SENTRY_DSN: z.url().optional(),
+    SENTRY_PROFILE_SESSION_SAMPLE_RATE: z.coerce
+      .number()
+      .min(0)
+      .max(1)
+      .optional(),
+    WILDBEAST_CLUSTER_ID: z.string().optional(),
+    WILDBEAST_CLUSTERING_MODE: z.enum(['static', 'autonomous']).optional(),
+    // When set, commands register in this guild instead of globally, so
+    // development iterations show up instantly.
+    WILDBEAST_DEV_GUILD_ID: z.string().regex(/^\d+$/).optional(),
+    // Shown by /invite instead of the generated OAuth URL when set.
+    WILDBEAST_INVITE_OVERRIDE: z.url().optional(),
+    // Comma-separated `skuId:tier` or `skuId:tier:scope` entries mapping the
+    // app's monetization SKUs to premium tiers, with scope (user/guild)
+    // matching the kind of subscription the SKU is sold as, e.g.
+    // "1315790123456789:premium:guild". Unset means premium is off:
+    // everything runs at the free tier.
+    WILDBEAST_PREMIUM_SKUS: z
+      .string()
+      .optional()
+      .superRefine((value, ctx) => {
+        if (value === undefined) return
+        try {
+          parsePremiumSkus(value)
+        } catch (error) {
+          ctx.addIssue({ code: 'custom', message: (error as Error).message })
+        }
+      }),
+    // Base URL of an OFREP-compatible feature flag service (flagd, GO
+    // Feature Flag, ...). Optional: without it, command/task gates,
+    // experiments and remote limit overrides use their in-code defaults.
+    WILDBEAST_OFREP_URL: z.url().optional(),
+    // Bearer token sent to the OFREP service, for providers that need auth.
+    WILDBEAST_OFREP_TOKEN: z.string().optional(),
+    // Seconds a flag evaluation is reused before asking the OFREP service
+    // again (default 30). Remote changes take up to this long to apply;
+    // 0 evaluates every time.
+    WILDBEAST_OFREP_CACHE_TTL: z.coerce.number().int().nonnegative().optional(),
+    WILDBEAST_SHARDING_START: z.coerce.number().int().nonnegative().optional(),
+    WILDBEAST_SHARDING_END: z.coerce.number().int().nonnegative().optional(),
+    WILDBEAST_SHARDING_TOTAL: z.coerce.number().int().positive().optional(),
+  })
+  .superRefine((env, ctx) => {
+    // Command registration bulk-overwrites each scope with the full desired
+    // set. With a dev guild configured the global set is empty, so letting
+    // this combination reach a production bot would deregister every global
+    // command the moment it boots.
+    if (env.WILDBEAST_DEV_GUILD_ID && env.NODE_ENV === 'production') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['WILDBEAST_DEV_GUILD_ID'],
+        message:
+          'WILDBEAST_DEV_GUILD_ID must not be set when NODE_ENV is production: ' +
+          'commands would register only in that guild and all global commands would be removed',
+      })
+    }
+  })
 
 export type Env = z.infer<typeof envSchema>
 
