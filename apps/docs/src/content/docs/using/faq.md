@@ -23,8 +23,8 @@ it.
 WildBeast is the open-source framework, the code in the
 [GitHub repository](https://github.com/TheSharks/WildBeast). WildBot is the
 public bot The Sharks host with it. Documentation about commands and
-TagScript applies to both; the Guides, Scaling, and Observability sections
-apply to people running their own instance.
+TagScript applies to both; the Self-hosting section applies to people
+running their own instance.
 
 ## Which commands does the bot have?
 

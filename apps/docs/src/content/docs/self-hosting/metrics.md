@@ -22,11 +22,11 @@ Emitted by shard processes (`service.name = @thesharks/discord`).
 | `discord_command_errors_total` | counter | `command`, `shard_id`, `scope` |
 | `discord_command_duration_seconds` | histogram | `command`, `shard_id`, `scope` |
 | `discord_command_denied_total` | counter | `command`, `identifier`, `shard_id`, `scope` |
-| `discord_context_commands_total` / `_errors_total` / `_duration_seconds` | — | as above |
+| `discord_context_commands_total` / `discord_context_command_errors_total` / `discord_context_command_duration_seconds` | — | as above |
 | `discord_button_interaction_total` / `discord_button_duration_seconds` | — | `custom_id`, `shard_id`, `scope` |
-| `discord_select_menu_interaction_total` / `_duration_seconds` | — | `custom_id`, `shard_id`, `scope` |
-| `discord_modal_submit_total` / `_duration_seconds` | — | `custom_id`, `shard_id`, `scope` |
-| `discord_autocomplete_interaction_total` / `_duration_seconds` | — | `command`, `shard_id`, `scope` |
+| `discord_select_menu_interaction_total` / `discord_select_menu_duration_seconds` | — | `custom_id`, `shard_id`, `scope` |
+| `discord_modal_submit_total` / `discord_modal_submit_duration_seconds` | — | `custom_id`, `shard_id`, `scope` |
+| `discord_autocomplete_interaction_total` / `discord_autocomplete_duration_seconds` | — | `command`, `shard_id`, `scope` |
 
 `scope` is `guild` or `dm`; `identifier` is the precondition that denied the
 command; component `custom_id` labels use the prefix before the first `:`
