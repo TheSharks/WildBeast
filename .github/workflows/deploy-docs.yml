@@ -1,0 +1,61 @@
+name: Deploy docs
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/docs/**'
+      - 'packages/tagscript/**'
+      - '.github/workflows/deploy-docs.yml'
+  # Deploy on demand for changes outside the watched paths.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Publish to GitHub Pages via the deployment API.
+  pages: write
+  # Mint the OIDC token deploy-pages authenticates with.
+  id-token: write
+
+# One Pages deployment at a time, and let a running deploy finish so the
+# site never serves a half-published build.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # turbo builds @thesharks/tagscript first (dependsOn ^build); the
+      # docs playground imports it.
+      - name: Build site
+        run: pnpm exec turbo run build --filter=@thesharks/docs
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/docs/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

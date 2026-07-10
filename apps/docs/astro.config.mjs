@@ -4,7 +4,7 @@ import { defineConfig } from 'astro/config'
 import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
-  site: 'https://thesharks.github.io',
+  site: 'https://wildbeast.guide',
   redirects: {
     '/guides/getting-started/': '/self-hosting/getting-started/',
     '/guides/configuration/': '/self-hosting/configuration/',
