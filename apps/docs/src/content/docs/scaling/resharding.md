@@ -37,9 +37,10 @@ fleet:
   forever, because the active epoch never drains while correctly configured
   clusters serve. Fix its configuration and redeploy it.
 - Two different new totals proposed at once is a configuration error; the
-  second proposal refuses to start with a message naming both totals. If
-  the *pending* proposal is the wrong one, delete the
-  `wildbeast:epoch:pending` key in Redis and redeploy.
+  second proposal refuses to start with a message naming both totals while
+  the first pending fleet is alive. Parked clusters refresh their proposal;
+  if they all disappear, it expires after 45 seconds and a corrected rollout
+  can propose a replacement without manual Redis surgery.
 - A serving cluster left behind by a promotion (only possible if it was
   fenced off long enough for its membership to expire) notices the epoch
   moved, logs a fatal message, and exits so the supervisor can restart it.

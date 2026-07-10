@@ -16,6 +16,14 @@ NODE_ENV=production node apps/discord/dist/cluster.mjs
 Configuration comes from the environment or `apps/discord/.env`, see
 [Configuration](/guides/configuration/).
 
+The production image must be built with the monorepo root as its context so
+pnpm can resolve and compile the local workspace packages:
+
+```bash
+docker build -f apps/discord/Dockerfile -t wildbeast .
+docker run --env-file apps/discord/.env wildbeast
+```
+
 `NODE_ENV=production` sets the log level to info, disables hot module
 reload, and lowers trace sampling to production rates (see
 [Telemetry](/observability/telemetry/)). Anything else counts as
@@ -38,14 +46,22 @@ A reachable Redis is required even for a single cluster: it backs the
 scheduled task queue, the identify rate limiter, and persisted gateway
 sessions.
 
+WildBeast v9 no longer posts guild counts to third-party bot-listing sites.
+The v8 `TOP_GG_TOKEN`, `BOTS_GG_TOKEN`, `DBL_COM_TOKEN`,
+`ONDISCORD_XYZ_TOKEN`, and `DEL_XYZ_TOKEN` settings are intentionally ignored;
+remove them or run a separate listing-statistics publisher if those listings
+still need periodic updates.
+
 ## Shutdown
 
 `SIGTERM` and `SIGINT` both shut down gracefully. The manager relays the
 signal to the shard workers as a message (signals don't reach worker
 threads), each worker closes its gateway connection and flushes telemetry,
-and the manager waits before forcibly terminating stragglers, 10 seconds
-per shard in autonomous mode, 15 seconds overall in static mode. Pending
-telemetry is flushed with a 10-second deadline, then the process exits 0.
+and the manager waits up to 20 seconds before forcibly terminating
+stragglers. Shards drain concurrently in both clustering modes, so that is
+one fleet-wide window rather than 20 seconds per shard. Worker OpenTelemetry
+flushes are bounded at 5 seconds, followed by Sentry's 2-second flush, leaving
+the rest of the manager grace for gateway and session-store cleanup.
 
 In autonomous mode a graceful shutdown also releases the cluster's shard
 leases and withdraws it from fleet membership, so the surviving clusters
@@ -60,7 +76,7 @@ policies) that restarts on non-zero exit. The manager exits `1` in two
 cases, and both want a restart:
 
 - It failed to start: invalid environment, unreachable Discord, or a
-  conflicting [epoch proposal](/scaling/resharding/).
+  genuinely conflicting live [epoch proposal](/scaling/resharding/).
 - Its configuration went stale: the fleet migrated to a new epoch while
   this cluster was fenced off. It logs a fatal message and exits so it can
   come back with fresh state.

@@ -50,6 +50,11 @@ leases for shards it hands off. The assignment is a pure function of the
 live member list, so every cluster computes the same answer without any
 negotiation.
 
+Heartbeat and lease renewal run independently from shard lifecycle work. A
+worker can spend its full drain grace stopping, or wait in the global identify
+queue while starting, without starving the timers that keep its membership and
+already-acquired leases alive.
+
 When a cluster joins, shards that hash to it are handed over by their
 current owners after a 10-second settle window. When one leaves gracefully
 (SIGTERM), it releases its leases and withdraws, and survivors pick its
@@ -93,9 +98,13 @@ Settle windows prevent churn. Membership must be stable for 10 seconds
 before shards move, so a flapping cluster or a rolling deploy doesn't cause
 a reshuffle storm.
 
-A cluster that cannot reach Redis for 20 seconds fences itself and stops
+A cluster that cannot reach Redis for 5 seconds fences itself and stops
 serving its shards, before its leases can expire and another cluster picks
 them up.
+
+Losing one lease fences that shard immediately: its local worker is stopped
+before reconciliation may try to acquire it again. Multi-shard drains happen
+concurrently, but each lease stays held until its corresponding worker is dead.
 
 Finally, a fleet-wide guard protects the shard total. Guild-to-shard
 routing is `(guild_id >> 22) % total`, so all clusters must agree on

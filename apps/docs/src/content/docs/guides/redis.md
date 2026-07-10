@@ -23,7 +23,8 @@ indexes on a shared server.
 | Scheduled task queue | BullMQ's own `bull:*` keys | Recreated on boot |
 | Identify rate limiting | `wildbeast:identify:<bucket>` | Seconds (pacing keys) |
 | Gateway sessions | `wildbeast:shard:<id>:session` | 15 minutes since last write |
-| Active epoch | `wildbeast:epoch`, `wildbeast:epoch:pending` | Until the next [migration](/scaling/resharding/) |
+| Active epoch | `wildbeast:epoch` | Until the next [migration](/scaling/resharding/) |
+| Pending epoch proposal | `wildbeast:epoch:pending` | 45 seconds without refresh from a parked cluster |
 | Fleet membership | `wildbeast:e<N>:clusters` | 15 seconds without a heartbeat |
 | Shard total agreement | `wildbeast:e<N>:total_shards` | Life of the epoch |
 | Shard leases | `wildbeast:e<N>:shard:<id>:owner` | 30 seconds without renewal |
@@ -39,7 +40,9 @@ A few details behind the table:
   resume instead of re-identifying, and they're what makes restarts cheap:
   a shard that comes back within 15 minutes replays missed events rather
   than starting a fresh session. Writes are debounced to once per second
-  per shard.
+  per shard. Failed writes stay dirty for the next interval, and session
+  invalidations retry so a transient Redis error cannot leave a known-dead
+  resume token behind for its full TTL.
 - **Membership** is a sorted set scored by Redis server time, so clusters
   on hosts with skewed clocks still agree on who's alive.
 - **Leases** guarantee a shard never has two owners: the value is the
@@ -56,7 +59,8 @@ it is connection churn, not data loss:
   identify-rate-limited restart (roughly 5.5 seconds per shard per
   rate-limit bucket).
 - **Membership and leases** re-form within seconds; running clusters
-  heartbeat and re-acquire on their normal cadence.
+  heartbeat and re-acquire on their normal cadence. Heartbeat and renewal
+  are independent of slow shard starts and stops.
 - The **task queue** is recreated when clusters boot; recurring tasks
   resume their schedules. A one-shot job enqueued but not yet run is lost.
 - The **epoch pointer** is re-initialized by the next cluster to resolve

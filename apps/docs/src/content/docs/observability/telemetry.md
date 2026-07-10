@@ -115,5 +115,6 @@ full lifecycle of the bot; see the
 
 Set `OTEL_DIAGNOSTIC_LOG_LEVEL` (`error` … `debug`) to surface the
 OpenTelemetry SDK's own diagnostics, for example when the collector isn't
-receiving data. On shutdown, pending telemetry is flushed with a 10-second
-deadline so a slow collector can't stall process termination.
+receiving data. On shutdown, pending telemetry uses a 10-second deadline by
+default; shard workers use 5 seconds so their OpenTelemetry and Sentry flushes
+fit inside the cluster manager's 20-second worker-stop grace.

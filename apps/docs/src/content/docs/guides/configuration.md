@@ -17,11 +17,12 @@ file at all.
 
 ## Core
 
-The essentials: the token and the runtime mode.
+The essentials: the token, database, and runtime mode.
 
 | Variable | Required | Description |
 | --- | --- | --- |
 | `DISCORD_TOKEN` | yes | Bot token. The v8 name `BOT_TOKEN` is accepted as a legacy alias. |
+| `DATABASE_URL` | yes | PostgreSQL connection URL. It is validated before the bot logs in. |
 | `NODE_ENV` | no | `development` enables debug logging and hot module reload. |
 | `TRACE` | no | Any value raises the log level to trace. |
 
@@ -29,7 +30,7 @@ The essentials: the token and the runtime mode.
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `WILDBEAST_DEV_GUILD_ID` | no | When set, slash commands register in this guild instead of globally. Guild commands update instantly, so development environments want this; production leaves it unset. |
+| `WILDBEAST_DEV_GUILD_ID` | no | When set, slash commands register in this guild instead of globally. Guild commands update instantly, so development environments want this; production leaves it unset. Boot refuses the combination with `NODE_ENV=production`, because bulk-overwrite registration would remove every global command. |
 | `WILDBEAST_INVITE_OVERRIDE` | no | A URL for `/invite` to hand out instead of the generated OAuth link. |
 
 ## Premium
