@@ -1,26 +1,12 @@
 import type { ChatInputCommandErrorPayload } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
-import { type Attributes, metrics, resolveShardId } from '@thesharks/analytics'
+import { metrics } from '@thesharks/analytics'
+import { commandMetricLabels } from '../../utils/tracing.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const errorCounter = meter.createCounter('discord_command_errors_total', {
   description: 'Total number of Discord command errors',
 })
-
-function resolveScope(payload: ChatInputCommandErrorPayload): 'guild' | 'dm' {
-  return payload.interaction.inGuild() ? 'guild' : 'dm'
-}
-
-function createLabels(
-  payload: ChatInputCommandErrorPayload,
-  shardId: string,
-): Attributes {
-  return {
-    command: payload.command?.name,
-    shard_id: shardId,
-    scope: resolveScope(payload),
-  }
-}
 
 export class CommandErrorListener extends Listener {
   public constructor(
@@ -34,8 +20,9 @@ export class CommandErrorListener extends Listener {
   }
 
   public run(payload: ChatInputCommandErrorPayload) {
-    const shardId = resolveShardId(payload.interaction, this)
-    const labels = createLabels(payload, shardId)
-    errorCounter.add(1, labels)
+    errorCounter.add(
+      1,
+      commandMetricLabels(payload.interaction, payload.command?.name, this),
+    )
   }
 }

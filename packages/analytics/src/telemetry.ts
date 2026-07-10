@@ -369,6 +369,24 @@ export function resolveTransportConfig(
   return exporters
 }
 
+function buildOtlpOptions(
+  signal: 'traces' | 'metrics' | 'logs',
+  exporterConfig: TelemetryExporterConfig,
+) {
+  const normalizedEndpoint = exporterConfig.endpoint
+    ? normalizeOtlpEndpointUrl(exporterConfig.endpoint, signal)
+    : undefined
+  return {
+    ...(normalizedEndpoint ? { url: normalizedEndpoint } : {}),
+    headers: exporterConfig.headers,
+    timeoutMillis: exporterConfig.timeout,
+    compression:
+      exporterConfig.compression === 'gzip'
+        ? CompressionAlgorithm.GZIP
+        : CompressionAlgorithm.NONE,
+  }
+}
+
 export function initOpenTelemetry(
   config?: TelemetryConfig,
 ): TelemetryInitResult {
@@ -497,22 +515,11 @@ export function initOpenTelemetry(
   const spanProcessors: SpanProcessor[] = [new SentrySpanProcessor()]
   for (const exporterConfig of tracesConfigs) {
     if (exportingEnabled) {
-      const normalizedEndpoint = exporterConfig.endpoint
-        ? normalizeOtlpEndpointUrl(exporterConfig.endpoint, 'traces')
-        : undefined
-      const commonOptions = {
-        ...(normalizedEndpoint ? { url: normalizedEndpoint } : {}),
-        headers: exporterConfig.headers,
-        timeoutMillis: exporterConfig.timeout,
-        compression:
-          exporterConfig.compression === 'gzip'
-            ? CompressionAlgorithm.GZIP
-            : CompressionAlgorithm.NONE,
-      }
+      const options = buildOtlpOptions('traces', exporterConfig)
       const traceExporter =
         exporterConfig.protocol === 'grpc'
-          ? new OTLPTraceGrpcExporter(commonOptions)
-          : new OTLPTraceHttpExporter(commonOptions)
+          ? new OTLPTraceGrpcExporter(options)
+          : new OTLPTraceHttpExporter(options)
       spanProcessors.push(new BatchSpanProcessor(traceExporter))
     }
   }
@@ -531,22 +538,11 @@ export function initOpenTelemetry(
   const readers: MetricReader[] = []
   for (const exporterConfig of metricsConfigs) {
     if (exportingEnabled) {
-      const normalizedEndpoint = exporterConfig.endpoint
-        ? normalizeOtlpEndpointUrl(exporterConfig.endpoint, 'metrics')
-        : undefined
-      const commonOptions = {
-        ...(normalizedEndpoint ? { url: normalizedEndpoint } : {}),
-        headers: exporterConfig.headers,
-        timeoutMillis: exporterConfig.timeout,
-        compression:
-          exporterConfig.compression === 'gzip'
-            ? CompressionAlgorithm.GZIP
-            : CompressionAlgorithm.NONE,
-      }
+      const options = buildOtlpOptions('metrics', exporterConfig)
       const metricExporter =
         exporterConfig.protocol === 'grpc'
-          ? new OTLPMetricGrpcExporter(commonOptions)
-          : new OTLPMetricHttpExporter(commonOptions)
+          ? new OTLPMetricGrpcExporter(options)
+          : new OTLPMetricHttpExporter(options)
       readers.push(
         new PeriodicExportingMetricReader({
           exporter: metricExporter,
@@ -568,22 +564,11 @@ export function initOpenTelemetry(
   const logProcessors: LogRecordProcessor[] = []
   for (const exporterConfig of logsConfigs) {
     if (exportingEnabled) {
-      const normalizedEndpoint = exporterConfig.endpoint
-        ? normalizeOtlpEndpointUrl(exporterConfig.endpoint, 'logs')
-        : undefined
-      const commonOptions = {
-        ...(normalizedEndpoint ? { url: normalizedEndpoint } : {}),
-        headers: exporterConfig.headers,
-        timeoutMillis: exporterConfig.timeout,
-        compression:
-          exporterConfig.compression === 'gzip'
-            ? CompressionAlgorithm.GZIP
-            : CompressionAlgorithm.NONE,
-      }
+      const options = buildOtlpOptions('logs', exporterConfig)
       const logExporter =
         exporterConfig.protocol === 'grpc'
-          ? new OTLPLogGrpcExporter(commonOptions)
-          : new OTLPLogHttpExporter(commonOptions)
+          ? new OTLPLogGrpcExporter(options)
+          : new OTLPLogHttpExporter(options)
       logProcessors.push(new BatchLogRecordProcessor({ exporter: logExporter }))
     }
   }

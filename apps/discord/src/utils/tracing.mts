@@ -6,7 +6,8 @@ import {
   SpanStatusCode,
   trace,
 } from '@thesharks/analytics'
-import type { CommandInteraction, Interaction } from 'discord.js'
+import type { CommandInteraction, Guild, Interaction } from 'discord.js'
+import { sendErrorReport } from './errorResponse.mjs'
 
 export type DiscordScope = 'guild' | 'dm'
 
@@ -33,6 +34,27 @@ export function resolveInteractionScope(
   interaction: Interaction,
 ): DiscordScope {
   return interaction.inGuild() ? 'guild' : 'dm'
+}
+
+/** Canonical low-cardinality labels shared by command metrics listeners. */
+export function commandMetricLabels(
+  interaction: { guild?: Guild | null; inGuild(): boolean },
+  command: string | undefined,
+  piece?: Pick<Listener, 'container'>,
+  extra: Attributes = {},
+): Attributes {
+  return {
+    command,
+    shard_id: resolveShardId(interaction, piece),
+    scope: interaction.inGuild() ? 'guild' : 'dm',
+    ...extra,
+  }
+}
+
+export function interactionDurationSeconds(
+  interaction: Pick<Interaction, 'createdTimestamp'>,
+): number {
+  return Math.max(0, Date.now() - interaction.createdTimestamp) / 1_000
 }
 
 export function attributesFromInteraction(
@@ -130,4 +152,28 @@ export async function withInteractionSpan<T>(
     applyInteractionScope(scope, interaction)
     return withSpan(name, attributes, fn)
   })
+}
+
+/** Capture and report a command failure with one consistent scope and
+ * breadcrumb shape across chat-input, context-menu, and subcommand events. */
+export async function captureInteractionError(
+  interaction: CommandInteraction,
+  error: unknown,
+  breadcrumbData: Record<string, unknown> = {},
+): Promise<void> {
+  const uuid = Sentry.withScope((scope) => {
+    applyInteractionScope(scope, interaction)
+    scope.addBreadcrumb({
+      category: 'command',
+      level: 'error',
+      message: error instanceof Error ? error.message : String(error),
+      data: {
+        commandName: interaction.commandName,
+        userId: interaction.user.id,
+        ...breadcrumbData,
+      },
+    })
+    return Sentry.captureException(error)
+  })
+  await sendErrorReport(interaction, error, uuid)
 }

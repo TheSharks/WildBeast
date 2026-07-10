@@ -1,11 +1,10 @@
 import type { ChatInputCommandSuccessPayload } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
+import { DURATION_SECONDS_BOUNDARIES, metrics } from '@thesharks/analytics'
 import {
-  type Attributes,
-  DURATION_SECONDS_BOUNDARIES,
-  metrics,
-  resolveShardId,
-} from '@thesharks/analytics'
+  commandMetricLabels,
+  interactionDurationSeconds,
+} from '../../utils/tracing.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const commandCounter = meter.createCounter('discord_commands_total', {
@@ -20,21 +19,6 @@ const executionTime = meter.createHistogram(
   },
 )
 
-function resolveScope(payload: ChatInputCommandSuccessPayload): 'guild' | 'dm' {
-  return payload.interaction.inGuild() ? 'guild' : 'dm'
-}
-
-function createLabels(
-  payload: ChatInputCommandSuccessPayload,
-  shardId: string,
-): Attributes {
-  return {
-    command: payload.command.name,
-    shard_id: shardId,
-    scope: resolveScope(payload),
-  }
-}
-
 export class CommandExecutedListener extends Listener {
   public constructor(
     context: Listener.LoaderContext,
@@ -47,14 +31,15 @@ export class CommandExecutedListener extends Listener {
   }
 
   public run(payload: ChatInputCommandSuccessPayload) {
-    const shardId = resolveShardId(payload.interaction, this)
-    const labels = createLabels(payload, shardId)
+    const labels = commandMetricLabels(
+      payload.interaction,
+      payload.command.name,
+      this,
+    )
 
     commandCounter.add(1, labels)
 
-    const duration = Date.now() - payload.interaction.createdTimestamp
-    const durationSeconds = Math.max(0, duration) / 1000
-    executionTime.record(durationSeconds, {
+    executionTime.record(interactionDurationSeconds(payload.interaction), {
       ...labels,
       duration_scope: 'interaction',
     })

@@ -1,12 +1,11 @@
 import { Listener } from '@sapphire/framework'
-import {
-  type Attributes,
-  DURATION_SECONDS_BOUNDARIES,
-  metrics,
-  resolveShardId,
-} from '@thesharks/analytics'
+import { DURATION_SECONDS_BOUNDARIES, metrics } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
 import { completeExperimentOutcomes } from '../../features/experiments.mjs'
+import {
+  commandMetricLabels,
+  interactionDurationSeconds,
+} from '../../utils/tracing.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const commandCounter = meter.createCounter('discord_commands_total', {
@@ -45,19 +44,16 @@ export class SubcommandExecutedListener extends Listener {
     ]: ClientEvents['chatInputSubcommandSuccess']
   ) {
     completeExperimentOutcomes('success')
-    const shardId = resolveShardId(interaction, this)
-    const labels: Attributes = {
-      command: payload.command.name,
-      subcommand: subcommand.name,
-      shard_id: shardId,
-      scope: interaction.inGuild() ? 'guild' : 'dm',
-    }
+    const labels = commandMetricLabels(
+      interaction,
+      payload.command.name,
+      this,
+      { subcommand: subcommand.name },
+    )
 
     commandCounter.add(1, labels)
 
-    const duration = Date.now() - interaction.createdTimestamp
-    const durationSeconds = Math.max(0, duration) / 1000
-    executionTime.record(durationSeconds, {
+    executionTime.record(interactionDurationSeconds(interaction), {
       ...labels,
       duration_scope: 'interaction',
     })
