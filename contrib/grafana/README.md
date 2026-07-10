@@ -2,7 +2,10 @@
 
 Premade dashboards and alert rules for WildBeast's OpenTelemetry output,
 plus a ready-to-run local stack: collector, Prometheus (metrics and
-alerting), Tempo (traces), Loki (logs) and a provisioned Grafana.
+alerting), Tempo (traces), Loki (logs) and a provisioned Grafana. The
+[dashboards page](https://wildbeast.guide/self-hosting/dashboards/)
+describes what each dashboard shows and how the alert rules map to
+failure modes.
 
 ## Quick start
 
@@ -22,10 +25,6 @@ dashboards provisioned into the WildBeast folder. All three signals flow:
 metrics into the dashboards, traces into Tempo and logs into Loki (Explore).
 Traces link to their logs and logs back to their trace via the provisioned
 datasource correlation.
-
-What each dashboard shows and how the alert rules map to failure modes is
-documented at
-[wildbeast.guide/self-hosting/dashboards](https://wildbeast.guide/self-hosting/dashboards/).
 
 ## Alert rules
 

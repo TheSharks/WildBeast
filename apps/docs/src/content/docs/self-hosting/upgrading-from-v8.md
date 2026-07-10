@@ -15,10 +15,10 @@ to see what carries over and what doesn't.
 
 v9 needs more from its environment than v8 did:
 
-- **Node.js 22 or later** and **pnpm**.
-- **PostgreSQL**. `DATABASE_URL` is validated at boot; the database backs
+- Node.js 22 or later and pnpm.
+- PostgreSQL: `DATABASE_URL` is validated at boot, and the database backs
   the tag system and the premium entitlement mirror.
-- **Redis**, even for a single cluster. It backs the scheduled task queue,
+- Redis, even for a single cluster: it backs the scheduled task queue,
   identify rate limiting, and persisted gateway sessions.
 
 [Getting started](/self-hosting/getting-started/) walks through a fresh
@@ -28,7 +28,7 @@ setup.
 
 `BOT_TOKEN` still works: v9 accepts it as a legacy alias for
 `DISCORD_TOKEN`, so a copied v8 `.env` logs in unchanged. We recommend
-renaming it, since all other documentation refers to `DISCORD_TOKEN`.
+renaming it, since the rest of the documentation refers to `DISCORD_TOKEN`.
 
 WildBeast v9 no longer posts guild counts to third-party bot-listing
 sites. The v8 `TOP_GG_TOKEN`, `BOTS_GG_TOKEN`, `DBL_COM_TOKEN`,

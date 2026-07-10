@@ -135,6 +135,8 @@ console.log(mathResult.output) // hello
 
 ## Built-in tags
 
+These tags ship in the default registry, grouped by purpose.
+
 ### String manipulation
 
 | Tag | Description |

@@ -5,7 +5,7 @@ OpenTelemetry-first analytics helpers for WildBeast. This package provides:
 - Sapphire logger bridge (`AnalyticsLogger`)
 - OpenTelemetry API re-exports (`metrics`, `logs`, `trace`)
 
-## OpenTelemetry Bootstrap
+## OpenTelemetry bootstrap
 
 The shared bootstrap configures traces, metrics, and logs via OTLP HTTP or gRPC exporters. The bootstrap automatically configures exporters for all signals when an OTLP endpoint is provided. If no endpoint is set, exporters remain disabled unless `enableExport` is explicitly set to `true`. The bootstrap enables the `pg`, `undici`, `ioredis` and `runtime-node` auto-instrumentations by default (disable via config or environment variables).
 
@@ -17,23 +17,23 @@ Common config knobs in `initOpenTelemetry`:
 - `instrumentations` to toggle `pg`, `undici`, `ioredis`, `fs` and `runtimeNode`
 - `sentry` to override `dsn`, `tracesSampleRate`, `tracesSampler`, `environment`, `release`
 
-### Exporter Configuration
+### Exporter configuration
 
 Each signal (traces, metrics, logs) can be configured with:
-- `endpoint`: OTLP endpoint URL (e.g., `http://localhost:4317` or `grpc://localhost:4317`)
+- `endpoint`: OTLP endpoint URL (for example `http://localhost:4317` or `grpc://localhost:4317`)
 - `headers`: Custom headers for the exporter
 - `protocol`: Explicitly set `'http'` or `'grpc'` (optional, auto-detected from endpoint URL)
 - `timeout`: Request timeout in milliseconds (optional)
 - `compression`: Compression setting (`'gzip'` or `'none'`, optional)
 
-**Protocol Selection:**
+#### Protocol selection
 Protocol is determined by precedence:
 1. Config field: `protocol: 'http' | 'grpc'`
 2. Signal-specific env var: `OTEL_EXPORTER_OTLP_{SIGNAL}_PROTOCOL`
 3. Global env var: `OTEL_EXPORTER_OTLP_PROTOCOL`
 4. URL scheme detection: `grpc://` or `grpcs://` → gRPC, otherwise HTTP
 
-**Multiple Exporters:**
+#### Multiple exporters
 Each signal can have multiple exporters configured as an array:
 ```typescript
 exporters: {
@@ -80,11 +80,11 @@ process.once("SIGINT", () => telemetry.shutdown());
 process.once("SIGTERM", () => telemetry.shutdown());
 ```
 
-## API Overview
+## API overview
 
 This package exports the OpenTelemetry API for creating metrics, logs, and traces. Use `metrics.getMeter`, `logs.getLogger`, and `trace.getTracer` to instrument your application.
 
-## OTel API Usage
+## OTel API usage
 
 ```typescript
 import { metrics, logs, trace } from "@thesharks/analytics";
@@ -103,7 +103,7 @@ logger.emit({
 });
 ```
 
-## Sapphire Logger Bridge
+## Sapphire logger bridge
 
 The `AnalyticsLogger` extends Sapphire's logger to automatically send logs to both OpenTelemetry and Sentry:
 
@@ -124,44 +124,44 @@ The AnalyticsLogger sends all Sapphire logs to three destinations:
 
 Sentry Logs integration is enabled by default and requires `@sentry/node` v9.41.0 or later.
 
-## Environment Variables
+## Environment variables
 
 ### OpenTelemetry
 
-**Required (for export):**
-- `OTEL_EXPORTER_OTLP_ENDPOINT`: Base OTLP endpoint (e.g., `http://localhost:4317` or `grpc://localhost:4317`)
+#### Required for export
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: Base OTLP endpoint (for example `http://localhost:4317` or `grpc://localhost:4317`)
 
-**Endpoints (optional):**
+#### Endpoints (optional)
 - `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`: Overrides traces endpoint
 - `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`: Overrides metrics endpoint
 - `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`: Overrides logs endpoint
 
-**Headers (optional):**
-Format: Comma-separated key=value pairs (e.g., `Authorization=Bearer token,X-Custom-Header=value`)
+#### Headers (optional)
+Format: Comma-separated key=value pairs (for example `Authorization=Bearer token,X-Custom-Header=value`)
 - `OTEL_EXPORTER_OTLP_HEADERS`: Global headers for all OTLP exporters
 - `OTEL_EXPORTER_OTLP_TRACES_HEADERS`: Traces-specific headers
-- `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`: Metrics-specific headers
+- `OTEL_EXPORTER_OTLP_METRICS_HEADERS`: Metrics-specific headers
 - `OTEL_EXPORTER_OTLP_LOGS_HEADERS`: Logs-specific headers
 
-**Protocol (optional):**
+#### Protocol (optional)
 - `OTEL_EXPORTER_OTLP_PROTOCOL`: Global protocol: `http/protobuf` or `grpc`
 - `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL`: Traces-specific protocol
 - `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL`: Metrics-specific protocol
 - `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL`: Logs-specific protocol
 
-**Timeout (optional):**
+#### Timeout (optional)
 - `OTEL_EXPORTER_OTLP_TIMEOUT`: Request timeout in milliseconds
 
-**Compression (optional):**
+#### Compression (optional)
 - `OTEL_EXPORTER_OTLP_COMPRESSION`: Compression setting: `gzip` or `none`
 
-**Service Configuration (optional):**
+#### Service configuration (optional)
 - `OTEL_SERVICE_NAME`: Overrides service name
 - `OTEL_DIAGNOSTIC_LOG_LEVEL`: Set to `verbose` to enable OTEL diagnostics
 - `OTEL_INSTRUMENTATION_PG_ENABLED`: Set to `false` to disable pg instrumentation
 - `OTEL_INSTRUMENTATION_UNDICI_ENABLED`: Set to `false` to disable undici instrumentation
 
-**Sentry (optional):**
+### Sentry
 - `SENTRY_DSN`: Sentry DSN for error tracing
 - `SENTRY_VALIDATE_OTEL_SETUP`: Set to `true` to validate OTEL setup on boot (throws if validation fails)
 

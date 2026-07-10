@@ -65,8 +65,8 @@ how to add one.
 
 ## How telemetry threads through
 
-Telemetry is not bolted on at the edges; it is initialized before anything
-else in both process roles (`initOpenTelemetry` is the first real statement in
+Telemetry is initialized before anything else in both process roles
+(`initOpenTelemetry` is the first real statement in
 `cluster.mts` and `index.mts`) so auto-instrumentation can hook Postgres,
 Redis, and outbound HTTP from the first call. Commands and scheduled tasks run
 inside spans because their base classes wrap them, and every listener that

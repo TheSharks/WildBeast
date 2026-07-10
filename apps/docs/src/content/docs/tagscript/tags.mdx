@@ -38,13 +38,13 @@ string mode: `+` concatenates and `-` removes the first match.
 
 | Tag | What it does |
 | --- | --- |
-| `{math:a\|op\|b\|op\|c...}` | Evaluate a chain, e.g. `{math:2\|+\|3\|*\|4}`. |
+| `{math:a\|op\|b\|op\|c...}` | Evaluate a chain, for example `{math:2\|+\|3\|*\|4}`. |
 | `{add:a\|b}` `{subtract:a\|b}` `{multiply:a\|b}` `{divide:a\|b}` | Two-operand arithmetic. |
 | `{pow:a\|b}` `{mod:a\|b}` | Power and modulo. |
 | `{abs:n}` `{ceil:n}` `{floor:n}` `{round:n}` | Rounding and absolute value. |
 | `{sqrt:n}` `{sin:n}` `{cos:n}` `{tan:n}` | Roots and trigonometry. |
 | `{pi}` `{e}` | The constants π and e. |
-| `{base:n\|radix}` | Convert `n` to another base (radix 2–36), e.g. `{base:255\|16}` → `ff`. |
+| `{base:n\|radix}` | Convert `n` to another base (radix 2–36), for example `{base:255\|16}` → `ff`. |
 | `{random:min\|max}` | A random integer between `min` and `max`, inclusive. |
 | `{choose:a\|b\|c...}` | Pick one of the values at random. |
 | `{range:start\|end\|step}` | A list of numbers from `start` to `end` (up to 2000 values). |
@@ -59,7 +59,7 @@ timestamp, using tokens `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`, or the literal
 | --- | --- |
 | `{now}` | Current time as a Unix timestamp in milliseconds. |
 | `{time}` | Same as `{now}` with no arguments. |
-| `{time:format}` | The current time formatted, e.g. `{time:yyyy-MM-dd}` or `{time:iso}`. |
+| `{time:format}` | The current time formatted, for example `{time:yyyy-MM-dd}` or `{time:iso}`. |
 | `{time:timestamp\|format}` | A specific millisecond timestamp, formatted. |
 
 ## Variables

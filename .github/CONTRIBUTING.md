@@ -1,6 +1,6 @@
-**Thank you for taking the time to contribute to the development of WildBeast!**
+Thank you for taking the time to contribute to the development of WildBeast!
 
-Please follow these rules when making contributions to this repository.
+Follow these rules when making contributions to this repository.
 
 # Source code
 
@@ -15,12 +15,12 @@ Please follow these rules when making contributions to this repository.
 
 ### Verified as working
 
-All code contributed to this repository should be verified as working, meaning you've tested the functionality at least once and didn't encounter unexpected behaviour.  
-Please keep in mind that we might ask you to confirm if this is the case.
+All code contributed to this repository must be verified as working, meaning you've tested the functionality at least once and didn't encounter unexpected behaviour.  
+Keep in mind that we might ask you to confirm if this is the case.
 
 ### Style enforcement
 
-[Biome](https://biomejs.dev/) handles our style enforcement and linting. When making contributions, **please confirm your code adheres to the style**, your build will fail otherwise and we're less inclined to merge it.  
+[Biome](https://biomejs.dev/) handles our style enforcement and linting. When making contributions, confirm your code adheres to the style; your build will fail otherwise and we're less inclined to merge it.  
 To verify your code adheres to our styleguide, run `pnpm lint` in the project root. Most issues can be fixed automatically with `pnpm check:fix`.
 
 ### Tests
@@ -47,7 +47,7 @@ interaction.reply(await resolveKey(interaction, "user/greeting:hello", { name: u
 ### Database operations
 
 We use [Drizzle ORM](https://orm.drizzle.team/) for database access, wrapped in the `@thesharks/drizzle` workspace package.  
-When something requires database access, **do not create your own database connection, use the client and schema exported from `@thesharks/drizzle`**. Schema changes belong in that package, alongside a migration.
+When something requires database access, do not create your own database connection; use the client and schema exported from `@thesharks/drizzle`. Schema changes belong in that package, alongside a migration.
 
 ## Commands
 

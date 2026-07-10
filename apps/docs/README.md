@@ -14,4 +14,4 @@ All commands are run from this directory (or via turbo from the repo root):
 
 ## Adding content
 
-Pages are Markdown or MDX files in `src/content/docs/`. Files in `using/`, `tagscript/`, `self-hosting/`, and `development/` are picked up automatically by the sidebar, ordered by their `sidebar.order` frontmatter. See the [Starlight docs](https://starlight.astro.build/guides/authoring-content/) for authoring details.
+Pages are Markdown or MDX files in `src/content/docs/`. The sidebar picks up files in `using/`, `tagscript/`, `self-hosting/`, and `development/` automatically, ordered by their `sidebar.order` frontmatter. See the [Starlight docs](https://starlight.astro.build/guides/authoring-content/) for authoring details.

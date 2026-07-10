@@ -19,8 +19,8 @@ All commands are run from this directory (or via turbo from the repo root):
 
 ## Configuration
 
-Everything is configured through environment variables, loaded from
-`apps/discord/.env` when present and validated at boot. See the
+The bot reads its configuration from environment variables, loads
+`apps/discord/.env` when present, and validates everything at boot. See the
 [configuration reference](https://wildbeast.guide/self-hosting/configuration/).
 
 ## Documentation

@@ -72,13 +72,13 @@ Flag lookups sit on the interaction path, and a gated command with a limit
 and an experiment makes up to three of them against Discord's three-second
 response deadline. Two mechanisms keep that safe:
 
-- **Caching.** Each flag + context resolution is reused for
+- Caching: each flag + context resolution is reused for
   `WILDBEAST_OFREP_CACHE_TTL` seconds (default 30; `0` evaluates every
   time), and concurrent evaluations of the same flag + context share one
   in-flight request. Remote changes therefore take up to the TTL to reach
-  every worker — the tradeoff to keep hot paths off the network. Cached
+  every worker, the tradeoff to keep hot paths off the network. Cached
   answers appear in the evaluation metrics with source `cache`.
-- **A circuit breaker.** Individual evaluations already time out after two
+- A circuit breaker: individual evaluations already time out after two
   seconds and fall back to the in-code default, but during an outage every
   cold flag + context would pay that timeout. After three consecutive
   provider failures the client stops calling the service for thirty
@@ -136,11 +136,11 @@ if (variant === 'suggestion') {
 ```
 
 `commandFlagContext` (features/commandContext.mts) is the one way command
-call sites build their targeting context — it resolves the tier and
+call sites build their targeting context: it resolves the tier and
 subcommand so no call site can forget an attribute and silently stop
 matching the service's rules.
 
-The default variant should preserve current behavior. A provider value not
+The default variant must preserve current behavior. A provider value not
 listed in `variants` is rejected in favor of that default and reported with an
 `invalid` exposure source.
 
@@ -148,8 +148,9 @@ The traced command and task bases open an experiment outcome scope around each
 run. The first read of an experiment records one exposure; repeated reads in the
 same run reuse that assignment without another OFREP call. When the operation
 finishes, every exposed experiment receives a technical `success` or `error`
-outcome. These outcomes measure runtime health by variant; product-specific
-conversions should be separate events at their actual conversion point.
+outcome. These outcomes measure runtime health by variant; record
+product-specific conversions as separate events at their actual conversion
+point.
 
 ## Observability and tests
 
@@ -160,7 +161,7 @@ Sentry error events also carry the flags evaluated in their isolated command
 scope.
 
 Use OpenFeature's `InMemoryProvider` in unit tests to exercise targeting without
-running an OFREP service. Tests should cover the in-code default, each behavior
+running an OFREP service. Cover the in-code default, each behavior
 branch, invalid remote values, and success/error outcome attribution. The
 runtime-policy tests use `captureMetrics()` to verify the exported series as
 well as the returned assignments.

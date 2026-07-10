@@ -12,14 +12,14 @@ default-on [runtime gate](/development/features/#command-and-task-gates).
 
 Two project conventions sit on top of Sapphire's defaults, and both matter:
 
-- **Commands and scheduled tasks extend a traced base class**, not Sapphire's
+- Commands and scheduled tasks extend a traced base class, not Sapphire's
   directly, so every run is captured as a span and an isolated Sentry scope.
-- **A piece's name defaults to its file name, and names must be unique.**
+- A piece's name defaults to its file name, and names must be unique.
   Sapphire silently unloads a piece whose name collides with one already
   loaded. A [structure test](/development/testing/) asserts that every
   exported piece actually registers, which catches this, but it is the single
   easiest mistake to make.
-- **Every command and task has a typed runtime gate.** Add
+- Every command and task has a typed runtime gate. Add
   `features.commands.<name>` or `features.tasks.<name>` to the flag registry;
   the structure test fails when it is missing.
 

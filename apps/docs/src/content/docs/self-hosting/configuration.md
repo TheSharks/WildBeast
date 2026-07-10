@@ -28,6 +28,8 @@ The essentials: the token, database, and runtime mode.
 
 ## Commands
 
+Where slash commands register and what `/invite` hands out.
+
 | Variable | Required | Description |
 | --- | --- | --- |
 | `WILDBEAST_DEV_GUILD_ID` | no | When set, slash commands register in this guild instead of globally. Guild commands update instantly, so development environments want this; production leaves it unset. Boot refuses the combination with `NODE_ENV=production`, because bulk-overwrite registration would remove every global command. |
@@ -40,7 +42,7 @@ limits work.
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `WILDBEAST_PREMIUM_SKUS` | no | Comma-separated `skuId:tier` or `skuId:tier:scope` entries mapping the app's monetization SKUs to premium tiers, e.g. `1315790123456789:premium:guild`. The scope (`user` or `guild`) matches the kind of subscription the SKU is sold as. Unset means premium is off: everything runs at the free tier. |
+| `WILDBEAST_PREMIUM_SKUS` | no | Comma-separated `skuId:tier` or `skuId:tier:scope` entries mapping the app's monetization SKUs to premium tiers, for example `1315790123456789:premium:guild`. The scope (`user` or `guild`) matches the kind of subscription the SKU is sold as. Unset means premium is off: everything runs at the free tier. |
 
 ## Runtime flags
 

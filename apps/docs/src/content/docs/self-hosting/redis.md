@@ -35,7 +35,7 @@ leak into a new one. The epoch pointer itself (`wildbeast:epoch`) is global.
 
 A few details behind the table:
 
-- **Sessions** hold the session id, sequence number, and resume URL of each
+- Sessions hold the session id, sequence number, and resume URL of each
   shard's gateway connection. They let a shard moving to another cluster
   resume instead of re-identifying, and they're what makes restarts cheap:
   a shard that comes back within 15 minutes replays missed events rather
@@ -43,9 +43,9 @@ A few details behind the table:
   per shard. Failed writes stay dirty for the next interval, and session
   invalidations retry so a transient Redis error cannot leave a known-dead
   resume token behind for its full TTL.
-- **Membership** is a sorted set scored by Redis server time, so clusters
+- Membership is a sorted set scored by Redis server time, so clusters
   on hosts with skewed clocks still agree on who's alive.
-- **Leases** guarantee a shard never has two owners: the value is the
+- Leases guarantee a shard never has two owners: the value is the
   owning cluster's id, and another cluster's acquire fails until the lease
   is released or expires.
 
@@ -54,16 +54,16 @@ A few details behind the table:
 Nothing in Redis is precious; all of it can be rebuilt. The cost of losing
 it is connection churn, not data loss:
 
-- Persisted **sessions** disappear, so every shard identifies fresh on its
+- Persisted sessions disappear, so every shard identifies fresh on its
   next reconnect instead of resuming. For a large fleet that means a slow,
   identify-rate-limited restart (roughly 5.5 seconds per shard per
   rate-limit bucket).
-- **Membership and leases** re-form within seconds; running clusters
+- Membership and leases re-form within seconds; running clusters
   heartbeat and re-acquire on their normal cadence. Heartbeat and renewal
   are independent of slow shard starts and stops.
-- The **task queue** is recreated when clusters boot; recurring tasks
+- The task queue is recreated when clusters boot; recurring tasks
   resume their schedules. A one-shot job enqueued but not yet run is lost.
-- The **epoch pointer** is re-initialized by the next cluster to resolve
+- The epoch pointer is re-initialized by the next cluster to resolve
   it. Don't flush Redis in the middle of a
   [shard total migration](/self-hosting/resharding/); the pending proposal
   would be lost.

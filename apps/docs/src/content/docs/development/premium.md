@@ -15,7 +15,7 @@ tier-dependent number.
 
 Discord sells two kinds of subscription, and the framework supports both:
 
-- A **user subscription** follows the buyer everywhere — every guild and
+- A **user subscription** follows the buyer everywhere: every guild and
   DM.
 - A **guild subscription** benefits one guild and everyone acting in it.
 
@@ -32,7 +32,7 @@ export const PREMIUM_TIERS = ['free', 'premium'] as const
 ```
 
 `free` is the baseline everyone has; later entries are granted by active
-entitlements. Adding a tier is one edit here — the compiler then forces a
+entitlements. Adding a tier is one edit here; the compiler then forces a
 value for the new tier on every limit in the registry, so no cap can fall
 through to an accidental default.
 
@@ -48,8 +48,8 @@ WILDBEAST_PREMIUM_SKUS=1315790123456789:premium:guild
 ```
 
 The optional scope (`user` or `guild`) states what kind of subscription
-the SKU is sold as. Tier resolution never consults it — the entitlement
-is authoritative — it exists so the purchase button on denial replies can
+the SKU is sold as. Tier resolution never consults it (the entitlement
+is authoritative); it exists so the purchase button on denial replies can
 offer the SKU that matches the gate (see
 [Gating commands](#gating-commands)). Unset means premium is off:
 everything runs at the free tier and gated commands deny without a
@@ -77,7 +77,7 @@ Each limit declares whose subscription raises it:
 | --- | --- |
 | `user` | Only the invoker's own subscription counts. |
 | `guild` | Only the current guild's subscription counts; free tier in DMs. |
-| `any` | The best of both. The right choice for per-user caps that a guild subscription should also lift — a `user` limit can never be raised in a deployment that only sells guild subscriptions. |
+| `any` | The best of both. The right choice for per-user caps that a guild subscription should also lift; a `user` limit can never be raised in a deployment that only sells guild subscriptions. |
 
 `UNLIMITED` (`Infinity`) as a value removes the cap for that tier, which
 is why enforcement checks `Number.isFinite` first. Commands read their
@@ -101,7 +101,7 @@ the registry entry, then check it at the enforcement site.
 The registry values can be overridden at runtime through the same
 [typed OFREP runtime policy](/development/features/) used for feature gates and
 experiments. When configured, every `limitFor` call evaluates
-`limits.<key>` — the registry entry for `tags.maxPerGuild` becomes the flag
+`limits.<key>`: the registry entry for `tags.maxPerGuild` becomes the flag
 `limits.tags.maxPerGuild`, with the tier's registry value as its default.
 
 Evaluations carry a context the service can target rules at, so an
@@ -112,7 +112,7 @@ override can be as narrow or as broad as needed:
 | `targetingKey` | The guild id, or the user id for `user`-scoped limits (and in DMs). |
 | `guildId` | The guild the interaction happened in, when there is one. |
 | `userId` | The invoker. |
-| `tier` | The already-resolved premium tier — rules can treat premium guilds differently. |
+| `tier` | The already-resolved premium tier, so rules can treat premium guilds differently. |
 | `environment` | `NODE_ENV`, so staging can run different numbers than production. |
 
 A rule matching none of these applies globally. The bot never depends on the
@@ -129,9 +129,9 @@ caching: Discord attaches every applicable active entitlement (the
 invoker's user subscriptions and the guild's subscriptions) to each
 interaction. `premium/entitlements.mts` exposes three views:
 
-- `userTierForInteraction` — the invoker's own subscriptions.
-- `guildTierForInteraction` — the current guild's subscriptions.
-- `tierForInteraction` — the best of either.
+- `userTierForInteraction`: the invoker's own subscriptions.
+- `guildTierForInteraction`: the current guild's subscriptions.
+- `tierForInteraction`: the best of either.
 
 Outside interactions (scheduled tasks, background jobs), `tierForUser`
 and `tierForGuild` answer the same questions from the [entitlement
@@ -152,8 +152,8 @@ subscription for a whole command, apply the `Premium`
 `tier` defaults to `premium` and `scope` to `any` (either kind of
 subscription satisfies the gate); a `guild` gate always denies in DMs.
 When the precondition denies, the reply listener answers with the
-localized `system/errors:premium_required` message and — when a
-configured SKU matches the gate's scope — a premium-style button that
+localized `system/errors:premium_required` message and (when a
+configured SKU matches the gate's scope) a premium-style button that
 opens Discord's purchase flow.
 
 ## The entitlement mirror
@@ -168,8 +168,8 @@ Discord's entitlements locally:
   (refunds, test cleanup) are soft: the row keeps its history and a
   `deleted` flag, matching Discord's own model.
 - On boot, `listeners/premium/entitlementBackfill.mts` reconciles the
-  mirror against the API once — entitlements are app-global, so only the
-  worker holding shard 0 does this — catching anything granted or revoked
+  mirror against the API once (entitlements are app-global, so only the
+  worker holding shard 0 does this), catching anything granted or revoked
   while the bot was offline.
 
 A failed mirror write only degrades background checks until the next

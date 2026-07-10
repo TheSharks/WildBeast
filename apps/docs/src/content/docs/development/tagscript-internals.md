@@ -30,14 +30,14 @@ Everything lives in `packages/tagscript/src`:
 `parse` makes one pass over the input and returns a tree of text and tag
 nodes. The properties that matter:
 
-- **Escapes are resolved at parse time.** `\{` becomes a literal `{` inside
+- Escapes are resolved at parse time: `\{` becomes a literal `{` inside
   a text node; the renderer never sees escape sequences.
-- **Malformed syntax is text, not an error.** An unclosed `{`, an empty tag
+- Malformed syntax is text, not an error: an unclosed `{`, an empty tag
   name (`{}`), or a stray `}` all fall back to literal text. Parsing never
   fails on user input (the only guard is a hard recursion limit of 1000).
-- **Arguments are sub-segments.** `{if:a|b}` parses into a tag node whose
+- Arguments are sub-segments: `{if:a|b}` parses into a tag node whose
   `args` are each their own segment, which may contain nested tags.
-- **Every node carries a span** (start and end offsets into the source),
+- Every node carries a span (start and end offsets into the source),
   which the renderer uses to reproduce unknown tags exactly as written and
   the docs playground uses for its AST view.
 
@@ -51,14 +51,14 @@ variable whose value contains tags renders in the next pass.
 
 Within a pass, each tag node resolves in this order:
 
-1. **Lazy tags** (`if`, `eval`, `ignore`, `note`, and `fetch` in the Node
+1. Lazy tags (`if`, `eval`, `ignore`, `note`, and `fetch` in the Node
    entry) receive their arguments as unrendered AST segments and decide
    what to render. That's how `{if}` skips the branch it doesn't take.
-2. **Normal tags** get their arguments rendered first (depth-first, in
+2. Normal tags get their arguments rendered first (depth-first, in
    parallel), then the handler runs on plain strings.
-3. **No handler, but a variable with that name exists**: the variable's
+3. No handler, but a variable with that name exists: the variable's
    value is the output. This is why `{score}` reads a variable directly.
-4. **Otherwise the tag is unknown**: in `ignore` mode it renders as its
+4. Otherwise the tag is unknown: in `ignore` mode it renders as its
    literal source text (recovered via the node's span); in `strict` mode
    the render throws.
 
@@ -80,10 +80,10 @@ parses, and restores the real characters once, at the very end.
 A registry is two maps, normal and lazy handlers, built with
 `createRegistry`. There are two entry points with different defaults:
 
-- **`@thesharks/tagscript`** (`index.ts`): the full registry, including
+- `@thesharks/tagscript` (`index.ts`): the full registry, including
   `{fetch}` (as a lazy handler, so its URL argument renders but its output
   can be made inert).
-- **`@thesharks/tagscript/web`** (`web.ts`): the browser-safe registry,
+- `@thesharks/tagscript/web` (`web.ts`): the browser-safe registry,
   everything except `{fetch}`. This is what the documentation's live
   playground imports, straight from source via a Vite alias.
 

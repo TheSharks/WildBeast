@@ -46,7 +46,7 @@ A reachable Redis is required even for a single cluster: it backs the
 scheduled task queue, the identify rate limiter, and persisted gateway
 sessions.
 
-Coming from an existing v8 deployment?
+If you're upgrading an existing v8 deployment,
 [Upgrading from v8](/self-hosting/upgrading-from-v8/) covers the dropped
 settings and other differences.
 
