@@ -40,9 +40,9 @@ are targeting context and never metric labels.
 
 | Metric | Type | Labels |
 | --- | --- | --- |
-| `discord_feature_flag_evaluations_total` | counter | `flag`, `kind` (`gate`, `experiment`, `limit`), `source` (`default`, `provider`, `error`), and `state` for boolean gates |
+| `discord_feature_flag_evaluations_total` | counter | `flag`, `kind` (`gate`, `experiment`, `limit`), `source` (`default`, `provider`, `cache`, `error`), and `state` for boolean gates |
 | `discord_feature_flag_evaluation_duration_seconds` | histogram | same as the evaluation counter |
-| `discord_experiment_exposures_total` | counter | `experiment`, `variant`, `source` (`default`, `provider`, `error`, `invalid`) |
+| `discord_experiment_exposures_total` | counter | `experiment`, `variant`, `source` (`default`, `provider`, `cache`, `error`, `invalid`) |
 | `discord_experiment_outcomes_total` | counter | `experiment`, `variant`, `outcome` (`success`, `error`), `operation_kind`, `operation` |
 
 An exposure is recorded once per experiment per command/task run, even if the

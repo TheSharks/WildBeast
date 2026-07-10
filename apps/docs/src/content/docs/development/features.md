@@ -66,6 +66,25 @@ Interaction evaluations send a consistent targeting context:
 Scheduled tasks use `task:<name>` as the targeting key and send `task`,
 `environment`, and the available worker identity.
 
+### Latency and failure isolation
+
+Flag lookups sit on the interaction path, and a gated command with a limit
+and an experiment makes up to three of them against Discord's three-second
+response deadline. Two mechanisms keep that safe:
+
+- **Caching.** Each flag + context resolution is reused for
+  `WILDBEAST_OFREP_CACHE_TTL` seconds (default 30; `0` evaluates every
+  time), and concurrent evaluations of the same flag + context share one
+  in-flight request. Remote changes therefore take up to the TTL to reach
+  every worker — the tradeoff to keep hot paths off the network. Cached
+  answers appear in the evaluation metrics with source `cache`.
+- **A circuit breaker.** Individual evaluations already time out after two
+  seconds and fall back to the in-code default, but during an outage every
+  cold flag + context would pay that timeout. After three consecutive
+  provider failures the client stops calling the service for thirty
+  seconds and serves in-code values immediately; a missing flag
+  (`FLAG_NOT_FOUND`) is not an outage and never trips it.
+
 ## Command and task gates
 
 Every command has a default-on boolean key named

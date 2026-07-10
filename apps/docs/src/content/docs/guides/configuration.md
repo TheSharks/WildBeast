@@ -50,6 +50,7 @@ registry, targeting context, command/task gates, and experiment behavior.
 | --- | --- | --- |
 | `WILDBEAST_OFREP_URL` | no | Base URL of an OFREP-compatible feature flag service. Unset means gates, experiments, and limits use their in-code defaults. |
 | `WILDBEAST_OFREP_TOKEN` | no | Bearer token sent to the OFREP service, for providers that need authentication. |
+| `WILDBEAST_OFREP_CACHE_TTL` | no | Seconds a flag evaluation is reused before asking the service again. Defaults to 30; `0` evaluates every time. Remote changes take up to this long to apply. |
 
 ## Redis
 
