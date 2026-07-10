@@ -97,9 +97,10 @@ not the bot.
 
 ## Tags
 
-Tags are named snippets of text anyone can save and recall. Their content
-can use [TagScript](/tagscript/overview/), so a tag can greet whoever runs
-it, do math, or pick a random reply.
+Tags are named snippets of text anyone can save and recall. Each server
+has its own tags, so the commands only work in servers, not DMs. Tag
+content can use [TagScript](/tagscript/overview/), so a tag can greet
+whoever runs it, do math, or pick a random reply.
 
 ### /tag show
 
@@ -115,11 +116,14 @@ output never ping anyone.
 
 ### /tag create
 
-Saves a new tag. Names are unique across the bot, up to 32 characters.
+Saves a new tag. Names are unique within the server, up to 32 characters.
 
 ```
 /tag create name:hello content:Hi, {username}!
 ```
+
+A server can hold up to 50 tags; a premium subscription for the server
+raises that to 500.
 
 ### /tag edit and /tag delete
 

@@ -26,9 +26,11 @@ The connection string comes from `DATABASE_URL` (a standard
 TimescaleDB service.
 
 :::note
-The schema carries over from v8 and currently backs the
-[tag system](/using/commands/#tags); the package exists so new features
-land on a shared client from day one.
+The schema started as a v8 carry-over and currently backs the
+[tag system](/using/commands/#tags) (now namespaced per guild, where v8
+tags were global) and the
+[premium entitlement mirror](/development/premium/#the-entitlement-mirror);
+the package exists so new features land on a shared client from day one.
 :::
 
 ## Extensions
@@ -49,16 +51,17 @@ they add no hosting constraints.
 
 ## Current schema
 
-Two tables, defined in `packages/drizzle/src/schema.ts`:
+The tables, defined in `packages/drizzle/src/schema.ts`:
 
 | Table | Columns | Purpose |
 | --- | --- | --- |
-| `Tag` | `id`, `name` (citext, unique), `content`, `authorId` | Stored [TagScript](/tagscript/overview/) templates. |
+| `Tag` | `id`, `guildId`, `name` (citext, unique per guild), `content`, `authorId` | Stored [TagScript](/tagscript/overview/) templates, namespaced per guild. |
 | `Guild` | `id` | Guilds known to the bot. |
 | `ApplicationCommandId` | `commandId`, `name`, `guildId` | Discord-assigned command ids, fed back to Sapphire as `idHints` on the next boot. |
+| `Entitlement` | `id`, `skuId`, `userId`, `guildId`, `type`, `deleted`, `startsAt`, `endsAt` | Local mirror of Discord's [premium entitlements](/development/premium/#the-entitlement-mirror), for premium checks outside interactions. |
 
 The schema module also exports inferred types (`Tag`, `NewTag`, `Guild`,
-`NewGuild`) for use in application code.
+`NewGuild`, ...) for use in application code.
 
 ## Changing the schema
 

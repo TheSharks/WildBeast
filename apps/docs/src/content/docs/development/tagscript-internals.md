@@ -2,7 +2,7 @@
 title: TagScript internals
 description: How the interpreter works, and how to add a tag.
 sidebar:
-  order: 6
+  order: 7
 ---
 
 How `@thesharks/tagscript` works under the hood, for anyone changing the

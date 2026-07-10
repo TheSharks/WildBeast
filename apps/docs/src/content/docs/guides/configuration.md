@@ -32,6 +32,15 @@ The essentials: the token and the runtime mode.
 | `WILDBEAST_DEV_GUILD_ID` | no | When set, slash commands register in this guild instead of globally. Guild commands update instantly, so development environments want this; production leaves it unset. |
 | `WILDBEAST_INVITE_OVERRIDE` | no | A URL for `/invite` to hand out instead of the generated OAuth link. |
 
+## Premium
+
+See [Premium subscriptions](/development/premium/) for how tiers and
+limits work.
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `WILDBEAST_PREMIUM_SKUS` | no | Comma-separated `skuId:tier` or `skuId:tier:scope` entries mapping the app's monetization SKUs to premium tiers, e.g. `1315790123456789:premium:guild`. The scope (`user` or `guild`) matches the kind of subscription the SKU is sold as. Unset means premium is off: everything runs at the free tier. |
+
 ## Redis
 
 Redis backs the scheduled task queue and, in multi-cluster setups, all
