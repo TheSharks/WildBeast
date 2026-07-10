@@ -68,7 +68,7 @@ async function shutdown() {
     // continue shutting down telemetry even if the client fails to close
   }
   try {
-    const { closeFeatureFlags } = await import('./premium/features.mjs')
+    const { closeFeatureFlags } = await import('./features/client.mjs')
     await closeFeatureFlags()
   } catch {
     // flag providers hold no state worth dying over
@@ -143,7 +143,7 @@ try {
   sessionStore = imported.sessionStore
   // Optional OFREP feature flags; a no-op unless configured, and a failed
   // flag service never blocks login (in-code defaults apply).
-  const { initFeatureFlags } = await import('./premium/features.mjs')
+  const { initFeatureFlags } = await import('./features/client.mjs')
   await initFeatureFlags({ logger: client.logger })
   await client.login(process.env.DISCORD_TOKEN)
   client.logger.info('Logged in')

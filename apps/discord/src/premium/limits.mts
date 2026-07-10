@@ -34,6 +34,7 @@ const registry = {
 } as const satisfies Record<string, LimitDefinition>
 
 export type LimitKey = keyof typeof registry
+export type LimitFlagKey = `limits.${LimitKey}`
 
 export const limitKeys = Object.keys(registry) as LimitKey[]
 
@@ -41,6 +42,10 @@ export const limitKeys = Object.keys(registry) as LimitKey[]
  * tier may be UNLIMITED. */
 export function getLimit(key: LimitKey, tier: PremiumTier): number {
   return registry[key].values[tier]
+}
+
+export function limitFlagKey(key: LimitKey): LimitFlagKey {
+  return `limits.${key}`
 }
 
 /** The registry entry itself, for surfaces that display limits (e.g. a

@@ -1,4 +1,6 @@
 import { Command } from '@sapphire/framework'
+import { withExperimentOutcomes } from '../features/experiments.mjs'
+import { installCommandFeatureGate } from '../features/gates.mjs'
 import { installIdHintTracking } from '../utils/idHints.mjs'
 import {
   attributesFromInteraction,
@@ -19,6 +21,7 @@ export abstract class TracedCommand extends Command {
     super(context, options)
 
     installIdHintTracking(this)
+    installCommandFeatureGate(this)
 
     const chatInputRun = this.chatInputRun?.bind(this)
     if (chatInputRun) {
@@ -32,7 +35,10 @@ export abstract class TracedCommand extends Command {
             'discord.command.type': 'chat_input',
             'sentry.op': 'discord.command',
           },
-          () => chatInputRun(interaction, runContext),
+          () =>
+            withExperimentOutcomes({ kind: 'command', name: this.name }, () =>
+              chatInputRun(interaction, runContext),
+            ),
         )
     }
 
@@ -53,7 +59,10 @@ export abstract class TracedCommand extends Command {
             'discord.command.type': 'context_menu',
             'sentry.op': 'discord.command',
           },
-          () => contextMenuRun(interaction, runContext),
+          () =>
+            withExperimentOutcomes({ kind: 'command', name: this.name }, () =>
+              contextMenuRun(interaction, runContext),
+            ),
         )
     }
   }

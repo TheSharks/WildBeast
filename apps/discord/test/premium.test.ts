@@ -41,6 +41,8 @@ function fakeInteraction(
 ) {
   return {
     guildId,
+    guild: null,
+    user: { id: '900' },
     entitlements: new Map(
       entitlements.map((entitlement, index) => [
         String(index),

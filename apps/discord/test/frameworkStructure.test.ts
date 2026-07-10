@@ -19,6 +19,7 @@ import { SpanStatusCode } from '@thesharks/analytics'
 import { captureSpans, silentLogger } from '@thesharks/test-utils'
 import { Collection } from 'discord.js'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { commandGateKey, taskGateKey } from '../src/features/registry.mjs'
 import { TracedCommand } from '../src/structures/command.mjs'
 import { TracedScheduledTask } from '../src/structures/task.mjs'
 
@@ -136,6 +137,10 @@ describe('piece loading', () => {
         `${task.name} should have a traced run wrapper`,
       ).toBe(true)
       expect(task.interval, `${task.name} should have an interval`).toBeTruthy()
+      expect(
+        taskGateKey(task.name),
+        `${task.name} should have a registered runtime gate`,
+      ).toBeDefined()
     }
   })
 
@@ -145,6 +150,10 @@ describe('piece loading', () => {
     expect(commandStore.size).toBe(exported)
 
     for (const command of commandStore.values()) {
+      expect(
+        commandGateKey(command.name),
+        `${command.name} should have a registered runtime gate`,
+      ).toBeDefined()
       if (typeof command.chatInputRun === 'function') {
         expect(
           Object.hasOwn(command, 'chatInputRun'),

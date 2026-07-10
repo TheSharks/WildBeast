@@ -1,6 +1,7 @@
 import { Listener } from '@sapphire/framework'
 import { type Attributes, metrics, resolveShardId } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
+import { completeExperimentOutcomes } from '../../features/experiments.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const errorCounter = meter.createCounter('discord_command_errors_total', {
@@ -24,6 +25,7 @@ export class SubcommandErrorListener extends Listener {
   }
 
   public run(...[, payload]: ClientEvents['chatInputSubcommandError']) {
+    completeExperimentOutcomes('error')
     const shardId = resolveShardId(payload.interaction, this)
     const labels: Attributes = {
       command: payload.command?.name,

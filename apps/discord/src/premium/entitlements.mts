@@ -11,8 +11,14 @@ import {
   sql,
 } from '@thesharks/drizzle'
 import type { BaseInteraction, Entitlement } from 'discord.js'
-import { featureFlagClient, featureFlagsActive } from './features.mjs'
-import { describeLimit, getLimit, type LimitKey } from './limits.mjs'
+import { limitFlagValue } from '../features/client.mjs'
+import { interactionFlagContext } from '../features/context.mjs'
+import {
+  describeLimit,
+  getLimit,
+  type LimitKey,
+  limitFlagKey,
+} from './limits.mjs'
 import { premiumSkuMap } from './skus.mjs'
 import { FREE_TIER, highestTier, type PremiumTier } from './tiers.mjs'
 
@@ -62,7 +68,7 @@ export function tierForInteraction(interaction: BaseInteraction): PremiumTier {
  * invoker's own for 'user' limits, the current guild's for 'guild' limits,
  * the best of either for 'any' limits.
  *
- * When an OFREP flag service is configured (premium/features.mjs), the
+ * When an OFREP flag service is configured (features/client.mjs), the
  * registry value becomes the default of the `limits.<key>` flag and the
  * service can override it by any dimension of the context — a guild, a
  * user, a tier, an environment — or unconditionally for a global change.
@@ -81,18 +87,17 @@ export async function limitFor(
   }[definition.scope]
   const tier = resolve(interaction)
   const fallback = getLimit(key, tier)
-  if (!featureFlagsActive()) return fallback
-
-  return featureFlagClient().getNumberValue(`limits.${key}`, fallback, {
-    targetingKey:
-      definition.scope === 'user'
-        ? interaction.user.id
-        : (interaction.guildId ?? interaction.user.id),
-    userId: interaction.user.id,
-    ...(interaction.guildId ? { guildId: interaction.guildId } : {}),
-    tier,
-    environment: process.env.NODE_ENV ?? 'development',
-  })
+  return limitFlagValue(
+    limitFlagKey(key),
+    fallback,
+    interactionFlagContext(interaction, {
+      tier,
+      targetingKey:
+        definition.scope === 'user'
+          ? interaction.user.id
+          : (interaction.guildId ?? interaction.user.id),
+    }),
+  )
 }
 
 function grantedByInteraction(

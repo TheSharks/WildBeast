@@ -21,6 +21,8 @@ import {
   MessageFlags,
   type SlashCommandStringOption,
 } from 'discord.js'
+import { commandFlagContext } from '../../features/commandContext.mjs'
+import { experimentVariant } from '../../features/experiments.mjs'
 import { limitFor } from '../../premium/entitlements.mjs'
 import { TracedSubcommand } from '../../structures/subcommand.mjs'
 
@@ -406,19 +408,28 @@ export class TagCommand extends TracedSubcommand {
     interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
     const name = interaction.options.getString('name', true)
-    // pg_trgm "did you mean": the closest existing name in this guild, if
-    // it's close enough to plausibly be a typo.
-    const [closest] = await db
-      .select({ name: tags.name })
-      .from(tags)
-      .where(
-        and(
-          eq(tags.guildId, BigInt(interaction.guildId)),
-          sql`similarity(${tags.name}, ${name}) > 0.3`,
-        ),
-      )
-      .orderBy(sql`similarity(${tags.name}, ${name}) DESC`)
-      .limit(1)
+    const replyVariant = await experimentVariant(
+      'experiments.tags.notFoundReply',
+      commandFlagContext(interaction, this.name),
+    )
+
+    let closest: { name: string } | undefined
+    if (replyVariant === 'suggestion') {
+      // pg_trgm "did you mean": the closest existing name in this guild, if
+      // it's close enough to plausibly be a typo.
+      const matches = await db
+        .select({ name: tags.name })
+        .from(tags)
+        .where(
+          and(
+            eq(tags.guildId, BigInt(interaction.guildId)),
+            sql`similarity(${tags.name}, ${name}) > 0.3`,
+          ),
+        )
+        .orderBy(sql`similarity(${tags.name}, ${name}) DESC`)
+        .limit(1)
+      closest = matches[0]
+    }
 
     return interaction.reply({
       content: (await resolveKey(

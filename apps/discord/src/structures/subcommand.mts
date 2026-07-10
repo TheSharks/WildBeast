@@ -1,4 +1,6 @@
 import { Subcommand } from '@sapphire/plugin-subcommands'
+import { withExperimentOutcomes } from '../features/experiments.mjs'
+import { installCommandFeatureGate } from '../features/gates.mjs'
 import { installIdHintTracking } from '../utils/idHints.mjs'
 import {
   attributesFromInteraction,
@@ -20,6 +22,7 @@ export abstract class TracedSubcommand extends Subcommand {
     super(context, options)
 
     installIdHintTracking(this)
+    installCommandFeatureGate(this)
 
     const chatInputRun = this.chatInputRun?.bind(this)
     if (chatInputRun) {
@@ -35,7 +38,19 @@ export abstract class TracedSubcommand extends Subcommand {
             'discord.command.type': 'chat_input',
             'sentry.op': 'discord.command',
           },
-          () => chatInputRun(interaction, runContext),
+          () =>
+            withExperimentOutcomes(
+              {
+                kind: 'command',
+                name: [this.name, interaction.options.getSubcommand(false)]
+                  .filter(Boolean)
+                  .join('.'),
+              },
+              () => chatInputRun(interaction, runContext),
+              // The subcommands plugin converts mapped-method throws into
+              // events; its success/error listeners complete this scope.
+              { automatic: false },
+            ),
         )
     }
   }

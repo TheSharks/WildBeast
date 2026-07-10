@@ -6,6 +6,7 @@ import {
   resolveShardId,
 } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
+import { completeExperimentOutcomes } from '../../features/experiments.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const commandCounter = meter.createCounter('discord_commands_total', {
@@ -43,6 +44,7 @@ export class SubcommandExecutedListener extends Listener {
       payload,
     ]: ClientEvents['chatInputSubcommandSuccess']
   ) {
+    completeExperimentOutcomes('success')
     const shardId = resolveShardId(interaction, this)
     const labels: Attributes = {
       command: payload.command.name,

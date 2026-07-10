@@ -48,8 +48,8 @@ export const envSchema = z.object({
       }
     }),
   // Base URL of an OFREP-compatible feature flag service (flagd, GO
-  // Feature Flag, ...). Optional: without it, flag-controlled values (the
-  // limit registry) use their in-code defaults.
+  // Feature Flag, ...). Optional: without it, command/task gates,
+  // experiments and remote limit overrides use their in-code defaults.
   WILDBEAST_OFREP_URL: z.url().optional(),
   // Bearer token sent to the OFREP service, for providers that need auth.
   WILDBEAST_OFREP_TOKEN: z.string().optional(),

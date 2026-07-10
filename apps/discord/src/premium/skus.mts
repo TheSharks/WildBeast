@@ -63,15 +63,26 @@ export function parsePremiumSkus(
   return map
 }
 
+let cachedRaw: string | undefined
+let cachedMap: Map<string, PremiumSku> | undefined
+
 /**
  * The configured SKU mapping. Empty when premium is not configured, in
  * which case everything runs at the free tier and premium-gated commands
- * deny with a plain message (no purchase button).
+ * deny with a plain message (no purchase button). Parsed once per distinct
+ * value: tier resolution consults this several times per interaction (gate
+ * context, precondition, limit lookup), so it must stay allocation-free on
+ * the hot path.
  */
 export function premiumSkuMap(
   env: NodeJS.ProcessEnv = process.env,
 ): Map<string, PremiumSku> {
-  return parsePremiumSkus(env.WILDBEAST_PREMIUM_SKUS)
+  const raw = env.WILDBEAST_PREMIUM_SKUS
+  if (cachedMap === undefined || raw !== cachedRaw) {
+    cachedMap = parsePremiumSkus(raw)
+    cachedRaw = raw
+  }
+  return cachedMap
 }
 
 /**

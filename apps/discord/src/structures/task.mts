@@ -1,5 +1,9 @@
 import { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
 import * as Sentry from '@sentry/node'
+import { booleanFlagValue } from '../features/client.mjs'
+import { taskFlagContext } from '../features/context.mjs'
+import { withExperimentOutcomes } from '../features/experiments.mjs'
+import { taskGateKey } from '../features/registry.mjs'
 import { monitorConfigFromSchedule, monitorSlug } from '../utils/crons.mjs'
 import { spanName, withSpan } from '../utils/tracing.mjs'
 
@@ -23,6 +27,7 @@ export abstract class TracedScheduledTask extends ScheduledTask {
 
     const monitorConfig = monitorConfigFromSchedule(this)
     const slug = monitorSlug(this.name)
+    const gateKey = taskGateKey(this.name)
 
     const run = this.run.bind(this)
     this.run = (payload) =>
@@ -35,7 +40,25 @@ export abstract class TracedScheduledTask extends ScheduledTask {
               'discord.task.name': this.name,
               'sentry.op': 'discord.task',
             },
-            () => run(payload),
+            () =>
+              withExperimentOutcomes(
+                { kind: 'task', name: this.name },
+                async () => {
+                  if (
+                    gateKey &&
+                    !(await booleanFlagValue(
+                      gateKey,
+                      taskFlagContext(this.name),
+                    ))
+                  ) {
+                    this.container.logger?.debug(
+                      `Scheduled task ${this.name} disabled by ${gateKey}`,
+                    )
+                    return undefined
+                  }
+                  return run(payload)
+                },
+              ),
           )
         return monitorConfig
           ? Sentry.withMonitor(slug, execute, monitorConfig)

@@ -9,6 +9,7 @@ import {
   type ClientEvents,
   MessageFlags,
 } from 'discord.js'
+import { FeaturePreconditionIdentifier } from '../../preconditions/Feature.mjs'
 import { PremiumPreconditionIdentifier } from '../../preconditions/Premium.mjs'
 import { skuIdForTier } from '../../premium/skus.mjs'
 import { isPremiumTier } from '../../premium/tiers.mjs'
@@ -56,6 +57,14 @@ export class CommandDeniedReplyListener extends Listener {
         content: (await resolveKey(interaction, 'system/errors:cooldown', {
           resumeAt: `<t:${Math.ceil((Date.now() + remaining) / 1000)}:R>`,
         })) as string,
+      }
+    }
+    if (error.identifier === FeaturePreconditionIdentifier) {
+      return {
+        content: (await resolveKey(
+          interaction,
+          'system/errors:feature_unavailable',
+        )) as string,
       }
     }
     if (error.identifier === PremiumPreconditionIdentifier) {
