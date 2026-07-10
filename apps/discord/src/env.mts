@@ -1,6 +1,7 @@
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
+import { parsePremiumSkus } from './premium/skus.mjs'
 
 /**
  * Shape of the environment WildBeast cares about. Unknown variables pass
@@ -30,6 +31,22 @@ export const envSchema = z.object({
   WILDBEAST_DEV_GUILD_ID: z.string().regex(/^\d+$/).optional(),
   // Shown by /invite instead of the generated OAuth URL when set.
   WILDBEAST_INVITE_OVERRIDE: z.url().optional(),
+  // Comma-separated `skuId:tier` or `skuId:tier:scope` entries mapping the
+  // app's monetization SKUs to premium tiers, with scope (user/guild)
+  // matching the kind of subscription the SKU is sold as, e.g.
+  // "1315790123456789:premium:guild". Unset means premium is off:
+  // everything runs at the free tier.
+  WILDBEAST_PREMIUM_SKUS: z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      if (value === undefined) return
+      try {
+        parsePremiumSkus(value)
+      } catch (error) {
+        ctx.addIssue({ code: 'custom', message: (error as Error).message })
+      }
+    }),
   WILDBEAST_SHARDING_START: z.coerce.number().int().nonnegative().optional(),
   WILDBEAST_SHARDING_END: z.coerce.number().int().nonnegative().optional(),
   WILDBEAST_SHARDING_TOTAL: z.coerce.number().int().positive().optional(),

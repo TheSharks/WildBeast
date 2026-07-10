@@ -1,19 +1,35 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { Command } from '@sapphire/framework'
+import { CommandOptionsRunTypeEnum } from '@sapphire/framework'
 import { applyLocalizedBuilder, resolveKey } from '@sapphire/plugin-i18next'
 import type { Subcommand } from '@sapphire/plugin-subcommands'
-import { asc, db, eq, ilike, or, sql, tags } from '@thesharks/drizzle'
+import {
+  and,
+  asc,
+  count,
+  db,
+  eq,
+  ilike,
+  or,
+  sql,
+  tags,
+} from '@thesharks/drizzle'
 import { RenderError, render } from '@thesharks/tagscript'
 import {
   escapeCodeBlock,
+  InteractionContextType,
   MessageFlags,
   type SlashCommandStringOption,
 } from 'discord.js'
+import { limitFor } from '../../premium/entitlements.mjs'
 import { TracedSubcommand } from '../../structures/subcommand.mjs'
 
 const MAX_LISTED_TAGS = 100
 
+// Tags are namespaced per guild, so the command needs one; registration
+// below also hides it outside guilds.
 @ApplyOptions<Subcommand.Options>({
+  runIn: [CommandOptionsRunTypeEnum.GuildAny],
   subcommands: [
     { name: 'show', chatInputRun: 'chatInputShow' },
     { name: 'create', chatInputRun: 'chatInputCreate' },
@@ -45,6 +61,7 @@ export class TagCommand extends TracedSubcommand {
         'commands/names:tag',
         'commands/descriptions:tag',
       )
+        .setContexts(InteractionContextType.Guild)
         .addSubcommand((sub) =>
           applyLocalizedBuilder(
             sub,
@@ -130,6 +147,7 @@ export class TagCommand extends TracedSubcommand {
   public override async autocompleteRun(
     interaction: Command.AutocompleteInteraction,
   ) {
+    if (!interaction.guildId) return interaction.respond([])
     const focused = interaction.options.getFocused()
     // % and _ are LIKE wildcards; a literal search must not let users match
     // through them.
@@ -140,7 +158,12 @@ export class TagCommand extends TracedSubcommand {
       // Substring matches, plus trigram-similar names (the % operator) so
       // typos still surface suggestions. Both are backed by the pg_trgm
       // index; best match first.
-      .where(or(ilike(tags.name, pattern), sql`${tags.name} % ${focused}`))
+      .where(
+        and(
+          eq(tags.guildId, BigInt(interaction.guildId)),
+          or(ilike(tags.name, pattern), sql`${tags.name} % ${focused}`),
+        ),
+      )
       .orderBy(sql`similarity(${tags.name}, ${focused}) DESC`, asc(tags.name))
       .limit(25)
 
@@ -150,9 +173,9 @@ export class TagCommand extends TracedSubcommand {
   }
 
   public async chatInputShow(
-    interaction: Subcommand.ChatInputCommandInteraction,
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
-    const tag = await this.findTag(interaction.options.getString('name', true))
+    const tag = await this.findTag(interaction)
     if (!tag) {
       return this.replyNotFound(interaction)
     }
@@ -206,19 +229,37 @@ export class TagCommand extends TracedSubcommand {
   }
 
   public async chatInputCreate(
-    interaction: Subcommand.ChatInputCommandInteraction,
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
     const name = interaction.options.getString('name', true).trim()
     const content = interaction.options.getString('content', true)
 
+    // Subscription-controlled cap; see the registry in premium/limits.mts.
+    const limit = limitFor(interaction, 'tags.maxPerGuild')
+    if (Number.isFinite(limit)) {
+      const [held] = await db
+        .select({ value: count() })
+        .from(tags)
+        .where(eq(tags.guildId, BigInt(interaction.guildId)))
+      if ((held?.value ?? 0) >= limit) {
+        return interaction.reply({
+          content: (await resolveKey(interaction, 'commands/tag:limitReached', {
+            limit,
+          })) as string,
+          flags: MessageFlags.Ephemeral,
+        })
+      }
+    }
+
     const inserted = await db
       .insert(tags)
       .values({
+        guildId: BigInt(interaction.guildId),
         name,
         content,
         authorId: BigInt(interaction.user.id),
       })
-      .onConflictDoNothing({ target: tags.name })
+      .onConflictDoNothing({ target: [tags.guildId, tags.name] })
       .returning({ name: tags.name })
 
     return interaction.reply({
@@ -235,9 +276,9 @@ export class TagCommand extends TracedSubcommand {
   }
 
   public async chatInputEdit(
-    interaction: Subcommand.ChatInputCommandInteraction,
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
-    const tag = await this.findTag(interaction.options.getString('name', true))
+    const tag = await this.findTag(interaction)
     if (!tag) {
       return this.replyNotFound(interaction)
     }
@@ -260,9 +301,9 @@ export class TagCommand extends TracedSubcommand {
   }
 
   public async chatInputDelete(
-    interaction: Subcommand.ChatInputCommandInteraction,
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
-    const tag = await this.findTag(interaction.options.getString('name', true))
+    const tag = await this.findTag(interaction)
     if (!tag) {
       return this.replyNotFound(interaction)
     }
@@ -282,14 +323,18 @@ export class TagCommand extends TracedSubcommand {
   }
 
   public async chatInputList(
-    interaction: Subcommand.ChatInputCommandInteraction,
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
     const author = interaction.options.getUser('author')
-    const query = db.select({ name: tags.name }).from(tags)
-    const rows = await (author
-      ? query.where(eq(tags.authorId, BigInt(author.id)))
-      : query
-    )
+    const rows = await db
+      .select({ name: tags.name })
+      .from(tags)
+      .where(
+        and(
+          eq(tags.guildId, BigInt(interaction.guildId)),
+          author ? eq(tags.authorId, BigInt(author.id)) : undefined,
+        ),
+      )
       .orderBy(asc(tags.name))
       .limit(MAX_LISTED_TAGS)
 
@@ -313,9 +358,9 @@ export class TagCommand extends TracedSubcommand {
   }
 
   public async chatInputInfo(
-    interaction: Subcommand.ChatInputCommandInteraction,
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
-    const tag = await this.findTag(interaction.options.getString('name', true))
+    const tag = await this.findTag(interaction)
     if (!tag) {
       return this.replyNotFound(interaction)
     }
@@ -331,9 +376,9 @@ export class TagCommand extends TracedSubcommand {
   }
 
   public async chatInputRaw(
-    interaction: Subcommand.ChatInputCommandInteraction,
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
-    const tag = await this.findTag(interaction.options.getString('name', true))
+    const tag = await this.findTag(interaction)
     if (!tag) {
       return this.replyNotFound(interaction)
     }
@@ -346,20 +391,32 @@ export class TagCommand extends TracedSubcommand {
     })
   }
 
-  private findTag(name: string) {
-    return db.query.tags.findFirst({ where: eq(tags.name, name.trim()) })
+  private findTag(
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
+  ) {
+    return db.query.tags.findFirst({
+      where: and(
+        eq(tags.guildId, BigInt(interaction.guildId)),
+        eq(tags.name, interaction.options.getString('name', true).trim()),
+      ),
+    })
   }
 
   private async replyNotFound(
-    interaction: Subcommand.ChatInputCommandInteraction,
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
     const name = interaction.options.getString('name', true)
-    // pg_trgm "did you mean": the closest existing name, if it's close
-    // enough to plausibly be a typo.
+    // pg_trgm "did you mean": the closest existing name in this guild, if
+    // it's close enough to plausibly be a typo.
     const [closest] = await db
       .select({ name: tags.name })
       .from(tags)
-      .where(sql`similarity(${tags.name}, ${name}) > 0.3`)
+      .where(
+        and(
+          eq(tags.guildId, BigInt(interaction.guildId)),
+          sql`similarity(${tags.name}, ${name}) > 0.3`,
+        ),
+      )
       .orderBy(sql`similarity(${tags.name}, ${name}) DESC`)
       .limit(1)
 
@@ -375,7 +432,7 @@ export class TagCommand extends TracedSubcommand {
   }
 
   private async replyNotOwner(
-    interaction: Subcommand.ChatInputCommandInteraction,
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ) {
     return interaction.reply({
       content: (await resolveKey(

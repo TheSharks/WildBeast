@@ -22,6 +22,20 @@
       "when": 1783198752233,
       "tag": "0002_command-id-hints",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783688530467,
+      "tag": "0003_entitlements",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783690208723,
+      "tag": "0004_per-guild-tags",
+      "breakpoints": true
     }
   ]
 }

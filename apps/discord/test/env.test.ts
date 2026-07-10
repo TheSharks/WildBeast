@@ -49,4 +49,19 @@ describe('validateEnv', () => {
       }),
     ).toThrow(/WILDBEAST_CLUSTERING_MODE/)
   })
+
+  it('validates the premium SKU mapping', () => {
+    expect(
+      validateEnv({
+        DISCORD_TOKEN: 'token',
+        WILDBEAST_PREMIUM_SKUS: '1315790123456789:premium',
+      }),
+    ).toMatchObject({ WILDBEAST_PREMIUM_SKUS: '1315790123456789:premium' })
+    expect(() =>
+      validateEnv({
+        DISCORD_TOKEN: 'token',
+        WILDBEAST_PREMIUM_SKUS: '1315790123456789:gold',
+      }),
+    ).toThrow(/Unknown premium tier/)
+  })
 })

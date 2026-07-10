@@ -5,6 +5,7 @@
   "notFound": "There's no tag named `{{name}}`.",
   "notFoundSuggestion": "There's no tag named `{{name}}`. Did you mean `{{suggestion}}`?",
   "alreadyExists": "A tag named `{{name}}` already exists.",
+  "limitReached": "This server has reached the maximum number of tags it can hold ({{limit}}).",
   "notOwner": "Only the author of a tag can change or delete it.",
   "renderFailed": "Couldn't render that tag: {{error}}",
   "emptyOutput": "That tag rendered to an empty message.",
