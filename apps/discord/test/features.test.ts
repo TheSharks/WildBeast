@@ -32,11 +32,7 @@ import { limitFor } from '../src/premium/entitlements.mjs'
 import { getLimit } from '../src/premium/limits.mjs'
 import { TracedScheduledTask } from '../src/structures/task.mjs'
 
-const restoreEnv = snapshotEnv([
-  'WILDBEAST_OFREP_URL',
-  'WILDBEAST_OFREP_TOKEN',
-  'WILDBEAST_PREMIUM_SKUS',
-])
+const restoreEnv = snapshotEnv(['WILDBEAST_OFREP', 'WILDBEAST_PREMIUM'])
 afterAll(async () => {
   await closeFeatureFlags()
   restoreEnv()
@@ -318,5 +314,80 @@ describe.sequential('scheduled task gates', () => {
 
     await expect(task.run()).resolves.toBe('ran')
     expect(task.runs).toBe(1)
+  })
+})
+
+describe.sequential('evaluation caching and provider health', () => {
+  const gateProvider = (contextEvaluator: () => string) =>
+    new InMemoryProvider({
+      'features.commands.booru': {
+        disabled: false,
+        variants: { enabled: true, disabled: false },
+        defaultVariant: 'disabled',
+        contextEvaluator,
+      },
+    })
+
+  it('reuses one provider resolution per flag and context within the TTL', async () => {
+    const contextEvaluator = vi.fn(() => 'enabled')
+    await initFeatureFlags({
+      logger: silentLogger,
+      provider: gateProvider(contextEvaluator),
+    })
+
+    const context = { targetingKey: 'guild:1', guildId: '1' }
+    await expect(
+      booleanFlagValue('features.commands.booru', context),
+    ).resolves.toBe(true)
+    await expect(
+      booleanFlagValue('features.commands.booru', context),
+    ).resolves.toBe(true)
+    expect(contextEvaluator).toHaveBeenCalledTimes(1)
+
+    // A different context is a different cache entry.
+    await booleanFlagValue('features.commands.booru', {
+      targetingKey: 'guild:2',
+      guildId: '2',
+    })
+    expect(contextEvaluator).toHaveBeenCalledTimes(2)
+  })
+
+  it('evaluates every time when the cache TTL is zero', async () => {
+    process.env.WILDBEAST_OFREP_CACHE_TTL = '0'
+    const contextEvaluator = vi.fn(() => 'enabled')
+    await initFeatureFlags({
+      logger: silentLogger,
+      provider: gateProvider(contextEvaluator),
+    })
+    delete process.env.WILDBEAST_OFREP_CACHE_TTL
+
+    const context = { targetingKey: 'guild:1', guildId: '1' }
+    await booleanFlagValue('features.commands.booru', context)
+    await booleanFlagValue('features.commands.booru', context)
+    expect(contextEvaluator).toHaveBeenCalledTimes(2)
+  })
+
+  it('stops calling the provider after repeated outages', async () => {
+    const contextEvaluator = vi.fn((): string => {
+      throw new Error('flag service is down')
+    })
+    await initFeatureFlags({
+      logger: silentLogger,
+      provider: gateProvider(contextEvaluator),
+    })
+
+    // Distinct contexts so the cache cannot absorb the calls. Every one
+    // falls back to the default-on gate value.
+    for (const guild of ['1', '2', '3', '4']) {
+      await expect(
+        booleanFlagValue('features.commands.booru', {
+          targetingKey: `guild:${guild}`,
+          guildId: guild,
+        }),
+      ).resolves.toBe(true)
+    }
+    // The breaker trips after three consecutive failures; the fourth
+    // evaluation is served from cooldown without touching the provider.
+    expect(contextEvaluator).toHaveBeenCalledTimes(3)
   })
 })

@@ -53,6 +53,10 @@ export const envSchema = z.object({
   WILDBEAST_OFREP_URL: z.url().optional(),
   // Bearer token sent to the OFREP service, for providers that need auth.
   WILDBEAST_OFREP_TOKEN: z.string().optional(),
+  // Seconds a flag evaluation is reused before asking the OFREP service
+  // again (default 30). Remote changes take up to this long to apply;
+  // 0 evaluates every time.
+  WILDBEAST_OFREP_CACHE_TTL: z.coerce.number().int().nonnegative().optional(),
   WILDBEAST_SHARDING_START: z.coerce.number().int().nonnegative().optional(),
   WILDBEAST_SHARDING_END: z.coerce.number().int().nonnegative().optional(),
   WILDBEAST_SHARDING_TOTAL: z.coerce.number().int().positive().optional(),
