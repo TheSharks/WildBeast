@@ -52,6 +52,9 @@ either a Sapphire piece or its supporting data:
 | `listeners/` | Event listeners, grouped by purpose (`metrics/`, `logging/`, `reporting/`). |
 | `scheduled-tasks/` | Recurring background jobs, backed by a BullMQ queue on Redis. |
 | `languages/` | i18next translation files, one directory per locale. |
+| `features/` | Typed runtime flags, OFREP evaluation, command/task gates, and experiment telemetry. |
+| `premium/` | Subscription tiers, entitlement resolution, SKU mapping, and typed limits. |
+| `preconditions/` | Reusable Sapphire policy checks, including premium and runtime feature gates. |
 | `structures/` | The `client`, and the `TracedCommand` / `TracedScheduledTask` base classes. |
 | `sharding/` | The autonomous clustering machinery: coordination, leases, epochs, session persistence. |
 | `utils/` | Cross-cutting helpers: the tracing wrappers, Redis connection options, cron slug derivation. |

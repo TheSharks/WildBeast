@@ -7,7 +7,8 @@ sidebar:
 
 Commands, listeners, and scheduled tasks are all Sapphire **pieces**: classes
 in the right directory that the framework discovers and loads automatically.
-You add one by dropping a file in; there is no registry to wire it into.
+You add one by dropping a file in; the only central entry it needs is its
+default-on [runtime gate](/development/features/#command-and-task-gates).
 
 Two project conventions sit on top of Sapphire's defaults, and both matter:
 
@@ -18,6 +19,9 @@ Two project conventions sit on top of Sapphire's defaults, and both matter:
   loaded. A [structure test](/development/testing/) asserts that every
   exported piece actually registers, which catches this, but it is the single
   easiest mistake to make.
+- **Every command and task has a typed runtime gate.** Add
+  `features.commands.<name>` or `features.tasks.<name>` to the flag registry;
+  the structure test fails when it is missing.
 
 ## Commands
 

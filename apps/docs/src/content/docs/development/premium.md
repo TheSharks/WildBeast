@@ -2,7 +2,7 @@
 title: Premium subscriptions
 description: Discord entitlements, premium tiers, and the limit registry.
 sidebar:
-  order: 5
+  order: 6
 ---
 
 WildBeast monetizes through [Discord's premium app
@@ -87,7 +87,7 @@ scope and looks the value up in one call:
 ```ts
 import { limitFor } from '../../premium/entitlements.mjs'
 
-const limit = limitFor(interaction, 'tags.maxPerGuild')
+const limit = await limitFor(interaction, 'tags.maxPerGuild')
 if (Number.isFinite(limit) && held >= limit) {
   // deny with a localized message
 }
@@ -96,17 +96,13 @@ if (Number.isFinite(limit) && held >= limit) {
 `/tag create` is the worked example. Adding a new limit is two steps: add
 the registry entry, then check it at the enforcement site.
 
-## Remote limit overrides (OFREP)
+## Remote limit overrides
 
-The registry values can be overridden at runtime, without a deploy,
-through any feature flag service that speaks OpenFeature's
-[Remote Evaluation Protocol](https://openfeature.dev/specification/appendix-c/)
-(flagd, GO Feature Flag, and others). Point
-[`WILDBEAST_OFREP_URL`](/guides/configuration/#premium) at the service
-(plus `WILDBEAST_OFREP_TOKEN` when it needs auth) and every `limitFor`
-call becomes an evaluation of the flag `limits.<key>` — the registry entry
-for `tags.maxPerGuild` becomes the flag `limits.tags.maxPerGuild`, with
-the registry value as its default.
+The registry values can be overridden at runtime through the same
+[typed OFREP runtime policy](/development/features/) used for feature gates and
+experiments. When configured, every `limitFor` call evaluates
+`limits.<key>` — the registry entry for `tags.maxPerGuild` becomes the flag
+`limits.tags.maxPerGuild`, with the tier's registry value as its default.
 
 Evaluations carry a context the service can target rules at, so an
 override can be as narrow or as broad as needed:
@@ -119,17 +115,12 @@ override can be as narrow or as broad as needed:
 | `tier` | The already-resolved premium tier — rules can treat premium guilds differently. |
 | `environment` | `NODE_ENV`, so staging can run different numbers than production. |
 
-A rule matching none of these applies globally. This is strictly a power
-feature, and the bot never depends on it: with the variable unset the
-OpenFeature client is never consulted, and when the service is down,
-slow (evaluations time out after two seconds), or has no rule for a flag,
-the registry value applies. A flag service that fails at boot logs a
-warning and keeps retrying in the background while the bot runs normally.
+A rule matching none of these applies globally. The bot never depends on the
+provider: when it is unconfigured, down, slow, or has no matching flag, the
+tier's registry value applies.
 
-Flag evaluations are also reported to
-[Sentry](/observability/telemetry/#sentry): error events carry the flags
-evaluated in that scope, recording whether a remote override diverged from
-the in-code default when the error happened.
+Evaluations are reported through the runtime-policy
+[metrics and Sentry integration](/development/features/#observability-and-tests).
 
 ## Resolving tiers
 

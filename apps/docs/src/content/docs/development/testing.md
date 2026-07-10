@@ -2,7 +2,7 @@
 title: Testing
 description: Running and writing tests for the WildBeast framework.
 sidebar:
-  order: 6
+  order: 7
 ---
 
 WildBeast's suite tests the framework's own infrastructure (piece loading,

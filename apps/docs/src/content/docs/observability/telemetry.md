@@ -75,7 +75,7 @@ platform:
   stuck.
 - Node runtime metrics (event loop, GC, memory) flow to the Sentry metrics
   product alongside the OTLP metrics.
-- When the optional [OFREP feature flag service](/development/premium/#remote-limit-overrides-ofrep)
+- When the optional [OFREP feature flag service](/development/features/)
   is configured, every flag evaluation is buffered and attached to error
   events, so an issue shows whether a remote override was active when
   things broke.
