@@ -29,7 +29,9 @@ apply to people running their own instance.
 ## Which commands does the bot have?
 
 See the [command reference](/using/commands/). Version 9 is a rewrite in
-progress, so the set is small right now and grows with each release.
+progress, so the set is small right now and grows with each release. If
+you're hosting a v8 instance, [Upgrading from v8](/self-hosting/upgrading-from-v8/)
+explains what changed.
 
 ## What is TagScript?
 

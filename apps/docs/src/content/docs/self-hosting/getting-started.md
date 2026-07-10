@@ -11,6 +11,8 @@ WildBeast is a modular Discord bot developed by The Sharks.
 
 - [Node.js](https://nodejs.org/) 22 or later
 - [pnpm](https://pnpm.io/)
+- A [PostgreSQL](https://www.postgresql.org/) database, which backs the tag
+  system and premium entitlements
 - A [Redis](https://redis.io/) server, which backs the scheduled task queue,
   identify rate limiting, and gateway session storage, even with a single
   cluster. A local install with default settings works out of the box.
@@ -28,11 +30,12 @@ pnpm install
 
 ## Running the bot
 
-Create `apps/discord/.env` with at least your bot token (see
-[Configuration](/self-hosting/configuration/) for everything else):
+Create `apps/discord/.env` with at least your bot token and database URL
+(see [Configuration](/self-hosting/configuration/) for everything else):
 
 ```bash
 DISCORD_TOKEN=your-bot-token
+DATABASE_URL=postgresql://user:password@localhost:5432/wildbeast
 ```
 
 Then build the workspace and start the Discord app in watch mode:
@@ -49,6 +52,8 @@ For a real deployment, see
 
 - [Configuration](/self-hosting/configuration/) covers every environment
   variable.
+- [Upgrading from v8](/self-hosting/upgrading-from-v8/) explains what
+  changed if you ran an earlier version.
 - [Running in production](/self-hosting/running-in-production/) explains the
   process model, shutdown behavior, and supervision.
 - [Redis](/self-hosting/redis/) explains what the bot stores there and how to

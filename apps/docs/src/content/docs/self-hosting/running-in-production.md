@@ -46,11 +46,9 @@ A reachable Redis is required even for a single cluster: it backs the
 scheduled task queue, the identify rate limiter, and persisted gateway
 sessions.
 
-WildBeast v9 no longer posts guild counts to third-party bot-listing sites.
-The v8 `TOP_GG_TOKEN`, `BOTS_GG_TOKEN`, `DBL_COM_TOKEN`,
-`ONDISCORD_XYZ_TOKEN`, and `DEL_XYZ_TOKEN` settings are intentionally ignored;
-remove them or run a separate listing-statistics publisher if those listings
-still need periodic updates.
+Coming from an existing v8 deployment?
+[Upgrading from v8](/self-hosting/upgrading-from-v8/) covers the dropped
+settings and other differences.
 
 ## Shutdown
 
