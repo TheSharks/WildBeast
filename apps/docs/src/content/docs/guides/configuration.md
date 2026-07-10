@@ -40,6 +40,8 @@ limits work.
 | Variable | Required | Description |
 | --- | --- | --- |
 | `WILDBEAST_PREMIUM_SKUS` | no | Comma-separated `skuId:tier` or `skuId:tier:scope` entries mapping the app's monetization SKUs to premium tiers, e.g. `1315790123456789:premium:guild`. The scope (`user` or `guild`) matches the kind of subscription the SKU is sold as. Unset means premium is off: everything runs at the free tier. |
+| `WILDBEAST_OFREP_URL` | no | Base URL of an [OFREP-compatible feature flag service](/development/premium/#remote-limit-overrides-ofrep) for overriding limits remotely. Unset means limits use their in-code values. |
+| `WILDBEAST_OFREP_TOKEN` | no | Bearer token sent to the OFREP service, for providers that need authentication. |
 
 ## Redis
 

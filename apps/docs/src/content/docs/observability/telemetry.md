@@ -75,6 +75,10 @@ platform:
   stuck.
 - Node runtime metrics (event loop, GC, memory) flow to the Sentry metrics
   product alongside the OTLP metrics.
+- When the optional [OFREP feature flag service](/development/premium/#remote-limit-overrides-ofrep)
+  is configured, every flag evaluation is buffered and attached to error
+  events, so an issue shows whether a remote override was active when
+  things broke.
 - A few measurements go to Sentry metrics exclusively: guild joins and
   leaves (with the guild's size and shard attached) and the wait imposed by
   each REST rate limit. Sentry metrics are per-item and stamped with the

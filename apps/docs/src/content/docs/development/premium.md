@@ -96,6 +96,41 @@ if (Number.isFinite(limit) && held >= limit) {
 `/tag create` is the worked example. Adding a new limit is two steps: add
 the registry entry, then check it at the enforcement site.
 
+## Remote limit overrides (OFREP)
+
+The registry values can be overridden at runtime, without a deploy,
+through any feature flag service that speaks OpenFeature's
+[Remote Evaluation Protocol](https://openfeature.dev/specification/appendix-c/)
+(flagd, GO Feature Flag, and others). Point
+[`WILDBEAST_OFREP_URL`](/guides/configuration/#premium) at the service
+(plus `WILDBEAST_OFREP_TOKEN` when it needs auth) and every `limitFor`
+call becomes an evaluation of the flag `limits.<key>` — the registry entry
+for `tags.maxPerGuild` becomes the flag `limits.tags.maxPerGuild`, with
+the registry value as its default.
+
+Evaluations carry a context the service can target rules at, so an
+override can be as narrow or as broad as needed:
+
+| Attribute | Value |
+| --- | --- |
+| `targetingKey` | The guild id, or the user id for `user`-scoped limits (and in DMs). |
+| `guildId` | The guild the interaction happened in, when there is one. |
+| `userId` | The invoker. |
+| `tier` | The already-resolved premium tier — rules can treat premium guilds differently. |
+| `environment` | `NODE_ENV`, so staging can run different numbers than production. |
+
+A rule matching none of these applies globally. This is strictly a power
+feature, and the bot never depends on it: with the variable unset the
+OpenFeature client is never consulted, and when the service is down,
+slow (evaluations time out after two seconds), or has no rule for a flag,
+the registry value applies. A flag service that fails at boot logs a
+warning and keeps retrying in the background while the bot runs normally.
+
+Flag evaluations are also reported to
+[Sentry](/observability/telemetry/#sentry): error events carry the flags
+evaluated in that scope, recording whether a remote override diverged from
+the in-code default when the error happened.
+
 ## Resolving tiers
 
 With an interaction at hand, resolution is synchronous and needs no
