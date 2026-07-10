@@ -27,7 +27,7 @@ A running cluster is a single Node.js process with two roles inside it.
 the environment, sets up telemetry, and runs a discord.js `ShardingManager`
 in **worker mode**: every shard is a worker thread in this same process, not
 a child process. In autonomous mode the manager also runs the
-[sharding coordinator](/scaling/clustering/) that decides which shards this
+[sharding coordinator](/self-hosting/clustering/) that decides which shards this
 cluster owns.
 
 **Each shard worker** (`src/index.mts`) boots its own telemetry, then imports
@@ -38,7 +38,7 @@ The manager and workers share one environment, so configuration resolved once
 in the manager (the cluster id, the epoch) is passed to workers through
 `process.env`. Signals only reach the main thread, so the manager relays
 lifecycle commands (shutdown, handoff) to workers as messages. See
-[Running in production](/guides/running-in-production/) for the lifecycle in
+[Running in production](/self-hosting/running-in-production/) for the lifecycle in
 full.
 
 ## Where the bot's code lives
@@ -71,5 +71,5 @@ else in both process roles (`initOpenTelemetry` is the first real statement in
 Redis, and outbound HTTP from the first call. Commands and scheduled tasks run
 inside spans because their base classes wrap them, and every listener that
 records a metric pulls its meter from the same `@thesharks/analytics` package.
-The [Telemetry](/observability/telemetry/) page is the operator's view of the
+The [Telemetry](/self-hosting/telemetry/) page is the operator's view of the
 same system.

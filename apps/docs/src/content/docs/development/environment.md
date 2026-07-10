@@ -42,7 +42,7 @@ pnpm install
 ```
 
 Create `apps/discord/.env` with your `DISCORD_TOKEN` (see
-[Configuration](/guides/configuration/) for the rest).
+[Configuration](/self-hosting/configuration/) for the rest).
 
 ## Everyday commands
 
@@ -64,7 +64,7 @@ outside pieces (structures, sharding, the cluster manager) still need one.
 
 For telemetry during development, `SENTRY_SPOTLIGHT=true` streams events to
 a local [Spotlight](https://spotlightjs.com/) sidecar, and the
-[observability stack](/observability/dashboards/) under `contrib/grafana`
+[observability stack](/self-hosting/dashboards/) under `contrib/grafana`
 gives you the full Grafana/Prometheus/Tempo/Loki experience against your
 local bot.
 

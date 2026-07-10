@@ -136,7 +136,7 @@ Extend `TracedScheduledTask` from `structures/task.mjs` and set a schedule,
 either an `interval` in milliseconds or a `pattern` (cron). The base class wraps
 `run` in a `discord.task.<name>` span, and when the schedule is expressible as
 a Sentry monitor (a cron pattern, or a whole-minute interval) it also reports
-[cron check-ins](/observability/telemetry/#sentry), so a run that never
+[cron check-ins](/self-hosting/telemetry/#sentry), so a run that never
 happens alerts like one that throws.
 
 ```ts

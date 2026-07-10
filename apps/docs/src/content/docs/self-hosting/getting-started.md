@@ -29,7 +29,7 @@ pnpm install
 ## Running the bot
 
 Create `apps/discord/.env` with at least your bot token (see
-[Configuration](/guides/configuration/) for everything else):
+[Configuration](/self-hosting/configuration/) for everything else):
 
 ```bash
 DISCORD_TOKEN=your-bot-token
@@ -43,21 +43,21 @@ pnpm dev
 ```
 
 For a real deployment, see
-[Running in production](/guides/running-in-production/).
+[Running in production](/self-hosting/running-in-production/).
 
 ## Next steps
 
-- [Configuration](/guides/configuration/) covers every environment
+- [Configuration](/self-hosting/configuration/) covers every environment
   variable.
-- [Running in production](/guides/running-in-production/) explains the
+- [Running in production](/self-hosting/running-in-production/) explains the
   process model, shutdown behavior, and supervision.
-- [Redis](/guides/redis/) explains what the bot stores there and how to
+- [Redis](/self-hosting/redis/) explains what the bot stores there and how to
   operate it.
-- [Clustering](/scaling/clustering/) explains how to scale across multiple
+- [Clustering](/self-hosting/clustering/) explains how to scale across multiple
   processes and machines with autonomous shard rebalancing.
-- [Telemetry](/observability/telemetry/) shows how to wire up OpenTelemetry
+- [Telemetry](/self-hosting/telemetry/) shows how to wire up OpenTelemetry
   and Sentry.
-- [Troubleshooting](/guides/troubleshooting/) is the place to look when
+- [Troubleshooting](/self-hosting/troubleshooting/) is the place to look when
   something misbehaves.
 - [Development environment](/development/environment/) is the place to
   start for contributors.

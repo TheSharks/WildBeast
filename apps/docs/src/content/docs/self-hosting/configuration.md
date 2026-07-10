@@ -68,7 +68,7 @@ sessions).
 
 ## Sharding and clustering
 
-See [Clustering](/scaling/clustering/) for what these mean in practice.
+See [Clustering](/self-hosting/clustering/) for what these mean in practice.
 
 | Variable | Default | Description |
 | --- | --- | --- |
@@ -80,7 +80,7 @@ See [Clustering](/scaling/clustering/) for what these mean in practice.
 
 ## Telemetry
 
-See [Telemetry](/observability/telemetry/) for the full story.
+See [Telemetry](/self-hosting/telemetry/) for the full story.
 
 | Variable | Description |
 | --- | --- |

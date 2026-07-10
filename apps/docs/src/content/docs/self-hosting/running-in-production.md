@@ -2,7 +2,7 @@
 title: Running in production
 description: The process model, lifecycle, and how to supervise WildBeast.
 sidebar:
-  order: 3
+  order: 5
 ---
 
 A production cluster is one Node.js process:
@@ -14,7 +14,7 @@ NODE_ENV=production node apps/discord/dist/cluster.mjs
 
 `pnpm --filter @thesharks/discord start` runs the same entry point.
 Configuration comes from the environment or `apps/discord/.env`, see
-[Configuration](/guides/configuration/).
+[Configuration](/self-hosting/configuration/).
 
 The production image must be built with the monorepo root as its context so
 pnpm can resolve and compile the local workspace packages:
@@ -26,7 +26,7 @@ docker run --env-file apps/discord/.env wildbeast
 
 `NODE_ENV=production` sets the log level to info, disables hot module
 reload, and lowers trace sampling to production rates (see
-[Telemetry](/observability/telemetry/)). Anything else counts as
+[Telemetry](/self-hosting/telemetry/)). Anything else counts as
 development.
 
 ## Process model
@@ -76,14 +76,14 @@ policies) that restarts on non-zero exit. The manager exits `1` in two
 cases, and both want a restart:
 
 - It failed to start: invalid environment, unreachable Discord, or a
-  genuinely conflicting live [epoch proposal](/scaling/resharding/).
+  genuinely conflicting live [epoch proposal](/self-hosting/resharding/).
 - Its configuration went stale: the fleet migrated to a new epoch while
   this cluster was fenced off. It logs a fatal message and exits so it can
   come back with fresh state.
 
 You don't need to supervise individual shards. A crashed shard worker is
 respawned automatically (by the manager in static mode, by the
-[reconciler](/scaling/clustering/) in autonomous mode), and each respawn is
+[reconciler](/self-hosting/clustering/) in autonomous mode), and each respawn is
 counted in `discord_manager_shard_launches_total`.
 
 ## Knowing it's healthy
@@ -91,6 +91,6 @@ counted in `discord_manager_shard_launches_total`.
 `discord_manager_shard_up` is the readiness signal: one gauge per shard,
 `1` once the shard is ready. Alert when any shard reads 0, and in
 autonomous mode alert on `discord_cluster_fenced == 1`. The
-[metrics reference](/observability/metrics/) lists everything else, and the
-bundled [dashboards and alert rules](/observability/dashboards/) encode
+[metrics reference](/self-hosting/metrics/) lists everything else, and the
+bundled [dashboards and alert rules](/self-hosting/dashboards/) encode
 these starting points.

@@ -2,7 +2,7 @@
 title: Clustering
 description: Running WildBeast across multiple autonomous clusters.
 sidebar:
-  order: 1
+  order: 6
 ---
 
 WildBeast can run as a fleet of independent **clusters** (one process per
@@ -109,14 +109,14 @@ concurrently, but each lease stays held until its corresponding worker is dead.
 Finally, a fleet-wide guard protects the shard total. Guild-to-shard
 routing is `(guild_id >> 22) % total`, so all clusters must agree on
 `WILDBEAST_SHARDING_TOTAL`. A mismatched cluster refuses to serve; see
-[Changing the shard total](/scaling/resharding/) for how totals are
+[Changing the shard total](/self-hosting/resharding/) for how totals are
 migrated safely.
 
 ## Operating notes
 
 - All clusters must share the same Redis (`REDIS_*` variables).
 - Shard readiness, ownership, handoffs and fleet membership are all exported
-  as metrics, see the [metrics reference](/observability/metrics/). The
+  as metrics, see the [metrics reference](/self-hosting/metrics/). The
   `discord_manager_shard_up` gauge is the one to alert on.
 - Identify pacing means a cold fleet start takes roughly 5.5 seconds per
   shard per rate-limit bucket. Resumed handoffs skip this entirely.

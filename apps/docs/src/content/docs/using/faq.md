@@ -15,7 +15,7 @@ to your server at [invite.thesharks.xyz](https://invite.thesharks.xyz). It
 runs this same open-source codebase.
 
 Hosting your own instance gives you full control over configuration and
-scale; the [getting started guide](/guides/getting-started/) walks through
+scale; the [getting started guide](/self-hosting/getting-started/) walks through
 it.
 
 ## What's the difference between WildBeast and WildBot?

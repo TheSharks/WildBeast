@@ -5,6 +5,18 @@ import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   site: 'https://thesharks.github.io',
+  redirects: {
+    '/guides/getting-started/': '/self-hosting/getting-started/',
+    '/guides/configuration/': '/self-hosting/configuration/',
+    '/guides/redis/': '/self-hosting/redis/',
+    '/guides/running-in-production/': '/self-hosting/running-in-production/',
+    '/guides/troubleshooting/': '/self-hosting/troubleshooting/',
+    '/scaling/clustering/': '/self-hosting/clustering/',
+    '/scaling/resharding/': '/self-hosting/resharding/',
+    '/observability/telemetry/': '/self-hosting/telemetry/',
+    '/observability/metrics/': '/self-hosting/metrics/',
+    '/observability/dashboards/': '/self-hosting/dashboards/',
+  },
   vite: {
     resolve: {
       alias: {
@@ -45,10 +57,6 @@ export default defineConfig({
       },
       sidebar: [
         {
-          label: 'Guides',
-          items: [{ autogenerate: { directory: 'guides' } }],
-        },
-        {
           label: 'Using WildBeast',
           items: [{ autogenerate: { directory: 'using' } }],
         },
@@ -57,12 +65,8 @@ export default defineConfig({
           items: [{ autogenerate: { directory: 'tagscript' } }],
         },
         {
-          label: 'Scaling',
-          items: [{ autogenerate: { directory: 'scaling' } }],
-        },
-        {
-          label: 'Observability',
-          items: [{ autogenerate: { directory: 'observability' } }],
+          label: 'Self-hosting',
+          items: [{ autogenerate: { directory: 'self-hosting' } }],
         },
         {
           label: 'Development',

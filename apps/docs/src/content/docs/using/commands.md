@@ -150,7 +150,7 @@ on.
 - The bot must be invited with the `applications.commands` scope. Reinviting
   with the invite link from the [FAQ](/using/faq/) fixes a missing scope.
 - If you host WildBeast yourself and no commands appear, see
-  [troubleshooting](/guides/troubleshooting/#slash-commands-dont-appear).
+  [troubleshooting](/self-hosting/troubleshooting/#slash-commands-dont-appear).
 
 ## Next steps
 

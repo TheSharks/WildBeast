@@ -2,7 +2,7 @@
 title: Changing the shard total
 description: Migrating the fleet to a new shard count with a rolling deploy.
 sidebar:
-  order: 2
+  order: 7
 ---
 
 The shard total decides which guilds land on which shard

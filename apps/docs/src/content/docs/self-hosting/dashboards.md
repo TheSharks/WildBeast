@@ -2,7 +2,7 @@
 title: Grafana dashboards
 description: Premade dashboards for WildBeast's metrics, with a local stack to run them.
 sidebar:
-  order: 3
+  order: 10
 ---
 
 WildBeast ships three premade Grafana dashboards and 14 Prometheus alert
@@ -30,7 +30,7 @@ dashboards, no login needed.
 ## What each dashboard shows
 
 **Fleet & clustering** is the operator's view of
-[autonomous sharding](/scaling/clustering/): shards up against desired,
+[autonomous sharding](/self-hosting/clustering/): shards up against desired,
 handoffs split by graceful releases versus lost leases, identify pacing
 against Discord's rate limit, and how often shards resume sessions instead
 of paying for a fresh identify.
@@ -46,7 +46,7 @@ websocket latency and the BullMQ task queue.
 ## Alerting
 
 The alert rules encode the failure semantics of
-[autonomous sharding](/scaling/clustering/) and the runtime: a fenced
+[autonomous sharding](/self-hosting/clustering/) and the runtime: a fenced
 cluster, shards assigned but not connected, leases lost without a graceful
 release, crash-looping workers, command error rates above 5%, event loops
 blocked long enough to threaten heartbeats, and heap growth approaching the

@@ -11,7 +11,7 @@ so you can make an informed call about persistence and sizing.
 
 A single-cluster deployment uses Redis for three things: the scheduled task
 queue, identify rate limiting, and persisted gateway sessions. In
-[autonomous clustering](/scaling/clustering/), Redis additionally carries
+[autonomous clustering](/self-hosting/clustering/), Redis additionally carries
 all fleet coordination state. Every cluster in a fleet must point at the
 same Redis; use `REDIS_DB` to give separate fleets separate database
 indexes on a shared server.
@@ -23,7 +23,7 @@ indexes on a shared server.
 | Scheduled task queue | BullMQ's own `bull:*` keys | Recreated on boot |
 | Identify rate limiting | `wildbeast:identify:<bucket>` | Seconds (pacing keys) |
 | Gateway sessions | `wildbeast:shard:<id>:session` | 15 minutes since last write |
-| Active epoch | `wildbeast:epoch` | Until the next [migration](/scaling/resharding/) |
+| Active epoch | `wildbeast:epoch` | Until the next [migration](/self-hosting/resharding/) |
 | Pending epoch proposal | `wildbeast:epoch:pending` | 45 seconds without refresh from a parked cluster |
 | Fleet membership | `wildbeast:e<N>:clusters` | 15 seconds without a heartbeat |
 | Shard total agreement | `wildbeast:e<N>:total_shards` | Life of the epoch |
@@ -65,7 +65,7 @@ it is connection churn, not data loss:
   resume their schedules. A one-shot job enqueued but not yet run is lost.
 - The **epoch pointer** is re-initialized by the next cluster to resolve
   it. Don't flush Redis in the middle of a
-  [shard total migration](/scaling/resharding/); the pending proposal
+  [shard total migration](/self-hosting/resharding/); the pending proposal
   would be lost.
 
 We recommend enabling Redis persistence (AOF with `everysec` is plenty) in
@@ -81,9 +81,9 @@ sit on the hot path of shard lifecycle operations.
 
 ## Next steps
 
-- [Configuration](/guides/configuration/#redis) lists the `REDIS_*`
+- [Configuration](/self-hosting/configuration/#redis) lists the `REDIS_*`
   variables.
-- [Clustering](/scaling/clustering/) explains the coordination model these
+- [Clustering](/self-hosting/clustering/) explains the coordination model these
   keys implement.
-- [Troubleshooting](/guides/troubleshooting/) covers the errors you see
+- [Troubleshooting](/self-hosting/troubleshooting/) covers the errors you see
   when Redis is unreachable or misconfigured.

@@ -2,7 +2,7 @@
 title: Telemetry
 description: OpenTelemetry and Sentry instrumentation in WildBeast.
 sidebar:
-  order: 1
+  order: 8
 ---
 
 WildBeast is instrumented end to end with OpenTelemetry (traces, metrics,
@@ -83,7 +83,7 @@ platform:
   leaves (with the guild's size and shard attached) and the wait imposed by
   each REST rate limit. Sentry metrics are per-item and stamped with the
   active trace, with no client-side aggregation, so they carry the rare,
-  inspectable events; the aggregated [OTLP metrics](/observability/metrics/)
+  inspectable events; the aggregated [OTLP metrics](/self-hosting/metrics/)
   keep the high-volume series, and nothing is reported to both. Set
   `enableMetrics: false` in the telemetry config to turn them off.
 
@@ -109,7 +109,7 @@ heap spaces); each can be disabled with
 Logs are written to the console and mirrored as OTLP log records and Sentry
 logs, with the configured log level applied to all three. Metrics cover the
 full lifecycle of the bot; see the
-[metrics reference](/observability/metrics/).
+[metrics reference](/self-hosting/metrics/).
 
 ## Troubleshooting
 

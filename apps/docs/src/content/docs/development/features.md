@@ -155,7 +155,7 @@ conversions should be separate events at their actual conversion point.
 
 Every evaluation reports its key, kind, source, duration, and boolean state to
 OpenTelemetry. Experiment exposures and outcomes are separate counters; see the
-[metrics reference](/observability/metrics/#runtime-flags-and-experiments).
+[metrics reference](/self-hosting/metrics/#runtime-flags-and-experiments).
 Sentry error events also carry the flags evaluated in their isolated command
 scope.
 

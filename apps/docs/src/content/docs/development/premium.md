@@ -39,7 +39,7 @@ through to an accidental default.
 ## Configuration
 
 One environment variable turns premium on:
-[`WILDBEAST_PREMIUM_SKUS`](/guides/configuration/#premium) maps SKU ids
+[`WILDBEAST_PREMIUM_SKUS`](/self-hosting/configuration/#premium) maps SKU ids
 from the developer portal's monetization tab to tiers, as comma-separated
 `skuId:tier` or `skuId:tier:scope` entries:
 
@@ -54,7 +54,7 @@ offer the SKU that matches the gate (see
 [Gating commands](#gating-commands)). Unset means premium is off:
 everything runs at the free tier and gated commands deny without a
 purchase button. Malformed values fail
-[validation](/guides/configuration/#validation-behavior) at boot.
+[validation](/self-hosting/configuration/#validation-behavior) at boot.
 
 ## The limit registry
 
@@ -183,7 +183,7 @@ your own account or guild. They arrive with no expiry (`startsAt` and
 
 ## Next steps
 
-- [Configuration](/guides/configuration/#premium) lists the environment
+- [Configuration](/self-hosting/configuration/#premium) lists the environment
   variable.
 - [Database](/development/database/) covers the schema and migrations
   behind the mirror.
