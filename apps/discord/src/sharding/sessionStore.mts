@@ -37,11 +37,15 @@ export interface SessionStoreOptions {
  */
 export class RedisSessionStore {
   private readonly cache = new Map<number, SessionInfo | null>()
-  private readonly dirty = new Set<number>()
+  /** Revision per dirty shard. A write only clears the revision it observed,
+   * so an update racing an in-flight Redis command remains dirty. */
+  private readonly dirty = new Map<number, number>()
   private readonly prefix: string
   private readonly flushIntervalMillis: number
   private readonly sessionTtlMillis: number
   private readonly onError: (error: unknown) => void
+  private revision = 0
+  private flushWork?: Promise<void>
   private timer?: NodeJS.Timeout
 
   public constructor(
@@ -89,7 +93,12 @@ export class RedisSessionStore {
 
   public update(shardId: number, session: SessionInfo | null): void {
     this.cache.set(shardId, session)
-    this.dirty.add(shardId)
+    this.dirty.set(shardId, ++this.revision)
+
+    // Null updates also need a retry path: their eager delete can fail, and
+    // leaving the old Redis value until its 15-minute TTL would hand a future
+    // owner a session Discord has already invalidated.
+    this.ensureFlushTimer()
 
     if (session === null) {
       // Invalidations shouldn't linger in the debounce window; a stale
@@ -97,7 +106,9 @@ export class RedisSessionStore {
       void this.flush().catch(this.onError)
       return
     }
+  }
 
+  private ensureFlushTimer(): void {
     if (!this.timer) {
       this.timer = setInterval(() => {
         void this.flush().catch(this.onError)
@@ -108,22 +119,48 @@ export class RedisSessionStore {
   }
 
   public async flush(): Promise<void> {
-    const pending = [...this.dirty]
-    this.dirty.clear()
-
-    for (const shardId of pending) {
-      const session = this.cache.get(shardId)
-      if (session == null) {
-        await this.redis.del(this.key(shardId))
-      } else {
-        await this.redis.set(
-          this.key(shardId),
-          JSON.stringify(session),
-          'PX',
-          this.sessionTtlMillis,
-        )
+    // Concurrent callers join the active pass, then re-check dirty state:
+    // an update can land after that pass took its snapshot but before it
+    // resolves, and the caller that observed the update must not return early.
+    while (this.dirty.size > 0) {
+      const work = this.flushWork ?? this.flushPass()
+      this.flushWork = work
+      try {
+        await work
+      } finally {
+        if (this.flushWork === work) this.flushWork = undefined
       }
     }
+  }
+
+  private async flushPass(): Promise<void> {
+    const pending = [...this.dirty]
+    let firstError: unknown
+
+    for (const [shardId, revision] of pending) {
+      const session = this.cache.get(shardId)
+      try {
+        if (session == null) {
+          await this.redis.del(this.key(shardId))
+        } else {
+          await this.redis.set(
+            this.key(shardId),
+            JSON.stringify(session),
+            'PX',
+            this.sessionTtlMillis,
+          )
+        }
+        if (this.dirty.get(shardId) === revision) {
+          this.dirty.delete(shardId)
+        }
+      } catch (error) {
+        // Leave the observed revision dirty. Continue with other shards so
+        // one unavailable key does not discard or starve unrelated sessions.
+        firstError ??= error
+      }
+    }
+
+    if (firstError !== undefined) throw firstError
   }
 
   public async close(): Promise<void> {

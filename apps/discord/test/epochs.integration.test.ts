@@ -71,6 +71,27 @@ describe.skipIf(!redisUrl)('EpochCoordinator (integration)', () => {
     )
   })
 
+  it('recovers from an abandoned conflicting proposal after its TTL', async () => {
+    await new EpochCoordinator(redis, { totalShards: 8 }).resolve()
+    await new EpochCoordinator(connect(), {
+      totalShards: 16,
+      pendingTtlMillis: 150,
+    }).resolve()
+
+    const corrected = new EpochCoordinator(connect(), {
+      totalShards: 32,
+      pendingTtlMillis: 150,
+    })
+    await expect(corrected.resolve()).rejects.toThrow(
+      /Conflicting shard total migrations/,
+    )
+    await new Promise((resolveSleep) => setTimeout(resolveSleep, 200))
+    await expect(corrected.resolve()).resolves.toMatchObject({
+      state: { totalShards: 32 },
+      role: 'pending',
+    })
+  })
+
   it('refuses promotion while the active epoch has live members', async () => {
     const epochs = new EpochCoordinator(redis, {
       totalShards: 8,

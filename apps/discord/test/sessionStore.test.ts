@@ -1,3 +1,4 @@
+import { waitUntil } from '@thesharks/test-utils'
 import type { SessionInfo } from 'discord.js'
 import { describe, expect, it } from 'vitest'
 import {
@@ -28,6 +29,60 @@ class FakeKV implements SessionKV {
   public async del(key: string): Promise<unknown> {
     this.data.delete(key)
     return 1
+  }
+}
+
+class FailingKV extends FakeKV {
+  public failedSets = 0
+  public failedDeletes = 0
+
+  public override async set(
+    key: string,
+    value: string,
+    px: 'PX',
+    milliseconds: number,
+  ): Promise<unknown> {
+    if (this.failedSets > 0) {
+      this.failedSets -= 1
+      throw new Error('set unavailable')
+    }
+    return super.set(key, value, px, milliseconds)
+  }
+
+  public override async del(key: string): Promise<unknown> {
+    if (this.failedDeletes > 0) {
+      this.failedDeletes -= 1
+      throw new Error('delete unavailable')
+    }
+    return super.del(key)
+  }
+}
+
+function deferred() {
+  let resolve!: () => void
+  const promise = new Promise<void>((resolvePromise) => {
+    resolve = resolvePromise
+  })
+  return { promise, resolve }
+}
+
+class BlockingKV extends FakeKV {
+  public readonly writeStarted = deferred()
+  public readonly releaseWrite = deferred()
+  private blockNextWrite = true
+
+  public override async set(
+    key: string,
+    value: string,
+    px: 'PX',
+    milliseconds: number,
+  ): Promise<unknown> {
+    if (this.blockNextWrite) {
+      this.blockNextWrite = false
+      this.writeStarted.resolve()
+      await this.releaseWrite.promise
+    }
+    return super.set(key, value, px, milliseconds)
   }
 }
 
@@ -80,6 +135,43 @@ describe('RedisSessionStore', () => {
     await store.close()
   })
 
+  it('keeps failed and not-yet-written entries dirty for retry', async () => {
+    const kv = new FailingKV()
+    const store = new RedisSessionStore(kv, { flushIntervalMillis: 60_000 })
+    store.update(0, session(10))
+    store.update(1, { ...session(20), shardId: 1 })
+    kv.failedSets = 1
+
+    await expect(store.flush()).rejects.toThrow('set unavailable')
+    // The pass continues after shard 0 fails, so unrelated shard 1 lands.
+    expect(
+      JSON.parse((await kv.get('wildbeast:shard:1:session'))!),
+    ).toMatchObject({ sequence: 20 })
+
+    await store.flush()
+    expect(
+      JSON.parse((await kv.get('wildbeast:shard:0:session'))!),
+    ).toMatchObject({ sequence: 10 })
+    await store.close()
+  })
+
+  it('does not clear an update made during an in-flight write', async () => {
+    const kv = new BlockingKV()
+    const store = new RedisSessionStore(kv, { flushIntervalMillis: 60_000 })
+    store.update(0, session(1))
+
+    const flushing = store.flush()
+    await kv.writeStarted.promise
+    store.update(0, session(2))
+    kv.releaseWrite.resolve()
+    await flushing
+
+    const persisted = JSON.parse((await kv.get('wildbeast:shard:0:session'))!)
+    expect(persisted).toMatchObject({ sequence: 2 })
+    expect(kv.writes).toBe(2)
+    await store.close()
+  })
+
   it('deletes invalidated sessions immediately', async () => {
     const kv = new FakeKV()
     const store = new RedisSessionStore(kv, { flushIntervalMillis: 60_000 })
@@ -93,6 +185,28 @@ describe('RedisSessionStore', () => {
     await new Promise((resolveSleep) => setTimeout(resolveSleep, 20))
     expect(kv.data.size).toBe(0)
     expect(await store.retrieve(0)).toBeNull()
+    await store.close()
+  })
+
+  it('retries an eager invalidation after its immediate delete fails', async () => {
+    const kv = new FailingKV()
+    const errors: unknown[] = []
+    const store = new RedisSessionStore(kv, {
+      flushIntervalMillis: 20,
+      onError: (error) => errors.push(error),
+    })
+    store.update(0, session(1))
+    await store.flush()
+    kv.failedDeletes = 1
+
+    store.update(0, null)
+    await waitUntil(() => errors.length === 1)
+    await waitUntil(() => !kv.data.has('wildbeast:shard:0:session'), {
+      timeoutMillis: 1_000,
+      intervalMillis: 10,
+    })
+
+    expect(errors[0]).toMatchObject({ message: 'delete unavailable' })
     await store.close()
   })
 

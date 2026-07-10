@@ -1,6 +1,15 @@
 import type { EvaluationContext } from '@openfeature/server-sdk'
 import type { BaseInteraction } from 'discord.js'
 
+// Worker threads share process.env, so a per-shard value must stay in the
+// worker's module isolate rather than being written to SHARD_ID. index.mts
+// resolves discord.js's process/worker-data variants once and sets it here.
+let taskShardId: string | undefined
+
+export function setTaskFlagShardId(shardId: string | undefined): void {
+  taskShardId = shardId
+}
+
 export interface InteractionFlagContextOptions {
   command?: string
   subcommand?: string
@@ -43,7 +52,7 @@ export function taskFlagContext(task: string): EvaluationContext {
     ...(process.env.WILDBEAST_CLUSTER_ID
       ? { clusterId: process.env.WILDBEAST_CLUSTER_ID }
       : {}),
-    ...(process.env.SHARD_ID ? { shardId: process.env.SHARD_ID } : {}),
+    ...(taskShardId ? { shardId: taskShardId } : {}),
     environment: process.env.NODE_ENV ?? 'development',
   }
 }

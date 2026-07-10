@@ -2,6 +2,8 @@ import { parentPort, workerData } from 'node:worker_threads'
 import type { SapphireClient } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
 import { initOpenTelemetry } from '@thesharks/analytics'
+import { setTaskFlagShardId } from './features/context.mjs'
+import { WORKER_TELEMETRY_SHUTDOWN_TIMEOUT_MILLIS } from './sharding/lifecycle.mjs'
 
 // discord.js exposes the shard id as SHARDS: via env in process mode, via
 // workerData in worker mode (where all shards share one pid, so falling back
@@ -10,6 +12,11 @@ const shardId =
   process.env.SHARD_ID ??
   process.env.SHARDS ??
   (workerData?.SHARDS !== undefined ? String(workerData.SHARDS) : undefined)
+
+// SHARE_ENV makes process.env common to every worker in this cluster. Keep
+// the resolved id in this worker's module isolate so scheduled-task OFREP
+// targeting cannot be contaminated by another shard.
+setTaskFlagShardId(shardId)
 
 const environment = process.env.NODE_ENV ?? 'development'
 const baseTracesSampleRate = environment === 'production' ? 0.2 : 1.0
@@ -22,6 +29,7 @@ const telemetry = initOpenTelemetry({
   serviceName: '@thesharks/discord',
   namespace: '@thesharks',
   shardId,
+  shutdownTimeoutMillis: WORKER_TELEMETRY_SHUTDOWN_TIMEOUT_MILLIS,
   resourceAttributes: clusterId ? { 'cluster.id': clusterId } : undefined,
   sentry: {
     // Make Sentry error events filterable by shard and cluster, matching

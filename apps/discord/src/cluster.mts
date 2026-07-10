@@ -20,6 +20,7 @@ import {
   type EpochState,
   epochKeyPrefix,
 } from './sharding/epochs.mjs'
+import { SHARD_STOP_GRACE_MILLIS } from './sharding/lifecycle.mjs'
 import { type ShardHost, ShardReconciler } from './sharding/reconciler.mjs'
 import { redisConnectionOptions } from './utils/redis.mjs'
 
@@ -172,7 +173,6 @@ const SHUTDOWN_MESSAGE = { _wildbeast: 'shutdown' }
 // Handoff exits skip the gateway close so the session stays resumable and
 // the next owner can RESUME instead of identifying.
 const HANDOFF_MESSAGE = { _wildbeast: 'handoff' }
-const SHARD_STOP_GRACE_MILLIS = 10_000
 
 function shardIsAlive(shard: Shard): boolean {
   return Boolean(shard.process ?? shard.worker)
@@ -375,7 +375,7 @@ async function shutdown(code = 0) {
       shard.send(SHUTDOWN_MESSAGE).catch(() => undefined)
     }
 
-    const graceful = await waitWithTimeout(deaths, 15_000)
+    const graceful = await waitWithTimeout(deaths, SHARD_STOP_GRACE_MILLIS)
     if (!graceful) {
       logger.warn('Shards did not exit in time; terminating them')
       for (const shard of manager.shards.values()) {

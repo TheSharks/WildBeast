@@ -2,7 +2,6 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import type { ILogger } from '@sapphire/framework'
 import { createGauge, metrics } from '@thesharks/analytics'
 import { shardsFor } from './assignment.mjs'
-import type { ClusterCoordinator } from './coordination.mjs'
 
 /**
  * The subset of shard lifecycle operations the reconciler needs; cluster.mts
@@ -16,17 +15,32 @@ export interface ShardHost {
   stop(shardId: number): Promise<void>
 }
 
+/** Redis coordination surface used here. Keeping the lifecycle algorithm
+ * behind this interface makes timing and lease-loss invariants testable
+ * without shortening production Redis TTLs. */
+export interface ReconcilerCoordinator {
+  ensureTotalShardsAgreement(): Promise<void>
+  heartbeat(): Promise<void>
+  liveMembers(): Promise<string[]>
+  withdraw(): Promise<void>
+  acquireLease(shardId: number): Promise<boolean>
+  renewLease(shardId: number): Promise<boolean>
+  releaseLease(shardId: number): Promise<void>
+  leaseHolder(shardId: number): Promise<string | null>
+}
+
 export interface ReconcilerOptions {
   clusterId: string
   totalShards: number
-  /** Reconcile interval. Default 5s. */
+  /** Liveness and assignment interval. Default 5s. */
   tickMillis?: number
   /** How long membership must be stable before shards move. Default 10s. */
   settleMillis?: number
   /**
    * Stop serving shards when coordination has been unreachable this long.
-   * Must be shorter than the lease TTL, so we stop before another cluster
-   * can acquire our expired leases. Default 20s.
+   * Together with the worker-stop grace this must fit inside the lease TTL,
+   * so we stop before another cluster can acquire our expired leases.
+   * Default 5s: 5s fencing + 20s stop grace < the 30s lease TTL.
    */
   fenceAfterMillis?: number
 }
@@ -47,22 +61,30 @@ export class ShardReconciler {
   private readonly fencedGauge
 
   private running = false
-  private loop?: Promise<void>
+  private livenessLoop?: Promise<void>
+  private loopAbort?: AbortController
+  private reconcileWork?: Promise<void>
+  private reconcileRequested = false
   private lastCoordinationSuccess = Date.now()
   private lastMembers: string[] = []
   private membersStableSince = 0
   private desired = new Set<number>()
+  /** Leases acquired by this reconciler, including shards still spawning. */
+  private readonly heldLeases = new Set<number>()
+  /** A lost lease fences only that shard until its local session is dead. */
+  private readonly lostLeaseShards = new Set<number>()
+  private readonly standDowns = new Map<number, Promise<void>>()
   private fenced = false
 
   public constructor(
-    private readonly coordinator: ClusterCoordinator,
+    private readonly coordinator: ReconcilerCoordinator,
     private readonly host: ShardHost,
     private readonly options: ReconcilerOptions,
     private readonly logger: ILogger,
   ) {
     this.tickMillis = options.tickMillis ?? 5_000
     this.settleMillis = options.settleMillis ?? 10_000
-    this.fenceAfterMillis = options.fenceAfterMillis ?? 20_000
+    this.fenceAfterMillis = options.fenceAfterMillis ?? 5_000
 
     const meter = metrics.getMeter('@thesharks/discord-manager')
     this.handoffCounter = meter.createCounter(
@@ -100,27 +122,43 @@ export class ShardReconciler {
     this.running = true
     this.lastCoordinationSuccess = Date.now()
     this.fencedGauge.set(0, {})
-    this.loop = this.run()
+    this.loopAbort = new AbortController()
+    this.livenessLoop = this.runLiveness(this.loopAbort.signal)
   }
 
-  private async run(): Promise<void> {
-    while (this.running) {
+  /**
+   * Heartbeats and renewals must never wait behind shard lifecycle work.
+   * A handoff can spend ten seconds draining and a cold spawn can wait much
+   * longer in the fleet-wide identify queue; either is longer than the
+   * membership cadence and must not consume a lease's renewal budget.
+   */
+  private async runLiveness(signal: AbortSignal): Promise<void> {
+    while (this.running && !signal.aborted) {
       try {
-        await this.tick()
+        await this.livenessTick()
       } catch (error) {
-        // tick() handles coordination errors itself; anything reaching here
-        // is a bug, and the loop must survive it.
-        this.logger.error('Reconciler tick failed unexpectedly:', error)
+        // livenessTick handles coordination errors itself; anything reaching
+        // here is a bug, and the loop must survive it.
+        this.logger.error(
+          'Reconciler liveness tick failed unexpectedly:',
+          error,
+        )
       }
-      await sleep(this.tickMillis)
+
+      try {
+        await sleep(this.tickMillis, undefined, { signal })
+      } catch {
+        break
+      }
     }
   }
 
-  private async tick(): Promise<void> {
+  private async livenessTick(): Promise<void> {
     let members: string[]
     try {
       await this.coordinator.heartbeat()
       members = await this.coordinator.liveMembers()
+      await this.renewHeldLeases()
       this.lastCoordinationSuccess = Date.now()
     } catch (error) {
       this.coordinationErrorCounter.add(1)
@@ -136,81 +174,219 @@ export class ShardReconciler {
     }
 
     this.memberGauge.set(members.length, {})
+    this.updateAssignment(members)
+    this.desiredShardGauge.set(this.desired.size, {})
+    this.requestReconcile()
+  }
 
+  private async renewHeldLeases(): Promise<void> {
+    const results = await Promise.allSettled(
+      [...this.heldLeases].map(async (shardId) => {
+        if (this.lostLeaseShards.has(shardId)) return
+
+        const renewed = await this.coordinator.renewLease(shardId)
+        if (renewed || (await this.coordinator.acquireLease(shardId))) return
+
+        this.markLeaseLost(shardId)
+      }),
+    )
+    const failed = results.find(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    )
+    if (failed) throw failed.reason
+  }
+
+  private updateAssignment(members: string[]): void {
     // Only move shards once membership has been stable for the settle
     // window, so a rolling deploy or flapping cluster doesn't cause churn.
-    // Renewal and crash recovery for currently desired shards continue
-    // regardless.
+    // Renewal continues independently while lifecycle work catches up.
     if (!sameMembers(members, this.lastMembers)) {
       this.logger.info(
         `Cluster membership changed: [${members.join(', ')}] (settling)`,
       )
       this.lastMembers = members
       this.membersStableSince = Date.now()
-    } else if (
-      Date.now() - this.membersStableSince >= this.settleMillis &&
-      members.length > 0
+      return
+    }
+    if (
+      Date.now() - this.membersStableSince < this.settleMillis ||
+      members.length === 0
     ) {
-      const next = new Set(
-        shardsFor(this.options.clusterId, members, this.options.totalShards),
-      )
-      if (!sameShardSet(next, this.desired)) {
-        this.logger.info(
-          `Assignment changed: now responsible for [${[...next].join(', ')}]`,
-        )
-      }
-      this.desired = next
+      return
     }
 
-    this.desiredShardGauge.set(this.desired.size, {})
-    await this.reconcile()
+    const next = new Set(
+      shardsFor(this.options.clusterId, members, this.options.totalShards),
+    )
+    if (!sameShardSet(next, this.desired)) {
+      this.logger.info(
+        `Assignment changed: now responsible for [${[...next].join(', ')}]`,
+      )
+    }
+    this.desired = next
+  }
+
+  /** Coalesce assignment changes behind one lifecycle worker. Slow work may
+   * delay another rebalance, but can never delay the independent liveness
+   * loop or overlap another reconcile pass. */
+  private requestReconcile(): void {
+    if (!this.running || this.fenced) return
+    this.reconcileRequested = true
+    if (this.reconcileWork) return
+
+    const work = this.drainReconciles()
+    this.reconcileWork = work
+    void work.finally(() => {
+      if (this.reconcileWork === work) this.reconcileWork = undefined
+      if (this.reconcileRequested) this.requestReconcile()
+    })
+  }
+
+  private async drainReconciles(): Promise<void> {
+    while (this.running && !this.fenced && this.reconcileRequested) {
+      this.reconcileRequested = false
+      try {
+        await this.reconcile()
+      } catch (error) {
+        this.logger.error('Shard reconciliation failed:', error)
+      }
+    }
   }
 
   private async reconcile(): Promise<void> {
     const current = new Set(this.host.currentShards())
+    const releasing = new Set(
+      [...current, ...this.heldLeases].filter(
+        (shardId) => !this.desired.has(shardId),
+      ),
+    )
 
-    // Release what we no longer own — before anything else, so the new
-    // owner's lease acquisition can succeed.
-    for (const shardId of current) {
-      if (this.desired.has(shardId)) continue
-      this.logger.info(`Handing off shard ${shardId}`)
-      await this.host.stop(shardId)
-      await this.coordinator.releaseLease(shardId)
-      this.handoffCounter.add(1, { direction: 'released' })
-    }
+    // Draining shards is independent per worker. Do it concurrently so a
+    // large rebalance/shutdown consumes one grace window, not one per shard;
+    // retain each lease until that shard is actually dead.
+    await Promise.allSettled(
+      [...releasing].map((shardId) => this.releaseShard(shardId)),
+    )
+    if (!this.running || this.fenced) return
 
+    // Starts stay serial here. The Redis identify throttler is the authority
+    // that paces them fleet-wide; liveness continues in parallel no matter
+    // how long one spawn waits in that queue.
     for (const shardId of this.desired) {
-      if (current.has(shardId)) {
-        // Keep the lease alive; losing it means another cluster owns the
-        // shard now (e.g. we were fenced) and we must stand down.
-        const held = await this.coordinator.renewLease(shardId)
-        if (!held && !(await this.coordinator.acquireLease(shardId))) {
-          this.logger.warn(
-            `Lost the lease for shard ${shardId}; stopping our copy`,
-          )
-          await this.host.stop(shardId)
-          this.handoffCounter.add(1, { direction: 'lost' })
-          continue
-        }
-        // Crash recovery: the reconciler is the only respawn authority.
-        if (!this.host.isAlive(shardId)) {
-          this.logger.warn(`Shard ${shardId} is down; restarting it`)
-          await this.host.start(shardId)
-        }
-        continue
-      }
+      if (!this.running || this.fenced) return
+      await this.ensureDesiredShard(shardId)
+    }
+  }
 
-      if (await this.coordinator.acquireLease(shardId)) {
-        this.logger.info(`Acquired shard ${shardId}`)
-        await this.host.start(shardId)
-        this.handoffCounter.add(1, { direction: 'acquired' })
-      } else {
-        const holder = await this.coordinator.leaseHolder(shardId)
-        this.logger.debug(
-          `Waiting for shard ${shardId} lease (held by ${holder ?? 'nobody'})`,
-        )
+  private async releaseShard(shardId: number): Promise<void> {
+    try {
+      if (this.host.currentShards().includes(shardId)) {
+        this.logger.info(`Handing off shard ${shardId}`)
+        await this.host.stop(shardId)
+      }
+    } catch (error) {
+      // Keeping the lease is the safe failure mode: nobody else may start a
+      // shard whose local session we failed to stop. A later pass retries.
+      this.logger.error(`Failed to stop shard ${shardId} for handoff:`, error)
+      this.reconcileRequested = true
+      return
+    }
+
+    if (this.heldLeases.has(shardId)) {
+      // The worker is dead now, so stop the liveness loop from racing this
+      // DEL with a renew-miss/reacquire sequence. If DEL fails, expiry is a
+      // safe (if slower) handoff because no local session remains.
+      this.heldLeases.delete(shardId)
+      try {
+        await this.coordinator.releaseLease(shardId)
+      } catch (error) {
+        this.logger.warn(`Failed to release shard ${shardId} lease:`, error)
+        return
       }
     }
+    this.lostLeaseShards.delete(shardId)
+    this.handoffCounter.add(1, { direction: 'released' })
+  }
+
+  private async ensureDesiredShard(shardId: number): Promise<void> {
+    if (this.lostLeaseShards.has(shardId)) {
+      this.scheduleStandDown(shardId)
+      return
+    }
+
+    const alreadyRunning = this.host.currentShards().includes(shardId)
+    let acquired = false
+    if (!this.heldLeases.has(shardId)) {
+      if (!(await this.coordinator.acquireLease(shardId))) {
+        if (alreadyRunning) {
+          this.markLeaseLost(shardId)
+        } else {
+          const holder = await this.coordinator.leaseHolder(shardId)
+          this.logger.debug(
+            `Waiting for shard ${shardId} lease (held by ${holder ?? 'nobody'})`,
+          )
+        }
+        return
+      }
+      this.heldLeases.add(shardId)
+      acquired = true
+      this.logger.info(`Acquired shard ${shardId}`)
+    }
+
+    if (!this.host.isAlive(shardId)) {
+      this.logger.warn(
+        alreadyRunning
+          ? `Shard ${shardId} is down; restarting it`
+          : `Starting shard ${shardId}`,
+      )
+      await this.host.start(shardId)
+    }
+
+    // Assignment or lease state may change while an unbounded spawn waits.
+    // Never leave the resulting session serving after its authority vanished.
+    if (
+      !this.running ||
+      this.fenced ||
+      !this.desired.has(shardId) ||
+      !this.heldLeases.has(shardId) ||
+      this.lostLeaseShards.has(shardId)
+    ) {
+      await this.host.stop(shardId)
+      return
+    }
+
+    if (acquired) {
+      this.handoffCounter.add(1, { direction: 'acquired' })
+    }
+  }
+
+  private markLeaseLost(shardId: number): void {
+    if (this.lostLeaseShards.has(shardId)) return
+    this.heldLeases.delete(shardId)
+    this.lostLeaseShards.add(shardId)
+    this.logger.warn(`Lost the lease for shard ${shardId}; stopping our copy`)
+    this.scheduleStandDown(shardId)
+  }
+
+  private scheduleStandDown(shardId: number): void {
+    if (this.standDowns.has(shardId)) return
+
+    const work = (async () => {
+      try {
+        await this.host.stop(shardId)
+        this.handoffCounter.add(1, { direction: 'lost' })
+      } catch (error) {
+        this.logger.error(`Failed to stop lease-lost shard ${shardId}:`, error)
+      }
+    })()
+    this.standDowns.set(shardId, work)
+    void work.finally(() => {
+      this.standDowns.delete(shardId)
+      if (!this.host.currentShards().includes(shardId)) {
+        this.lostLeaseShards.delete(shardId)
+      }
+      if (this.running) this.requestReconcile()
+    })
   }
 
   /**
@@ -229,31 +405,57 @@ export class ShardReconciler {
     this.logger.error(
       'Coordination unreachable beyond the fencing deadline; stopping all shards',
     )
-    for (const shardId of this.host.currentShards()) {
-      await this.host.stop(shardId)
+    const shards = this.host.currentShards()
+    this.heldLeases.clear()
+    for (const shardId of shards) this.lostLeaseShards.add(shardId)
+    await Promise.allSettled(shards.map((shardId) => this.host.stop(shardId)))
+    for (const shardId of shards) {
+      if (!this.host.currentShards().includes(shardId)) {
+        this.lostLeaseShards.delete(shardId)
+      }
     }
   }
 
   /**
-   * Stop reconciling without releasing anything; leases and the membership
+   * Stop liveness without releasing anything; leases and the membership
    * entry expire on their own, exactly as if the process had crashed.
+   * In-flight lifecycle work observes `running = false` before leaving a
+   * newly-started shard serving.
    */
   public async halt(): Promise<void> {
     this.running = false
-    await this.loop?.catch(() => undefined)
+    this.reconcileRequested = false
+    this.loopAbort?.abort()
+    await this.livenessLoop?.catch(() => undefined)
   }
 
   public async shutdown(): Promise<void> {
     await this.halt()
 
-    for (const shardId of this.host.currentShards()) {
-      await this.host.stop(shardId)
-      try {
-        await this.coordinator.releaseLease(shardId)
-      } catch {
-        // lease will expire on its own
-      }
-    }
+    const shardIds = new Set([
+      ...this.host.currentShards(),
+      ...this.heldLeases,
+      ...this.standDowns.keys(),
+    ])
+    await Promise.allSettled(
+      [...shardIds].map(async (shardId) => {
+        const standDown = this.standDowns.get(shardId)
+        if (standDown) {
+          await standDown
+        } else if (this.host.currentShards().includes(shardId)) {
+          await this.host.stop(shardId)
+        }
+
+        if (this.heldLeases.has(shardId)) {
+          try {
+            await this.coordinator.releaseLease(shardId)
+            this.heldLeases.delete(shardId)
+          } catch {
+            // lease will expire on its own
+          }
+        }
+      }),
+    )
     try {
       await this.coordinator.withdraw()
     } catch {
