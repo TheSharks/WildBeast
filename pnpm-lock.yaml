@@ -33,6 +33,12 @@ importers:
       '@discordjs/builders':
         specifier: ^1.14.1
         version: 1.14.1
+      '@openfeature/ofrep-provider':
+        specifier: ^0.2.5
+        version: 0.2.5(@openfeature/core@1.11.0)(@openfeature/server-sdk@1.22.0(@openfeature/core@1.11.0))
+      '@openfeature/server-sdk':
+        specifier: ^1.22.0
+        version: 1.22.0(@openfeature/core@1.11.0)
       '@sapphire/decorators':
         specifier: ^6.2.0
         version: 6.2.0
@@ -1463,6 +1469,25 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
+
+  '@openfeature/core@1.11.0':
+    resolution: {integrity: sha512-P0u3/ht/oZCQT89fOed+laLk0kZR529a825cS02uPDglxXbE97irWYpDAeRGGVETIzKfuy+H2g8c3Ccv/tXJNQ==}
+
+  '@openfeature/ofrep-core@2.2.0':
+    resolution: {integrity: sha512-YbeT8mYS4Ggo/JFcYY1IzN0O0UvsCx7RPk1m40TFc4ip0gJdFVpYc5a8WDwZC2v/YqxreJ7NWBDxHxP5SOevsA==}
+    peerDependencies:
+      '@openfeature/core': ^1.6.0
+
+  '@openfeature/ofrep-provider@0.2.5':
+    resolution: {integrity: sha512-UMQiTdJYJdBMPWs+AvIhEdIgutCTbk0sMlcrlQeH99Ieacka0GKG0oeGtDB0hHPVGaNGHSGLfGYXSfBoXRXSQA==}
+    peerDependencies:
+      '@openfeature/server-sdk': ^1.6.0
+
+  '@openfeature/server-sdk@1.22.0':
+    resolution: {integrity: sha512-YBrf6SQkn0FNB/dRAtLEs41dvFMUE8CrQTwI+iLaMFUIqWlqGNJfGnulKSneEKS+2OgKTAC6DdmKcZ6tK7kBcg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@openfeature/core': ^1.11.0
 
   '@opentelemetry/api-logs@0.214.0':
     resolution: {integrity: sha512-40lSJeqYO8Uz2Yj7u94/SJWE/wONa7rmMKjI1ZcIjgf3MHNHv1OZUCrCETGuaRF62d5pQD1wKIW+L4lmSMTzZA==}
@@ -6140,6 +6165,23 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
+
+  '@openfeature/core@1.11.0': {}
+
+  '@openfeature/ofrep-core@2.2.0(@openfeature/core@1.11.0)':
+    dependencies:
+      '@openfeature/core': 1.11.0
+
+  '@openfeature/ofrep-provider@0.2.5(@openfeature/core@1.11.0)(@openfeature/server-sdk@1.22.0(@openfeature/core@1.11.0))':
+    dependencies:
+      '@openfeature/ofrep-core': 2.2.0(@openfeature/core@1.11.0)
+      '@openfeature/server-sdk': 1.22.0(@openfeature/core@1.11.0)
+    transitivePeerDependencies:
+      - '@openfeature/core'
+
+  '@openfeature/server-sdk@1.22.0(@openfeature/core@1.11.0)':
+    dependencies:
+      '@openfeature/core': 1.11.0
 
   '@opentelemetry/api-logs@0.214.0':
     dependencies:

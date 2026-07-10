@@ -235,7 +235,7 @@ export class TagCommand extends TracedSubcommand {
     const content = interaction.options.getString('content', true)
 
     // Subscription-controlled cap; see the registry in premium/limits.mts.
-    const limit = limitFor(interaction, 'tags.maxPerGuild')
+    const limit = await limitFor(interaction, 'tags.maxPerGuild')
     if (Number.isFinite(limit)) {
       const [held] = await db
         .select({ value: count() })

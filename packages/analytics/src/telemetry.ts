@@ -430,6 +430,9 @@ export function initOpenTelemetry(
       Sentry.httpIntegration(),
       // Flattens ZodError issues into readable event context.
       Sentry.zodErrorsIntegration(),
+      // Buffers feature flag evaluations (reported via addFeatureFlag by
+      // the app's OpenFeature hook) and attaches them to error events.
+      Sentry.featureFlagsIntegration(),
       // Captures non-standard error properties (discord.js errors carry
       // code/status/method/url) as event context.
       Sentry.extraErrorDataIntegration(),

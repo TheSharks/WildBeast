@@ -11,6 +11,7 @@ import {
   sql,
 } from '@thesharks/drizzle'
 import type { BaseInteraction, Entitlement } from 'discord.js'
+import { featureFlagClient, featureFlagsActive } from './features.mjs'
 import { describeLimit, getLimit, type LimitKey } from './limits.mjs'
 import { premiumSkuMap } from './skus.mjs'
 import { FREE_TIER, highestTier, type PremiumTier } from './tiers.mjs'
@@ -60,14 +61,38 @@ export function tierForInteraction(interaction: BaseInteraction): PremiumTier {
  * The registry entry's scope decides whose subscription counts: the
  * invoker's own for 'user' limits, the current guild's for 'guild' limits,
  * the best of either for 'any' limits.
+ *
+ * When an OFREP flag service is configured (premium/features.mjs), the
+ * registry value becomes the default of the `limits.<key>` flag and the
+ * service can override it by any dimension of the context — a guild, a
+ * user, a tier, an environment — or unconditionally for a global change.
+ * Without a service, or when it's unreachable or has no rule, the registry
+ * value stands.
  */
-export function limitFor(interaction: BaseInteraction, key: LimitKey): number {
+export async function limitFor(
+  interaction: BaseInteraction,
+  key: LimitKey,
+): Promise<number> {
+  const definition = describeLimit(key)
   const resolve = {
     user: userTierForInteraction,
     guild: guildTierForInteraction,
     any: tierForInteraction,
-  }[describeLimit(key).scope]
-  return getLimit(key, resolve(interaction))
+  }[definition.scope]
+  const tier = resolve(interaction)
+  const fallback = getLimit(key, tier)
+  if (!featureFlagsActive()) return fallback
+
+  return featureFlagClient().getNumberValue(`limits.${key}`, fallback, {
+    targetingKey:
+      definition.scope === 'user'
+        ? interaction.user.id
+        : (interaction.guildId ?? interaction.user.id),
+    userId: interaction.user.id,
+    ...(interaction.guildId ? { guildId: interaction.guildId } : {}),
+    tier,
+    environment: process.env.NODE_ENV ?? 'development',
+  })
 }
 
 function grantedByInteraction(

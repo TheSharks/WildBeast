@@ -217,14 +217,14 @@ describe('tier resolution from interactions', () => {
     ).toBe(FREE_TIER)
   })
 
-  it('resolves guild-scoped limits by the guild subscription only', () => {
+  it('resolves guild-scoped limits by the guild subscription only', async () => {
     process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
-    const free = limitFor(fakeInteraction([]), 'tags.maxPerGuild')
-    const viaUserSub = limitFor(
+    const free = await limitFor(fakeInteraction([]), 'tags.maxPerGuild')
+    const viaUserSub = await limitFor(
       fakeInteraction([{ skuId: '123' }]),
       'tags.maxPerGuild',
     )
-    const viaGuildSub = limitFor(
+    const viaGuildSub = await limitFor(
       fakeInteraction([{ skuId: '123', guildId: '500' }]),
       'tags.maxPerGuild',
     )

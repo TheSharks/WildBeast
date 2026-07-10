@@ -47,6 +47,12 @@ export const envSchema = z.object({
         ctx.addIssue({ code: 'custom', message: (error as Error).message })
       }
     }),
+  // Base URL of an OFREP-compatible feature flag service (flagd, GO
+  // Feature Flag, ...). Optional: without it, flag-controlled values (the
+  // limit registry) use their in-code defaults.
+  WILDBEAST_OFREP_URL: z.url().optional(),
+  // Bearer token sent to the OFREP service, for providers that need auth.
+  WILDBEAST_OFREP_TOKEN: z.string().optional(),
   WILDBEAST_SHARDING_START: z.coerce.number().int().nonnegative().optional(),
   WILDBEAST_SHARDING_END: z.coerce.number().int().nonnegative().optional(),
   WILDBEAST_SHARDING_TOTAL: z.coerce.number().int().positive().optional(),

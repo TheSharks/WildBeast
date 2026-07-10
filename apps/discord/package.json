@@ -28,6 +28,8 @@
   "homepage": "https://wildbeast.guide/",
   "dependencies": {
     "@discordjs/builders": "^1.14.1",
+    "@openfeature/ofrep-provider": "^0.2.5",
+    "@openfeature/server-sdk": "^1.22.0",
     "@sapphire/decorators": "^6.2.0",
     "@sapphire/discord.js-utilities": "^7.3.3",
     "@sapphire/framework": "^5.5.0",
