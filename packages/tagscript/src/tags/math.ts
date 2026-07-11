@@ -96,10 +96,14 @@ export const mathHandler: TagHandler = (
 
   for (const token of tokens) {
     if (token.type === 'op') {
+      // '^' is right-associative (2^3^2 = 512), so equal precedence doesn't
+      // pop; every other operator is left-associative.
       while (
         ops.length > 0 &&
         ops[ops.length - 1] !== '(' &&
-        precedence[ops[ops.length - 1]] >= precedence[token.value]
+        (precedence[ops[ops.length - 1]] > precedence[token.value] ||
+          (precedence[ops[ops.length - 1]] === precedence[token.value] &&
+            token.value !== '^'))
       ) {
         const b = values.pop()
         const a = values.pop()
@@ -188,7 +192,15 @@ export const rangeHandler: TagHandler = (
   const end = parseInt(args[1] ?? '0', 10)
   const step = parseInt(args[2] ?? '1', 10)
 
-  if (isNaN(start) || isNaN(end) || isNaN(step)) return ''
+  // Safe integers guarantee `i += step` always advances; beyond 2^53 the
+  // addition can round back to the same value and loop forever.
+  if (
+    !Number.isSafeInteger(start) ||
+    !Number.isSafeInteger(end) ||
+    !Number.isSafeInteger(step)
+  ) {
+    return ''
+  }
   if (step <= 0) return 'Error: step must be positive'
 
   const count = Math.ceil((end - start) / step)

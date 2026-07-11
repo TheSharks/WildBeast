@@ -75,7 +75,9 @@ describe('string tags comprehensive', () => {
         '{replaceregex:/\\d+/gi|with:X|in:I have 5 cats and 23 shirts}',
         'I have X cats and X shirts',
       ],
-      ['{replaceregex:\\d|with:#}', ''],
+      // With only one JagTag marker present, the arguments read as native
+      // syntax: text "\d", pattern "with:#", no replacement.
+      ['{replaceregex:\\d|with:#}', '\\d'],
     ])('JagTag syntax: %s', async (input, expected) => {
       const result = await render(input)
       expect(result.output).toBe(expected)

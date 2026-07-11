@@ -52,11 +52,13 @@ describe('functional tags comprehensive', () => {
   })
 
   describe('ignore', () => {
+    // {ignore} output is literal: its body is never executed, even when it
+    // contains registered tags.
     it.each([
-      ['{ignore:{upper:hello}}', 'HELLO'],
-      ['{ignore:{upper:hello}|{lower:WORLD}}', 'HELLOworld'],
+      ['{ignore:{upper:hello}}', '{upper:hello}'],
+      ['{ignore:{upper:hello}|{lower:WORLD}}', '{upper:hello}{lower:WORLD}'],
       ['{ignore}', ''],
-      ['{ignore:text {upper:tag} more}', 'text TAG more'],
+      ['{ignore:text {upper:tag} more}', 'text {upper:tag} more'],
       ['{ignore:{nested:{inner:value}}}', '{nested:{inner:value}}'],
       ['{ignore:a|b|c}', 'abc'],
     ])('%s evaluates to %s', async (input, expected) => {
@@ -81,7 +83,7 @@ describe('functional tags comprehensive', () => {
   describe('tag combinations', () => {
     it.each([
       ['{if:abc|==|abc|{note:ignored}|else}', ''],
-      ['{if:abc|==|abc|{ignore:{upper:hello}}|else}', 'HELLO'],
+      ['{if:abc|==|abc|{ignore:{upper:hello}}|else}', '{upper:hello}'],
       ['{eval:{if:abc|==|abc|hello|world}}', 'hello'],
       ['{if:abc|==|abc|{if:123|==|123|nested|no}|else}', 'nested'],
     ])('%s evaluates to %s', async (input, expected) => {

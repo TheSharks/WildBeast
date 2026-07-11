@@ -20,6 +20,9 @@ blockedRanges.addSubnet('fe80::', 10, 'ipv6')
 blockedRanges.addSubnet('fc00::', 7, 'ipv6')
 
 const FETCH_TIMEOUT_MS = 10_000
+const MAX_REDIRECTS = 5
+
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308])
 
 function assertUrlAllowed(raw: string, allowedHosts?: string[]): URL {
   let url: URL
@@ -115,16 +118,12 @@ export const fetchHandler: LazyTagHandler = async (
 
   const [urlArg, verbArg] = args
 
-  const { output: url } = await renderSegment(
-    urlArg,
-    ctx,
-    '',
-    limits,
-    depth + 1,
-  )
-  const { output: verb } = verbArg
+  const url = urlArg
+    ? await renderSegment(urlArg, ctx, '', limits, depth + 1)
+    : ''
+  const verb = verbArg
     ? await renderSegment(verbArg, ctx, '', limits, depth + 1)
-    : { output: 'GET' }
+    : 'GET'
 
   const target = assertUrlAllowed(url, ctx.options.fetchAllowedHosts)
 
@@ -137,22 +136,77 @@ export const fetchHandler: LazyTagHandler = async (
   ctx.fetchRequests++
 
   const callerOptions = ctx.options.fetchOptions ?? {}
-  // Merge headers so the default User-Agent survives unless the embedder
-  // replaces it. Spread callerOptions last: embedder-provided options are
-  // trusted and may override the tag's method, but the tag cannot override
-  // them.
-  const headers = {
-    'User-Agent': '@TheSharks/TagScript/1.0 #github.com/TheSharks/WildBeast',
-    ...((callerOptions.headers as Record<string, string> | undefined) ?? {}),
+  // Headers normalizes every HeadersInit form (plain object, Headers
+  // instance, tuple array). The default User-Agent survives unless the
+  // embedder supplies its own.
+  const headers = new Headers(callerOptions.headers)
+  if (!headers.has('user-agent')) {
+    headers.set(
+      'User-Agent',
+      '@TheSharks/TagScript/1.0 #github.com/TheSharks/WildBeast',
+    )
   }
-  const requestInit: RequestInit = {
-    method: verb.toUpperCase(),
-    ...callerOptions,
-    headers,
-    signal: callerOptions.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  // The timeout signal is created once so it caps the whole redirect chain,
+  // not each hop individually.
+  const signal = callerOptions.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS)
+
+  // Redirects are followed manually so every hop is validated against the
+  // same scheme/allowlist/private-address rules as the initial URL. Native
+  // fetch would follow them silently, letting an allowed public host bounce
+  // the request to localhost, metadata services, or a non-allowlisted host.
+  let currentUrl = target
+  let method = verb.toUpperCase()
+  let response: Response
+
+  for (let hop = 0; ; hop++) {
+    // Spread callerOptions first: embedder-provided options are trusted and
+    // may override the tag's method, but redirect handling stays manual.
+    response = await fetch(currentUrl, {
+      method,
+      ...callerOptions,
+      headers,
+      signal,
+      redirect: 'manual',
+    })
+
+    if (!REDIRECT_STATUSES.has(response.status)) {
+      break
+    }
+
+    await response.body?.cancel().catch(() => undefined)
+
+    if (hop >= MAX_REDIRECTS) {
+      throw new RenderError(
+        `Fetch exceeded maximum of ${MAX_REDIRECTS} redirects`,
+      )
+    }
+
+    const location = response.headers.get('location')
+    if (!location) {
+      throw new RenderError(
+        `Fetch request failed with status ${response.status}`,
+      )
+    }
+
+    let resolved: URL
+    try {
+      resolved = new URL(location, currentUrl)
+    } catch {
+      throw new RenderError(`Invalid fetch redirect URL: ${location}`)
+    }
+    currentUrl = assertUrlAllowed(resolved.href, ctx.options.fetchAllowedHosts)
+
+    // Standard redirect semantics: 303 always switches to GET, and browsers
+    // treat 301/302 POSTs the same way.
+    if (
+      response.status === 303 ||
+      ((response.status === 301 || response.status === 302) &&
+        method === 'POST')
+    ) {
+      method = 'GET'
+    }
   }
 
-  const response = await fetch(target, requestInit)
   if (!response.ok) {
     throw new RenderError(`Fetch request failed with status ${response.status}`)
   }

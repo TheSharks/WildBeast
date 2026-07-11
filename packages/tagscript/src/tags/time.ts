@@ -38,6 +38,11 @@ export const timeHandler: TagHandler = (
   if (secondArg) {
     const timestamp = parseInt(firstArg, 10)
     const date = new Date(timestamp)
+    // Built-ins tolerate bad input: an out-of-range timestamp renders as
+    // nothing instead of leaking a RangeError from toISOString.
+    if (Number.isNaN(date.getTime())) {
+      return ''
+    }
     if (secondArg === 'iso') {
       return date.toISOString()
     }

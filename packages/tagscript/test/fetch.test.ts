@@ -190,15 +190,126 @@ describe('fetch tag', () => {
       })
       const init = fn.mock.calls[0][1]
       expect(init.method).toBe('PUT')
-      const headers = init.headers as Record<string, string>
-      expect(headers['X-Token']).toBe('secret')
-      expect(headers['User-Agent']).toContain('TagScript')
+      const headers = new Headers(init.headers)
+      expect(headers.get('X-Token')).toBe('secret')
+      expect(headers.get('User-Agent')).toContain('TagScript')
+    })
+
+    it('accepts Headers instances and tuple arrays', async () => {
+      const fn = mockFetch(() => new Response('ok', { status: 200 }))
+      await render('{fetch:https://example.com/data}', {
+        enableFetch: true,
+        fetchOptions: { headers: new Headers({ 'X-One': '1' }) },
+      })
+      await render('{fetch:https://example.com/data}', {
+        enableFetch: true,
+        fetchOptions: { headers: [['X-Two', '2']] },
+      })
+      expect(new Headers(fn.mock.calls[0][1].headers).get('X-One')).toBe('1')
+      expect(new Headers(fn.mock.calls[1][1].headers).get('X-Two')).toBe('2')
     })
 
     it('passes an abort signal by default', async () => {
       const fn = mockFetch(() => new Response('ok', { status: 200 }))
       await render('{fetch:https://example.com/data}', { enableFetch: true })
       expect(fn.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal)
+    })
+  })
+
+  describe('redirects', () => {
+    const redirect = (location: string, status = 302) =>
+      new Response(null, { status, headers: { location } })
+
+    it('requests with manual redirect handling', async () => {
+      const fn = mockFetch(() => new Response('ok', { status: 200 }))
+      await render('{fetch:https://example.com/data}', { enableFetch: true })
+      expect(fn.mock.calls[0][1].redirect).toBe('manual')
+    })
+
+    it('follows an allowed redirect chain to the final body', async () => {
+      const fn = mockFetch((url) =>
+        url === 'https://example.com/start'
+          ? redirect('https://example.com/next')
+          : new Response('final', { status: 200 }),
+      )
+      const result = await render('{fetch:https://example.com/start}', {
+        enableFetch: true,
+      })
+      expect(result.output).toBe('final')
+      expect(fn).toHaveBeenCalledTimes(2)
+    })
+
+    it('resolves relative redirect targets against the current URL', async () => {
+      const fn = mockFetch((url) =>
+        url === 'https://example.com/start'
+          ? redirect('/moved')
+          : new Response('ok', { status: 200 }),
+      )
+      await render('{fetch:https://example.com/start}', { enableFetch: true })
+      expect(fn.mock.calls[1][0].toString()).toBe('https://example.com/moved')
+    })
+
+    it('blocks a redirect to a private address', async () => {
+      const fn = mockFetch((url) =>
+        url === 'https://example.com/start'
+          ? redirect('http://169.254.169.254/latest/meta-data')
+          : new Response('metadata', { status: 200 }),
+      )
+      await expect(
+        render('{fetch:https://example.com/start}', { enableFetch: true }),
+      ).rejects.toThrow(/Blocked fetch to private address/)
+      expect(fn).toHaveBeenCalledOnce()
+    })
+
+    it('blocks a redirect to a localhost name', async () => {
+      mockFetch(() => redirect('http://localhost/admin'))
+      await expect(
+        render('{fetch:https://example.com/start}', { enableFetch: true }),
+      ).rejects.toThrow('Blocked fetch to private host')
+    })
+
+    it('blocks a redirect off the allowlist', async () => {
+      const fn = mockFetch(() => redirect('https://evil.example.org/exfil'))
+      await expect(
+        render('{fetch:https://api.example.com/data}', {
+          enableFetch: true,
+          fetchAllowedHosts: ['api.example.com'],
+        }),
+      ).rejects.toThrow('Fetch host not in allowlist')
+      expect(fn).toHaveBeenCalledOnce()
+    })
+
+    it('caps the number of redirect hops', async () => {
+      const fn = mockFetch(() => redirect('https://example.com/loop'))
+      await expect(
+        render('{fetch:https://example.com/start}', { enableFetch: true }),
+      ).rejects.toThrow('Fetch exceeded maximum of 5 redirects')
+      expect(fn).toHaveBeenCalledTimes(6)
+    })
+
+    it('switches POST to GET on a 303 redirect', async () => {
+      const fn = mockFetch((url) =>
+        url === 'https://example.com/start'
+          ? redirect('https://example.com/result', 303)
+          : new Response('ok', { status: 200 }),
+      )
+      await render('{fetch:https://example.com/start|POST}', {
+        enableFetch: true,
+      })
+      expect(fn.mock.calls[0][1].method).toBe('POST')
+      expect(fn.mock.calls[1][1].method).toBe('GET')
+    })
+
+    it('preserves the method on a 307 redirect', async () => {
+      const fn = mockFetch((url) =>
+        url === 'https://example.com/start'
+          ? redirect('https://example.com/result', 307)
+          : new Response('ok', { status: 200 }),
+      )
+      await render('{fetch:https://example.com/start|POST}', {
+        enableFetch: true,
+      })
+      expect(fn.mock.calls[1][1].method).toBe('POST')
     })
   })
 })

@@ -26,6 +26,11 @@ export const serveridHandler: TagHandler = (ctx: RenderContext) => {
 }
 
 export const avatarHandler: TagHandler = (ctx: RenderContext) => {
+  // Prefer a complete URL from the embedder: constructing one from the user
+  // ID alone can't include the avatar hash Discord's CDN requires.
+  const avatarUrl = ctx.discord?.user?.avatarUrl
+  if (avatarUrl) return avatarUrl
+
   const userId = ctx.discord?.user?.id
   if (!userId) return ''
 

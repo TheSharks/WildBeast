@@ -3,16 +3,42 @@ import { parse } from './parser.js'
 import { renderWithDefaultRegistry } from './runtime/entry.js'
 import { createRegistry } from './runtime/registry.js'
 import { fetchHandler } from './tags/fetch.js'
-import type { RenderOptions, RenderResult } from './types.js'
+import type { RenderOptions, RenderResult, TagRegistry } from './types.js'
 
 export { RenderError } from './runtime/errors.js'
+export { DEFAULT_LIMITS } from './runtime/limits.js'
 export { createRegistry } from './runtime/registry.js'
-export type { Ast, RenderOptions, RenderResult } from './types.js'
+export { renderSegment } from './runtime/renderer.js'
+export { serializeSegment } from './runtime/serialize.js'
+export type { Sandbox, SandboxResult } from './sandbox/types.js'
+export type {
+  Ast,
+  DiscordContext,
+  DiscordUser,
+  LazyTagHandler,
+  Limits,
+  Node,
+  RenderContext,
+  RenderMode,
+  RenderOptions,
+  RenderResult,
+  Segment,
+  Span,
+  TagHandler,
+  TagNode,
+  TagRegistry,
+  TagStore,
+  TextNode,
+} from './types.js'
 
-export const defaultRegistry = createRegistry(webTagHandlers, {
-  ...webLazyTagHandlers,
-  fetch: fetchHandler,
-})
+function buildDefaultRegistry(): TagRegistry {
+  return createRegistry(webTagHandlers, {
+    ...webLazyTagHandlers,
+    fetch: fetchHandler,
+  })
+}
+
+export const defaultRegistry = buildDefaultRegistry()
 
 export async function render(
   input: string,
@@ -21,8 +47,12 @@ export async function render(
   return renderWithDefaultRegistry(input, options, defaultRegistry)
 }
 
-export function createDefaultRegistry() {
-  return defaultRegistry
+/**
+ * Build a fresh default registry. Each call returns an independent instance,
+ * so callers can extend or wrap it without affecting other renders.
+ */
+export function createDefaultRegistry(): TagRegistry {
+  return buildDefaultRegistry()
 }
 
 export { parse }

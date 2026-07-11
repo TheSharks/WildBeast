@@ -3,26 +3,38 @@ import { createRegistry, RenderError, render } from '../src/index.js'
 import type { Sandbox } from '../src/sandbox/types.js'
 
 describe('recursion limits', () => {
-  describe('maxIterations fails closed', () => {
-    it('throws when output never converges', async () => {
-      const registry = createRegistry({
-        grow: async (_ctx, [value]) => `{grow:${value}x}`,
-      })
+  describe('expansion budget (maxIterations) fails closed', () => {
+    it('throws when stored tags expand recursively without bound', async () => {
+      const tagStore = {
+        getTagContents: (name: string) =>
+          name === 'loop' ? '{loop}' : undefined,
+      }
       await expect(
-        render('{grow:x}', { registry, maxIterations: 5 }),
-      ).rejects.toThrow('Exceeded maximum iterations of 5')
+        render('{loop}', { tagStore, maxIterations: 5 }),
+      ).rejects.toThrow('Exceeded maximum expansions of 5')
+    })
+
+    it('throws when eval re-expands itself without bound', async () => {
+      await expect(
+        render('{eval:{get:x}}', {
+          variables: { x: '{eval:{get:x}}' },
+          maxIterations: 5,
+          maxDepth: 1000,
+        }),
+      ).rejects.toThrow('Exceeded maximum expansions of 5')
     })
 
     it('throws a RenderError', async () => {
-      const registry = createRegistry({
-        grow: async (_ctx, [value]) => `{grow:${value}x}`,
-      })
+      const tagStore = {
+        getTagContents: (name: string) =>
+          name === 'loop' ? '{loop}' : undefined,
+      }
       await expect(
-        render('{grow:x}', { registry, maxIterations: 5 }),
+        render('{loop}', { tagStore, maxIterations: 5 }),
       ).rejects.toBeInstanceOf(RenderError)
     })
 
-    it('does not throw when output converges', async () => {
+    it('does not throw for ordinary rendering', async () => {
       const result = await render('{upper:hello}', { maxIterations: 2 })
       expect(result.output).toBe('HELLO')
     })
@@ -55,12 +67,20 @@ describe('recursion limits', () => {
     })
   })
 
-  describe('inert handler output', () => {
+  describe('handler output is literal', () => {
     const sandbox = (text: string): Sandbox => ({
       execute: async () => ({ text }),
     })
 
-    it('js output is not re-executed as TagScript by default', async () => {
+    it('handler output containing tags is not re-executed', async () => {
+      const registry = createRegistry({
+        grow: async (_ctx, [value]) => `{grow:${value}x}`,
+      })
+      const result = await render('{grow:x}', { registry })
+      expect(result.output).toBe('{grow:xx}')
+    })
+
+    it('js output is not re-executed as TagScript', async () => {
       const result = await render('{js:code}', {
         enableJs: true,
         sandbox: sandbox('{upper:hi}'),
@@ -76,28 +96,22 @@ describe('recursion limits', () => {
       expect(result.output).toBe('a|b')
     })
 
-    it('inertHandlerOutput: [] restores re-execution', async () => {
-      const result = await render('{js:code}', {
-        enableJs: true,
-        sandbox: sandbox('{upper:hi}'),
-        inertHandlerOutput: [],
-      })
-      expect(result.output).toBe('HI')
-    })
-
-    it('custom tags can be marked inert', async () => {
-      const registry = createRegistry({
-        payload: async () => '{upper:hi}',
-      })
-      const result = await render('{payload}', {
-        registry,
-        inertHandlerOutput: ['payload'],
+    it('variables render literally', async () => {
+      const result = await render('{get:x}', {
+        variables: { x: '{upper:hi}' },
       })
       expect(result.output).toBe('{upper:hi}')
     })
 
-    it('variables still re-execute recursively', async () => {
-      const result = await render('{get:x}', {
+    it('arguments render literally', async () => {
+      const result = await render('{args}', {
+        args: ['{upper:hi}'],
+      })
+      expect(result.output).toBe('{upper:hi}')
+    })
+
+    it('eval is the deliberate literal-to-executable transition', async () => {
+      const result = await render('{eval:{get:x}}', {
         variables: { x: '{upper:hi}' },
       })
       expect(result.output).toBe('HI')

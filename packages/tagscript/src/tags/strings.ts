@@ -1,5 +1,5 @@
-import { checkSync } from 'recheck'
 import { RenderError } from '../runtime/errors.js'
+import { consumeRegexBudget, isRegexSafe } from '../runtime/regex-safety.js'
 import type { Limits, TagHandler } from '../types.js'
 
 export const upperHandler: TagHandler = (_ctx, args) =>
@@ -14,15 +14,17 @@ export const replaceHandler: TagHandler = (_ctx, args) => {
   let search: string | undefined
   let replacement: string | undefined
 
-  // Check for JagTag syntax: {replace:search|with:replacement|in:text}
+  // JagTag syntax needs both markers: {replace:search|with:replacement|in:text}.
+  // Requiring both keeps native-syntax arguments that merely start with
+  // "with:" or "in:" from being misread as JagTag form.
   const withIndex = args.findIndex((a) => a.startsWith('with:'))
   const inIndex = args.findIndex((a) => a.startsWith('in:'))
 
-  if (withIndex >= 0 || inIndex >= 0) {
+  if (withIndex >= 0 && inIndex >= 0) {
     // JagTag syntax
     search = args[0]
-    replacement = withIndex >= 0 ? args[withIndex].slice(5) : undefined
-    text = inIndex >= 0 ? args[inIndex].slice(3) : undefined
+    replacement = args[withIndex].slice(5)
+    text = args[inIndex].slice(3)
   } else {
     // TagScript syntax (backwards compatible)
     ;[text, search, replacement] = args
@@ -71,21 +73,26 @@ export const hashHandler: TagHandler = (_ctx, args) => {
   return String(hash)
 }
 
-export const replaceregexHandler: TagHandler = (_ctx, args, limits: Limits) => {
+export const replaceregexHandler: TagHandler = async (
+  ctx,
+  args,
+  limits: Limits,
+) => {
   // Support both TagScript syntax {replaceregex:text|pattern|replacement}
   // and JagTag syntax {replaceregex:pattern|with:replacement|in:text}
   let text: string | undefined
   let pattern: string | undefined
   let replacement: string | undefined
 
+  // Both markers required, mirroring replaceHandler's disambiguation rule.
   const withIndex = args.findIndex((a) => a.startsWith('with:'))
   const inIndex = args.findIndex((a) => a.startsWith('in:'))
 
-  if (withIndex >= 0 || inIndex >= 0) {
+  if (withIndex >= 0 && inIndex >= 0) {
     // JagTag syntax
     pattern = args[0]
-    replacement = withIndex >= 0 ? args[withIndex].slice(5) : undefined
-    text = inIndex >= 0 ? args[inIndex].slice(3) : undefined
+    replacement = args[withIndex].slice(5)
+    text = args[inIndex].slice(3)
   } else {
     // TagScript syntax
     ;[text, pattern, replacement] = args
@@ -106,31 +113,32 @@ export const replaceregexHandler: TagHandler = (_ctx, args, limits: Limits) => {
   // Parse pattern string e.g. /search/flags
   const match = pattern.match(/^\/(.+)\/([gimsuy]*)$/)
 
+  let patternBody: string
+  let flags: string
+
+  if (match) {
+    ;[, patternBody, flags] = match
+  } else {
+    // Fallback: treat entire string as a global regex pattern
+    patternBody = pattern
+    flags = 'g'
+  }
+
   let regex: RegExp
   try {
-    let patternBody: string
-    let flags: string
-
-    if (match) {
-      ;[, patternBody, flags] = match
-    } else {
-      // Fallback: treat entire string as a global regex pattern
-      patternBody = pattern
-      flags = 'g'
-    }
-
-    // Check for ReDoS vulnerability before executing
-    const diagnostic = checkSync(patternBody, flags)
-    if (diagnostic.status === 'vulnerable') {
-      throw new RenderError('Potentially unsafe regex pattern')
-    }
-
     regex = new RegExp(patternBody, flags)
-    return text.replace(regex, replacement ?? '')
   } catch (error) {
     if (error instanceof Error) {
       throw new RenderError(`Invalid regex: ${error.message}`)
     }
     throw new RenderError('Invalid regex: Unknown error')
   }
+
+  consumeRegexBudget(ctx, limits)
+  // Fail closed: only patterns recheck positively verifies as safe run.
+  if (!(await isRegexSafe(patternBody, flags))) {
+    throw new RenderError('Potentially unsafe regex pattern')
+  }
+
+  return text.replace(regex, replacement ?? '')
 }

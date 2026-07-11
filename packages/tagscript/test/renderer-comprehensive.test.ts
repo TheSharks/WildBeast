@@ -25,7 +25,13 @@ describe('renderer comprehensive', () => {
       const ast = parse('hello world')
       const result = await renderAst(
         ast,
-        { mode: 'ignore', options: {}, fetchRequests: 1 },
+        {
+          mode: 'ignore',
+          options: {},
+          fetchRequests: 0,
+          expansions: 0,
+          regexOperations: 0,
+        },
         DEFAULT_LIMITS,
       )
       expect(result.output).toBe('hello world')
@@ -38,7 +44,14 @@ describe('renderer comprehensive', () => {
       const ast = parse('{upper:hello}')
       const result = await renderAst(
         ast,
-        { mode: 'ignore', registry, options: {}, fetchRequests: 1 },
+        {
+          mode: 'ignore',
+          registry,
+          options: {},
+          fetchRequests: 0,
+          expansions: 0,
+          regexOperations: 0,
+        },
         DEFAULT_LIMITS,
       )
       expect(result.output).toBe('HELLO')
@@ -51,24 +64,31 @@ describe('renderer comprehensive', () => {
       const ast = parse('hello {upper:world}!')
       const result = await renderAst(
         ast,
-        { mode: 'ignore', registry, options: {}, fetchRequests: 1 },
+        {
+          mode: 'ignore',
+          registry,
+          options: {},
+          fetchRequests: 0,
+          expansions: 0,
+          regexOperations: 0,
+        },
         DEFAULT_LIMITS,
       )
       expect(result.output).toBe('hello WORLD!')
     })
   })
 
-  describe('render iterations', () => {
-    it('re-renders until stable', async () => {
+  describe('handler output', () => {
+    it('is literal and never re-executed', async () => {
       const registry = createRegistry({
         step1: async (_ctx, [value]) => `{step2:${value}}`,
         step2: async (_ctx, [value]) => value,
       })
       const result = await render('{step1:x}', { registry })
-      expect(result.output).toBe('x')
+      expect(result.output).toBe('{step2:x}')
     })
 
-    it('handles max iterations reached', async () => {
+    it('does not loop when a handler emits its own tag', async () => {
       const registry = createRegistry({
         loop: async (_ctx, [value]) => `{loop:${value}}`,
       })

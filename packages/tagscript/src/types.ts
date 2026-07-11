@@ -1,10 +1,17 @@
 export interface Limits {
+  /**
+   * Maximum number of template expansions per render. Each deliberate
+   * re-execution of rendered text ({eval}, stored tags from a tagStore)
+   * counts as one expansion.
+   */
   maxIterations: number
   maxOutputLength: number
   maxDepth: number
   regexPatternLength: number
   maxRegexInputLength: number
   maxFetchRequests: number
+  /** Maximum regex evaluations ({if} `?` operator, {replaceregex}) per render. */
+  maxRegexOperations: number
 }
 
 export interface RenderResult {
@@ -18,6 +25,8 @@ export interface DiscordUser {
   id: string
   tag: string
   mention: string
+  /** Complete avatar URL. When set, {avatar} returns it verbatim. */
+  avatarUrl?: string
   avatarBase?: string
   avatarFormat?: string
 }
@@ -43,8 +52,12 @@ export interface RenderContext {
   tagStore?: TagStore
   sandbox?: import('./sandbox/types.js').Sandbox
   fetchRequests: number
-  /** Tags whose output is rendered as literal text instead of being re-executed on later passes. */
-  inertTags?: Set<string>
+  /** Template expansions performed so far; bounded by limits.maxIterations. */
+  expansions: number
+  /** Regex evaluations performed so far; bounded by limits.maxRegexOperations. */
+  regexOperations: number
+  /** Attachment produced by a handler (e.g. a sandbox), surfaced on RenderResult. */
+  attachment?: { data: Uint8Array; type: string }
 }
 
 export type TagHandler = (
@@ -69,29 +82,20 @@ export interface TagRegistry {
 export interface RenderOptions extends Partial<Limits> {
   mode?: RenderMode
   registry?: TagRegistry
-  maxIterations?: number
-  maxOutputLength?: number
-  maxDepth?: number
-  maxFetchRequests?: number
   variables?: Record<string, string> | Map<string, string>
   args?: string[]
   discord?: DiscordContext
   tagStore?: TagStore
   enableJs?: boolean
   enableFetch?: boolean
-  /**
-   * Tags whose output is treated as literal text instead of being re-executed
-   * as TagScript on later render passes. Defaults to ['fetch', 'js', 'javascript']
-   * so remote or sandboxed content can't inject executable tags.
-   */
-  inertHandlerOutput?: string[]
   fetchOptions?: RequestInit
   /**
    * Hostnames the fetch tag is allowed to request (exact match,
    * case-insensitive). When provided, every other host is rejected — this is
    * the recommended safeguard for attacker-controllable templates. When
    * omitted, all hosts are allowed except loopback, private, link-local and
-   * metadata IP literals plus `localhost` names.
+   * metadata IP literals plus `localhost` names. Every redirect hop is
+   * revalidated against the same rules.
    */
   fetchAllowedHosts?: string[]
   sandbox?: import('./sandbox/types.js').Sandbox

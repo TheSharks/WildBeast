@@ -8,65 +8,54 @@ import type {
   TagNode,
 } from '../types.js'
 import { RenderError } from './errors.js'
-import { checkLimits, type Limits } from './limits.js'
-import { serializeSegment, serializeTag } from './serialize.js'
+import type { Limits } from './limits.js'
+import { serializeTag } from './serialize.js'
 
-// Sentinels for inert tag output. Backslash escapes don't survive the fixpoint
-// loop (the next pass consumes them), so inert output swaps syntax characters
-// for private-use codepoints during rendering and restores them once at the end.
-const INERT_OPEN = '\uE000'
-const INERT_CLOSE = '\uE001'
-const INERT_PIPE = '\uE002'
-
-function makeInert(text: string): string {
-  return text
-    .replaceAll('{', INERT_OPEN)
-    .replaceAll('}', INERT_CLOSE)
-    .replaceAll('|', INERT_PIPE)
-}
-
-function restoreInert(text: string): string {
-  return text
-    .replaceAll(INERT_OPEN, '{')
-    .replaceAll(INERT_CLOSE, '}')
-    .replaceAll(INERT_PIPE, '|')
-}
+// Rendering is a single top-down pass over the parse tree. Handler output is
+// literal: it is appended to the surrounding output verbatim and never parsed
+// as TagScript again. The only ways rendered text becomes executable are the
+// deliberate transitions routed through renderExpansion ({eval} and stored
+// tags), each of which counts against the maxIterations expansion budget.
 
 export async function render(
   input: string,
   context: RenderContext,
   limits: Limits,
 ): Promise<RenderResult> {
-  let output = input
-  let iteration = 0
+  const ast = parse(input)
+  const output = await renderSegment(ast, context, input, limits, 0)
 
-  while (true) {
-    if (iteration >= limits.maxIterations) {
-      throw new RenderError(
-        `Exceeded maximum iterations of ${limits.maxIterations}`,
-      )
-    }
+  const result: RenderResult = { output }
+  if (context.attachment) {
+    result.attachment = context.attachment
+  }
+  return result
+}
 
-    const ast = parse(output)
-    const { output: newOutput, depth } = await renderSegment(
-      ast,
-      context,
-      output,
-      limits,
-      0,
+/**
+ * Parse a string of TagScript source and render it. This is the deliberate
+ * literal-to-executable transition: everything else in the renderer treats
+ * strings as inert text. Bounded by the maxIterations expansion budget in
+ * addition to the regular depth budget.
+ */
+export async function renderExpansion(
+  source: string,
+  context: RenderContext,
+  limits: Limits,
+  depth: number,
+): Promise<string> {
+  context.expansions++
+  if (context.expansions > limits.maxIterations) {
+    throw new RenderError(
+      `Exceeded maximum expansions of ${limits.maxIterations}`,
     )
-
-    checkLimits(newOutput, limits, depth)
-
-    if (newOutput === output) {
-      break
-    }
-
-    output = newOutput
-    iteration++
+  }
+  if (depth > limits.maxDepth) {
+    throw new RenderError(`Exceeded maximum depth of ${limits.maxDepth}`)
   }
 
-  return { output: restoreInert(output) }
+  const ast = parse(source)
+  return renderSegment(ast, context, source, limits, depth)
 }
 
 export async function renderSegment(
@@ -75,17 +64,21 @@ export async function renderSegment(
   input: string,
   limits: Limits,
   depth: number,
-): Promise<{ output: string; depth: number }> {
+): Promise<string> {
   let output = ''
-  let maxDepth = 0
 
   for (const node of segment.nodes) {
-    const result = await renderNode(node, context, input, limits, depth)
-    output += result.output
-    maxDepth = Math.max(maxDepth, result.depth)
+    output += await renderNode(node, context, input, limits, depth)
+    // Checked while accumulating, not just at the end, so intermediate
+    // strings can't grow far beyond the output limit before being caught.
+    if (output.length > limits.maxOutputLength) {
+      throw new RenderError(
+        `Output exceeded maximum length of ${limits.maxOutputLength} characters`,
+      )
+    }
   }
 
-  return { output, depth: maxDepth }
+  return output
 }
 
 async function renderNode(
@@ -94,9 +87,9 @@ async function renderNode(
   input: string,
   limits: Limits,
   depth: number,
-): Promise<{ output: string; depth: number }> {
+): Promise<string> {
   if (node.type === 'text') {
-    return { output: node.value, depth: 0 }
+    return node.value
   }
 
   return renderTag(node, context, input, limits, depth)
@@ -108,49 +101,55 @@ async function renderTag(
   input: string,
   limits: Limits,
   depth: number,
-): Promise<{ output: string; depth: number }> {
+): Promise<string> {
   if (depth > limits.maxDepth) {
     throw new RenderError(`Exceeded maximum depth of ${limits.maxDepth}`)
   }
 
   const registry = context.registry
-  const isLazy = registry?.isLazy?.(tag.name)
-  const inert = context.inertTags?.has(tag.name) ?? false
 
-  if (isLazy) {
-    const lazyHandler = registry?.getLazy?.(tag.name)
+  if (registry?.isLazy?.(tag.name)) {
+    const lazyHandler = registry.getLazy?.(tag.name)
     if (lazyHandler === undefined) {
       return renderUnknownTag(tag, context, input)
     }
 
     const result = await lazyHandler(context, tag.args, limits, depth)
-    return { output: inert ? makeInert(result) : result, depth: 1 }
+    return checkHandlerOutput(result, limits)
   }
 
   const handler = registry?.get(tag.name)
   if (!handler) {
-    if (context.variables && context.variables.has(tag.name)) {
-      const output = context.variables.get(tag.name) ?? ''
-      return { output, depth: 0 }
+    if (context.variables?.has(tag.name)) {
+      return context.variables.get(tag.name) ?? ''
     }
+
+    const stored = context.tagStore?.getTagContents(tag.name)
+    if (stored !== undefined) {
+      return renderExpansion(stored, context, limits, depth + 1)
+    }
+
     return renderUnknownTag(tag, context, input)
   }
 
-  const args = await Promise.all(
-    tag.args.map(async (arg) =>
-      renderSegment(arg, context, input, limits, depth + 1),
-    ),
-  )
-  const maxArgDepth = args.reduce((max, arg) => Math.max(max, arg.depth), 0)
-  const result = await handler(
-    context,
-    args.map((a) => a.output),
-    limits,
-  )
-  return {
-    output: inert ? makeInert(result) : result,
-    depth: maxArgDepth + 1,
+  // Arguments render sequentially so tags with side effects ({set}, {fetch})
+  // observe a deterministic left-to-right order.
+  const args: string[] = []
+  for (const arg of tag.args) {
+    args.push(await renderSegment(arg, context, input, limits, depth + 1))
   }
+
+  const result = await handler(context, args, limits)
+  return checkHandlerOutput(result, limits)
+}
+
+function checkHandlerOutput(output: string, limits: Limits): string {
+  if (output.length > limits.maxOutputLength) {
+    throw new RenderError(
+      `Output exceeded maximum length of ${limits.maxOutputLength} characters`,
+    )
+  }
+  return output
 }
 
 export async function renderAst(
@@ -158,22 +157,25 @@ export async function renderAst(
   context: RenderContext,
   limits: Limits,
 ): Promise<RenderResult> {
-  const input = serializeSegment(ast)
-  const { output } = await renderSegment(ast, context, input, limits, 0)
-  return { output: restoreInert(output) }
+  const output = await renderSegment(ast, context, '', limits, 0)
+
+  const result: RenderResult = { output }
+  if (context.attachment) {
+    result.attachment = context.attachment
+  }
+  return result
 }
 
 function renderUnknownTag(
   tag: TagNode,
   context: RenderContext,
   input: string,
-): { output: string; depth: number } {
+): string {
   if (context.mode === 'strict') {
     throw new RenderError(`Unknown tag: ${tag.name}`)
   }
 
-  const output = renderTagLiteral(tag, input)
-  return { output, depth: 0 }
+  return renderTagLiteral(tag, input)
 }
 
 function renderTagLiteral(tag: TagNode, input: string): string {

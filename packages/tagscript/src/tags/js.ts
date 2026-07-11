@@ -15,11 +15,19 @@ export async function jsHandler(
 
   const code = args[0] || ''
   const result = await sandbox.execute(code)
-  // we expect a isolated-vm like result with a text property
+
+  if (typeof result === 'object' && result !== null) {
+    if ('attachment' in result && result.attachment) {
+      ctx.attachment = result.attachment
+    }
+    if ('text' in result) {
+      return result.text
+    }
+  }
+
+  // we expect an isolated-vm like result with a text property
   // but fall back to string conversion if not
-  return typeof result === 'object' && result !== null && 'text' in result
-    ? result.text
-    : String(result ?? '')
+  return String(result ?? '')
 }
 
 export const javascriptHandler = jsHandler

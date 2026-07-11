@@ -1,5 +1,4 @@
 import type { Limits } from '../types.js'
-import { RenderError } from './errors.js'
 
 export type { Limits }
 
@@ -10,40 +9,41 @@ export const DEFAULT_LIMITS: Limits = {
   regexPatternLength: 1000,
   maxRegexInputLength: 10000,
   maxFetchRequests: 3,
+  maxRegexOperations: 10,
 }
 
-export function checkLimits(
-  output: string,
-  limits: Limits,
-  depth: number,
-): void {
-  if (output.length > limits.maxOutputLength) {
-    throw new RenderError(
-      `Output exceeded maximum length of ${limits.maxOutputLength} characters`,
-    )
+function resolveLimit(name: keyof Limits, value: number | undefined): number {
+  if (value === undefined) {
+    return DEFAULT_LIMITS[name]
   }
-  if (depth > limits.maxDepth) {
-    throw new RenderError(`Exceeded maximum depth of ${limits.maxDepth}`)
+  // NaN would make every comparison false and silently disable the
+  // safeguard, so invalid values are an embedder error.
+  if (typeof value !== 'number' || Number.isNaN(value) || value < 0) {
+    throw new RangeError(`Invalid limit for ${name}: ${value}`)
   }
+  return value
 }
 
-export function getLimits(options: {
-  maxIterations?: number
-  maxOutputLength?: number
-  maxDepth?: number
-  regexPatternLength?: number
-  maxRegexInputLength?: number
-  maxFetchRequests?: number
-}): Limits {
+export function getLimits(options: Partial<Limits>): Limits {
   return {
-    maxIterations: options.maxIterations ?? DEFAULT_LIMITS.maxIterations,
-    maxOutputLength: options.maxOutputLength ?? DEFAULT_LIMITS.maxOutputLength,
-    maxDepth: options.maxDepth ?? DEFAULT_LIMITS.maxDepth,
-    regexPatternLength:
-      options.regexPatternLength ?? DEFAULT_LIMITS.regexPatternLength,
-    maxRegexInputLength:
-      options.maxRegexInputLength ?? DEFAULT_LIMITS.maxRegexInputLength,
-    maxFetchRequests:
-      options.maxFetchRequests ?? DEFAULT_LIMITS.maxFetchRequests,
+    maxIterations: resolveLimit('maxIterations', options.maxIterations),
+    maxOutputLength: resolveLimit('maxOutputLength', options.maxOutputLength),
+    maxDepth: resolveLimit('maxDepth', options.maxDepth),
+    regexPatternLength: resolveLimit(
+      'regexPatternLength',
+      options.regexPatternLength,
+    ),
+    maxRegexInputLength: resolveLimit(
+      'maxRegexInputLength',
+      options.maxRegexInputLength,
+    ),
+    maxFetchRequests: resolveLimit(
+      'maxFetchRequests',
+      options.maxFetchRequests,
+    ),
+    maxRegexOperations: resolveLimit(
+      'maxRegexOperations',
+      options.maxRegexOperations,
+    ),
   }
 }

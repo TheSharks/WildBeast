@@ -29,6 +29,8 @@ Inspired by [JagTag-JS](https://github.com/TheSharks/JagTag-JS/), TagScript is W
 npm install @thesharks/tagscript
 ```
 
+The package is ESM-only and requires Node.js 22 or newer.
+
 ## Basic usage
 
 ```ts
@@ -119,19 +121,19 @@ console.log(mathResult.output) // hello
 | `variables` | `Record<string, string> \| Map<string, string>` | `{}` | Variables available to tags. |
 | `args` | `string[]` | `undefined` | Arguments available through `{arg}` and `{args}`. |
 | `discord` | `DiscordContext` | `undefined` | Discord-specific context for Discord tags. |
-| `tagStore` | `TagStore` | `undefined` | Storage for lazy-loaded tags. |
+| `tagStore` | `TagStore` | `undefined` | Store of user tags. Names matching neither a handler nor a variable resolve here and execute as templates. |
 | `enableJs` | `boolean` | `false` | Enable JavaScript execution. |
 | `sandbox` | `Sandbox` | `undefined` | Sandbox for JavaScript execution. |
 | `enableFetch` | `boolean` | `false` | Enable fetch tag. |
 | `fetchOptions` | `RequestInit` | `undefined` | Options to pass to fetch. |
 | `fetchAllowedHosts` | `string[]` | `undefined` | Hostnames the fetch tag may request (exact, case-insensitive). When set, every other host is rejected. See [Fetch safety](#fetch-safety). |
-| `maxIterations` | `number` | `100` | Maximum render passes. Rendering throws if the output still changes after this many passes. |
-| `inertHandlerOutput` | `string[]` | `['fetch', 'js', 'javascript']` | Tags whose output renders as literal text instead of being re-executed as TagScript. |
-| `maxOutputLength` | `number` | `100000` | Maximum output length. |
+| `maxIterations` | `number` | `100` | Maximum template expansions per render. Each `{eval}` and each stored-tag lookup counts as one expansion. |
+| `maxOutputLength` | `number` | `100000` | Maximum output length, enforced while output accumulates. |
 | `maxDepth` | `number` | `100` | Maximum nested tag depth. |
 | `maxFetchRequests` | `number` | `3` | Maximum fetch requests per render. |
 | `regexPatternLength` | `number` | `1000` | Maximum regex pattern length. |
 | `maxRegexInputLength` | `number` | `10000` | Maximum input length for regex operations. |
+| `maxRegexOperations` | `number` | `10` | Maximum regex evaluations per render (`{if}` with `?`, `{replaceregex}`). |
 
 ## Built-in tags
 
@@ -143,10 +145,10 @@ These tags ship in the default registry, grouped by purpose.
 |-----|-------------|
 | `{upper:text}` | Convert to uppercase. |
 | `{lower:text}` | Convert to lowercase. |
-| `{length:text}` | Get string length. |
+| `{length:text}` | String length in UTF-16 code units, matching JagTag (an emoji like 😀 counts as 2). |
 | `{replace:text\|search\|replacement}` | Replace text. |
 | `{replaceregex:text\|pattern\|replacement}` | Replace using regex. Supports `/pattern/flags` syntax. |
-| `{replaceregex:pattern\|with:replacement\|in:text}` | JagTag-compatible syntax for regex replacement. |
+| `{replaceregex:pattern\|with:replacement\|in:text}` | JagTag-compatible syntax for regex replacement. Both the `with:` and `in:` markers must be present; otherwise the arguments read as the native syntax. The same rule applies to `{replace}`. |
 | `{reverse:text}` | Reverse string. Grapheme-aware. |
 | `{url:text}` | URL encode string. |
 | `{substring:text\|start\|end}` | Extract substring. Negative indices count from the end. |
@@ -157,7 +159,7 @@ These tags ship in the default registry, grouped by purpose.
 
 | Tag | Description |
 |-----|-------------|
-| `{math:a\|op\|b\|op\|c...}` | JagTag-compatible math operations. Supports `+`, `-`, `*`, `/`, `^`, `%`. Non-numeric operands fall back to string mode: `+` concatenates, `-` removes the first occurrence of the right operand, other operators join the operands literally. |
+| `{math:a\|op\|b\|op\|c...}` | JagTag-compatible math operations. Supports `+`, `-`, `*`, `/`, `^`, `%` with the usual precedence; `^` is right-associative (`{math:2\|^\|3\|^\|2}` is 512). Non-numeric operands fall back to string mode: `+` concatenates, `-` removes the first occurrence of the right operand, other operators join the operands literally. |
 | `{abs:value}` | Absolute value. |
 | `{sin:value}` | Sine. |
 | `{cos:value}` | Cosine. |
@@ -172,7 +174,7 @@ These tags ship in the default registry, grouped by purpose.
 | `{pow:a\|b}` | Power (a^b). |
 | `{mod:a\|b}` | Modulo. |
 | `{choose:a\|b\|c}` | Random choice from pipe-separated values. |
-| `{range:start\|end\|step}` | Generate number range. Maximum 2000 values. |
+| `{range:start\|end\|step}` | Generate number range. Maximum 2000 values; bounds must be safe integers. |
 | `{random:min\|max}` | Random integer between min and max, inclusive. |
 | `{ceil:value}` | Ceiling. |
 | `{floor:value}` | Floor. |
@@ -207,8 +209,8 @@ These tags ship in the default registry, grouped by purpose.
 |-----|-------------|
 | `{if:a\|operator\|b\|then\|else}` | Conditional. Operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `~` (fuzzy match), `?` (regex match). |
 | `{note:text}` | Comment. Ignored in output. |
-| `{ignore:text}` | Ignore errors in text. |
-| `{eval:expression}` | Evaluate expression. |
+| `{ignore:text}` | Render `text` literally without executing the tags inside it. |
+| `{eval:template}` | Execute rendered text as a template. The only tag that turns output back into TagScript; see [Literal output](#literal-output-and-eval). |
 
 ### Discord
 
@@ -247,9 +249,10 @@ The fetch tag can reach network resources, so treat it as attacker-controllable 
 
 - Only `http:` and `https:` URLs are allowed. Other schemes (`file:`, `ftp:`, ...) are rejected.
 - Requests to loopback, private, link-local and cloud-metadata IP literals are blocked, including `localhost`/`*.localhost` and IPv4-mapped IPv6 forms such as `::ffff:127.0.0.1`.
+- Redirects are followed manually, at most 5 hops, and every hop is validated against the same scheme, allowlist, and private-address rules as the initial URL. An allowed host can't bounce the request somewhere forbidden.
 - Responses are streamed and aborted once they exceed `maxOutputLength`, so a large remote body can't exhaust memory.
-- Each request carries a 10-second `AbortSignal.timeout` unless your `fetchOptions` supplies its own signal.
-- Fetched output is marked inert (see `inertHandlerOutput`) so remote bodies can't inject executable tags.
+- The whole redirect chain shares a 10-second `AbortSignal.timeout` unless your `fetchOptions` supplies its own signal.
+- Fetched output is literal text, like all tag output, so remote bodies can't inject executable tags.
 
 The IP checks only cover literal addresses in the URL. A hostname that resolves to a private address via DNS (DNS rebinding) is **not** blocked, because pinning the resolved address is out of scope. For untrusted templates, set `fetchAllowedHosts` to an explicit allowlist; this is the recommended safeguard:
 
@@ -305,8 +308,10 @@ const context = await isolate.createContext()
 const sandbox = {
   execute: async (code: string) => {
     const script = await isolate.compileScript(code)
-    const result = await script.run(context)
-    return result
+    // Always pass a timeout: the memory limit alone doesn't stop an
+    // infinite loop from burning CPU forever.
+    const result = await script.run(context, { timeout: 1000 })
+    return { text: String(result ?? '') }
   },
 }
 
@@ -334,28 +339,37 @@ const result = await render(template)
 console.log(result.output) // I have X cats and X shirts
 ```
 
-## Recursive rendering
+## Literal output and eval
 
-TagScript re-renders its output until it stops changing, so tag output containing `{...}` executes on the next pass. This is what makes stored tags and variables composable:
+Tag output is literal. Whatever a handler returns (an argument, a variable, a Discord context value, a fetched body, a sandbox result) is appended to the output as plain text and is never parsed as TagScript again. Caller-controlled data can't inject executable tags:
 
 ```ts
-const result = await render('{get:greeting}', {
-  variables: { greeting: '{upper:hello}' },
-})
-console.log(result.output) // HELLO
+const result = await render('{args}', { args: ['{js:steal()}'] })
+console.log(result.output) // {js:steal()}
 ```
 
-Three safeguards bound this recursion:
+Two things deliberately cross back from text to template:
 
-- `maxIterations` caps the number of render passes. If the output still changes when the cap is reached, rendering throws a `RenderError` instead of returning partially rendered output.
-- `maxDepth` caps nesting depth, including inside lazy tags like `{if}` and `{eval}`.
-- `inertHandlerOutput` lists tags whose output is never re-executed. It defaults to `['fetch', 'js', 'javascript']` so remote responses and sandbox results render as literal text. Pass your own list to change this, including an empty array to re-execute everything.
+- `{eval}` renders its argument, then executes the result as TagScript. Use it when a variable or stored value intentionally holds a template:
+
+  ```ts
+  const result = await render('{eval:{get:greeting}}', {
+    variables: { greeting: '{upper:hello}' },
+  })
+  console.log(result.output) // HELLO
+  ```
+
+- `tagStore` contents. When a tag name matches neither a handler nor a variable, the renderer asks `tagStore.getTagContents(name)`; whatever it returns is template source and executes as one. This is how stored user tags call each other.
+
+Both are bounded: each `{eval}` and each stored-tag expansion counts against `maxIterations` (default 100), and `maxDepth` caps nesting, including inside lazy tags like `{if}` and `{eval}`. Runaway recursion throws a `RenderError` instead of hanging.
+
+Escapes follow the same rule: `\{upper:x\}` renders as the literal text `{upper:x}` and stays that way. Rendered output is never re-parsed, so the escaped tag can't execute on a later pass.
 
 ## Regular expression safety
 
-TagScript includes safeguards to prevent ReDoS (Regular Expression Denial of Service) attacks when using regex-based tags. TagScript uses [recheck](https://www.npmjs.com/package/recheck) to analyze regex patterns for potential vulnerabilities before execution.
+TagScript includes safeguards to prevent ReDoS (Regular Expression Denial of Service) attacks when using regex-based tags. TagScript uses [recheck](https://www.npmjs.com/package/recheck) to analyze regex patterns before execution and fails closed: only patterns the analysis positively verifies as safe run. A pattern the analyzer can't verify (including on analysis timeout) is rejected. Each render is also limited to `maxRegexOperations` regex evaluations, since the analysis itself costs time.
 
-No check is perfect. Some false positives or negatives can occur. Use caution when relying on these checks for security-critical applications.
+No check is perfect. Some false positives can occur. Use caution when relying on these checks for security-critical applications.
 
 For complete safety, use [RE2](https://github.com/uhop/node-re2). RE2 only works in Node.js environments, but it guarantees linear-time regex execution. See the [RE2 integration example](./examples/re2.ts) for implementation details.
 

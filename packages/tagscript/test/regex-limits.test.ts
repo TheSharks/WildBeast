@@ -110,13 +110,13 @@ describe('replaceregex limits', () => {
       // Classic ReDoS pattern: nested quantifiers with overlapping alternatives
       await expect(
         render('{replaceregex:aaaaaaaaaa|/^(a+)+$/|x}'),
-      ).rejects.toThrow(/Invalid regex:.*unsafe/i)
+      ).rejects.toThrow('Potentially unsafe regex pattern')
     })
 
     it('rejects vulnerable patterns in JagTag syntax', async () => {
       await expect(
         render('{replaceregex:^(a+)+$|with:x|in:aaaa}'),
-      ).rejects.toThrow(/Invalid regex:.*unsafe/i)
+      ).rejects.toThrow('Potentially unsafe regex pattern')
     })
 
     it('allows safe regex patterns', async () => {

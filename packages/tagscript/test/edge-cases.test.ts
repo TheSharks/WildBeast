@@ -65,14 +65,26 @@ describe('edge cases', () => {
   })
 
   describe('character encodings and escapes', () => {
+    // Escapes are processed exactly once: the unescaped text is literal
+    // output and is never re-parsed as TagScript.
     it.each([
       ['abc\\\\', 'abc\\'],
-      ['a\\\\\\\\b', 'a\\b'],
-      ['a\\\\\\\\\\\\{b}', 'a{b}'],
-      ['\\\\{hello\\}|\\\\{world\\}', '{hello}|{world}'],
+      ['a\\\\\\\\b', 'a\\\\b'],
+      ['a\\\\\\\\\\\\{b}', 'a\\\\\\{b}'],
+      ['\\{hello\\}|\\{world\\}', '{hello}|{world}'],
     ])('%s handles backslashes', async (input, expected) => {
       const result = await render(input)
       expect(result.output).toBe(expected)
+    })
+
+    it('an escaped registered tag stays literal text', async () => {
+      const result = await render('\\{upper:x\\}')
+      expect(result.output).toBe('{upper:x}')
+    })
+
+    it('escaped tags inside arguments stay literal', async () => {
+      const result = await render('{lower:\\{UPPER:X\\}}')
+      expect(result.output).toBe('{upper:x}')
     })
   })
 

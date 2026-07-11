@@ -31,9 +31,8 @@ export async function renderWithDefaultRegistry(
     sandbox: enableJs ? sandbox : undefined,
     options,
     fetchRequests: 0,
-    inertTags: new Set(
-      options.inertHandlerOutput ?? ['fetch', 'js', 'javascript'],
-    ),
+    expansions: 0,
+    regexOperations: 0,
   }
   const result = await renderInternal(input, context, limits)
 
