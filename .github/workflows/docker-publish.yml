@@ -1,0 +1,136 @@
+name: Docker publish
+
+on:
+  push:
+    branches: [master]
+    tags: ['@thesharks/discord@*']
+
+permissions:
+  contents: read
+  # Push images to GHCR.
+  packages: write
+
+env:
+  IMAGE: ghcr.io/thesharks/wildbeast
+
+# Publish sequentially per ref so an older run can't overwrite the
+# moving tags (edge, latest) with a stale image.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Build each platform on its native runner (QEMU-emulated arm64 makes
+  # pnpm install and tsc crawl), push by digest, and assemble the
+  # multi-arch manifest in the publish job.
+  build:
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/discord/Dockerfile
+          platforms: ${{ matrix.platform }}
+          build-args: COMMIT=${{ github.sha }}
+          # The source label links the GHCR package to this repository.
+          labels: |
+            org.opencontainers.image.source=https://github.com/TheSharks/WildBeast
+            org.opencontainers.image.revision=${{ github.sha }}
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,scope=${{ matrix.platform }},mode=max
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest='${{ steps.build.outputs.digest }}'
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # metadata-action can't parse the changesets tag format
+      # (@thesharks/discord@X.Y.Z) as a semver ref, so extract the
+      # version and feed it in explicitly below.
+      - name: Extract version from tag
+        id: version
+        if: github.ref_type == 'tag'
+        run: echo "version=${GITHUB_REF_NAME#@thesharks/discord@}" >> "$GITHUB_OUTPUT"
+
+      # Master pushes get the moving edge tag plus a pinned sha tag.
+      # Release tags get the full version; for stable releases
+      # metadata-action also derives X.Y, X, and latest, and skips those
+      # for prereleases like 9.0.0-dev.
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=edge,branch=master
+            type=sha
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }},enable=${{ github.ref_type == 'tag' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }},enable=${{ github.ref_type == 'tag' }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }},enable=${{ github.ref_type == 'tag' }}
+
+      - name: Create multi-arch manifest
+        working-directory: /tmp/digests
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          args=()
+          for tag in $TAGS; do
+            args+=(--tag "$tag")
+          done
+          for digest in *; do
+            args+=("$IMAGE@sha256:$digest")
+          done
+          docker buildx imagetools create "${args[@]}"
+
+      - name: Inspect
+        run: docker buildx imagetools inspect "$IMAGE:${{ steps.meta.outputs.version }}"

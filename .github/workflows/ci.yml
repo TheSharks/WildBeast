@@ -5,9 +5,16 @@ on:
     branches: [master, 'feat/**']
   pull_request:
 
+# Supersede in-flight runs when a branch or PR gets new commits, but let
+# master runs finish so its history stays complete.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -26,3 +33,78 @@ jobs:
 
       - name: Test (unit + integration)
         run: pnpm test:integration
+
+  # The Pages deploy only runs on master; this catches docs breakage on
+  # branches and PRs before it gets there.
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm --filter @thesharks/docs typecheck
+
+      - name: Build site
+        run: pnpm exec turbo run build --filter=@thesharks/docs
+
+  migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Both drizzle-kit commands work from the schema and snapshots alone,
+      # no database connection needed.
+      - name: Check for migration collisions
+        run: pnpm --filter @thesharks/drizzle exec drizzle-kit check
+
+      - name: Verify migrations match the schema
+        run: |
+          pnpm --filter @thesharks/drizzle exec drizzle-kit generate
+          # generate emits new (untracked) files when the schema drifted,
+          # so check porcelain status rather than the tracked diff.
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --porcelain
+            echo '::error::schema.ts changed without a migration; run pnpm --filter @thesharks/drizzle generate and commit the result'
+            exit 1
+          fi
+
+  # The self-hosting docs point users at this Dockerfile; make sure it
+  # builds. Publishing to GHCR happens in docker-publish.yml.
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/discord/Dockerfile
+          push: false
+          cache-from: type=gha,scope=linux/amd64
+          cache-to: type=gha,scope=linux/amd64,mode=max

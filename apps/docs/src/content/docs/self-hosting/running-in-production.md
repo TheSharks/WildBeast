@@ -16,8 +16,20 @@ NODE_ENV=production node apps/discord/dist/cluster.mjs
 Configuration comes from the environment or `apps/discord/.env`, see
 [Configuration](/self-hosting/configuration/).
 
-The production image must be built with the monorepo root as its context so
-pnpm can resolve and compile the local workspace packages:
+Prebuilt multi-arch images (amd64 and arm64) are published to GitHub
+Container Registry:
+
+```bash
+docker pull ghcr.io/thesharks/wildbeast:latest
+docker run --env-file apps/discord/.env ghcr.io/thesharks/wildbeast:latest
+```
+
+`latest` tracks the newest stable release. Pin a version tag (`9`, `9.0`,
+or `9.0.0`) for controlled upgrades, or use `edge` for the latest master
+build.
+
+To build the image yourself instead, use the monorepo root as the build
+context so pnpm can resolve and compile the local workspace packages:
 
 ```bash
 docker build -f apps/discord/Dockerfile -t wildbeast .

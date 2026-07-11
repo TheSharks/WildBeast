@@ -38,6 +38,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Unit tests only: the docker-gated integration suites skip
+      # themselves when their service env vars are absent. Gates npm
+      # publish on green tests.
+      - name: Test
+        run: pnpm test
+
       # With pending changesets this opens/updates the "Version Packages"
       # PR; when that PR is merged, it publishes the bumped packages to npm
       # (authenticated via the OIDC trusted publisher, no token secret) and
