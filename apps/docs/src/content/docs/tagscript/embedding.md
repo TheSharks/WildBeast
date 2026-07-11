@@ -14,6 +14,8 @@ has the full option-by-option reference.
 npm install @thesharks/tagscript
 ```
 
+The package is ESM-only and needs Node 22 or newer.
+
 ## Rendering
 
 `render` takes the template and an options object and returns the output:
@@ -59,7 +61,8 @@ on only when you trust the source of the template, or with the guardrails
 below.
 
 `{fetch}` needs `enableFetch: true`. It already rejects non-HTTP schemes,
-blocks requests to private and loopback IP literals, streams and aborts
+blocks requests to private and loopback IP literals, follows redirects
+manually so every hop is validated against the same rules, streams and aborts
 oversized responses, and times out after 10 seconds. One gap remains: a
 hostname that resolves to a private address through DNS is not caught. For
 untrusted templates, set `fetchAllowedHosts` to an explicit allowlist; this is
@@ -74,19 +77,26 @@ await render('{fetch:https://api.example.com/data}', {
 
 `{js}` needs `enableJs: true` **and** a `sandbox` you provide, since TagScript
 does not execute code itself. Use [`isolated-vm`](https://github.com/laverdet/isolated-vm)
-or similar so scripts run with a memory limit and no access to the host; the
-README has a worked example.
+or similar so scripts run with a memory limit, an execution timeout, and no
+access to the host; the README has a worked example.
 
 ## Limits and safety
 
+Tag output is literal. Whatever a handler returns (an argument, a variable, a
+fetched body, a sandbox result) goes into the output as plain text and is
+never executed as TagScript. The only ways rendered text runs as a template
+are `{eval}` and stored tags from a `tagStore`, and each of those expansions
+counts against `maxIterations`. This is what makes caller-controlled data safe
+to pass in as `args`, `variables`, or `discord` context.
+
 Every bound from the [reference](/tagscript/tags/#limits) is an option:
 `maxIterations`, `maxDepth`, `maxOutputLength`, `maxFetchRequests`,
-`regexPatternLength`, and `maxRegexInputLength`. `inertHandlerOutput` lists the
-tags whose output is never re-rendered (default: `fetch`, `js`, `javascript`).
+`regexPatternLength`, `maxRegexInputLength`, and `maxRegexOperations`.
 
 Regex-based tags are additionally screened for [ReDoS](https://en.wikipedia.org/wiki/ReDoS)
-with [recheck](https://www.npmjs.com/package/recheck) before running. No static
-check is perfect; for a hard guarantee, back the tags with
+with [recheck](https://www.npmjs.com/package/recheck) before running, and only
+patterns the analysis positively verifies as safe execute. No static check is
+perfect; for a hard guarantee, back the tags with
 [RE2](https://github.com/uhop/node-re2), which runs every pattern in linear
 time. The defaults are safe for trusted input; tighten them when templates
 come from your users.

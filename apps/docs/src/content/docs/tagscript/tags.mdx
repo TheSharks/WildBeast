@@ -20,7 +20,7 @@ playground drawer at the bottom of the page to try tags as you read.
 | --- | --- |
 | `{upper:text}` | Uppercase. |
 | `{lower:text}` | Lowercase. |
-| `{length:text}` | Character count. |
+| `{length:text}` | Length in UTF-16 code units, matching JagTag (an emoji like 😀 counts as 2). |
 | `{reverse:text}` | Reverse the string (grapheme-aware, so emoji stay intact). |
 | `{oneline:text}` | Replace newlines with spaces. |
 | `{url:text}` | URL-encode the text. |
@@ -33,7 +33,8 @@ playground drawer at the bottom of the page to try tags as you read.
 
 `{math}` takes a chain of operands and operators and evaluates it with the
 usual operator precedence (`^` before `*`, `/`, `%` before `+`, `-`), so
-`{math:2|+|3|*|4}` is 14. When an operand isn't a number it falls back to
+`{math:2|+|3|*|4}` is 14. Exponentiation is right-associative, so
+`{math:2|^|3|^|2}` is 512. When an operand isn't a number it falls back to
 string mode: `+` concatenates and `-` removes the first match.
 
 | Tag | What it does |
@@ -86,8 +87,8 @@ command), these read them:
 | Tag | What it does |
 | --- | --- |
 | `{if:a\|operator\|b\|then\|else}` | Compare `a` and `b`; render `then` if true, otherwise the optional `else`. |
-| `{eval:template}` | Render a template built from other tags. |
-| `{ignore:text}` | Render `text` but swallow any errors inside it. |
+| `{eval:template}` | Execute rendered text as a template. This is the only tag that turns output back into TagScript. |
+| `{ignore:text}` | Render `text` literally without executing the tags inside it. |
 | `{note:text}` | A comment. Produces no output. |
 
 `{if}` operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `~` (fuzzy match, close
@@ -118,13 +119,14 @@ they reach outside the template. See [embedding](/tagscript/embedding/).
 
 | Tag | What it does |
 | --- | --- |
-| `{fetch:url\|method}` | Fetch content from a URL. Restricted to `http`/`https`, blocks private addresses, and is size- and time-limited. |
+| `{fetch:url\|method}` | Fetch content from a URL. Restricted to `http`/`https`, blocks private addresses (including on every redirect hop), and is size- and time-limited. |
 | `{js:code}` (alias `{javascript:code}`) | Run JavaScript in a sandbox. |
 
 ## Limits
 
-Rendering is bounded so no template can exhaust resources: a maximum number of
-render passes, nesting depth, total output length, fetch requests per render,
-and regex sizes. Reaching the pass limit while the output is still changing
-raises an error rather than returning half-rendered text. Embedders can tune
-every bound, see [embedding](/tagscript/embedding/#limits-and-safety).
+Rendering is bounded so no template can exhaust resources: a maximum number
+of `{eval}` and stored-tag expansions, nesting depth, total output length,
+fetch requests per render, regex operations per render, and regex sizes.
+Exceeding a bound raises an error rather than returning half-rendered text.
+Embedders can tune every bound, see
+[embedding](/tagscript/embedding/#limits-and-safety).

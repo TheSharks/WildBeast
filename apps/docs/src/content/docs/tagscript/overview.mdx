@@ -66,16 +66,23 @@ compute something once and reuse it:
 
 ## How rendering works
 
-TagScript renders repeatedly until the output stops changing, so a tag whose
-result contains more tags keeps resolving. This is what makes stored templates
-and variables composable: a variable holding `{upper:hi}` renders to `HI`, not
-the literal text.
+TagScript renders a template in one pass, innermost tags first. What a tag
+produces is plain text: it lands in the output exactly as returned, and is
+never read as more TagScript. A user argument or fetched response containing
+`{js:...}` renders as those characters instead of executing.
 
-That loop is bounded so a template can't run away: there are limits on the
-number of passes, the nesting depth, and the output length (see the
-[reference](/tagscript/tags/#limits)). A few tags, like `{fetch}` and `{js}`,
-have their output treated as literal text and never re-rendered, so a remote
-response or script result can't inject more tags.
+When you want rendered text to run as a template (say a variable holds
+`{upper:hi}` and you want `HI`), pass it through `{eval}`, the one tag whose
+job is exactly that:
+
+<TagScriptPlayground
+  variant="example"
+  examples={[{ template: '{set:tpl|{ignore:{upper:hi}}}{eval:{get:tpl}}' }]}
+/>
+
+Rendering is bounded so a template can't run away: there are limits on the
+nesting depth, the output length, and the number of `{eval}` and stored-tag
+expansions (see the [reference](/tagscript/tags/#limits)).
 
 ## Unknown tags
 
