@@ -68,6 +68,11 @@ const registry = {
     scope: 'guild',
     values: { free: 50, premium: 500 },
   },
+  'tags.maxPromotedPerGuild': {
+    description: 'Tags a guild may promote to guild slash commands',
+    scope: 'guild',
+    values: { free: 2, premium: 25 },
+  },
 } as const satisfies Record<string, LimitDefinition>
 ```
 
@@ -95,6 +100,51 @@ if (Number.isFinite(limit) && held >= limit) {
 
 `/tag create` is the worked example. Adding a new limit is two steps: add
 the registry entry, then check it at the enforcement site.
+
+## Upselling when a limit is hit
+
+A limit-reached reply should offer the upgrade that raises the cap.
+`premium/upsell.mts` centralizes the purchase button:
+
+```ts
+import { upsellForLimit } from '../../premium/upsell.mjs'
+
+return interaction.reply({
+  content: limitReachedMessage,
+  components: upsellForLimit(interaction, 'tags.maxPerGuild'),
+})
+```
+
+`upsellForLimit` resolves the invoker's tier by the limit's scope and
+returns a premium-style button for the SKU granting the lowest tier with
+a higher cap. It returns `undefined`, and the reply stays informational,
+when nothing should be sold: the invoker already holds the best
+applicable tier, no higher tier raises this particular cap, or no
+purchasable SKU is configured. The same rule keeps a premium guild at
+its premium cap from ever seeing a purchase button.
+
+The whole-command variant, `premiumUpsellComponents(tier, scope)`, backs
+the `Premium` precondition's denial reply and takes the target tier
+directly.
+
+## Promoted tag commands and entitlement lapse
+
+`/tag promote` (capped by `tags.maxPromotedPerGuild`) registers real
+guild slash commands, which raises the question of what happens when the
+subscription that allowed 25 of them goes away. The policy, implemented
+by the `guildTagCommandReconcile` scheduled task:
+
+- New promotions are blocked immediately; the limit check reads fresh
+  entitlements from the interaction.
+- Existing commands keep working until the nightly reconcile run, which
+  resolves each guild's tier from the [entitlement
+  mirror](#the-entitlement-mirror) and demotes the newest promotions
+  first until the guild fits its cap again.
+
+The daily cadence is the grace period: a billing hiccup or a stale
+mirror never insta-demotes a paying guild. The same run also heals
+drift in both directions, recreating registered commands Discord lost
+and deleting commands whose tag no longer exists.
 
 ## Remote limit overrides
 

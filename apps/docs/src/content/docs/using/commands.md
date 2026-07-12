@@ -133,17 +133,44 @@ delete it.
 ### /tag list
 
 Lists tag names, up to 100 at a time. Pass a user to only show tags they
-made.
+made. Promoted tags show as the slash command they answer to, like
+`/hello`.
 
 ### /tag info
 
-Shows who made a tag and how long its content is.
+Shows who made a tag and how long its content is, and whether it has been
+promoted to a command.
 
 ### /tag raw
 
 Shows a tag's content exactly as stored, without rendering the TagScript
 in it. The reply is ephemeral, handy for copying a tag you want to build
 on.
+
+### /tag promote and /tag demote
+
+Promoting a tag turns it into a slash command of its own in your server:
+instead of `/tag show name:hello`, members just run `/hello`.
+
+```
+/tag promote name:hello description:Greet someone
+```
+
+The description is optional and shows up in Discord's command picker.
+Promoted commands keep the optional `args` field, so arguments work
+exactly like they do with `/tag show`. `/tag demote` removes the command
+again; the tag itself stays untouched.
+
+You need the Manage Server permission to promote or demote. Command
+names follow Discord's rules: up to 32 characters, letters, numbers,
+dashes and underscores only, and they can't shadow one of the bot's own
+commands. Tag names get lowercased on promotion; a name Discord won't
+accept is rejected with the reason.
+
+A server can promote 2 tags; a premium subscription for the server
+raises that to 25. If the server's subscription lapses, existing
+commands keep working, but the newest promotions over the cap are
+removed during nightly maintenance.
 
 ## Commands don't show up?
 

@@ -34,6 +34,7 @@ Where slash commands register and what `/invite` hands out.
 | --- | --- | --- |
 | `WILDBEAST_DEV_GUILD_ID` | no | When set, slash commands register in this guild instead of globally. Guild commands update instantly, so development environments want this; production leaves it unset. Boot refuses the combination with `NODE_ENV=production`, because bulk-overwrite registration would remove every global command. |
 | `WILDBEAST_INVITE_OVERRIDE` | no | A URL for `/invite` to hand out instead of the generated OAuth link. |
+| `WILDBEAST_OWNER_IDS` | no | Comma-separated user ids allowed to run owner-only commands like [`/flags`](/development/features/#the-flags-owner-command). Unset means owner-only commands deny everyone. |
 
 ## Premium
 

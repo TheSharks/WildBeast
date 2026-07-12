@@ -104,6 +104,31 @@ Adding a command or task requires adding its key to the registry. The framework
 structure test loads every compiled piece and fails when a piece has no matching
 gate, so an unmanageable production feature cannot slip in silently.
 
+Surfaces that run outside any Sapphire piece need a standalone gate.
+`features.tags.guildCommands` is the worked example: promoted guild tag
+commands arrive as unknown chat input interactions, so the listener
+executing them evaluates that key itself before rendering anything.
+
+## The /flags owner command
+
+`/flags` gives operators live visibility into the whole flag surface
+without touching the OFREP service. It requires the `OwnerOnly`
+precondition (user ids from
+[`WILDBEAST_OWNER_IDS`](/self-hosting/configuration/#commands); unset
+denies everyone) and hides itself from guild members through default
+member permissions.
+
+`/flags list` evaluates every registered gate and experiment plus every
+`limits.*` flag with the invoking interaction's context, and shows each
+key with its value, evaluation source (`default`, `provider`, `cache`,
+`error`) and expiry, with expired flags pinned to a warning section on
+top. `/flags inspect key:<key>` shows one flag in full: definition
+metadata, default, variants, and any evaluation error.
+
+Expired flags also feed the `discord_feature_flags_expired` gauge, so
+dashboards and alerting see a forgotten temporary flag continuously
+rather than only in a boot log line.
+
 ## Experiments
 
 An experiment is a string flag whose allowed variants live in the registry:

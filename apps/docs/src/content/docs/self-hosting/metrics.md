@@ -27,6 +27,8 @@ Emitted by shard processes (`service.name = @thesharks/discord`).
 | `discord_select_menu_interaction_total` / `discord_select_menu_duration_seconds` | — | `custom_id`, `shard_id`, `scope` |
 | `discord_modal_submit_total` / `discord_modal_submit_duration_seconds` | — | `custom_id`, `shard_id`, `scope` |
 | `discord_autocomplete_interaction_total` / `discord_autocomplete_duration_seconds` | — | `command`, `shard_id`, `scope` |
+| `discord_guild_tag_command_promotions_total` | counter | `action` (`promote`, `demote`), `trigger` (`command`, `reconcile`, `tagDelete`, `orphanCleanup`) |
+| `discord_guild_tag_command_executions_total` | counter | `outcome` (`success`, `renderError`, `emptyOutput`, `orphaned`) |
 
 `scope` is `guild` or `dm`; `identifier` is the precondition that denied the
 command; component `custom_id` labels use the prefix before the first `:`
@@ -44,10 +46,13 @@ are targeting context and never metric labels.
 | `discord_feature_flag_evaluation_duration_seconds` | histogram | same as the evaluation counter |
 | `discord_experiment_exposures_total` | counter | `experiment`, `variant`, `source` (`default`, `provider`, `cache`, `error`, `invalid`) |
 | `discord_experiment_outcomes_total` | counter | `experiment`, `variant`, `outcome` (`success`, `error`), `operation_kind`, `operation` |
+| `discord_feature_flags_expired` | gauge | `scope` |
 
 An exposure is recorded once per experiment per command/task run, even if the
 assignment is read more than once. Outcomes are technical execution results,
-not product conversion events.
+not product conversion events. The expired gauge counts registry entries past
+their `expiresAt` date, so a forgotten temporary flag shows up on dashboards
+instead of only in a boot log line.
 
 ## Gateway and sessions
 

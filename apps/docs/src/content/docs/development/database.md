@@ -55,7 +55,7 @@ The tables, defined in `packages/drizzle/src/schema.ts`:
 
 | Table | Columns | Purpose |
 | --- | --- | --- |
-| `Tag` | `id`, `guildId`, `name` (citext, unique per guild), `content`, `authorId` | Stored [TagScript](/tagscript/overview/) templates, namespaced per guild. |
+| `Tag` | `id`, `guildId`, `name` (citext, unique per guild), `content`, `authorId`, `commandId`, `commandDescription`, `promotedBy`, `promotedAt` | Stored [TagScript](/tagscript/overview/) templates, namespaced per guild. The nullable promotion columns track tags promoted to [guild slash commands](/development/premium/#promoted-tag-commands-and-entitlement-lapse). |
 | `Guild` | `id` | Guilds known to the bot. |
 | `ApplicationCommandId` | `commandId`, `name`, `guildId` | Discord-assigned command ids, fed back to Sapphire as `idHints` on the next boot. |
 | `Entitlement` | `id`, `skuId`, `userId`, `guildId`, `type`, `deleted`, `startsAt`, `endsAt` | Local mirror of Discord's [premium entitlements](/development/premium/#the-entitlement-mirror), for premium checks outside interactions. |
