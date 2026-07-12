@@ -5,6 +5,7 @@ import '@thesharks/analytics/register'
 
 import {
   ApplicationCommandRegistries,
+  container,
   LogLevel,
   RegisterBehavior,
   SapphireClient,
@@ -63,6 +64,16 @@ const client = new SapphireClient({
       '..',
       'languages',
     ),
+    // Locales without a translation (e.g. a community server set to "nl")
+    // must fall back to en-US; the plugin's default throws on unloaded
+    // locales instead.
+    fetchLanguage: (context) => {
+      const locale =
+        context.interactionGuildLocale ??
+        context.interactionLocale ??
+        context.guild?.preferredLocale
+      return locale && container.i18n.languages.has(locale) ? locale : 'en-US'
+    },
     hmr,
   },
 })
