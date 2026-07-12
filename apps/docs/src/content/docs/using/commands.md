@@ -31,6 +31,8 @@ long the round trip to Discord took, and the websocket latency of the shard
 serving your server. Useful when the bot feels slow and you want to tell
 whether the delay is on Discord's side.
 
+![The bot replying to /ping with how long the reply took and the websocket latency](../../../assets/screenshots/ping.png)
+
 ### /info
 
 Shows what the bot is running: guild count, uptime, shard and cluster,
@@ -114,13 +116,19 @@ The optional `args` field passes space-separated arguments to the tag,
 readable through the [argument tags](/tagscript/tags/). Mentions in tag
 output never ping anyone.
 
+![The bot rendering the hello tag as "Hi, dougley!"](../../../assets/screenshots/tag-show.png)
+
 ### /tag create
 
 Saves a new tag. Names are unique within the server, up to 32 characters.
 
 ```
-/tag create name:hello content:Hi, {username}!
+/tag create name:hello content:Hi, {usertag}!
 ```
+
+![The tag create command composed in the Discord message box with name and content filled in](../../../assets/screenshots/tag-create-compose.png)
+
+![The bot confirming it created the hello tag](../../../assets/screenshots/tag-create.png)
 
 A server can hold up to 50 tags; a premium subscription for the server
 raises that to 500.
@@ -135,6 +143,8 @@ delete it.
 Lists tag names, up to 100 at a time. Pass a user to only show tags they
 made. Promoted tags show as the slash command they answer to, like
 `/hello`.
+
+![The bot listing one tag, shown as the promoted command /hello](../../../assets/screenshots/tag-list.png)
 
 ### /tag info
 
@@ -156,10 +166,20 @@ instead of `/tag show name:hello`, members just run `/hello`.
 /tag promote name:hello description:Greet someone
 ```
 
+![The tag promote command composed in the Discord message box with name and description filled in](../../../assets/screenshots/tag-promote-compose.png)
+
+![The bot confirming the hello tag now answers to /hello in this server](../../../assets/screenshots/tag-promote.png)
+
 The description is optional and shows up in Discord's command picker.
 Promoted commands keep the optional `args` field, so arguments work
 exactly like they do with `/tag show`. `/tag demote` removes the command
 again; the tag itself stays untouched.
+
+![The Discord command picker showing /hello as a command of its own, with the description "Greet someone"](../../../assets/screenshots/hello-picker.png)
+
+Members now run the tag like any other command:
+
+![The bot replying "Hi, dougley!" after a member used /hello](../../../assets/screenshots/hello-run.png)
 
 You need the Manage Server permission to promote or demote. Command
 names follow Discord's rules: up to 32 characters, letters, numbers,
