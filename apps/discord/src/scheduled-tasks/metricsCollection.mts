@@ -1,5 +1,6 @@
 import type { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
 import { type Attributes, createGauge, metrics } from '@thesharks/analytics'
+import { expiredFlagKeys } from '../features/registry.mjs'
 import { TracedScheduledTask } from '../structures/task.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
@@ -52,6 +53,11 @@ const wsLatencyGauge = createGauge(
   'Discord WebSocket latency in seconds',
   's',
 )
+const expiredFlagsGauge = createGauge(
+  '@thesharks/discord',
+  'discord_feature_flags_expired',
+  'Registered runtime flags past their expiry date',
+)
 
 export class MetricsCollectionTask extends TracedScheduledTask {
   public constructor(
@@ -85,6 +91,9 @@ export class MetricsCollectionTask extends TracedScheduledTask {
     botMemoryGauge.set(memory.heapUsed, { ...labels, type: 'heap_used' })
     botMemoryGauge.set(memory.heapTotal, { ...labels, type: 'heap_total' })
     botMemoryGauge.set(memory.rss, { ...labels, type: 'rss' })
+    // Continuously observable (dashboards, alerting), unlike the one-shot
+    // boot warning in initFeatureFlags.
+    expiredFlagsGauge.set(expiredFlagKeys().length, labels)
   }
 
   private updateDiscordMetrics() {

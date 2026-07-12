@@ -11,6 +11,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { FeaturePreconditionIdentifier } from '../../preconditions/Feature.mjs'
+import { OwnerOnlyPreconditionIdentifier } from '../../preconditions/OwnerOnly.mjs'
 import { PremiumPreconditionIdentifier } from '../../preconditions/Premium.mjs'
 import { isPremiumTier } from '../../premium/tiers.mjs'
 import { premiumUpsellComponents } from '../../premium/upsell.mjs'
@@ -83,6 +84,14 @@ async function describeDenial(
       content: (await resolveKey(
         interaction,
         'system/errors:feature_unavailable',
+      )) as string,
+    }
+  }
+  if (error.identifier === OwnerOnlyPreconditionIdentifier) {
+    return {
+      content: (await resolveKey(
+        interaction,
+        'system/errors:owner_only',
       )) as string,
     }
   }

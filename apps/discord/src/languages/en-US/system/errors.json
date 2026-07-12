@@ -5,5 +5,6 @@
   "report": "If you continue to see this error, please report it.",
   "cooldown": "This command is on cooldown, try again {{resumeAt}}",
   "feature_unavailable": "This command is temporarily unavailable.",
-  "premium_required": "This command requires a premium subscription."
+  "premium_required": "This command requires a premium subscription.",
+  "owner_only": "This command is reserved for the bot owner."
 }

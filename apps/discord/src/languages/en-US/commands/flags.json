@@ -1,0 +1,4 @@
+{
+  "listEmpty": "No flags matched.",
+  "unknownKey": "There's no flag named `{{key}}`."
+}

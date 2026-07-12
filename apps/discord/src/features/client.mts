@@ -411,19 +411,26 @@ export function experimentFlagDetails<Key extends ExperimentFlagKey>(
 
 /** Resolve a remote limit override; the tier's registry value is both the
  * flag default and the answer on any failure. */
-export async function limitFlagValue(
+export function limitFlagDetails(
   key: LimitFlagKey,
   fallback: number,
   context: EvaluationContext,
-): Promise<number> {
-  const details = await safelyEvaluate({
+): Promise<EvaluationDetails<number>> {
+  return safelyEvaluate({
     key,
     fallback,
     context,
     kind: 'limit',
     evaluate: (client) => client.getNumberDetails(key, fallback, context),
   })
-  return details.value
+}
+
+export async function limitFlagValue(
+  key: LimitFlagKey,
+  fallback: number,
+  context: EvaluationContext,
+): Promise<number> {
+  return (await limitFlagDetails(key, fallback, context)).value
 }
 
 export async function closeFeatureFlags(): Promise<void> {

@@ -119,6 +119,7 @@ export const flagRegistry = {
     'cat',
     'dice',
     'dog',
+    'flags',
     'info',
     'inspire',
     'invite',

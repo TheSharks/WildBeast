@@ -56,6 +56,15 @@ export const envSchema = z
           ctx.addIssue({ code: 'custom', message: (error as Error).message })
         }
       }),
+    // Comma-separated user ids allowed to run owner-only commands (/flags).
+    // Unset means owner-only commands deny everyone.
+    WILDBEAST_OWNER_IDS: z
+      .string()
+      .regex(
+        /^\d+(,\s*\d+)*$/,
+        'WILDBEAST_OWNER_IDS must be comma-separated user ids',
+      )
+      .optional(),
     // Base URL of an OFREP-compatible feature flag service (flagd, GO
     // Feature Flag, ...). Optional: without it, command/task gates,
     // experiments and remote limit overrides use their in-code defaults.
