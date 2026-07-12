@@ -54,6 +54,13 @@ Trace sampling is error-biased: command traces are always kept (that's
 where user-facing failures live), recurring scheduled tasks are sampled at
 5% in production, and everything else at 20% (100% outside production).
 
+Every event carries a release identifier so Sentry can tell you which
+version introduced a regression. The official Docker images bake it in as
+`SENTRY_RELEASE` (matching the image tag, `@thesharks/discord@9.0.0` for
+example). If you run from source, set `SENTRY_RELEASE` yourself, or events
+fall back to the package version when launched through pnpm scripts, then
+the `GIT_COMMIT` environment variable, then `dev`.
+
 Beyond errors and traces, the SDK is wired for the rest of the Sentry
 platform:
 

@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node'
-import { afterAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import type { TelemetryInitResult } from '../src/telemetry.js'
 import { initOpenTelemetry } from '../src/telemetry.js'
 import type { TelemetryConfig } from '../src/types.js'
@@ -93,5 +93,34 @@ describe('Sentry init overrides', () => {
     expect(client.getOptions().tracePropagationTargets).toEqual([
       'https://internal.svc',
     ])
+  })
+})
+
+describe('release resolution', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('prefers SENTRY_RELEASE over the package version', () => {
+    vi.stubEnv('SENTRY_RELEASE', '@thesharks/discord@9.9.9')
+    const client = init()
+    expect(client.getOptions().release).toBe('@thesharks/discord@9.9.9')
+  })
+
+  it('falls back to the commit when no release or version is known', () => {
+    // Docker ARGs surface unset values as empty strings, not undefined.
+    vi.stubEnv('SENTRY_RELEASE', '')
+    vi.stubEnv('npm_package_version', undefined)
+    vi.stubEnv('GIT_COMMIT', 'abc1234')
+    const client = init()
+    expect(client.getOptions().release).toBe('abc1234')
+  })
+
+  it('reports dev when nothing identifies the build', () => {
+    vi.stubEnv('SENTRY_RELEASE', '')
+    vi.stubEnv('npm_package_version', undefined)
+    vi.stubEnv('GIT_COMMIT', '')
+    const client = init()
+    expect(client.getOptions().release).toBe('dev')
   })
 })

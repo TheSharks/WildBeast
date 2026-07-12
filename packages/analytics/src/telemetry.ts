@@ -401,8 +401,16 @@ export function initOpenTelemetry(
 
   const environment =
     config?.environment ?? process.env.NODE_ENV ?? 'development'
+  // Published images bake SENTRY_RELEASE in at build time; npm scripts
+  // expose the package version; a bare `node dist/...` falls back to the
+  // commit when the image build provided one. || rather than ?? because
+  // Dockerfile ARGs surface as empty strings when unset.
   const release =
-    config?.sentry?.release ?? process.env.npm_package_version ?? 'dev'
+    config?.sentry?.release ??
+    (process.env.SENTRY_RELEASE ||
+      process.env.npm_package_version ||
+      process.env.GIT_COMMIT ||
+      'dev')
 
   const profileSessionSampleRate = config?.sentry?.profileSessionSampleRate ?? 0
   const eventLoopBlockThreshold =
