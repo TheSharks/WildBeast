@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
@@ -9,6 +10,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 
 /**
@@ -32,12 +34,26 @@ export const tags = pgTable(
     // Discord snowflakes exceed Number.MAX_SAFE_INTEGER, so they must map
     // to JS BigInt rather than number.
     authorId: bigint('authorId', { mode: 'bigint' }).notNull(),
+    // Set when the tag is promoted to a guild-scoped slash command: the
+    // command id Discord assigned. Null means not promoted.
+    commandId: bigint('commandId', { mode: 'bigint' }),
+    // The description sent to Discord at promotion, kept so reconciliation
+    // can recreate the command verbatim.
+    commandDescription: text('commandDescription'),
+    promotedBy: bigint('promotedBy', { mode: 'bigint' }),
+    promotedAt: timestamp('promotedAt', { withTimezone: true }),
   },
   (table) => [
     unique('Tag_guildId_name_key').on(table.guildId, table.name),
     // Trigram index (pg_trgm) backing substring autocomplete and
     // similarity() suggestions; queries always filter by guild first.
     index('Tag_name_trgm_idx').using('gin', table.name.op('gin_trgm_ops')),
+    uniqueIndex('Tag_commandId_key').on(table.commandId),
+    // Promoted tags per guild: cap counting and reconcile scans only ever
+    // read promoted rows, so keep the index that small.
+    index('Tag_promoted_guildId_idx')
+      .on(table.guildId)
+      .where(sql`"commandId" IS NOT NULL`),
   ],
 )
 

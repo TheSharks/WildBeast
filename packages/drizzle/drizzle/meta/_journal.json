@@ -36,6 +36,13 @@
       "when": 1783690208723,
       "tag": "0004_per-guild-tags",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783771374712,
+      "tag": "0005_promoted-tags",
+      "breakpoints": true
     }
   ]
 }
