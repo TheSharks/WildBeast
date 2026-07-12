@@ -23,10 +23,13 @@
   "tagList": "list",
   "tagInfo": "info",
   "tagRaw": "raw",
+  "tagPromote": "promote",
+  "tagDemote": "demote",
   "tagOptionName": "name",
   "tagOptionContent": "content",
   "tagOptionArgs": "args",
   "tagOptionAuthor": "author",
+  "tagOptionDescription": "description",
   "urbandictionary": "urbandictionary",
   "urbanOptionQuery": "query"
 }

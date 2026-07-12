@@ -3,9 +3,8 @@ import type { ListenerOptions, UserError } from '@sapphire/framework'
 import { Events, Identifiers, Listener } from '@sapphire/framework'
 import { resolveKey } from '@sapphire/plugin-i18next'
 import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
+  type ActionRowBuilder,
+  type ButtonBuilder,
   type ChatInputCommandInteraction,
   type ClientEvents,
   type ContextMenuCommandInteraction,
@@ -13,8 +12,8 @@ import {
 } from 'discord.js'
 import { FeaturePreconditionIdentifier } from '../../preconditions/Feature.mjs'
 import { PremiumPreconditionIdentifier } from '../../preconditions/Premium.mjs'
-import { skuIdForTier } from '../../premium/skus.mjs'
 import { isPremiumTier } from '../../premium/tiers.mjs'
+import { premiumUpsellComponents } from '../../premium/upsell.mjs'
 
 interface DenialReply {
   content: string
@@ -91,25 +90,15 @@ async function describeDenial(
     const context = Object(error.context)
     const required = String(Reflect.get(context, 'requiredTier') ?? 'premium')
     const scope = Reflect.get(context, 'requiredScope')
-    // A premium-style button opens Discord's purchase flow for the SKU
-    // that grants the missing tier; without a configured SKU the denial
-    // is just informational.
-    const skuId = skuIdForTier(
-      isPremiumTier(required) ? required : 'premium',
-      scope === 'user' || scope === 'guild' ? scope : 'any',
-    )
     return {
       content: (await resolveKey(
         interaction,
         'system/errors:premium_required',
       )) as string,
-      components: skuId
-        ? [
-            new ActionRowBuilder<ButtonBuilder>().addComponents(
-              new ButtonBuilder().setStyle(ButtonStyle.Premium).setSKUId(skuId),
-            ),
-          ]
-        : undefined,
+      components: premiumUpsellComponents(
+        isPremiumTier(required) ? required : 'premium',
+        scope === 'user' || scope === 'guild' ? scope : 'any',
+      ),
     }
   }
   // Other precondition messages are framework-provided English; they gain

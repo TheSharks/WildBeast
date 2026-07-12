@@ -23,10 +23,13 @@
   "tagList": "List available tags",
   "tagInfo": "Show who made a tag",
   "tagRaw": "Show the unrendered content of a tag",
+  "tagPromote": "Turn a tag into a slash command of its own",
+  "tagDemote": "Remove a tag's slash command",
   "tagOptionName": "The name of the tag",
   "tagOptionContent": "What the tag should say; TagScript is allowed here",
   "tagOptionArgs": "Space-separated arguments passed to the tag",
   "tagOptionAuthor": "Only list tags made by this user",
+  "tagOptionDescription": "What the new command's description should say",
   "urbandictionary": "Search Urban Dictionary",
   "urbanOptionQuery": "What to search for"
 }

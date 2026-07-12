@@ -76,6 +76,18 @@ function commandGates<const Names extends readonly string[]>(
   }
 }
 
+function guildTagCommandsGate(): GateFlagDefinition {
+  return {
+    kind: 'gate',
+    type: 'boolean',
+    defaultValue: true,
+    surface: 'command',
+    description: 'Whether promoted guild tag commands may run',
+    owner: 'discord',
+    targets: interactionTargets,
+  }
+}
+
 function taskGate(description: string): GateFlagDefinition {
   return {
     kind: 'gate',
@@ -120,6 +132,12 @@ export const flagRegistry = {
   'features.tasks.metricsCollection': taskGate(
     'Whether runtime and Discord metrics collection may run',
   ),
+  'features.tasks.guildTagCommandReconcile': taskGate(
+    'Whether promoted guild tag command reconciliation may run',
+  ),
+  // Promoted guild tag commands run outside any Sapphire command piece, so
+  // the tag command's gate can't cover them; this one does.
+  'features.tags.guildCommands': guildTagCommandsGate(),
   'experiments.tags.notFoundReply': experiment({
     defaultValue: 'suggestion',
     variants: ['plain', 'suggestion'],

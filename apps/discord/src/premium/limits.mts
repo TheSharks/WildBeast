@@ -31,6 +31,13 @@ const registry = {
     scope: 'guild',
     values: { free: 50, premium: 500 },
   },
+  'tags.maxPromotedPerGuild': {
+    description: 'Tags a guild may promote to guild slash commands',
+    scope: 'guild',
+    // Discord allows 100 guild commands per app; the premium cap stays far
+    // below so promoted tags never crowd out the daily create budget.
+    values: { free: 2, premium: 25 },
+  },
 } as const satisfies Record<string, LimitDefinition>
 
 export type LimitKey = keyof typeof registry

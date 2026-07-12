@@ -10,21 +10,33 @@ import {
   db,
   eq,
   ilike,
+  isNotNull,
   or,
   sql,
   tags,
 } from '@thesharks/drizzle'
-import { RenderError, render } from '@thesharks/tagscript'
 import {
   escapeCodeBlock,
   InteractionContextType,
   MessageFlags,
+  PermissionFlagsBits,
   type SlashCommandStringOption,
 } from 'discord.js'
 import { commandFlagContext } from '../../features/commandContext.mjs'
 import { experimentVariant } from '../../features/experiments.mjs'
 import { limitFor } from '../../premium/entitlements.mjs'
+import { upsellForLimit } from '../../premium/upsell.mjs'
 import { TracedSubcommand } from '../../structures/subcommand.mjs'
+import {
+  createGuildTagCommand,
+  deleteGuildTagCommand,
+  isCommandCapError,
+  MAX_COMMAND_DESCRIPTION_LENGTH,
+  promotionsCounter,
+  reservedCommandNames,
+  tagCommandName,
+} from '../../utils/guildTagCommands.mjs'
+import { replyWithRenderedTag } from '../../utils/tagRender.mjs'
 
 const MAX_LISTED_TAGS = 100
 
@@ -40,6 +52,8 @@ const MAX_LISTED_TAGS = 100
     { name: 'list', chatInputRun: 'chatInputList' },
     { name: 'info', chatInputRun: 'chatInputInfo' },
     { name: 'raw', chatInputRun: 'chatInputRaw' },
+    { name: 'promote', chatInputRun: 'chatInputPromote' },
+    { name: 'demote', chatInputRun: 'chatInputDemote' },
   ],
 })
 export class TagCommand extends TracedSubcommand {
@@ -143,6 +157,28 @@ export class TagCommand extends TracedSubcommand {
             'commands/descriptions:tagRaw',
           ).addStringOption((option) => nameOption(option)),
         )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:tagPromote',
+            'commands/descriptions:tagPromote',
+          )
+            .addStringOption((option) => nameOption(option))
+            .addStringOption((option) =>
+              applyLocalizedBuilder(
+                option,
+                'commands/names:tagOptionDescription',
+                'commands/descriptions:tagOptionDescription',
+              ).setMaxLength(MAX_COMMAND_DESCRIPTION_LENGTH),
+            ),
+        )
+        .addSubcommand((sub) =>
+          applyLocalizedBuilder(
+            sub,
+            'commands/names:tagDemote',
+            'commands/descriptions:tagDemote',
+          ).addStringOption((option) => nameOption(option)),
+        )
     })
   }
 
@@ -164,6 +200,10 @@ export class TagCommand extends TracedSubcommand {
         and(
           eq(tags.guildId, BigInt(interaction.guildId)),
           or(ilike(tags.name, pattern), sql`${tags.name} % ${focused}`),
+          // Demoting only makes sense for promoted tags.
+          interaction.options.getSubcommand(false) === 'demote'
+            ? isNotNull(tags.commandId)
+            : undefined,
         ),
       )
       .orderBy(sql`similarity(${tags.name}, ${focused}) DESC`, asc(tags.name))
@@ -182,52 +222,7 @@ export class TagCommand extends TracedSubcommand {
       return this.replyNotFound(interaction)
     }
 
-    let output: string
-    try {
-      const result = await render(tag.content, {
-        maxOutputLength: 2000,
-        args:
-          interaction.options.getString('args')?.split(/\s+/).filter(Boolean) ??
-          [],
-        discord: {
-          user: {
-            id: interaction.user.id,
-            tag: interaction.user.tag,
-            mention: interaction.user.toString(),
-          },
-          channelId: interaction.channelId,
-          serverId: interaction.guildId ?? undefined,
-          server: interaction.guild?.name,
-        },
-      })
-      output = result.output.trim()
-    } catch (error) {
-      if (error instanceof RenderError) {
-        return interaction.reply({
-          content: (await resolveKey(interaction, 'commands/tag:renderFailed', {
-            error: error.message,
-          })) as string,
-          flags: MessageFlags.Ephemeral,
-        })
-      }
-      throw error
-    }
-
-    if (!output) {
-      return interaction.reply({
-        content: (await resolveKey(
-          interaction,
-          'commands/tag:emptyOutput',
-        )) as string,
-        flags: MessageFlags.Ephemeral,
-      })
-    }
-
-    return interaction.reply({
-      content: output,
-      // Tag content is user-authored: never let it ping anyone.
-      allowedMentions: { parse: [] },
-    })
+    return replyWithRenderedTag(interaction, tag.content)
   }
 
   public async chatInputCreate(
@@ -325,6 +320,24 @@ export class TagCommand extends TracedSubcommand {
 
     await db.delete(tags).where(eq(tags.id, tag.id))
 
+    // The guild command must not outlive its tag; reconciliation mops up
+    // if this delete fails.
+    if (tag.commandId !== null) {
+      try {
+        await deleteGuildTagCommand(
+          interaction.client,
+          interaction.guildId,
+          tag.commandId,
+        )
+        promotionsCounter.add(1, { action: 'demote', trigger: 'tagDelete' })
+      } catch (error) {
+        this.container.logger.warn(
+          `Could not delete the guild command of deleted tag ${tag.name}`,
+          error,
+        )
+      }
+    }
+
     return interaction.reply({
       content: (await resolveKey(interaction, 'commands/tag:deleted', {
         name: tag.name,
@@ -339,7 +352,7 @@ export class TagCommand extends TracedSubcommand {
   ) {
     const author = interaction.options.getUser('author')
     const rows = await db
-      .select({ name: tags.name })
+      .select({ name: tags.name, commandId: tags.commandId })
       .from(tags)
       .where(
         and(
@@ -363,7 +376,14 @@ export class TagCommand extends TracedSubcommand {
     return interaction.reply({
       content: (await resolveKey(interaction, 'commands/tag:list', {
         count: rows.length,
-        names: rows.map((row) => `\`${row.name}\``).join(', '),
+        // Promoted tags read as the slash command they answer to.
+        names: rows
+          .map((row) =>
+            row.commandId !== null
+              ? `\`/${row.name.toLowerCase()}\``
+              : `\`${row.name}\``,
+          )
+          .join(', '),
       })) as string,
       allowedMentions: { parse: [] },
     })
@@ -377,12 +397,21 @@ export class TagCommand extends TracedSubcommand {
       return this.replyNotFound(interaction)
     }
 
+    const info = (await resolveKey(interaction, 'commands/tag:info', {
+      name: tag.name,
+      authorId: tag.authorId.toString(),
+      length: tag.content.length,
+    })) as string
+    const promoted =
+      tag.commandId !== null
+        ? ((await resolveKey(interaction, 'commands/tag:infoPromoted', {
+            name: tag.name.toLowerCase(),
+            promotedBy: tag.promotedBy?.toString(),
+          })) as string)
+        : ''
+
     return interaction.reply({
-      content: (await resolveKey(interaction, 'commands/tag:info', {
-        name: tag.name,
-        authorId: tag.authorId.toString(),
-        length: tag.content.length,
-      })) as string,
+      content: info + promoted,
       allowedMentions: { parse: [] },
     })
   }
@@ -399,6 +428,202 @@ export class TagCommand extends TracedSubcommand {
     const content = escapeCodeBlock(tag.content).slice(0, 1_900)
     return interaction.reply({
       content: `\`\`\`\n${content}\n\`\`\``,
+      flags: MessageFlags.Ephemeral,
+    })
+  }
+
+  public async chatInputPromote(
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
+  ) {
+    if (!this.canManageTagCommands(interaction)) {
+      return this.replyMissingPermission(interaction)
+    }
+
+    const tag = await this.findTag(interaction)
+    if (!tag) {
+      return this.replyNotFound(interaction)
+    }
+    if (tag.commandId !== null) {
+      return interaction.reply({
+        content: (await resolveKey(
+          interaction,
+          'commands/tag:alreadyPromoted',
+          {
+            name: tag.name,
+          },
+        )) as string,
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+      })
+    }
+
+    const commandName = tagCommandName(tag.name, reservedCommandNames())
+    if (!commandName.ok) {
+      return interaction.reply({
+        content: (await resolveKey(
+          interaction,
+          commandName.reason === 'reserved'
+            ? 'commands/tag:promoteNameCollision'
+            : 'commands/tag:promoteInvalidName',
+          { name: tag.name },
+        )) as string,
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+      })
+    }
+
+    const description =
+      interaction.options.getString('description') ??
+      ((await resolveKey(
+        interaction,
+        'commands/tag:defaultCommandDescription',
+        { name: tag.name },
+      )) as string)
+
+    // Subscription-controlled cap; same per-guild serialization as tag
+    // creation so concurrent promotions cannot overshoot it. Registering
+    // with Discord inside the transaction means a REST failure rolls the
+    // promotion back.
+    const limit = await limitFor(interaction, 'tags.maxPromotedPerGuild')
+    try {
+      const outcome = await db.transaction(async (tx) => {
+        await tx.execute(
+          sql`SELECT pg_advisory_xact_lock(hashtextextended(${interaction.guildId}, 0))`,
+        )
+        if (Number.isFinite(limit)) {
+          const [held] = await tx
+            .select({ value: count() })
+            .from(tags)
+            .where(
+              and(
+                eq(tags.guildId, BigInt(interaction.guildId)),
+                isNotNull(tags.commandId),
+              ),
+            )
+          if ((held?.value ?? 0) >= limit) return 'limit' as const
+        }
+
+        const commandId = await createGuildTagCommand(
+          interaction.client,
+          interaction.guildId,
+          commandName.name,
+          description,
+        )
+        await tx
+          .update(tags)
+          .set({
+            commandId,
+            commandDescription: description,
+            promotedBy: BigInt(interaction.user.id),
+            promotedAt: new Date(),
+          })
+          .where(eq(tags.id, tag.id))
+        return 'promoted' as const
+      })
+
+      if (outcome === 'limit') {
+        return interaction.reply({
+          content: (await resolveKey(
+            interaction,
+            'commands/tag:promoteLimitReached',
+            { limit },
+          )) as string,
+          components: upsellForLimit(interaction, 'tags.maxPromotedPerGuild'),
+          flags: MessageFlags.Ephemeral,
+        })
+      }
+    } catch (error) {
+      if (!isCommandCapError(error)) {
+        this.container.logger.warn(
+          `Could not promote tag ${tag.name} in guild ${interaction.guildId}`,
+          error,
+        )
+      }
+      return interaction.reply({
+        content: (await resolveKey(interaction, 'commands/tag:promoteFailed', {
+          name: commandName.name,
+          error: error instanceof Error ? error.message : String(error),
+        })) as string,
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+      })
+    }
+
+    promotionsCounter.add(1, { action: 'promote', trigger: 'command' })
+    return interaction.reply({
+      content: (await resolveKey(interaction, 'commands/tag:promoted', {
+        name: tag.name,
+        command: commandName.name,
+      })) as string,
+      allowedMentions: { parse: [] },
+    })
+  }
+
+  public async chatInputDemote(
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
+  ) {
+    if (!this.canManageTagCommands(interaction)) {
+      return this.replyMissingPermission(interaction)
+    }
+
+    const tag = await this.findTag(interaction)
+    if (!tag) {
+      return this.replyNotFound(interaction)
+    }
+    if (tag.commandId === null) {
+      return interaction.reply({
+        content: (await resolveKey(interaction, 'commands/tag:notPromoted', {
+          name: tag.name,
+        })) as string,
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+      })
+    }
+
+    // Discord first: if the delete fails the row stays promoted and the
+    // command keeps working, which is the consistent state.
+    await deleteGuildTagCommand(
+      interaction.client,
+      interaction.guildId,
+      tag.commandId,
+    )
+    await db
+      .update(tags)
+      .set({
+        commandId: null,
+        commandDescription: null,
+        promotedBy: null,
+        promotedAt: null,
+      })
+      .where(eq(tags.id, tag.id))
+
+    promotionsCounter.add(1, { action: 'demote', trigger: 'command' })
+    return interaction.reply({
+      content: (await resolveKey(interaction, 'commands/tag:demoted', {
+        name: tag.name,
+        command: tag.name.toLowerCase(),
+      })) as string,
+      flags: MessageFlags.Ephemeral,
+      allowedMentions: { parse: [] },
+    })
+  }
+
+  /** Registering a guild-wide slash command is guild administration, not an
+   * authorship perk — tag ownership deliberately doesn't count here. */
+  private canManageTagCommands(
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
+  ): boolean {
+    return interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)
+  }
+
+  private async replyMissingPermission(
+    interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
+  ) {
+    return interaction.reply({
+      content: (await resolveKey(
+        interaction,
+        'commands/tag:promoteMissingPermission',
+      )) as string,
       flags: MessageFlags.Ephemeral,
     })
   }

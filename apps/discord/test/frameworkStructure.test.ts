@@ -142,7 +142,10 @@ describe('piece loading', () => {
         Object.hasOwn(task, 'run'),
         `${task.name} should have a traced run wrapper`,
       ).toBe(true)
-      expect(task.interval, `${task.name} should have an interval`).toBeTruthy()
+      expect(
+        task.interval ?? task.pattern,
+        `${task.name} should have a schedule`,
+      ).toBeTruthy()
       expect(
         taskGateKey(task.name),
         `${task.name} should have a registered runtime gate`,

@@ -11,5 +11,17 @@
   "emptyOutput": "That tag rendered to an empty message.",
   "listEmpty": "No tags found.",
   "list": "{{count}} tag(s): {{names}}",
-  "info": "`{{name}}` was made by <@{{authorId}}> and is {{length}} characters long."
+  "info": "`{{name}}` was made by <@{{authorId}}> and is {{length}} characters long.",
+  "infoPromoted": " It also answers to `/{{name}}`, promoted by <@{{promotedBy}}>.",
+  "promoted": "The tag `{{name}}` now answers to `/{{command}}` in this server.",
+  "demoted": "Removed the `/{{command}}` command. The tag `{{name}}` itself is untouched.",
+  "notPromoted": "The tag `{{name}}` doesn't have a command.",
+  "alreadyPromoted": "The tag `{{name}}` already has a command.",
+  "promoteLimitReached": "This server has reached the maximum number of tag commands it can have ({{limit}}).",
+  "promoteInvalidName": "`{{name}}` can't be a command name. Command names can hold up to 32 letters, numbers, dashes and underscores.",
+  "promoteNameCollision": "`{{name}}` would clash with one of the bot's own commands.",
+  "promoteMissingPermission": "You need the Manage Server permission to manage tag commands.",
+  "promoteFailed": "Discord wouldn't register `/{{name}}`: {{error}}",
+  "promotedCommandGone": "The tag behind this command no longer exists, so the command is being removed.",
+  "defaultCommandDescription": "Tag \"{{name}}\" from this server"
 }
