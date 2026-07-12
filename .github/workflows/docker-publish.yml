@@ -46,6 +46,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # For the version label: the changesets version on release tags,
+      # edge on master. Mirrors the extraction in the publish job.
+      - name: Extract version from tag
+        id: version
+        if: github.ref_type == 'tag'
+        run: echo "version=${GITHUB_REF_NAME#@thesharks/discord@}" >> "$GITHUB_OUTPUT"
+
+      # Baked into the image so runtime Sentry events line up with the
+      # release created in the sentry job: the tag name verbatim on
+      # releases, version+commit on master builds.
+      - name: Compute Sentry release
+        id: sentry
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            release="$GITHUB_REF_NAME"
+          else
+            version=$(node -p "require('./apps/discord/package.json').version")
+            release="@thesharks/discord@${version}+${GITHUB_SHA::7}"
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v6
@@ -53,11 +74,19 @@ jobs:
           context: .
           file: apps/discord/Dockerfile
           platforms: ${{ matrix.platform }}
-          build-args: COMMIT=${{ github.sha }}
-          # The source label links the GHCR package to this repository.
+          build-args: |
+            COMMIT=${{ github.sha }}
+            SENTRY_RELEASE=${{ steps.sentry.outputs.release }}
           labels: |
+            org.opencontainers.image.title=WildBeast
+            org.opencontainers.image.description=A modular Discord bot that stays fast, observable, and easy to extend.
+            org.opencontainers.image.url=https://wildbeast.guide
+            org.opencontainers.image.documentation=https://wildbeast.guide/self-hosting/running-in-production/
             org.opencontainers.image.source=https://github.com/TheSharks/WildBeast
+            org.opencontainers.image.licenses=MPL-2.0 AND LicenseRef-WildBeast-Addendums
+            org.opencontainers.image.version=${{ steps.version.outputs.version || 'edge' }}
             org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.platform }}
           cache-to: type=gha,scope=${{ matrix.platform }},mode=max
@@ -134,3 +163,63 @@ jobs:
 
       - name: Inspect
         run: docker buildx imagetools inspect "$IMAGE:${{ steps.meta.outputs.version }}"
+
+  # Tell Sentry about the release: associate commits and upload the
+  # compiled sourcemaps so production stack traces symbolicate. Gated on
+  # repository variables so forks without a Sentry org skip it (job-level
+  # if can read vars but not secrets).
+  sentry:
+    needs: publish
+    if: vars.SENTRY_ORG != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so set-commits can diff against the previous
+          # release.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Rebuild dist to get the sourcemaps the image was built from; the
+      # build is deterministic from the same commit.
+      - name: Build
+        run: pnpm exec turbo run build --filter=@thesharks/discord
+
+      # Must produce the same name as the build job's step so events from
+      # the published image resolve to this release.
+      - name: Compute Sentry release
+        id: sentry
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            release="$GITHUB_REF_NAME"
+          else
+            version=$(node -p "require('./apps/discord/package.json').version")
+            release="@thesharks/discord@${version}+${GITHUB_SHA::7}"
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v3
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        with:
+          release: ${{ steps.sentry.outputs.release }}
+          # rewriteFramesIntegration reports frames as app:///<path under
+          # dist>, so upload the artifacts under the same prefix.
+          sourcemaps: apps/discord/dist
+          url_prefix: app:///
+          # Debug IDs injected here would not match the files inside the
+          # published image; release + url_prefix matching is what works.
+          inject: false
