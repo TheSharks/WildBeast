@@ -36,14 +36,22 @@
   --wb-overlay-blurple: hsla(235, 86%, 65%, 0.15);
 }
 
-/* Splash page: blurple glow backdrop and translucent header. */
+/* Splash page: a quiet grid and bloom give the landing page its own identity. */
 [data-has-hero] .page {
   background:
-    linear-gradient(215deg, var(--wb-overlay-blurple), transparent 40%),
-    radial-gradient(var(--wb-overlay-blurple), transparent 40%) no-repeat -60vw
-      -40vh / 105vw 200vh,
-    radial-gradient(var(--wb-overlay-blurple), transparent 65%) no-repeat 50%
-      calc(100% + 20rem) / 60rem 30rem;
+    linear-gradient(125deg, var(--wb-overlay-blurple), transparent 34%),
+    radial-gradient(circle at 78% 18%, var(--wb-overlay-blurple), transparent 24rem),
+    linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(100% - 1px),
+      color-mix(in srgb, var(--sl-color-gray-5) 24%, transparent) calc(100% - 1px)
+    ) 50% 0 / 4rem 4rem,
+    linear-gradient(
+      transparent 0,
+      transparent calc(100% - 1px),
+      color-mix(in srgb, var(--sl-color-gray-5) 24%, transparent) calc(100% - 1px)
+    ) 50% 0 / 4rem 4rem;
 }
 
 [data-has-hero] header {
@@ -53,7 +61,34 @@
   backdrop-filter: blur(16px);
 }
 
-/* Hero: pill-shaped action buttons. */
+/* Hero: give the built-in Starlight layout a little more presence. */
+.hero {
+  align-items: center;
+  gap: clamp(2rem, 6vw, 5rem);
+  min-height: min(38rem, calc(100vh - var(--sl-nav-height)));
+  padding-block: clamp(4rem, 10vh, 7rem);
+}
+
+.hero > .stack {
+  max-width: 38rem;
+}
+
+.hero h1 {
+  font-size: clamp(3.5rem, 8vw, 6.25rem);
+  letter-spacing: -0.07em;
+  line-height: 0.92;
+}
+
+.hero .tagline {
+  font-size: clamp(1.125rem, 1.5vw, 1.35rem);
+  line-height: 1.55;
+  max-width: 34rem;
+}
+
+.hero > img {
+  filter: drop-shadow(0 1.5rem 3rem var(--wb-overlay-blurple));
+  width: min(100%, 26rem);
+}
 
 .hero .sl-link-button {
   border-radius: 999rem;
@@ -61,6 +96,17 @@
 
 .hero .sl-link-button.primary {
   box-shadow: 0 0.25rem 1.5rem var(--wb-overlay-blurple);
+}
+
+@media (max-width: 50rem) {
+  .hero {
+    min-height: auto;
+    padding-block: 4rem 3rem;
+  }
+
+  .hero > img {
+    width: min(24rem, 82vw);
+  }
 }
 
 /* Cards: rounded, with an accent on hover. */

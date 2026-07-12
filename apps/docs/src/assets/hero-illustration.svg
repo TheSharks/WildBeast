@@ -1,0 +1,37 @@
+<svg width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- backdrop -->
+  <circle cx="320" cy="332" r="252" fill="#5865F2" fill-opacity=".12"/>
+  <circle cx="320" cy="332" r="286" stroke="#A7AFFF" stroke-opacity=".28" stroke-width="3" stroke-dasharray="4 14" stroke-linecap="round"/>
+
+  <!-- horns -->
+  <path d="M320 208C262 186 196 190 156 216C126 234 110 214 108 180" stroke="#9EA7FF" stroke-width="44" stroke-linecap="round"/>
+  <path d="M320 208C378 186 444 190 484 216C514 234 530 214 532 180" stroke="#9EA7FF" stroke-width="44" stroke-linecap="round"/>
+
+  <!-- ears -->
+  <ellipse cx="212" cy="262" rx="38" ry="22" transform="rotate(-24 212 262)" fill="#4553E8"/>
+  <ellipse cx="428" cy="262" rx="38" ry="22" transform="rotate(24 428 262)" fill="#4553E8"/>
+
+  <!-- mane -->
+  <rect x="283" y="140" width="22" height="52" rx="11" fill="#4553E8"/>
+  <rect x="309" y="128" width="22" height="64" rx="11" fill="#4553E8"/>
+  <rect x="335" y="140" width="22" height="52" rx="11" fill="#4553E8"/>
+
+  <!-- beard -->
+  <rect x="286" y="492" width="16" height="52" rx="8" fill="#9EA7FF"/>
+  <rect x="312" y="492" width="16" height="64" rx="8" fill="#9EA7FF"/>
+  <rect x="338" y="492" width="16" height="52" rx="8" fill="#9EA7FF"/>
+
+  <!-- head -->
+  <rect x="230" y="168" width="180" height="240" rx="64" fill="#5865F2"/>
+  <rect x="244" y="336" width="152" height="182" rx="58" fill="#4553E8"/>
+
+  <!-- eyes -->
+  <circle cx="277" cy="292" r="21" fill="#FFFFFF"/>
+  <circle cx="363" cy="292" r="21" fill="#FFFFFF"/>
+  <circle cx="281" cy="295" r="9.5" fill="#15172A"/>
+  <circle cx="359" cy="295" r="9.5" fill="#15172A"/>
+
+  <!-- nostrils -->
+  <rect x="281" y="435" width="15" height="34" rx="7.5" transform="rotate(18 288.5 452)" fill="#23285E"/>
+  <rect x="344" y="435" width="15" height="34" rx="7.5" transform="rotate(-18 351.5 452)" fill="#23285E"/>
+</svg>
