@@ -2,6 +2,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import type { ILogger } from '@sapphire/framework'
 import { createGauge, metrics } from '@thesharks/analytics'
 import { shardsFor } from './assignment.mjs'
+import { DEFAULT_FENCE_AFTER_MILLIS } from './lifecycle.mjs'
 
 /**
  * The subset of shard lifecycle operations the reconciler needs; cluster.mts
@@ -39,8 +40,10 @@ export interface ReconcilerOptions {
   /**
    * Stop serving shards when coordination has been unreachable this long.
    * Together with the worker-stop grace this must fit inside the lease TTL,
-   * so we stop before another cluster can acquire our expired leases.
-   * Default 5s: 5s fencing + 20s stop grace < the 30s lease TTL.
+   * so we stop before another cluster can acquire our expired leases — and
+   * it must exceed the tick interval by enough that one transient
+   * coordination error doesn't stop every shard. Default 15s (three failed
+   * ticks); see DEFAULT_FENCE_AFTER_MILLIS for the full invariant.
    */
   fenceAfterMillis?: number
 }
@@ -84,7 +87,7 @@ export class ShardReconciler {
   ) {
     this.tickMillis = options.tickMillis ?? 5_000
     this.settleMillis = options.settleMillis ?? 10_000
-    this.fenceAfterMillis = options.fenceAfterMillis ?? 5_000
+    this.fenceAfterMillis = options.fenceAfterMillis ?? DEFAULT_FENCE_AFTER_MILLIS
 
     const meter = metrics.getMeter('@thesharks/discord-manager')
     this.handoffCounter = meter.createCounter(
@@ -419,14 +422,18 @@ export class ShardReconciler {
   /**
    * Stop liveness without releasing anything; leases and the membership
    * entry expire on their own, exactly as if the process had crashed.
-   * In-flight lifecycle work observes `running = false` before leaving a
-   * newly-started shard serving.
+   * Waits for in-flight lifecycle work so it observes `running = false` and
+   * stops a newly-started shard before shutdown() releases its lease — a
+   * spawn can wait long in the identify queue, and returning while it is
+   * pending would let shutdown() release the lease of a shard that is still
+   * coming up.
    */
   public async halt(): Promise<void> {
     this.running = false
     this.reconcileRequested = false
     this.loopAbort?.abort()
     await this.livenessLoop?.catch(() => undefined)
+    await this.reconcileWork?.catch(() => undefined)
   }
 
   public async shutdown(): Promise<void> {

@@ -29,6 +29,20 @@ export function epochKeyPrefix(epoch: number, base = 'wildbeast'): string {
   return `${base}:e${epoch}`
 }
 
+/**
+ * This cluster's shard total lost to a concurrent migration: another total
+ * owns the proposal slot or was promoted under the epoch this cluster was
+ * waiting on. Unrecoverable without a restart — the cluster must exit and
+ * re-resolve its epoch (with corrected config where applicable) rather than
+ * keep polling a migration that can no longer happen.
+ */
+export class EpochConflictError extends Error {
+  public constructor(message: string) {
+    super(message)
+    this.name = 'EpochConflictError'
+  }
+}
+
 export const DEFAULT_PENDING_EPOCH_TTL_MILLIS = 45_000
 
 // Refresh only the proposal this caller joined. GET + PEXPIRE as separate
@@ -160,7 +174,7 @@ export class EpochCoordinator {
     const pending = JSON.parse(pendingRaw) as EpochState
 
     if (pending.totalShards !== this.totalShards) {
-      throw new Error(
+      throw new EpochConflictError(
         `Conflicting shard total migrations: a migration to ${pending.totalShards} shards is already pending, ` +
           `this cluster proposes ${this.totalShards}. Fix the fleet configuration; an abandoned proposal expires automatically.`,
       )
@@ -216,6 +230,8 @@ export class EpochCoordinator {
   /**
    * Returns true once `pending` is the active epoch — either because this
    * call promoted it (active epoch drained) or another cluster already did.
+   * Throws EpochConflictError when a conflicting migration replaced or won
+   * this proposal; waiting longer can never resolve that.
    */
   public async tryPromote(pending: EpochState): Promise<boolean> {
     const activeRaw = await this.redis.get(this.epochKey)
@@ -223,7 +239,13 @@ export class EpochCoordinator {
 
     const active = JSON.parse(activeRaw) as EpochState
     if (active.epoch === pending.epoch) {
-      return active.totalShards === pending.totalShards
+      if (active.totalShards !== pending.totalShards) {
+        throw new EpochConflictError(
+          `Conflicting shard total migrations: epoch ${active.epoch} was promoted with ${active.totalShards} shards ` +
+            `while this cluster waited on ${pending.totalShards}. Fix the fleet configuration and restart this cluster.`,
+        )
+      }
+      return true
     }
     if (active.epoch !== pending.epoch - 1) {
       return false
@@ -231,9 +253,18 @@ export class EpochCoordinator {
 
     const pendingRaw = JSON.stringify(pending)
     if (!(await this.refreshPending(pendingRaw))) {
-      // This proposal expired and another total may now occupy the slot. An
-      // old waiter must never promote itself over the replacement.
-      return false
+      // This proposal expired (e.g. a Redis outage outlived the pending
+      // TTL). Re-claim the slot so the migration can still finish; if
+      // another total took it in the meantime, an old waiter must never
+      // promote itself over the replacement.
+      const currentRaw = await this.claimPending(pendingRaw)
+      if (currentRaw !== pendingRaw) {
+        const current = JSON.parse(currentRaw) as EpochState
+        throw new EpochConflictError(
+          `Conflicting shard total migrations: this cluster's expired proposal for ${pending.totalShards} shards ` +
+            `was replaced by one for ${current.totalShards}. Fix the fleet configuration and restart this cluster.`,
+        )
+      }
     }
 
     const result = await this.redis.eval(
@@ -254,7 +285,9 @@ export class EpochCoordinator {
  * Park until the pending epoch becomes active. Keeps heartbeating the
  * pending epoch's membership so the parked fleet's assignment converges the
  * instant promotion happens. Returns false when aborted (shutdown while
- * parked).
+ * parked); throws EpochConflictError when a conflicting migration made this
+ * one impossible, so the cluster exits and re-resolves instead of polling a
+ * dead proposal forever.
  */
 export async function awaitEpochActivation(options: {
   epochs: EpochCoordinator
@@ -273,6 +306,7 @@ export async function awaitEpochActivation(options: {
         return true
       }
     } catch (error) {
+      if (error instanceof EpochConflictError) throw error
       options.logger?.warn('Epoch coordination unreachable:', error)
     }
 

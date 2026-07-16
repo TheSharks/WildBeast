@@ -1,4 +1,5 @@
 import type { Redis } from 'ioredis'
+import { DEFAULT_LEASE_TTL_MILLIS } from './lifecycle.mjs'
 
 export const DEFAULT_MEMBERSHIP_TTL_MILLIS = 15_000
 
@@ -7,7 +8,8 @@ export interface CoordinatorOptions {
   totalShards: number
   /** How long a cluster stays a member without a heartbeat. Default 15s. */
   membershipTtlMillis?: number
-  /** How long a shard lease survives without renewal. Default 30s. */
+  /** How long a shard lease survives without renewal. Default 45s; see
+   * DEFAULT_LEASE_TTL_MILLIS for the invariant tying it to fencing. */
   leaseTtlMillis?: number
   keyPrefix?: string
 }
@@ -50,7 +52,7 @@ export class ClusterCoordinator {
     this.totalShards = options.totalShards
     this.membershipTtlMillis =
       options.membershipTtlMillis ?? DEFAULT_MEMBERSHIP_TTL_MILLIS
-    this.leaseTtlMillis = options.leaseTtlMillis ?? 30_000
+    this.leaseTtlMillis = options.leaseTtlMillis ?? DEFAULT_LEASE_TTL_MILLIS
     this.prefix = options.keyPrefix ?? 'wildbeast'
   }
 
