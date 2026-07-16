@@ -41,6 +41,12 @@ fleet:
   the first pending fleet is alive. Parked clusters refresh their proposal;
   if they all disappear, it expires after 45 seconds and a corrected rollout
   can propose a replacement without manual Redis surgery.
+- A parked fleet that outlives its own proposal (a Redis outage longer than
+  45 seconds) re-claims it on the next poll and the migration continues. If
+  a different total claimed the slot in the meantime, or was promoted under
+  the epoch the cluster was waiting on, the cluster exits with an error
+  naming both totals so the supervisor can restart it against the corrected
+  configuration.
 - A serving cluster left behind by a promotion (only possible if it was
   fenced off long enough for its membership to expire) notices the epoch
   moved, logs a fatal message, and exits so the supervisor can restart it.

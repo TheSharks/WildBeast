@@ -48,9 +48,9 @@ perform a real [shard total change](/self-hosting/resharding/).
 
 **`Coordination unreachable beyond the fencing deadline; stopping all
 shards.`** The cluster couldn't reach Redis for longer than the fencing
-deadline (5 seconds, leaving the 20-second worker-stop grace inside the
-30-second lease TTL) and stopped its shards so another cluster can safely
-take them over. `discord_cluster_fenced` reads 1 while this holds. Recovery is
+deadline (15 seconds — three failed liveness ticks, leaving the 20-second
+worker-stop grace inside the 45-second lease TTL) and stopped its shards so
+another cluster can safely take them over. `discord_cluster_fenced` reads 1 while this holds. Recovery is
 automatic: once Redis is reachable it logs
 `Coordination recovered; resuming shard ownership` and re-acquires its
 share. Investigate the Redis side, not the bot.

@@ -59,7 +59,7 @@ When a cluster joins, shards that hash to it are handed over by their
 current owners after a 10-second settle window. When one leaves gracefully
 (SIGTERM), it releases its leases and withdraws, and survivors pick its
 shards up within seconds. When one crashes, its membership entry (15s TTL)
-and leases (30s TTL) expire and survivors take over within about a minute.
+and leases (45s TTL) expire and survivors take over within about a minute.
 
 :::tip[Stable identities matter]
 Use a stable `WILDBEAST_CLUSTER_ID` (a StatefulSet ordinal, a machine name).
@@ -98,9 +98,11 @@ Settle windows prevent churn. Membership must be stable for 10 seconds
 before shards move, so a flapping cluster or a rolling deploy doesn't cause
 a reshuffle storm.
 
-A cluster that cannot reach Redis for 5 seconds fences itself and stops
+A cluster that cannot reach Redis for 15 seconds fences itself and stops
 serving its shards, before its leases can expire and another cluster picks
-them up.
+them up. A single failed coordination round trip is not enough to fence:
+the deadline spans three 5-second liveness ticks, so a transient Redis
+blip never takes a healthy cluster's shards offline.
 
 Losing one lease fences that shard immediately: its local worker is stopped
 before reconciliation may try to acquire it again. Multi-shard drains happen
