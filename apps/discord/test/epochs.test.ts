@@ -1,6 +1,10 @@
 import type { Redis } from 'ioredis'
 import { describe, expect, it } from 'vitest'
-import { EpochCoordinator } from '../src/sharding/epochs.mjs'
+import {
+  awaitEpochActivation,
+  EpochConflictError,
+  EpochCoordinator,
+} from '../src/sharding/epochs.mjs'
 
 interface Entry {
   value: string
@@ -149,7 +153,69 @@ describe('EpochCoordinator pending proposal expiry', () => {
     redis.advance(101)
     await epochs(redis, 32).resolve()
 
-    expect(await old.tryPromote(oldPending)).toBe(false)
+    await expect(old.tryPromote(oldPending)).rejects.toThrow(
+      /replaced by one for 32/,
+    )
     expect(await old.activeEpoch()).toEqual({ epoch: 1, totalShards: 8 })
+  })
+
+  it('re-claims an expired proposal that nothing replaced', async () => {
+    const redis = new FakeEpochRedis()
+    await epochs(redis, 8).resolve()
+    const migrating = epochs(redis, 16)
+    const { state: pending } = await migrating.resolve()
+
+    // The proposal key expires with the whole pending fleet unable to reach
+    // Redis; a later poll must restore it rather than go silent forever.
+    redis.advance(101)
+    expect(await redis.get('wildbeast:epoch:pending')).toBeNull()
+    expect(await migrating.tryPromote(pending)).toBe(false)
+    expect(await redis.get('wildbeast:epoch:pending')).toBe(
+      JSON.stringify(pending),
+    )
+
+    // The restored proposal owns the slot again.
+    await expect(epochs(redis, 32).resolve()).rejects.toThrow(
+      /Conflicting shard total migrations/,
+    )
+  })
+
+  it('surfaces a same-epoch promotion with a different total as a conflict', async () => {
+    const redis = new FakeEpochRedis()
+    await epochs(redis, 8).resolve()
+    const old = epochs(redis, 16)
+    const { state: pending } = await old.resolve()
+
+    // The proposal expires, a 32-shard fleet replaces it and wins epoch 2.
+    redis.advance(101)
+    await epochs(redis, 32).resolve()
+    await redis.set(
+      'wildbeast:epoch',
+      JSON.stringify({ epoch: 2, totalShards: 32 }),
+    )
+    await redis.del('wildbeast:epoch:pending')
+
+    await expect(old.tryPromote(pending)).rejects.toThrow(
+      /promoted with 32 shards/,
+    )
+  })
+
+  it('propagates conflicts out of the activation wait instead of polling forever', async () => {
+    const redis = new FakeEpochRedis()
+    await epochs(redis, 8).resolve()
+    const old = epochs(redis, 16)
+    const { state: pending } = await old.resolve()
+
+    redis.advance(101)
+    await epochs(redis, 32).resolve()
+
+    await expect(
+      awaitEpochActivation({
+        epochs: old,
+        pending,
+        heartbeat: async () => {},
+        pollMillis: 5,
+      }),
+    ).rejects.toBeInstanceOf(EpochConflictError)
   })
 })
