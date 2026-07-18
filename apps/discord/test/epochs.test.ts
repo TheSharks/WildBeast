@@ -213,6 +213,7 @@ describe('EpochCoordinator pending proposal expiry', () => {
       awaitEpochActivation({
         epochs: old,
         pending,
+        // biome-ignore lint/suspicious/noEmptyBlockStatements: irrelevant for this test
         heartbeat: async () => {},
         pollMillis: 5,
       }),

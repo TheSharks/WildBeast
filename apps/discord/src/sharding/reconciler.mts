@@ -87,7 +87,8 @@ export class ShardReconciler {
   ) {
     this.tickMillis = options.tickMillis ?? 5_000
     this.settleMillis = options.settleMillis ?? 10_000
-    this.fenceAfterMillis = options.fenceAfterMillis ?? DEFAULT_FENCE_AFTER_MILLIS
+    this.fenceAfterMillis =
+      options.fenceAfterMillis ?? DEFAULT_FENCE_AFTER_MILLIS
 
     const meter = metrics.getMeter('@thesharks/discord-manager')
     this.handoffCounter = meter.createCounter(

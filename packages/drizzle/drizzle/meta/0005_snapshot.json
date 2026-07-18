@@ -277,10 +277,7 @@
         "Tag_guildId_name_key": {
           "name": "Tag_guildId_name_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "guildId",
-            "name"
-          ]
+          "columns": ["guildId", "name"]
         }
       },
       "policies": {},
