@@ -98,19 +98,46 @@ async function describeDenial(
   if (error.identifier === PremiumPreconditionIdentifier) {
     const context = Object(error.context)
     const required = String(Reflect.get(context, 'requiredTier') ?? 'premium')
-    const scope = Reflect.get(context, 'requiredScope')
+    const rawScope = Reflect.get(context, 'requiredScope')
+    const scope = rawScope === 'user' || rawScope === 'guild' ? rawScope : 'any'
+    const tier = isPremiumTier(required) ? required : 'premium'
+    const base = (await resolveKey(
+      interaction,
+      'system/errors:premium_required',
+      { tier, scope },
+    )) as string
     return {
-      content: (await resolveKey(
-        interaction,
-        'system/errors:premium_required',
-      )) as string,
-      components: premiumUpsellComponents(
-        isPremiumTier(required) ? required : 'premium',
-        scope === 'user' || scope === 'guild' ? scope : 'any',
-      ),
+      content: `${base} ${premiumDenialDetail(interaction, tier, scope)}`,
+      components: premiumUpsellComponents(tier, scope, interaction.guildId),
     }
   }
   // Other precondition messages are framework-provided English; they gain
   // localized keys as preconditions get used.
   return { content: error.message }
+}
+
+/**
+ * Scope-aware denial detail appended to the localized premium_required
+ * base: who needs the subscription and at which tier/scope. Guild gates
+ * name the server; user gates name the invoker; 'any' names both. A guild
+ * gate in DMs can never pass, so say so explicitly. Exported for tests.
+ */
+export function premiumDenialDetail(
+  interaction: Pick<DeniedInteraction, 'guildId'>,
+  tier: string,
+  scope: 'user' | 'guild' | 'any',
+): string {
+  if (scope === 'guild') {
+    if (!interaction.guildId) {
+      return `This command needs ${tier} for a server and can't be used in DMs (guild scope).`
+    }
+    return `This server needs ${tier} (guild scope) to use this command.`
+  }
+  if (scope === 'user') {
+    return `You need ${tier} (user scope) to use this command.`
+  }
+  if (!interaction.guildId) {
+    return `You need ${tier} to use this command.`
+  }
+  return `You or this server need ${tier} to use this command.`
 }

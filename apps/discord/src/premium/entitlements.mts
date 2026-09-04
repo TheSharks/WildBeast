@@ -1,3 +1,5 @@
+import { container } from '@sapphire/framework'
+import { metrics } from '@thesharks/analytics'
 import {
   and,
   db,
@@ -12,15 +14,32 @@ import {
 } from '@thesharks/drizzle'
 import type { BaseInteraction, Entitlement } from 'discord.js'
 import { limitFlagValue } from '../features/client.mjs'
-import { interactionFlagContext } from '../features/context.mjs'
 import {
+  interactionFlagContext,
+  taskFlagContext,
+} from '../features/context.mjs'
+import {
+  clampLimitOverride,
   describeLimit,
   getLimit,
   type LimitKey,
   limitFlagKey,
 } from './limits.mjs'
 import { premiumSkuMap } from './skus.mjs'
-import { FREE_TIER, highestTier, type PremiumTier } from './tiers.mjs'
+import {
+  FREE_TIER,
+  highestTier,
+  type PremiumScope,
+  type PremiumTier,
+} from './tiers.mjs'
+
+const meter = metrics.getMeter('@thesharks/discord')
+/** Remote limit overrides that failed validation and fell back to the
+ * registry, by limit key. */
+export const limitOverrideFallbackCounter = meter.createCounter(
+  'discord_premium_limit_override_fallbacks_total',
+  { description: 'Remote limit overrides rejected as invalid' },
+)
 
 /**
  * Tier resolution from interactions. Discord attaches every applicable
@@ -54,12 +73,49 @@ export function guildTierForInteraction(
 }
 
 /** The best tier from either scope — for perks where any subscription
- * (the invoker's own or the guild's) should count. */
+ * (the invoker's own or the guild's) should count. This is the `anyTier`:
+ * commandFlagContext (features/commandContext.mjs) reports it as `tier`
+ * for gate targeting. Limit evaluation must NOT use it directly — use
+ * enforcementTier below so a user subscription can't lift a guild cap. */
 export function tierForInteraction(interaction: BaseInteraction): PremiumTier {
   return highestTier([
     userTierForInteraction(interaction),
     guildTierForInteraction(interaction),
   ])
+}
+
+/**
+ * The tier that enforces `scope` for `interaction`: the invoker's own for
+ * 'user' limits, the current guild's (free in DMs) for 'guild' limits, the
+ * best of either for 'any' limits. limitFor and upsellForLimit resolve
+ * through here so scope handling stays in one place; commandContext.mts
+ * re-exports it for limit call sites that need a scope-resolved tier.
+ */
+export function enforcementTier(
+  interaction: BaseInteraction,
+  scope: PremiumScope | 'any',
+): PremiumTier {
+  return {
+    user: userTierForInteraction,
+    guild: guildTierForInteraction,
+    any: tierForInteraction,
+  }[scope](interaction)
+}
+
+/** Warn once per invalid override without letting logging break the call. */
+function warnInvalidOverride(key: LimitKey, raw: unknown, fallback: number) {
+  try {
+    container.logger.warn(
+      `Invalid limit override for ${limitFlagKey(key)}: ${String(raw)}; using registry fallback ${fallback}`,
+    )
+  } catch {
+    // Logging must never break limit enforcement.
+  }
+  try {
+    limitOverrideFallbackCounter.add(1, { key })
+  } catch {
+    // Metrics must never break limit enforcement either.
+  }
 }
 
 /**
@@ -80,14 +136,9 @@ export async function limitFor(
   key: LimitKey,
 ): Promise<number> {
   const definition = describeLimit(key)
-  const resolve = {
-    user: userTierForInteraction,
-    guild: guildTierForInteraction,
-    any: tierForInteraction,
-  }[definition.scope]
-  const tier = resolve(interaction)
+  const tier = enforcementTier(interaction, definition.scope)
   const fallback = getLimit(key, tier)
-  return limitFlagValue(
+  const raw = await limitFlagValue(
     limitFlagKey(key),
     fallback,
     interactionFlagContext(interaction, {
@@ -98,6 +149,35 @@ export async function limitFor(
           : (interaction.guildId ?? interaction.user.id),
     }),
   )
+  const clamped = clampLimitOverride(raw, fallback)
+  if (clamped !== raw) warnInvalidOverride(key, raw, fallback)
+  return clamped
+}
+
+/**
+ * The validated cap for a guild outside interactions (the demotion path).
+ * Mirrors the reconcile task's capForGuild: resolve the mirrored tier, read
+ * the same `limits.*` flag with the registry value as default, then clamp
+ * the override exactly like limitFor. Shared clamp keeps enforcement and
+ * demotion from diverging — an operator override that enforcement ignores
+ * must not demote either.
+ */
+export async function capForGuild(
+  guildId: bigint,
+  key: LimitKey = 'tags.maxPromotedPerGuild',
+  taskName = 'guildTagCommandReconcile',
+): Promise<number> {
+  const tier = await tierForGuild(guildId)
+  const fallback = getLimit(key, tier)
+  const raw = await limitFlagValue(limitFlagKey(key), fallback, {
+    ...taskFlagContext(taskName),
+    targetingKey: guildId.toString(),
+    guildId: guildId.toString(),
+    tier,
+  })
+  const clamped = clampLimitOverride(raw, fallback)
+  if (clamped !== raw) warnInvalidOverride(key, raw, fallback)
+  return clamped
 }
 
 function grantedByInteraction(

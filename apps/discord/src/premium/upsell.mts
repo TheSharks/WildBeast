@@ -23,12 +23,21 @@ import {
  * grants `tier`. Undefined when no configured SKU fits, in which case the
  * surrounding message is just informational — callers can pass the result
  * straight to a reply's `components`.
+ *
+ * Pass the interaction's guildId when the reply goes to DMs: guild-scoped
+ * purchase buttons are suppressed there (guildId null + scope guild), and
+ * an 'any' request resolves to a user SKU so a guild-only SKU never
+ * renders where it can't be bought.
  */
 export function premiumUpsellComponents(
   tier: PremiumTier,
   scope: PremiumScope | 'any' = 'any',
+  guildId?: string | null,
 ): ActionRowBuilder<ButtonBuilder>[] | undefined {
-  const skuId = skuIdForTier(tier, scope)
+  const effectiveScope =
+    guildId === null && scope === 'any' ? ('user' as const) : scope
+  if (guildId === null && effectiveScope === 'guild') return undefined
+  const skuId = skuIdForTier(tier, effectiveScope)
   if (!skuId) return undefined
   return [
     new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -49,6 +58,9 @@ export function upsellForLimit(
   key: LimitKey,
 ): ActionRowBuilder<ButtonBuilder>[] | undefined {
   const definition = describeLimit(key)
+  // Guild caps are free tier in DMs; a guild-SKU button there can't be
+  // bought in context, so stay informational instead of upselling.
+  if (!interaction.guildId && definition.scope === 'guild') return undefined
   const resolve = {
     user: userTierForInteraction,
     guild: guildTierForInteraction,
@@ -57,7 +69,7 @@ export function upsellForLimit(
   const tier = resolve(interaction)
   const target = tierRaisingLimit(key, tier)
   if (!target) return undefined
-  return premiumUpsellComponents(target, definition.scope)
+  return premiumUpsellComponents(target, definition.scope, interaction.guildId)
 }
 
 /** The lowest tier above `tier` with a higher cap for `key`, if any. */

@@ -2,11 +2,15 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { container, PreconditionStore } from '@sapphire/framework'
 import { silentLogger, snapshotEnv } from '@thesharks/test-utils'
-import { afterAll, afterEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  isPremiumSatisfied,
   PremiumPrecondition,
   type PremiumPreconditionContext,
   PremiumPreconditionIdentifier,
+  premiumAutocompleteAllowed,
+  premiumComponentAllowed,
+  requirePremium,
 } from '../src/preconditions/Premium.mjs'
 
 const restoreEnv = snapshotEnv(['WILDBEAST_PREMIUM_SKUS'])
@@ -133,5 +137,83 @@ describe('PremiumPrecondition', () => {
       {} as never,
     )
     expect(result.isOk()).toBe(true)
+  })
+})
+
+describe('requirePremium helpers (autocomplete + component re-checks)', () => {
+  it('exposes the same gate synchronously for non-command surfaces', async () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    const authed = fakeInteraction([{ skuId: '123', guildId: '500' }])
+    const anon = fakeInteraction([])
+    const guildGate = { scope: 'guild' } as const
+
+    expect(isPremiumSatisfied(authed, guildGate)).toBe(true)
+    expect(isPremiumSatisfied(anon, guildGate)).toBe(false)
+    expect(requirePremium(authed, guildGate)).toBe(true)
+    expect(premiumAutocompleteAllowed(authed, guildGate)).toBe(true)
+    expect(premiumAutocompleteAllowed(anon, guildGate)).toBe(false)
+    expect(premiumComponentAllowed(authed, guildGate)).toBe(true)
+    expect(premiumComponentAllowed(anon, guildGate)).toBe(false)
+  })
+
+  it('denies guild gates in DMs on every surface', () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    const dm = fakeInteraction([{ skuId: '123', guildId: '500' }], null)
+    const guildGate = { scope: 'guild' } as const
+    expect(isPremiumSatisfied(dm, guildGate)).toBe(false)
+    expect(premiumAutocompleteAllowed(dm, guildGate)).toBe(false)
+    expect(premiumComponentAllowed(dm, guildGate)).toBe(false)
+  })
+
+  it('wires autocomplete suppression and component checks through gates.mts', async () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    const { commandPremiumAllowed, installCommandPremiumGate, premiumGateFor } =
+      await import('../src/features/gates.mjs')
+
+    const append = vi.fn()
+    const autocompleteRun = vi.fn(async () => 'ran')
+    const command = {
+      name: 'premium-fixture-command',
+      preconditions: { append },
+      autocompleteRun,
+    }
+    installCommandPremiumGate(command as never, { scope: 'guild' })
+
+    expect(append).toHaveBeenCalledWith({
+      name: 'Premium',
+      context: { scope: 'guild' },
+    })
+    expect(premiumGateFor('premium-fixture-command')).toEqual({
+      scope: 'guild',
+    })
+
+    // Autocomplete from a subscriber runs; from anyone else responds empty.
+    const respond = vi.fn(async () => undefined)
+    await (command as never as { autocompleteRun: Function }).autocompleteRun({
+      ...fakeInteraction([{ skuId: '123', guildId: '500' }]),
+      respond,
+    } as never)
+    expect(autocompleteRun).toHaveBeenCalledOnce()
+    autocompleteRun.mockClear()
+    await (command as never as { autocompleteRun: Function }).autocompleteRun({
+      ...fakeInteraction([]),
+      respond,
+    } as never)
+    expect(autocompleteRun).not.toHaveBeenCalled()
+    expect(respond).toHaveBeenCalledWith([])
+
+    // Component re-checks follow the same gate; unknown commands pass.
+    expect(
+      commandPremiumAllowed(
+        fakeInteraction([{ skuId: '123', guildId: '500' }]),
+        'premium-fixture-command',
+      ),
+    ).toBe(true)
+    expect(
+      commandPremiumAllowed(fakeInteraction([]), 'premium-fixture-command'),
+    ).toBe(false)
+    expect(commandPremiumAllowed(fakeInteraction([]), 'unregistered')).toBe(
+      true,
+    )
   })
 })

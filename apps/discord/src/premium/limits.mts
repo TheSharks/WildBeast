@@ -51,6 +51,35 @@ export function getLimit(key: LimitKey, tier: PremiumTier): number {
   return registry[key].values[tier]
 }
 
+/** Upper bound for remote limit overrides. The registry is trusted; the flag
+ * service is not — values above this fall back to the registry. */
+export const MAX_LIMIT_OVERRIDE = 10_000
+
+/**
+ * Clamp a remote limit override to the enforceable range: finite, >= 0,
+ * floored to an integer, and at most MAX_LIMIT_OVERRIDE. Anything else
+ * falls back to the registry value for the resolved tier (which may itself
+ * be UNLIMITED). Pure so enforcement (limitFor) and demotion (capForGuild)
+ * share one rule; callers warn + record a metric on fallback.
+ */
+export function clampLimitOverride(raw: unknown, fallback: number): number {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return fallback
+  const floored = Math.floor(raw)
+  if (floored < 0 || floored > MAX_LIMIT_OVERRIDE) return fallback
+  return floored
+}
+
+/** Whether `raw` is usable as a limit override without falling back. */
+export function isValidLimitOverride(raw: unknown): raw is number {
+  return (
+    typeof raw === 'number' &&
+    Number.isFinite(raw) &&
+    Math.floor(raw) === raw &&
+    raw >= 0 &&
+    raw <= MAX_LIMIT_OVERRIDE
+  )
+}
+
 export function limitFlagKey(key: LimitKey): LimitFlagKey {
   return `limits.${key}`
 }

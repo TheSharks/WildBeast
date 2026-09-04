@@ -52,7 +52,7 @@ export function parsePremiumSkus(
     }
     if (!SCOPES.includes(scope as PremiumSku['scope'])) {
       throw new Error(
-        `Unknown premium scope "${scope}"; expected user or guild`,
+        `Unknown premium scope "${scope}"; expected user, guild, or any`,
       )
     }
     if (map.has(skuId)) {

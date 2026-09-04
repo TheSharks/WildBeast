@@ -1,3 +1,5 @@
+import { container } from '@sapphire/framework'
+import { metrics } from '@thesharks/analytics'
 import {
   db,
   entitlements,
@@ -7,6 +9,22 @@ import {
 import type { Client, Entitlement as DiscordEntitlement } from 'discord.js'
 
 const FETCH_PAGE_SIZE = 100
+
+const meter = metrics.getMeter('@thesharks/discord')
+/** Mirror reconciliations by outcome, so an aborted empty-fetch is visible
+ * in dashboards rather than silent. */
+export const entitlementReconcileCounter = meter.createCounter(
+  'discord_entitlement_reconcile_total',
+  { description: 'Entitlement mirror reconciliations by result' },
+)
+
+function reconcileLogger() {
+  try {
+    return container.logger
+  } catch {
+    return undefined
+  }
+}
 
 type EntitlementCursor = 'before' | 'after'
 
@@ -104,12 +122,60 @@ function maxBigInt(values: bigint[]): bigint {
  * longer mentions (delete events missed while offline). Returns the number
  * of live entitlements. One reconcile per boot is enough — the gateway
  * listeners keep the mirror current afterwards.
+ *
+ * Snapshot race: the fetch and the transaction run back-to-back with no
+ * await between them except the empty-fetch guard, but they are still two
+ * separate snapshots. An entitlement granted after the fetch paginates past
+ * it is missed until the next event/reconcile; one revoked after the fetch
+ * but before the transaction is still upserted as live and corrected by the
+ * following delete event. The window is one boot-reconcile wide by design.
+ *
+ * TODO(entitlements): close the window with a watermark (e.g. remember the
+ * highest seen entitlement id / Discord's updated-after cursor and
+ * re-fetch everything at/after it inside the transaction) instead of a
+ * bare full-table diff.
  */
 export async function reconcileEntitlements(
   client: Client<true>,
 ): Promise<number> {
+  // Fetch and transaction are back-to-back: no await may be inserted here
+  // except the empty-fetch guard below, to keep the snapshot window narrow.
   const rows = await fetchAllEntitlementRows(client)
 
+  if (rows.length === 0) {
+    // An empty listing with a non-empty mirror almost certainly means the
+    // API call failed open (outage, unconfigured app id) rather than every
+    // subscriber churning at once. Soft-deleting the whole mirror here
+    // would demote every paying guild on the next reconcile run.
+    const mirror = await db
+      .select({ id: entitlements.id })
+      .from(entitlements)
+      .limit(1)
+    if (mirror.length > 0) {
+      try {
+        entitlementReconcileCounter.add(1, { result: 'empty_aborted' })
+      } catch {
+        // Metrics must never break the guard.
+      }
+      reconcileLogger()?.warn(
+        `Refusing to reconcile entitlements: API returned 0 rows while the mirror is non-empty; aborting before soft-delete`,
+      )
+      throw new Error(
+        'Entitlement fetch returned no rows while the mirror is non-empty; aborting reconcile to avoid mass soft-delete',
+      )
+    }
+    try {
+      entitlementReconcileCounter.add(1, { result: 'ok_empty' })
+    } catch {
+      // ignore
+    }
+    reconcileLogger()?.info(
+      'Entitlement mirror reconciled: 0 live entitlement(s), 0 soft-deleted (mirror already empty)',
+    )
+    return 0
+  }
+
+  let softDeleted = 0
   await db.transaction(async (tx) => {
     for (const row of rows) {
       const { id: _id, ...update } = row
@@ -118,14 +184,24 @@ export async function reconcileEntitlements(
         .values(row)
         .onConflictDoUpdate({ target: entitlements.id, set: update })
     }
-    // Anything the API didn't return no longer exists upstream. An empty
-    // fetch means every mirrored entitlement is stale (no where clause).
+    // Anything the API didn't return no longer exists upstream.
     const ids = rows.map((row) => row.id)
-    await tx
+    const deleted = await tx
       .update(entitlements)
       .set({ deleted: true })
-      .where(ids.length > 0 ? notInArray(entitlements.id, ids) : undefined)
+      .where(notInArray(entitlements.id, ids))
+      .returning({ id: entitlements.id })
+    softDeleted = deleted.length
   })
 
-  return rows.filter((row) => !row.deleted).length
+  const live = rows.filter((row) => !row.deleted).length
+  try {
+    entitlementReconcileCounter.add(1, { result: 'ok' })
+  } catch {
+    // ignore
+  }
+  reconcileLogger()?.info(
+    `Entitlement mirror reconciled: ${live} live entitlement(s), ${softDeleted} soft-deleted`,
+  )
+  return live
 }

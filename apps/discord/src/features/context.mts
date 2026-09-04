@@ -13,6 +13,13 @@ export function setTaskFlagShardId(shardId: string | undefined): void {
 export interface InteractionFlagContextOptions {
   command?: string
   subcommand?: string
+  /**
+   * Premium tier for targeting. Gate contexts carry the anyTier (best of
+   * user/guild); limit evaluations carry the scope-resolved enforcement
+   * tier — see enforcementTier in premium/entitlements.mjs and
+   * commandContext.mjs. The service must treat it as a targeting hint, not
+   * as proof of payment.
+   */
   tier?: string
   /** Override the natural guild-first targeting key (used by user limits). */
   targetingKey?: string

@@ -1,12 +1,18 @@
 import { snapshotEnv } from '@thesharks/test-utils'
-import { afterAll, afterEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  capForGuild,
   guildTierForInteraction,
   limitFor,
   tierForInteraction,
   userTierForInteraction,
 } from '../src/premium/entitlements.mjs'
-import { getLimit, limitKeys } from '../src/premium/limits.mjs'
+import {
+  clampLimitOverride,
+  getLimit,
+  limitKeys,
+  MAX_LIMIT_OVERRIDE,
+} from '../src/premium/limits.mjs'
 import {
   parsePremiumSkus,
   premiumSkuMap,
@@ -107,6 +113,7 @@ describe('parsePremiumSkus', () => {
     expect(() => parsePremiumSkus('123:premium:everyone')).toThrow(
       /Unknown premium scope/,
     )
+    expect(() => parsePremiumSkus('123:premium:everyone')).toThrow(/any/)
     expect(() => parsePremiumSkus('123:premium,123:free')).toThrow(
       /listed more than once/,
     )
@@ -298,5 +305,236 @@ describe('entitlementRow', () => {
     expect(new Set(rows.map((row) => row.id))).toEqual(
       new Set(entitlements.map((row) => BigInt(row.id))),
     )
+  })
+
+  it('paginates an oldest-first entitlement listing without skipping rows', async () => {
+    const entitlements = Array.from({ length: 150 }, (_, index) => ({
+      id: String(index + 1),
+      skuId: '123',
+      userId: '456',
+      guildId: null,
+      type: 8,
+      deleted: false,
+      startsAt: null,
+      endsAt: null,
+    }))
+    const fetch = async (options: {
+      limit: number
+      before?: string
+      after?: string
+    }) => {
+      const filtered = entitlements
+        .filter(
+          ({ id }) =>
+            (!options.before || BigInt(id) < BigInt(options.before)) &&
+            (!options.after || BigInt(id) > BigInt(options.after)),
+        )
+        .sort((left, right) => Number(BigInt(left.id) - BigInt(right.id)))
+        .slice(0, options.limit)
+      return new Map(filtered.map((row) => [row.id, row]))
+    }
+
+    const rows = await fetchAllEntitlementRows({
+      application: { entitlements: { fetch } },
+    } as never)
+
+    expect(rows).toHaveLength(150)
+    expect(new Set(rows.map((row) => row.id))).toEqual(
+      new Set(entitlements.map((row) => BigInt(row.id))),
+    )
+  })
+
+  it('aborts pagination when a cursor makes no progress', async () => {
+    const page = Array.from({ length: 100 }, (_, index) => ({
+      id: String(index + 1),
+      skuId: '123',
+      userId: '456',
+      guildId: null,
+      type: 8,
+      deleted: false,
+      startsAt: null,
+      endsAt: null,
+    }))
+    const fetch = async () => new Map(page.map((row) => [row.id, row]))
+    await expect(
+      fetchAllEntitlementRows({
+        application: { entitlements: { fetch } },
+      } as never),
+    ).rejects.toThrow(/did not advance/)
+  })
+})
+
+describe('clampLimitOverride', () => {
+  it('passes valid integers through', () => {
+    expect(clampLimitOverride(0, 50)).toBe(0)
+    expect(clampLimitOverride(500, 50)).toBe(500)
+    expect(clampLimitOverride(MAX_LIMIT_OVERRIDE, 50)).toBe(MAX_LIMIT_OVERRIDE)
+  })
+
+  it('falls back on negative, NaN, and infinite overrides', () => {
+    expect(clampLimitOverride(-1, 50)).toBe(50)
+    expect(clampLimitOverride(Number.NaN, 50)).toBe(50)
+    expect(clampLimitOverride(Number.POSITIVE_INFINITY, 50)).toBe(50)
+    expect(clampLimitOverride(Number.NEGATIVE_INFINITY, 50)).toBe(50)
+    expect(clampLimitOverride('500' as never, 50)).toBe(50)
+  })
+
+  it('floors fractional overrides and rejects out-of-range values', () => {
+    expect(clampLimitOverride(9.9, 50)).toBe(9)
+    expect(clampLimitOverride(0.5, 50)).toBe(0)
+    expect(clampLimitOverride(MAX_LIMIT_OVERRIDE + 1, 50)).toBe(50)
+    expect(clampLimitOverride(1e9, 50)).toBe(50)
+  })
+})
+
+describe.sequential('limitFor OFREP clamp', () => {
+  it('falls back to the registry on invalid remote overrides', async () => {
+    const { InMemoryProvider } = await import('@openfeature/server-sdk')
+    const { closeFeatureFlags, initFeatureFlags } = await import(
+      '../src/features/client.mjs'
+    )
+    const { container } = await import('@sapphire/framework')
+    const { silentLogger } = await import('@thesharks/test-utils')
+    container.logger = silentLogger
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+
+    const freeCap = getLimit('tags.maxPerGuild', 'free')
+    const cases: Array<{ variant: string; value: number }> = [
+      { variant: 'negative', value: -5 },
+      { variant: 'huge', value: MAX_LIMIT_OVERRIDE + 1 },
+      { variant: 'fractional', value: 9.9 },
+    ]
+    for (const { variant, value } of cases) {
+      const provider = new InMemoryProvider({
+        'limits.tags.maxPerGuild': {
+          disabled: false,
+          variants: { [variant]: value },
+          defaultVariant: variant,
+        },
+      })
+      await initFeatureFlags({ logger: silentLogger, provider })
+      // Fractional values floor; the rest fall back to the registry.
+      const expected = variant === 'fractional' ? Math.floor(value) : freeCap
+      expect(await limitFor(fakeInteraction([]), 'tags.maxPerGuild')).toBe(
+        expected,
+      )
+    }
+
+    await closeFeatureFlags()
+  })
+
+  it('falls back on NaN overrides via the provider', async () => {
+    const { InMemoryProvider } = await import('@openfeature/server-sdk')
+    const { closeFeatureFlags, initFeatureFlags } = await import(
+      '../src/features/client.mjs'
+    )
+    const { container } = await import('@sapphire/framework')
+    const { silentLogger } = await import('@thesharks/test-utils')
+    container.logger = silentLogger
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+
+    const freeCap = getLimit('tags.maxPerGuild', 'free')
+    const provider = new InMemoryProvider({
+      'limits.tags.maxPerGuild': {
+        disabled: false,
+        variants: { bad: Number.NaN },
+        defaultVariant: 'bad',
+      },
+    })
+    await initFeatureFlags({ logger: silentLogger, provider })
+    expect(await limitFor(fakeInteraction([]), 'tags.maxPerGuild')).toBe(
+      freeCap,
+    )
+    await closeFeatureFlags()
+  })
+
+  it('clamps the demotion-path cap the same way as enforcement', async () => {
+    const { InMemoryProvider } = await import('@openfeature/server-sdk')
+    const { closeFeatureFlags, initFeatureFlags } = await import(
+      '../src/features/client.mjs'
+    )
+    const { container } = await import('@sapphire/framework')
+    const { silentLogger } = await import('@thesharks/test-utils')
+    container.logger = silentLogger
+    // No SKUs: tier resolves free without touching the database mirror.
+    delete process.env.WILDBEAST_PREMIUM_SKUS
+
+    const freeCap = getLimit('tags.maxPromotedPerGuild', 'free')
+    const provider = new InMemoryProvider({
+      'limits.tags.maxPromotedPerGuild': {
+        disabled: false,
+        variants: { negative: -10 },
+        defaultVariant: 'negative',
+      },
+    })
+    await initFeatureFlags({ logger: silentLogger, provider })
+    expect(await capForGuild(500n)).toBe(freeCap)
+    await closeFeatureFlags()
+  })
+})
+
+describe('reconcileEntitlements empty-fetch guard', () => {
+  it('aborts without mass soft-delete when the API is empty but the mirror is not', async () => {
+    vi.resetModules()
+    vi.doMock('@thesharks/drizzle', async () => {
+      const actual =
+        await vi.importActual<typeof import('@thesharks/drizzle')>(
+          '@thesharks/drizzle',
+        )
+      return {
+        ...actual,
+        db: {
+          select: vi.fn(() => ({
+            from: vi.fn(() => ({
+              limit: vi.fn(async () => [{ id: 1n }]),
+            })),
+          })),
+          transaction: vi.fn(async () => undefined),
+        },
+      }
+    })
+    const sync = await import('../src/premium/sync.mjs')
+    const { db } = await import('@thesharks/drizzle')
+    const client = {
+      application: { entitlements: { fetch: async () => new Map() } },
+    } as never
+
+    await expect(sync.reconcileEntitlements(client)).rejects.toThrow(
+      /non-empty/,
+    )
+    expect(vi.mocked(db.transaction)).not.toHaveBeenCalled()
+    vi.doUnmock('@thesharks/drizzle')
+    vi.resetModules()
+  })
+
+  it('resolves zero without touching the mirror when both sides are empty', async () => {
+    vi.resetModules()
+    vi.doMock('@thesharks/drizzle', async () => {
+      const actual =
+        await vi.importActual<typeof import('@thesharks/drizzle')>(
+          '@thesharks/drizzle',
+        )
+      return {
+        ...actual,
+        db: {
+          select: vi.fn(() => ({
+            from: vi.fn(() => ({
+              limit: vi.fn(async () => []),
+            })),
+          })),
+          transaction: vi.fn(async () => undefined),
+        },
+      }
+    })
+    const sync = await import('../src/premium/sync.mjs')
+    const { db } = await import('@thesharks/drizzle')
+    const client = {
+      application: { entitlements: { fetch: async () => new Map() } },
+    } as never
+
+    await expect(sync.reconcileEntitlements(client)).resolves.toBe(0)
+    expect(vi.mocked(db.transaction)).not.toHaveBeenCalled()
+    vi.doUnmock('@thesharks/drizzle')
+    vi.resetModules()
   })
 })

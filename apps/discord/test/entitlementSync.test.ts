@@ -1,24 +1,47 @@
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { container, ListenerStore } from '@sapphire/framework'
-import { silentLogger } from '@thesharks/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { silentLogger, snapshotEnv } from '@thesharks/test-utils'
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 
 vi.mock('../src/premium/sync.mjs', async () => {
   const actual = await vi.importActual<
     typeof import('../src/premium/sync.mjs')
   >('../src/premium/sync.mjs')
-  return { ...actual, upsertEntitlement: vi.fn(async () => undefined) }
+  return {
+    ...actual,
+    upsertEntitlement: vi.fn(async () => undefined),
+    reconcileEntitlements: vi.fn(async () => 0),
+  }
 })
 
-const { upsertEntitlement } = vi.mocked(await import('../src/premium/sync.mjs'))
+const { reconcileEntitlements, upsertEntitlement } = vi.mocked(
+  await import('../src/premium/sync.mjs'),
+)
 const {
   EntitlementCreateListener,
   EntitlementUpdateListener,
   EntitlementDeleteListener,
 } = await import('../src/listeners/premium/entitlementSync.mjs')
+const { BACKFILL_RETRY_DELAYS_MS, EntitlementBackfillListener } = await import(
+  '../src/listeners/premium/entitlementBackfill.mjs'
+)
 
 container.logger = silentLogger
+
+const restoreEnv = snapshotEnv(['WILDBEAST_PREMIUM_SKUS'])
+afterEach(() => {
+  delete process.env.WILDBEAST_PREMIUM_SKUS
+})
+afterAll(restoreEnv)
 
 function instantiate<T>(
   Ctor: new (context: never, options: object) => T,
@@ -49,6 +72,8 @@ const gatewayEntitlement = {
 beforeEach(() => {
   upsertEntitlement.mockClear()
   upsertEntitlement.mockResolvedValue(undefined)
+  reconcileEntitlements.mockClear()
+  reconcileEntitlements.mockResolvedValue(0)
 })
 
 describe('entitlement sync listeners', () => {
@@ -92,5 +117,69 @@ describe('entitlement sync listeners', () => {
       'entitlementCreateSync',
     )
     await expect(listener.run(gatewayEntitlement)).resolves.toBeUndefined()
+  })
+})
+
+describe('entitlement backfill', () => {
+  const shardClient = (shards: number[] = [0]) =>
+    ({ ws: { shards: new Set(shards) } }) as never
+
+  it('retries a transient failure with backoff then succeeds', async () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    reconcileEntitlements
+      .mockRejectedValueOnce(new Error('api is down'))
+      .mockResolvedValueOnce(3)
+    const listener = instantiate(
+      EntitlementBackfillListener,
+      'entitlementBackfill',
+    )
+    const sleep = vi.fn(async () => undefined)
+
+    await listener.run(shardClient(), { sleep })
+
+    expect(reconcileEntitlements).toHaveBeenCalledTimes(2)
+    expect(sleep).toHaveBeenCalledOnce()
+    expect(sleep).toHaveBeenCalledWith(BACKFILL_RETRY_DELAYS_MS[0])
+  })
+
+  it('gives up after exhausting attempts without throwing', async () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    reconcileEntitlements.mockRejectedValue(new Error('still down'))
+    const listener = instantiate(
+      EntitlementBackfillListener,
+      'entitlementBackfill',
+    )
+    const sleep = vi.fn(async () => undefined)
+
+    await expect(
+      listener.run(shardClient(), { sleep }),
+    ).resolves.toBeUndefined()
+    expect(reconcileEntitlements).toHaveBeenCalledTimes(
+      1 + BACKFILL_RETRY_DELAYS_MS.length,
+    )
+    expect(sleep).toHaveBeenCalledTimes(BACKFILL_RETRY_DELAYS_MS.length)
+  })
+
+  it('keeps the shard-0 gate: other shards never reconcile', async () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    const listener = instantiate(
+      EntitlementBackfillListener,
+      'entitlementBackfill',
+    )
+    await listener.run(shardClient([1, 2]), { sleep: vi.fn() })
+    expect(reconcileEntitlements).not.toHaveBeenCalled()
+  })
+
+  it('skips without SKUs and re-triggers once they appear', async () => {
+    const listener = instantiate(
+      EntitlementBackfillListener,
+      'entitlementBackfill',
+    )
+    await listener.run(shardClient(), { sleep: vi.fn() })
+    expect(reconcileEntitlements).not.toHaveBeenCalled()
+
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    await listener.run(shardClient(), { sleep: vi.fn() })
+    expect(reconcileEntitlements).toHaveBeenCalledOnce()
   })
 })
