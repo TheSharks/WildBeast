@@ -9,11 +9,17 @@ import { TracedScheduledTask } from '../structures/task.mjs'
 import {
   createGuildTagCommand,
   deleteGuildTagCommand,
+  isTagCommandShape,
   promotionsCounter,
   promotionsOverCap,
   reservedCommandNames,
   tagCommandName,
 } from '../utils/guildTagCommands.mjs'
+
+// No interaction (and thus no locale) in task context: this is the en-US
+// `commands/descriptions:tagOptionArgs` value for recreated commands.
+const TAG_ARGS_DESCRIPTION_FALLBACK =
+  'Space-separated arguments passed to the tag'
 
 /**
  * Nightly reconciliation of promoted guild tag commands. Three jobs, in
@@ -90,20 +96,44 @@ export class GuildTagCommandReconcileTask extends TracedScheduledTask {
     )
     for (const command of registered.values()) {
       if (claimed.has(command.id)) continue
-      await deleteGuildTagCommand(
-        client,
-        guildId.toString(),
-        BigInt(command.id),
-      )
-      promotionsCounter.add(1, { action: 'demote', trigger: 'orphanCleanup' })
+      // Only tag-shaped commands are ours; never touch other guild commands.
+      if (!isTagCommandShape(command)) continue
+      try {
+        // Grace for in-flight promotes: the Discord command exists before
+        // its DB row is updated, so re-read before deleting.
+        const claimedRow = await db.query.tags.findFirst({
+          where: eq(tags.commandId, BigInt(command.id)),
+        })
+        if (claimedRow && claimedRow.guildId === guildId) continue
+        await deleteGuildTagCommand(
+          client,
+          guildId.toString(),
+          BigInt(command.id),
+        )
+        promotionsCounter.add(1, { action: 'demote', trigger: 'orphanCleanup' })
+      } catch (error) {
+        this.container.logger.warn(
+          `Could not delete orphaned guild command ${command.id} in guild ${guildId}`,
+          error,
+        )
+        continue
+      }
     }
 
     const demote = new Set(promotionsOverCap(promoted, cap))
     for (const row of demote) {
       if (row.commandId === null) continue
-      await deleteGuildTagCommand(client, guildId.toString(), row.commandId)
-      await this.clearPromotion(row.id)
-      promotionsCounter.add(1, { action: 'demote', trigger: 'reconcile' })
+      try {
+        await deleteGuildTagCommand(client, guildId.toString(), row.commandId)
+        await this.clearPromotion(row.id)
+        promotionsCounter.add(1, { action: 'demote', trigger: 'reconcile' })
+      } catch (error) {
+        this.container.logger.warn(
+          `Could not demote over-cap tag ${row.name} in guild ${guildId}`,
+          error,
+        )
+        continue
+      }
     }
 
     const reserved = reservedCommandNames()
@@ -115,19 +145,35 @@ export class GuildTagCommandReconcileTask extends TracedScheduledTask {
       // reserved names (a new bot command); demote rather than recreate.
       const name = tagCommandName(row.name, reserved)
       if (!name.ok) {
-        await this.clearPromotion(row.id)
-        promotionsCounter.add(1, { action: 'demote', trigger: 'reconcile' })
+        try {
+          await this.clearPromotion(row.id)
+          promotionsCounter.add(1, { action: 'demote', trigger: 'reconcile' })
+        } catch (error) {
+          this.container.logger.warn(
+            `Could not demote invalid tag ${row.name} in guild ${guildId}`,
+            error,
+          )
+        }
         continue
       }
 
-      const commandId = await createGuildTagCommand(
-        client,
-        guildId.toString(),
-        name.name,
-        row.commandDescription ?? `Tag "${row.name}" from this server`,
-      )
-      await db.update(tags).set({ commandId }).where(eq(tags.id, row.id))
-      promotionsCounter.add(1, { action: 'promote', trigger: 'reconcile' })
+      try {
+        const commandId = await createGuildTagCommand(
+          client,
+          guildId.toString(),
+          name.name,
+          row.commandDescription ?? `Tag "${row.name}" from this server`,
+          TAG_ARGS_DESCRIPTION_FALLBACK,
+        )
+        await db.update(tags).set({ commandId }).where(eq(tags.id, row.id))
+        promotionsCounter.add(1, { action: 'promote', trigger: 'reconcile' })
+      } catch (error) {
+        this.container.logger.warn(
+          `Could not recreate guild command for tag ${row.name} in guild ${guildId}`,
+          error,
+        )
+        continue
+      }
     }
   }
 

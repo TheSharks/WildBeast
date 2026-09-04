@@ -11,6 +11,7 @@ import {
   eq,
   ilike,
   isNotNull,
+  isNull,
   or,
   sql,
   tags,
@@ -44,6 +45,7 @@ const MAX_LISTED_TAGS = 100
 // below also hides it outside guilds.
 @ApplyOptions<Subcommand.Options>({
   runIn: [CommandOptionsRunTypeEnum.GuildAny],
+  cooldownDelay: 3_000,
   subcommands: [
     { name: 'show', chatInputRun: 'chatInputShow' },
     { name: 'create', chatInputRun: 'chatInputCreate' },
@@ -68,6 +70,7 @@ export class TagCommand extends TracedSubcommand {
         'commands/descriptions:tagOptionName',
       )
         .setRequired(true)
+        .setMinLength(1)
         .setMaxLength(32)
         .setAutocomplete(autocomplete)
 
@@ -186,32 +189,37 @@ export class TagCommand extends TracedSubcommand {
     interaction: Command.AutocompleteInteraction,
   ) {
     if (!interaction.guildId) return interaction.respond([])
-    const focused = interaction.options.getFocused()
-    // % and _ are LIKE wildcards; a literal search must not let users match
-    // through them.
-    const pattern = `%${focused.replace(/[\\%_]/g, '\\$&')}%`
-    const rows = await db
-      .select({ name: tags.name })
-      .from(tags)
-      // Substring matches, plus trigram-similar names (the % operator) so
-      // typos still surface suggestions. Both are backed by the pg_trgm
-      // index; best match first.
-      .where(
-        and(
-          eq(tags.guildId, BigInt(interaction.guildId)),
-          or(ilike(tags.name, pattern), sql`${tags.name} % ${focused}`),
-          // Demoting only makes sense for promoted tags.
-          interaction.options.getSubcommand(false) === 'demote'
-            ? isNotNull(tags.commandId)
-            : undefined,
-        ),
-      )
-      .orderBy(sql`similarity(${tags.name}, ${focused}) DESC`, asc(tags.name))
-      .limit(25)
+    try {
+      const focused = interaction.options.getFocused()
+      // % and _ are LIKE wildcards; a literal search must not let users match
+      // through them.
+      const pattern = `%${focused.replace(/[\\%_]/g, '\\$&')}%`
+      const rows = await db
+        .select({ name: tags.name })
+        .from(tags)
+        // Substring matches, plus trigram-similar names (the % operator) so
+        // typos still surface suggestions. Both are backed by the pg_trgm
+        // index; best match first.
+        .where(
+          and(
+            eq(tags.guildId, BigInt(interaction.guildId)),
+            or(ilike(tags.name, pattern), sql`${tags.name} % ${focused}`),
+            // Demoting only makes sense for promoted tags.
+            interaction.options.getSubcommand(false) === 'demote'
+              ? isNotNull(tags.commandId)
+              : undefined,
+          ),
+        )
+        .orderBy(sql`similarity(${tags.name}, ${focused}) DESC`, asc(tags.name))
+        .limit(25)
 
-    return interaction.respond(
-      rows.map((row) => ({ name: row.name, value: row.name })),
-    )
+      return interaction.respond(
+        rows.map((row) => ({ name: row.name, value: row.name })),
+      )
+    } catch (error) {
+      this.container.logger.warn('Could not autocomplete tag names', error)
+      return interaction.respond([])
+    }
   }
 
   public async chatInputShow(
@@ -230,6 +238,20 @@ export class TagCommand extends TracedSubcommand {
   ) {
     const name = interaction.options.getString('name', true).trim()
     const content = interaction.options.getString('content', true)
+
+    // Discord enforces minLength(1) on the raw option, but a whitespace-only
+    // name still passes it and would land as an empty tag after trimming.
+    if (!name) {
+      return interaction.reply({
+        content: (await resolveKey(
+          interaction,
+          'commands/tag:promoteInvalidName',
+          { name: interaction.options.getString('name', true) },
+        )) as string,
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+      })
+    }
 
     // Subscription-controlled cap; see the registry in premium/limits.mts.
     // Serialize creates per guild inside Postgres so concurrent interactions
@@ -265,6 +287,7 @@ export class TagCommand extends TracedSubcommand {
         content: (await resolveKey(interaction, 'commands/tag:limitReached', {
           limit,
         })) as string,
+        components: upsellForLimit(interaction, 'tags.maxPerGuild'),
         flags: MessageFlags.Ephemeral,
       })
     }
@@ -289,7 +312,11 @@ export class TagCommand extends TracedSubcommand {
     if (!tag) {
       return this.replyNotFound(interaction)
     }
-    if (tag.authorId !== BigInt(interaction.user.id)) {
+    // Tag authors may edit their own tags; guild managers may edit any tag.
+    if (
+      tag.authorId !== BigInt(interaction.user.id) &&
+      !this.canManageTagCommands(interaction)
+    ) {
       return this.replyNotOwner(interaction)
     }
 
@@ -314,7 +341,10 @@ export class TagCommand extends TracedSubcommand {
     if (!tag) {
       return this.replyNotFound(interaction)
     }
-    if (tag.authorId !== BigInt(interaction.user.id)) {
+    if (
+      tag.authorId !== BigInt(interaction.user.id) &&
+      !this.canManageTagCommands(interaction)
+    ) {
       return this.replyNotOwner(interaction)
     }
 
@@ -385,6 +415,7 @@ export class TagCommand extends TracedSubcommand {
           )
           .join(', '),
       })) as string,
+      flags: MessageFlags.Ephemeral,
       allowedMentions: { parse: [] },
     })
   }
@@ -485,6 +516,10 @@ export class TagCommand extends TracedSubcommand {
     // with Discord inside the transaction means a REST failure rolls the
     // promotion back.
     const limit = await limitFor(interaction, 'tags.maxPromotedPerGuild')
+    const argsDescription = (await resolveKey(
+      interaction,
+      'commands/descriptions:tagOptionArgs',
+    )) as string
     try {
       const outcome = await db.transaction(async (tx) => {
         await tx.execute(
@@ -503,13 +538,22 @@ export class TagCommand extends TracedSubcommand {
           if ((held?.value ?? 0) >= limit) return 'limit' as const
         }
 
+        // Re-select under the lock: a concurrent promote may have claimed
+        // the tag after our pre-transaction read.
+        const [fresh] = await tx
+          .select({ id: tags.id })
+          .from(tags)
+          .where(and(eq(tags.id, tag.id), isNull(tags.commandId)))
+        if (!fresh) return 'alreadyPromoted' as const
+
         const commandId = await createGuildTagCommand(
           interaction.client,
           interaction.guildId,
           commandName.name,
           description,
+          argsDescription,
         )
-        await tx
+        const updated = await tx
           .update(tags)
           .set({
             commandId,
@@ -517,7 +561,9 @@ export class TagCommand extends TracedSubcommand {
             promotedBy: BigInt(interaction.user.id),
             promotedAt: new Date(),
           })
-          .where(eq(tags.id, tag.id))
+          .where(and(eq(tags.id, tag.id), isNull(tags.commandId)))
+          .returning({ id: tags.id })
+        if (updated.length === 0) return 'alreadyPromoted' as const
         return 'promoted' as const
       })
 
@@ -530,6 +576,17 @@ export class TagCommand extends TracedSubcommand {
           )) as string,
           components: upsellForLimit(interaction, 'tags.maxPromotedPerGuild'),
           flags: MessageFlags.Ephemeral,
+        })
+      }
+      if (outcome === 'alreadyPromoted') {
+        return interaction.reply({
+          content: (await resolveKey(
+            interaction,
+            'commands/tag:alreadyPromoted',
+            { name: tag.name },
+          )) as string,
+          flags: MessageFlags.Ephemeral,
+          allowedMentions: { parse: [] },
         })
       }
     } catch (error) {
@@ -555,6 +612,7 @@ export class TagCommand extends TracedSubcommand {
         name: tag.name,
         command: commandName.name,
       })) as string,
+      flags: MessageFlags.Ephemeral,
       allowedMentions: { parse: [] },
     })
   }
@@ -580,22 +638,71 @@ export class TagCommand extends TracedSubcommand {
       })
     }
 
-    // Discord first: if the delete fails the row stays promoted and the
-    // command keeps working, which is the consistent state.
-    await deleteGuildTagCommand(
-      interaction.client,
-      interaction.guildId,
-      tag.commandId,
-    )
-    await db
-      .update(tags)
-      .set({
-        commandId: null,
-        commandDescription: null,
-        promotedBy: null,
-        promotedAt: null,
+    const expectedCommandId = tag.commandId
+    let outcome: 'demoted' | 'notPromoted'
+    try {
+      outcome = await db.transaction(async (tx) => {
+        await tx.execute(
+          sql`SELECT pg_advisory_xact_lock(hashtextextended(${interaction.guildId}, 0))`,
+        )
+        // Re-read under the lock: a concurrent demote may have cleared the
+        // promotion, or a delete/recreate cycle may have replaced it.
+        const [fresh] = await tx
+          .select({ commandId: tags.commandId })
+          .from(tags)
+          .where(eq(tags.id, tag.id))
+        if (!fresh || fresh.commandId === null) return 'notPromoted' as const
+        if (fresh.commandId !== expectedCommandId) return 'notPromoted' as const
+
+        // Discord first: if the delete fails the row stays promoted and the
+        // command keeps working, which is the consistent state.
+        await deleteGuildTagCommand(
+          interaction.client,
+          interaction.guildId,
+          expectedCommandId,
+        )
+        // Conditional clear: only demote if the command id still matches
+        // what we read, so an interleaved promote is never wiped.
+        const cleared = await tx
+          .update(tags)
+          .set({
+            commandId: null,
+            commandDescription: null,
+            promotedBy: null,
+            promotedAt: null,
+          })
+          .where(
+            and(eq(tags.id, tag.id), eq(tags.commandId, expectedCommandId)),
+          )
+          .returning({ id: tags.id })
+        return cleared.length > 0
+          ? ('demoted' as const)
+          : ('notPromoted' as const)
       })
-      .where(eq(tags.id, tag.id))
+    } catch (error) {
+      this.container.logger.warn(
+        `Could not demote tag ${tag.name} in guild ${interaction.guildId}`,
+        error,
+      )
+      return interaction.reply({
+        content: (await resolveKey(interaction, 'commands/tag:promoteFailed', {
+          name: tag.name.toLowerCase(),
+          error: error instanceof Error ? error.message : String(error),
+        })) as string,
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+      })
+    }
+
+    if (outcome === 'notPromoted') {
+      return interaction.reply({
+        content: (await resolveKey(interaction, 'commands/tag:notPromoted', {
+          name: tag.name,
+        })) as string,
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+      })
+    }
 
     promotionsCounter.add(1, { action: 'demote', trigger: 'command' })
     return interaction.reply({
@@ -613,7 +720,10 @@ export class TagCommand extends TracedSubcommand {
   private canManageTagCommands(
     interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ): boolean {
-    return interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)
+    return (
+      interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild) ??
+      false
+    )
   }
 
   private async replyMissingPermission(

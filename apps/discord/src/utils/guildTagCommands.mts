@@ -71,12 +71,16 @@ export const MAX_COMMAND_DESCRIPTION_LENGTH = 100
  * The full command payload for a promoted tag. Every promoted command
  * carries one optional `args` string option, forwarded to the tagscript
  * renderer exactly like `/tag show`'s — promoted tags stay programmable.
- * The option description is intentionally a fixed string: reconciliation
- * recreates commands with no interaction (and thus no locale) at hand.
+ * The option description is caller-supplied: promotion passes the localized
+ * `commands/descriptions:tagOptionArgs` string, reconciliation (which has no
+ * interaction and thus no locale) passes the en-US value. It deliberately
+ * lives outside this module so the en-US source of truth stays in the
+ * locale file.
  */
 export function guildTagCommandData(
   name: string,
   description: string,
+  argsDescription: string,
 ): ApplicationCommandDataResolvable {
   return {
     name,
@@ -85,10 +89,31 @@ export function guildTagCommandData(
       {
         type: ApplicationCommandOptionType.String,
         name: 'args',
-        description: 'Space-separated arguments passed to the tag',
+        description: argsDescription.slice(0, MAX_COMMAND_DESCRIPTION_LENGTH),
       },
     ],
   }
+}
+
+/**
+ * Whether a guild command looks like one of ours: a single optional string
+ * `args` option. Reconciliation must only delete orphans with this shape so
+ * it never removes guild commands owned by other features.
+ */
+export function isTagCommandShape(command: { options?: unknown }): boolean {
+  if (!Array.isArray(command.options) || command.options.length !== 1) {
+    return false
+  }
+  const [option] = command.options as Array<{
+    name?: unknown
+    type?: unknown
+    required?: unknown
+  }>
+  return (
+    option?.name === 'args' &&
+    option?.type === ApplicationCommandOptionType.String &&
+    option?.required !== true
+  )
 }
 
 /**
@@ -101,9 +126,10 @@ export async function createGuildTagCommand(
   guildId: string,
   name: string,
   description: string,
+  argsDescription: string,
 ): Promise<bigint> {
   const command = await client.application.commands.create(
-    guildTagCommandData(name, description),
+    guildTagCommandData(name, description, argsDescription),
     guildId,
   )
   return BigInt(command.id)
@@ -143,6 +169,8 @@ export function isCommandCapError(error: unknown): boolean {
  * Which promoted rows a guild must demote to fit under `cap`: the newest
  * promotions go first, so long-standing commands survive an entitlement
  * lapse. Pure selection logic, shared by the reconcile task and its tests.
+ * A null `promotedAt` (legacy rows) sorts as epoch zero, i.e. oldest and
+ * therefore kept — pinned by test.
  */
 export function promotionsOverCap<Row extends Pick<Tag, 'promotedAt'>>(
   rows: readonly Row[],

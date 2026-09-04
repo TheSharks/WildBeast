@@ -53,6 +53,24 @@ export class GuildTagCommandRunListener extends Listener {
     // Guild check is belt and braces: command ids are unique, but a tag
     // must never render outside its own guild.
     if (!tag || tag.guildId !== BigInt(interaction.guildId)) {
+      // Grace for in-flight promotes: the Discord command is registered
+      // before its DB row flips, so re-read once before treating it as
+      // orphaned.
+      try {
+        const reread = await db.query.tags.findFirst({
+          where: eq(tags.commandId, BigInt(interaction.commandId)),
+        })
+        if (reread && reread.guildId === BigInt(interaction.guildId)) {
+          const outcome = await replyWithRenderedTag(
+            interaction,
+            reread.content,
+          )
+          executionsCounter.add(1, { outcome })
+          return
+        }
+      } catch {
+        // Fall through to orphan handling on re-read failure.
+      }
       executionsCounter.add(1, { outcome: 'orphaned' })
       await interaction.reply({
         content: (await resolveKey(

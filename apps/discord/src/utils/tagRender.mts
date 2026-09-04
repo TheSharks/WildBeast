@@ -43,6 +43,7 @@ export async function replyWithRenderedTag(
           error: error.message,
         })) as string,
         flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
       })
       return 'renderError'
     }
@@ -56,6 +57,7 @@ export async function replyWithRenderedTag(
         'commands/tag:emptyOutput',
       )) as string,
       flags: MessageFlags.Ephemeral,
+      allowedMentions: { parse: [] },
     })
     return 'emptyOutput'
   }
