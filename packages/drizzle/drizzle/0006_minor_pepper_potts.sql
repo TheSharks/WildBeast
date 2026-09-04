@@ -1,0 +1,2 @@
+ALTER TABLE "Entitlement" ADD COLUMN "updatedAt" timestamp with time zone DEFAULT now() NOT NULL;--> statement-breakpoint
+ALTER TABLE "Entitlement" ADD CONSTRAINT "Entitlement_user_or_guild_check" CHECK ((("userId" IS NULL) <> ("guildId" IS NULL)));

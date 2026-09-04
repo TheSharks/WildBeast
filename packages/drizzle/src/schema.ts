@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
+  check,
   customType,
   index,
   integer,
@@ -85,6 +86,11 @@ export const applicationCommandIds = pgTable(
  * (scheduled tasks, background jobs) without hitting the API. Rows are
  * upserted by the entitlement listeners and reconciled on boot; interaction
  * handlers should prefer `interaction.entitlements`, which is always fresh.
+ *
+ * Exactly one of userId/guildId is set, enforced by a CHECK constraint:
+ * a user subscription has only userId, a guild subscription only guildId.
+ * There are intentionally no foreign keys: Discord is the source of truth
+ * and rows must survive guilds/users the bot has never seen.
  */
 export const entitlements = pgTable(
   'Entitlement',
@@ -104,10 +110,19 @@ export const entitlements = pgTable(
     // Null bounds mean a perpetual entitlement (e.g. test entitlements).
     startsAt: timestamp('startsAt', { withTimezone: true }),
     endsAt: timestamp('endsAt', { withTimezone: true }),
+    // Last time this row was written. Defaults to now() on insert so
+    // backfilled rows get a sensible value without application changes.
+    updatedAt: timestamp('updatedAt', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     index('Entitlement_guildId_idx').on(table.guildId),
     index('Entitlement_userId_idx').on(table.userId),
+    check(
+      'Entitlement_user_or_guild_check',
+      sql`(("userId" IS NULL) <> ("guildId" IS NULL))`,
+    ),
   ],
 )
 

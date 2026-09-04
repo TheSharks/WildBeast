@@ -43,6 +43,13 @@
       "when": 1783771374712,
       "tag": "0005_promoted-tags",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788467607623,
+      "tag": "0006_minor_pepper_potts",
+      "breakpoints": true
     }
   ]
 }
