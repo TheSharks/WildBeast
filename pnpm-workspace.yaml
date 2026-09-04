@@ -3,12 +3,9 @@ packages:
   - packages/*
 
 onlyBuiltDependencies:
-  - '@prisma/client'
-  - '@prisma/engines'
   - '@sentry/node-cpu-profiler'
   - '@sentry/node-native-stacktrace'
   - core-js
   - core-js-pure
   - msgpackr-extract
-  - prisma
   - protobufjs

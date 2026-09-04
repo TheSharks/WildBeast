@@ -7,17 +7,12 @@
   "features": {
     "ghcr.io/devcontainers-extra/features/pnpm:2": {}
   },
-  "forwardPorts": [
-    5432,
-    "redis:6379",
-    "otel-collector:4317",
-    "otel-collector:4318"
-  ],
+  "forwardPorts": [5432, 6379, 4317, 4318],
   "portsAttributes": {
     "5432": { "label": "PostgreSQL" },
-    "redis:6379": { "label": "Redis" },
-    "otel-collector:4317": { "label": "OTLP gRPC" },
-    "otel-collector:4318": { "label": "OTLP HTTP" }
+    "6379": { "label": "Redis" },
+    "4317": { "label": "OTLP gRPC" },
+    "4318": { "label": "OTLP HTTP" }
   },
   "customizations": {
     "vscode": {

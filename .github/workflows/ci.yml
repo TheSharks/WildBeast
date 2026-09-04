@@ -15,6 +15,24 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Disposable Postgres for the DB-gated suites (entitlement mirror, …).
+    # Pinned to major 17 to match the devcontainer and production guidance.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: wildbeast
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wildbeast
     steps:
       - uses: actions/checkout@v4
 
@@ -30,6 +48,11 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+
+      # Migrations must run before the DB tests: the suites assume the
+      # schema (including 0006's entitlement CHECK/updatedAt) already exists.
+      - name: Migrate database
+        run: pnpm --filter @thesharks/drizzle migrate
 
       - name: Test (unit + integration)
         run: pnpm test:integration

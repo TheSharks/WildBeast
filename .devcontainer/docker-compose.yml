@@ -12,14 +12,20 @@ services:
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
 
-    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:db
+    # No network_mode here: the default compose network resolves the
+    # db/redis/otel-collector hostnames used in devcontainer.env, and sharing
+    # db's namespace would hide the other services' localhost ports.
+    # Forward service ports via "forwardPorts" in **devcontainer.json**.
 
     # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   db:
-    image: timescale/timescaledb:latest-pg17
+    # Pinned to major 17 to match CI (.github/workflows/ci.yml) and the
+    # ephemeral database in scripts/test-integration.mjs. Stock image is
+    # enough: the schema only needs the citext and pg_trgm contrib
+    # extensions, which ship with every PostgreSQL distribution.
+    image: postgres:17
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -32,13 +38,16 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   redis:
-    image: redis:8
+    # Matches scripts/test-integration.mjs.
+    image: redis:7-alpine
     restart: unless-stopped
 
     # Add "forwardPorts": ["6379"] to **devcontainer.json** to forward Redis locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   otel-collector:
+    # Matches scripts/test-integration.mjs; pin instead of latest so local
+    # telemetry behaves the same on every machine.
     image: otel/opentelemetry-collector-contrib:0.143.1
     restart: unless-stopped
     command: ["--config=/etc/otelcol-contrib/config.yaml"]

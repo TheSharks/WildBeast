@@ -15,7 +15,7 @@
     "test": {
       "dependsOn": ["build"],
       "cache": false,
-      "passThroughEnv": ["REDIS_URL", "OTEL_E2E_OUTPUT"]
+      "passThroughEnv": ["DATABASE_URL", "REDIS_URL", "OTEL_E2E_OUTPUT"]
     },
     "@thesharks/docs#test": {
       "dependsOn": [],

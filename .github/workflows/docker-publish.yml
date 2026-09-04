@@ -1,9 +1,18 @@
 name: Docker publish
 
+# Every package is private, so changesets only bumps versions and pushes
+# tags (see privatePackages in .changeset/config.json): it never publishes
+# to npm and never creates GitHub releases. The tag push below is therefore
+# the normal release path; the release trigger is a backstop for a manually
+# created GitHub release, and workflow_dispatch allows rebuilding an image
+# for an existing ref without pushing an empty commit.
 on:
   push:
     branches: [master]
     tags: ['@thesharks/discord@*']
+  release:
+    types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -47,11 +56,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # For the version label: the changesets version on release tags,
-      # edge on master. Mirrors the extraction in the publish job.
+      # edge on master. Mirrors the extraction in the publish job. Release
+      # events carry the tag in the release payload instead of the ref.
       - name: Extract version from tag
         id: version
-        if: github.ref_type == 'tag'
-        run: echo "version=${GITHUB_REF_NAME#@thesharks/discord@}" >> "$GITHUB_OUTPUT"
+        if: github.ref_type == 'tag' || github.event_name == 'release'
+        run: |
+          ref="${GITHUB_REF_NAME:-${{ github.event.release.tag_name }}}"
+          echo "version=${ref#@thesharks/discord@}" >> "$GITHUB_OUTPUT"
 
       # Baked into the image so runtime Sentry events line up with the
       # release created in the sentry job: the tag name verbatim on
@@ -125,11 +137,14 @@ jobs:
 
       # metadata-action can't parse the changesets tag format
       # (@thesharks/discord@X.Y.Z) as a semver ref, so extract the
-      # version and feed it in explicitly below.
+      # version and feed it in explicitly below. Release events carry the
+      # tag in the release payload instead of the ref.
       - name: Extract version from tag
         id: version
-        if: github.ref_type == 'tag'
-        run: echo "version=${GITHUB_REF_NAME#@thesharks/discord@}" >> "$GITHUB_OUTPUT"
+        if: github.ref_type == 'tag' || github.event_name == 'release'
+        run: |
+          ref="${GITHUB_REF_NAME:-${{ github.event.release.tag_name }}}"
+          echo "version=${ref#@thesharks/discord@}" >> "$GITHUB_OUTPUT"
 
       # Master pushes get the moving edge tag plus a pinned sha tag.
       # Release tags get the full version; for stable releases
@@ -143,9 +158,9 @@ jobs:
           tags: |
             type=edge,branch=master
             type=sha
-            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }},enable=${{ github.ref_type == 'tag' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }},enable=${{ github.ref_type == 'tag' }}
-            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }},enable=${{ github.ref_type == 'tag' }}
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.version != '' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.version != '' }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.version != '' }}
 
       - name: Create multi-arch manifest
         working-directory: /tmp/digests
