@@ -6,7 +6,7 @@ import type { ClientEvents } from 'discord.js'
 import {
   attributesFromInteraction,
   captureInteractionError,
-  withSpan,
+  withErrorSpan,
 } from '../../utils/tracing.mjs'
 
 /**
@@ -21,16 +21,18 @@ export class SentrySubcommandErrorListener extends Listener {
   public async run(
     ...[error, payload]: ClientEvents['chatInputSubcommandError']
   ) {
-    return withSpan(
+    const subcommand = payload.matchedSubcommandMapping?.name ?? 'unknown'
+    return withErrorSpan(
       'discord.command.error_reporting',
+      payload.interaction,
       {
         ...attributesFromInteraction(payload.interaction, this),
         'discord.command.name': payload.interaction.commandName,
-        'discord.command.subcommand': payload.matchedSubcommandMapping.name,
+        'discord.command.subcommand': subcommand,
       },
       () =>
         captureInteractionError(payload.interaction, error, {
-          subcommand: payload.matchedSubcommandMapping.name,
+          subcommand,
         }),
     )
   }

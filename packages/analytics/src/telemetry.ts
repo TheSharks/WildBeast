@@ -1,9 +1,16 @@
 import {
   type Attributes,
+  type Context,
+  context,
   DiagConsoleLogger,
   DiagLogLevel,
   diag,
   metrics,
+  propagation,
+  type TextMapGetter,
+  type TextMapPropagator,
+  type TextMapSetter,
+  trace,
 } from '@opentelemetry/api'
 import { logs } from '@opentelemetry/api-logs'
 import { OTLPLogExporter as OTLPLogGrpcExporter } from '@opentelemetry/exporter-logs-otlp-grpc'
@@ -51,6 +58,249 @@ import type { TelemetryConfig, TelemetryExporterConfig } from './types.js'
 // from @opentelemetry/semantic-conventions/incubating
 // recommendation is to copy relevant definitions into code base
 const ATTR_DEPLOYMENT_ENVIRONMENT_NAME = 'deployment.environment.name'
+
+/**
+ * Keys that must never leave the process in Sentry events or OTEL logs.
+ * Discord usernames/tags, guild/channel names and secrets are PII: telemetry
+ * stays id-only unless explicitly opted in.
+ */
+export const SENTRY_PII_DENYLIST = [
+  'username',
+  'tag',
+  'globalName',
+  'displayName',
+  'email',
+  'token',
+  'authorization',
+  'password',
+  'secret',
+  'guild_name',
+  'channel_name',
+  'name',
+] as const
+
+function isDenylistedKey(key: string): boolean {
+  const lower = key.toLowerCase()
+  return (SENTRY_PII_DENYLIST as readonly string[]).some(
+    (denied) => lower === denied || lower.endsWith(`_${denied}`),
+  )
+}
+
+function scrubValue(value: unknown, key?: string): unknown {
+  if (key && isDenylistedKey(key)) {
+    return '[Redacted]'
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => scrubValue(entry))
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = scrubValue(v, k)
+    }
+    return out
+  }
+  if (typeof value === 'string' && key === undefined) {
+    // Best-effort token redaction in free-form strings (bot tokens, bearer).
+    return value
+      .replace(
+        /[A-Za-z0-9_-]{24}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27}/g,
+        '[Redacted]',
+      )
+      .replace(/Bearer\s+[A-Za-z0-9._~-]+/gi, 'Bearer [Redacted]')
+  }
+  return value
+}
+
+/**
+ * Sentry `beforeSend` scrub: id-only by default. Drops denylisted keys from
+ * user, contexts, extra and breadcrumb data. Exported for tests.
+ */
+export function scrubSentryEvent<T>(event: T): T {
+  if (!event || typeof event !== 'object') return event
+  const record = event as Record<string, unknown>
+
+  if (record.user && typeof record.user === 'object') {
+    const user = record.user as Record<string, unknown>
+    const scrubbed: Record<string, unknown> = {}
+    if (typeof user.id === 'string') scrubbed.id = user.id
+    // Preserve an explicitly opted-in username only when the caller set it
+    // via includePII; otherwise drop it (id-only default).
+    record.user = scrubbed
+  }
+
+  if (record.contexts && typeof record.contexts === 'object') {
+    const contexts = record.contexts as Record<string, unknown>
+    for (const [ctxKey, ctxValue] of Object.entries(contexts)) {
+      if (ctxValue && typeof ctxValue === 'object') {
+        const scrubbed: Record<string, unknown> = {}
+        for (const [k, v] of Object.entries(
+          ctxValue as Record<string, unknown>,
+        )) {
+          if (isDenylistedKey(k)) {
+            scrubbed[k] = '[Redacted]'
+          } else {
+            scrubbed[k] = scrubValue(v, k)
+          }
+        }
+        // Guild/channel contexts stay id-only: drop redacted name markers
+        // entirely so no high-cardinality label survives.
+        if (ctxKey === 'guild' || ctxKey === 'channel') {
+          delete scrubbed.name
+        }
+        contexts[ctxKey] = scrubbed
+      }
+    }
+  }
+
+  if (record.extra && typeof record.extra === 'object') {
+    record.extra = scrubValue(record.extra) as Record<string, unknown>
+  }
+
+  if (Array.isArray(record.breadcrumbs)) {
+    record.breadcrumbs = (record.breadcrumbs as unknown[]).map((crumb) => {
+      if (crumb && typeof crumb === 'object') {
+        const c = crumb as Record<string, unknown>
+        if (c.data && typeof c.data === 'object') {
+          return { ...c, data: scrubValue(c.data) }
+        }
+      }
+      return crumb
+    })
+  }
+
+  return event
+}
+
+// --- Minimal W3C propagators (vendored to avoid a new @opentelemetry/core
+// dependency). Together with SentryPropagator they form the composite
+// propagator below: W3C traceparent/baggage for OTLP collectors plus
+// sentry-trace/baggage for Sentry.
+
+const TRACE_PARENT_HEADER = 'traceparent'
+const TRACE_STATE_HEADER = 'tracestate'
+const BAGGAGE_HEADER = 'baggage'
+
+function parseTraceParent(value: string | undefined) {
+  if (!value) return undefined
+  const parts = value.trim().split('-')
+  if (parts.length < 4) return undefined
+  const [version, traceId, spanId, flags] = parts
+  if (!/^[0-9a-f]{2}$/.test(version ?? '')) return undefined
+  if (!/^[0-9a-f]{32}$/.test(traceId ?? '')) return undefined
+  if (!/^[0-9a-f]{16}$/.test(spanId ?? '')) return undefined
+  if (!/^[0-9a-f]{2}$/.test(flags ?? '')) return undefined
+  return { traceId: traceId as string, spanId: spanId as string, flags }
+}
+
+/** W3C Trace Context propagator (traceparent/tracestate). */
+export class W3CTraceContextPropagator implements TextMapPropagator {
+  inject(ctx: Context, carrier: unknown, setter: TextMapSetter): void {
+    const spanContext = trace.getSpanContext(ctx)
+    if (!spanContext) return
+    const flags = spanContext.traceFlags & 1 ? '01' : '00'
+    setter.set(
+      carrier as Record<string, string>,
+      TRACE_PARENT_HEADER,
+      `00-${spanContext.traceId}-${spanContext.spanId}-${flags}`,
+    )
+  }
+
+  extract(ctx: Context, carrier: unknown, getter: TextMapGetter): Context {
+    const header = getter.get(
+      carrier as Record<string, string>,
+      TRACE_PARENT_HEADER,
+    )
+    const value = Array.isArray(header) ? header[0] : header
+    const parsed = parseTraceParent(
+      typeof value === 'string' ? value : undefined,
+    )
+    if (!parsed) return ctx
+    return trace.setSpanContext(ctx, {
+      traceId: parsed.traceId,
+      spanId: parsed.spanId,
+      traceFlags: parsed.flags === '01' ? 1 : 0,
+      isRemote: true,
+    })
+  }
+
+  fields(): string[] {
+    return [TRACE_PARENT_HEADER, TRACE_STATE_HEADER]
+  }
+}
+
+/** W3C Baggage propagator (minimal pass-through). */
+export class W3CBaggagePropagator implements TextMapPropagator {
+  inject(ctx: Context, carrier: unknown, setter: TextMapSetter): void {
+    const baggage = propagation.getBaggage(ctx)
+    if (!baggage?.getAllEntries) return
+    const header = (baggage.getAllEntries() ?? [])
+      .map(([k, v]) => `${k}=${encodeURIComponent(String(v.value))}`)
+      .join(', ')
+    if (header) {
+      setter.set(carrier as Record<string, string>, BAGGAGE_HEADER, header)
+    }
+  }
+
+  extract(ctx: Context, carrier: unknown, getter: TextMapGetter): Context {
+    const header = getter.get(carrier as Record<string, string>, BAGGAGE_HEADER)
+    const value = Array.isArray(header) ? header.join(',') : header
+    if (typeof value !== 'string' || !value) return ctx
+    try {
+      const entries: Record<string, { value: string }> = {}
+      for (const part of value.split(',')) {
+        const eq = part.indexOf('=')
+        if (eq === -1) continue
+        const key = part.slice(0, eq).trim()
+        const val = decodeURIComponent(part.slice(eq + 1).trim())
+        if (key) entries[key] = { value: val }
+      }
+      if (Object.keys(entries).length === 0) return ctx
+      return propagation.setBaggage(ctx, propagation.createBaggage(entries))
+    } catch {
+      return ctx
+    }
+  }
+
+  fields(): string[] {
+    return [BAGGAGE_HEADER]
+  }
+}
+
+/** Fan-out propagator: injects/extracts via every member (W3C + Sentry). */
+export class CompositePropagator implements TextMapPropagator {
+  private readonly propagators: TextMapPropagator[]
+
+  constructor(config: { propagators: TextMapPropagator[] }) {
+    this.propagators = config.propagators
+  }
+
+  inject(ctx: Context, carrier: unknown, setter: TextMapSetter): void {
+    for (const propagator of this.propagators) {
+      try {
+        propagator.inject(ctx, carrier, setter)
+      } catch {
+        // One propagator must not break the others.
+      }
+    }
+  }
+
+  extract(ctx: Context, carrier: unknown, getter: TextMapGetter): Context {
+    let next = ctx
+    for (const propagator of this.propagators) {
+      try {
+        next = propagator.extract(next, carrier, getter)
+      } catch {
+        // ignore and continue with the next propagator
+      }
+    }
+    return next
+  }
+
+  fields(): string[] {
+    return [...new Set(this.propagators.flatMap((p) => p.fields()))]
+  }
+}
 
 export interface TelemetryInitResult {
   shutdown(): Promise<void>
@@ -433,6 +683,18 @@ export function initOpenTelemetry(
     // Nothing downstream continues our traces, and tagscript {fetch:} can
     // reach arbitrary hosts that must not see sentry-trace/baggage headers.
     tracePropagationTargets: config?.sentry?.tracePropagationTargets ?? [],
+    // Id-only by default: scrub usernames, guild/channel names and secrets
+    // from every error event. Composes with a caller-provided beforeSend.
+    beforeSend: (event, hint) => {
+      const scrubbed = scrubSentryEvent(event)
+      const custom = config?.sentry?.beforeSend
+      return typeof custom === 'function'
+        ? (custom as (e: typeof event, h: typeof hint) => typeof event | null)(
+            scrubbed,
+            hint,
+          )
+        : scrubbed
+    },
     spotlight:
       config?.sentry?.spotlight ?? process.env.SENTRY_SPOTLIGHT === 'true',
     ...(config?.sentry?.tags
@@ -505,12 +767,20 @@ export function initOpenTelemetry(
       ? config.enableExport
       : hasExporters
 
-  // enableExport: true without any configured endpoint falls back to the
-  // exporter libraries' default endpoints (localhost).
-  if (config?.enableExport === true) {
-    if (tracesConfigs.length === 0) tracesConfigs.push({})
-    if (metricsConfigs.length === 0) metricsConfigs.push({})
-    if (logsConfigs.length === 0) logsConfigs.push({})
+  // enableExport: true requires an explicit endpoint. Silently falling back
+  // to the exporter libraries' localhost defaults would black-hole telemetry
+  // in production, so warn loudly and export nothing until one is set.
+  if (config?.enableExport === true && !hasExporters) {
+    const message =
+      '[telemetry] enableExport is true but no OTLP endpoint is configured ' +
+      '(OTEL_EXPORTER_OTLP_*_ENDPOINT or exporters.otlp/traces/metrics/logs). ' +
+      'Exporting is disabled until an endpoint is set.'
+    try {
+      diag.warn(message)
+    } catch {
+      // ignore
+    }
+    console.warn(message)
   }
 
   const sentryClient = Sentry.getClient()
@@ -539,7 +809,16 @@ export function initOpenTelemetry(
   })
 
   tracerProvider.register({
-    propagator: new SentryPropagator(),
+    // W3C traceparent/baggage for OTLP collectors plus sentry-trace/baggage
+    // for Sentry. Outgoing Sentry headers are still gated by
+    // tracePropagationTargets (default []).
+    propagator: new CompositePropagator({
+      propagators: [
+        new W3CTraceContextPropagator(),
+        new W3CBaggagePropagator(),
+        new SentryPropagator(),
+      ],
+    }),
     contextManager: new Sentry.SentryContextManager(),
   })
 
@@ -618,6 +897,9 @@ export function initOpenTelemetry(
   )
 
   registerInstrumentations({
+    // One registration per process: the SDK dedupes by instrumentation name,
+    // so repeated initOpenTelemetry calls (tests) must disable
+    // instrumentations they don't own to avoid re-patching modules.
     instrumentations: [
       ...(pgEnabled ? [new PgInstrumentation()] : []),
       ...(undiciEnabled ? [new UndiciInstrumentation()] : []),

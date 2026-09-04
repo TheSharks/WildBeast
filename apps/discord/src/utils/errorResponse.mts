@@ -1,3 +1,4 @@
+import { container } from '@sapphire/framework'
 import { resolveKey } from '@sapphire/plugin-i18next'
 import {
   Colors,
@@ -11,22 +12,29 @@ import {
 /**
  * Send the user-facing report for a failed command as a Components V2
  * container. Handles both fresh and already acknowledged interactions.
+ *
+ * The user sees only a generic message plus the error code (uuid). The full
+ * error is logged server-side so support can correlate via the uuid.
  */
 export async function sendErrorReport(
   interaction: CommandInteraction,
   error: unknown,
   uuid: string,
 ): Promise<void> {
-  const container = new ContainerBuilder()
+  try {
+    container.logger.error(`Command failed [${uuid}]:`, error)
+  } catch {
+    // Logging must never break the user-facing reply.
+  }
+
+  const containerBuilder = new ContainerBuilder()
     .setAccentColor(Colors.Red)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
         `## ${await resolveKey(interaction, 'system/errors:oops')}`,
       ),
       new TextDisplayBuilder().setContent(
-        await resolveKey(interaction, 'system/errors:try_again', {
-          error: error instanceof Error ? error.message : String(error),
-        }),
+        await resolveKey(interaction, 'system/errors:try_again'),
       ),
     )
     .addSeparatorComponents(new SeparatorBuilder())
@@ -46,12 +54,12 @@ export async function sendErrorReport(
     await interaction.editReply({
       content: null,
       embeds: [],
-      components: [container],
+      components: [containerBuilder],
       flags: MessageFlags.IsComponentsV2,
     })
   } else {
     await interaction.reply({
-      components: [container],
+      components: [containerBuilder],
       flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
     })
   }

@@ -13,7 +13,8 @@ export class SentryBeforeChatInputListener extends Listener {
     // Sentry user/tag/context is applied per-interaction by TracedCommand's
     // isolation scope and by the error listeners at capture time; setting it
     // globally here would leak between concurrently running interactions.
-    this.container.logger.info(
+    // Debug: per-interaction chatter must not spam info logs.
+    this.container.logger.debug(
       `Got an interaction for a chat input command: ${interaction.commandName}`,
     )
   }

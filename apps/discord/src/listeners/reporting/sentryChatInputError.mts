@@ -5,7 +5,7 @@ import type { ClientEvents } from 'discord.js'
 import {
   attributesFromInteraction,
   captureInteractionError,
-  withSpan,
+  withErrorSpan,
 } from '../../utils/tracing.mjs'
 
 @ApplyOptions<ListenerOptions>({
@@ -13,8 +13,9 @@ import {
 })
 export class SentryChatInputErrorListener extends Listener {
   public async run(...[error, payload]: ClientEvents['chatInputCommandError']) {
-    return withSpan(
+    return withErrorSpan(
       'discord.command.error_reporting',
+      payload.interaction,
       {
         ...attributesFromInteraction(payload.interaction, this),
         'discord.command.name': payload.interaction.commandName,

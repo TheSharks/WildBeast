@@ -30,6 +30,7 @@ groups:
 
       - alert: WildBeastShardLeaseLost
         expr: sum(increase(discord_cluster_shard_handoffs_total{direction="lost"}[10m])) > 0
+        for: 5m
         labels:
           severity: warning
         annotations:
@@ -40,7 +41,7 @@ groups:
             previous owner.
 
       - alert: WildBeastCoordinationErrors
-        expr: sum(rate(discord_cluster_coordination_errors_total[5m])) > 0
+        expr: sum(rate(discord_cluster_coordination_errors_total[5m])) > 0.1
         for: 5m
         labels:
           severity: warning
@@ -170,7 +171,7 @@ groups:
             event loop.
 
       - alert: WildBeastTaskQueueFailures
-        expr: max(bullmq_queue_failed) > 0
+        expr: max by (queue_name) (bullmq_queue_failed) > 0
         for: 5m
         labels:
           severity: warning

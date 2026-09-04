@@ -45,6 +45,10 @@ export class ProcessErrorListener extends Listener {
 
       unhandledRejectionCounter.add(1, {
         error_name: error.name,
+        // Preserve the original rejection type: String(reason) above loses
+        // whether it was a string, number, object, ... Keep it as a
+        // low-cardinality label.
+        reason_type: reason instanceof Error ? 'error' : typeof reason,
       })
 
       this.container.logger?.error('Unhandled rejection:', reason)

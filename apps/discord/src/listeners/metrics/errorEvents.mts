@@ -22,7 +22,7 @@ export class WarnListener extends Listener {
   public run(...[message]: ClientEvents['warn']): void {
     // The message text goes to logs; a metric label with free-form text would
     // create a new time series per unique message.
-    warnCounter.add(1)
+    warnCounter.add(1, { error_type: 'warning' })
     this.container.logger.warn(`Discord client warning: ${message}`)
   }
 }

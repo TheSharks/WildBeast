@@ -4,6 +4,56 @@ import { LogLevel } from '@sapphire/framework'
 import { Logger as SapphireLogger } from '@sapphire/plugin-logger'
 import * as Sentry from '@sentry/node'
 
+/**
+ * Attribute/body keys that must never leave the process in telemetry.
+ * Log values are inspected into strings, so scrub both structured keys and
+ * common secret patterns in free-form text.
+ */
+export const LOGGER_PII_DENYLIST = [
+  'token',
+  'authorization',
+  'password',
+  'secret',
+  'email',
+  'username',
+  'tag',
+  'guild_name',
+  'channel_name',
+] as const
+
+function isDeniedLoggerKey(key: string): boolean {
+  const lower = key.toLowerCase()
+  return (LOGGER_PII_DENYLIST as readonly string[]).some(
+    (denied) => lower === denied || lower.endsWith(`_${denied}`),
+  )
+}
+
+function redactLoggerValue(value: unknown, key?: string): unknown {
+  if (key && isDeniedLoggerKey(key)) {
+    return '[Redacted]'
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => redactLoggerValue(entry))
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = redactLoggerValue(v, k)
+    }
+    return out
+  }
+  return value
+}
+
+function scrubLoggerText(text: string): string {
+  return text
+    .replace(
+      /[A-Za-z0-9_-]{24}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27}/g,
+      '[Redacted]',
+    )
+    .replace(/Bearer\s+[A-Za-z0-9._~-]+/gi, 'Bearer [Redacted]')
+}
+
 export class AnalyticsLogger extends SapphireLogger {
   private readonly otelLogger = logs.getLogger('@thesharks/sapphire-logger')
 
@@ -20,8 +70,10 @@ export class AnalyticsLogger extends SapphireLogger {
     const message = values
       .map((value) =>
         typeof value === 'string'
-          ? value
-          : inspect(value, { colors: false, depth: 3 }),
+          ? scrubLoggerText(value)
+          : scrubLoggerText(
+              inspect(redactLoggerValue(value), { colors: false, depth: 3 }),
+            ),
       )
       .join(' ')
 

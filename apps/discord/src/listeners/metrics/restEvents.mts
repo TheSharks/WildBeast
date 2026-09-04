@@ -21,7 +21,8 @@ export class RestRateLimitedListener extends Listener {
   public run(rateLimitInfo: RateLimitData): void {
     rateLimitCounter.add(1, {
       // The bucket route (e.g. /channels/:id/messages), not the raw URL, so
-      // cardinality stays bounded.
+      // cardinality stays bounded. `global` is a string to keep OTel and
+      // Sentry label types consistent.
       route: rateLimitInfo.route,
       method: rateLimitInfo.method,
       global: String(rateLimitInfo.global),
@@ -37,7 +38,7 @@ export class RestRateLimitedListener extends Listener {
         attributes: {
           route: rateLimitInfo.route,
           method: rateLimitInfo.method,
-          global: rateLimitInfo.global,
+          global: String(rateLimitInfo.global),
         },
       },
     )

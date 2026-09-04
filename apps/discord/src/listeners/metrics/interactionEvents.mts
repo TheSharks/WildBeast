@@ -118,7 +118,7 @@ export class SelectMenuInteractionListener extends Listener {
       return
     }
 
-    if (!interaction.isStringSelectMenu()) {
+    if (!interaction.isAnySelectMenu()) {
       return
     }
 

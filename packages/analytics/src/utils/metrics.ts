@@ -2,6 +2,15 @@ import { type Attributes, metrics } from '@opentelemetry/api'
 import type { Listener } from '@sapphire/framework'
 import type { Guild } from 'discord.js'
 
+export type {
+  Context as OTelContext,
+  Link as OTelLink,
+  SpanContext as OTelSpanContext,
+} from '@opentelemetry/api'
+// Re-exported for discord tracing without a direct @opentelemetry/api dep.
+// Instruments with the same meter + name + type are deduped by the SDK.
+export { context } from '@opentelemetry/api'
+
 type AttributeValue = Attributes[keyof Attributes]
 
 /**
@@ -66,6 +75,11 @@ function buildAttributeKey(attributes: Attributes) {
  * cumulative temporality (the OTLP default) retain a cleared series' last
  * value until the process restarts. Prefer `set(0, ...)` when downstream
  * dashboards must see the change.
+ *
+ * Instruments with the same meter + name + type are deduped by the SDK, so
+ * shared counters/histograms declared in multiple listener files (e.g.
+ * `discord_commands_total` in commandExecuted and subcommandExecuted) refer
+ * to the same underlying instrument.
  */
 export function createGauge(
   meterName: string,

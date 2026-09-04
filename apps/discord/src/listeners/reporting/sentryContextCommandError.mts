@@ -5,7 +5,7 @@ import type { ClientEvents } from 'discord.js'
 import {
   attributesFromInteraction,
   captureInteractionError,
-  withSpan,
+  withErrorSpan,
 } from '../../utils/tracing.mjs'
 
 @ApplyOptions<ListenerOptions>({
@@ -15,8 +15,9 @@ export class SentryContextCommandErrorListener extends Listener {
   public async run(
     ...[error, payload]: ClientEvents['contextMenuCommandError']
   ) {
-    return withSpan(
+    return withErrorSpan(
       'discord.context_command.error_reporting',
+      payload.interaction,
       {
         ...attributesFromInteraction(
           payload.interaction as unknown as Parameters<

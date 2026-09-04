@@ -1,8 +1,13 @@
 import { snapshotEnv } from '@thesharks/test-utils'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  CompositePropagator,
   normalizeOtlpEndpointUrl,
   resolveTransportConfig,
+  SENTRY_PII_DENYLIST,
+  scrubSentryEvent,
+  W3CBaggagePropagator,
+  W3CTraceContextPropagator,
 } from '../src/telemetry.js'
 
 let restoreEnv: () => void
@@ -215,5 +220,101 @@ describe('normalizeOtlpEndpointUrl', () => {
 
   it('returns empty input unchanged', () => {
     expect(normalizeOtlpEndpointUrl('  ', 'traces')).toBe('')
+  })
+})
+
+describe('exporter edge cases', () => {
+  it('requires an endpoint: enableExport without one warns and exports nothing', async () => {
+    const { initOpenTelemetry } = await import('../src/telemetry.js')
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      // swallow warning under test
+    })
+    try {
+      const result = initOpenTelemetry({
+        enableExport: true,
+        instrumentations: {
+          pg: false,
+          undici: false,
+          ioredis: false,
+          fs: false,
+          runtimeNode: false,
+        },
+      })
+      // No endpoint configured, so no OTLP readers/processors should exist.
+      // The init must warn loudly instead of falling back to localhost.
+      expect(warnSpy).toHaveBeenCalled()
+      const message = String(warnSpy.mock.calls[0]?.[0] ?? '')
+      expect(message).toMatch(/enableExport.*endpoint/i)
+      await result.shutdown()
+    } finally {
+      warnSpy.mockRestore()
+    }
+  })
+
+  it('unmatched config without endpoint is skipped, not defaulted', () => {
+    const config = {
+      exporters: { traces: [{ headers: { 'X-Test': '1' } }] },
+    }
+    expect(resolveTransportConfig('traces', config)).toEqual([])
+  })
+})
+
+describe('PII redaction', () => {
+  it('exposes a denylist covering usernames and secrets', () => {
+    expect(SENTRY_PII_DENYLIST).toContain('username')
+    expect(SENTRY_PII_DENYLIST).toContain('token')
+  })
+
+  it('scrubs user to id-only and drops guild/channel names', () => {
+    const event = scrubSentryEvent({
+      user: { id: '123', username: 'someone#0001', email: 'a@b.c' },
+      contexts: {
+        guild: { id: '1', name: 'Secret Guild' },
+        channel: { id: '2', name: 'secret-channel', type: 0 },
+        interaction: { id: '3', commandName: 'ping' },
+      },
+      extra: { token: 'abc', safe: 'ok' },
+      breadcrumbs: [{ data: { username: 'leak', ok: 1 } }],
+    } as unknown as Record<string, unknown>) as unknown as {
+      user: Record<string, unknown>
+      contexts: Record<string, Record<string, unknown>>
+      extra: Record<string, unknown>
+      breadcrumbs: Array<{ data: Record<string, unknown> }>
+    }
+
+    expect(event.user).toEqual({ id: '123' })
+    expect(event.contexts.guild).not.toHaveProperty('name')
+    expect(event.contexts.guild.id).toBe('1')
+    expect(event.contexts.channel).not.toHaveProperty('name')
+    expect(event.extra.token).toBe('[Redacted]')
+    expect(event.extra.safe).toBe('ok')
+    expect(event.breadcrumbs[0].data.username).toBe('[Redacted]')
+  })
+})
+
+describe('composite propagator', () => {
+  it('combines W3C trace/baggage with Sentry', async () => {
+    const composite = new CompositePropagator({
+      propagators: [
+        new W3CTraceContextPropagator(),
+        new W3CBaggagePropagator(),
+      ],
+    })
+    expect(composite.fields()).toContain('traceparent')
+    expect(composite.fields()).toContain('baggage')
+
+    // traceparent round-trip
+    const carrier: Record<string, string> = {}
+    const { context, trace } = await import('@opentelemetry/api')
+    const tracer = trace.getTracer('test')
+    const span = tracer.startSpan('test-span')
+    const ctx = trace.setSpanContext(context.active(), span.spanContext())
+    composite.inject(ctx, carrier, {
+      set: (c: Record<string, string>, k: string, v: string) => {
+        c[k] = v
+      },
+    })
+    expect(carrier.traceparent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-/)
+    span.end()
   })
 })

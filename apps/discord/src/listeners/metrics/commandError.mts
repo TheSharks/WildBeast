@@ -22,7 +22,11 @@ export class CommandErrorListener extends Listener {
   public run(payload: ChatInputCommandErrorPayload) {
     errorCounter.add(
       1,
-      commandMetricLabels(payload.interaction, payload.command?.name, this),
+      commandMetricLabels(
+        payload.interaction,
+        payload.command?.name ?? 'unknown',
+        this,
+      ),
     )
   }
 }

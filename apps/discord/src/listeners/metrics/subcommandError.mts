@@ -29,9 +29,9 @@ export class SubcommandErrorListener extends Listener {
     completeExperimentOutcomes('error')
     const labels = commandMetricLabels(
       payload.interaction,
-      payload.command?.name,
+      payload.command?.name ?? 'unknown',
       this,
-      { subcommand: payload.matchedSubcommandMapping.name },
+      { subcommand: payload.matchedSubcommandMapping?.name ?? 'unknown' },
     )
     errorCounter.add(1, labels)
   }

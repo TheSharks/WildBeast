@@ -25,7 +25,11 @@ export class ContextMenuErrorListener extends Listener {
   public run(payload: ContextMenuCommandErrorPayload) {
     errorCounter.add(
       1,
-      commandMetricLabels(payload.interaction, payload.command?.name, this),
+      commandMetricLabels(
+        payload.interaction,
+        payload.command?.name ?? 'unknown',
+        this,
+      ),
     )
   }
 }

@@ -61,6 +61,12 @@ export interface TelemetrySentryConfig {
    * watchdog runs on the main thread and observes worker threads too.
    */
   eventLoopBlockThreshold?: number | false
+  /**
+   * Custom `beforeSend` hook. Runs after the built-in PII scrub (id-only
+   * user/guild/channel, denylist redaction), so custom logic sees an already
+   * scrubbed event. Return `null` to drop the event.
+   */
+  beforeSend?: NodeOptions['beforeSend']
 }
 
 export interface TelemetryConfig {

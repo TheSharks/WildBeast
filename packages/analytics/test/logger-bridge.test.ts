@@ -67,4 +67,28 @@ describe('AnalyticsLogger OTEL bridge', () => {
     expect(error.severityNumber).toBe(17)
     expect(fatal.severityNumber).toBe(21)
   })
+
+  it('redacts denylisted keys from structured values', () => {
+    capture.reset()
+    makeLogger().info('login', {
+      username: 'someone',
+      token: 'secret-token',
+      safe: 'ok',
+    })
+
+    const [record] = capture.records()
+    expect(record.body).toContain('[Redacted]')
+    expect(record.body).toContain('ok')
+    expect(record.body).not.toContain('someone')
+    expect(record.body).not.toContain('secret-token')
+  })
+
+  it('redacts bearer secrets in free-form text', () => {
+    capture.reset()
+    makeLogger().info('auth Bearer abcdef12345')
+
+    const [record] = capture.records()
+    expect(record.body).toContain('Bearer [Redacted]')
+    expect(record.body).not.toContain('abcdef12345')
+  })
 })

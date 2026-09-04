@@ -2,7 +2,12 @@ import type { Listener } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
 import {
   type Attributes,
+  context,
+  type OTelContext,
+  type OTelLink,
+  type OTelSpanContext,
   resolveShardId,
+  type Span,
   SpanStatusCode,
   trace,
 } from '@thesharks/analytics'
@@ -75,19 +80,39 @@ export function attributesFromInteraction(
   return attributes
 }
 
+export interface InteractionScopeOptions {
+  /**
+   * Opt-in to human-readable PII (username, guild/channel names). Default is
+   * id-only: user id, guild id, channel id and numeric types. Set explicitly
+   * or via `SENTRY_INCLUDE_PII=true` for debugging only.
+   */
+  includePII?: boolean
+}
+
+function shouldIncludePII(options?: InteractionScopeOptions): boolean {
+  if (options?.includePII !== undefined) return options.includePII
+  return process.env.SENTRY_INCLUDE_PII === 'true'
+}
+
 /**
  * Populate a Sentry scope with everything we know about a command
  * interaction. Always use a local or isolation scope for this: the shared
  * global scope leaks user data between concurrently running interactions.
+ *
+ * Id-only by default (no username, guild/channel names). Pass
+ * `{ includePII: true }` to opt into names for debugging.
  */
 export function applyInteractionScope(
   scope: Sentry.Scope,
   interaction: CommandInteraction,
+  options?: InteractionScopeOptions,
 ): void {
-  scope.setUser({
-    id: interaction.user.id,
-    username: interaction.user.tag,
-  })
+  const includePII = shouldIncludePII(options)
+  scope.setUser(
+    includePII
+      ? { id: interaction.user.id, username: interaction.user.tag }
+      : { id: interaction.user.id },
+  )
   scope.setTag('command', interaction.commandName)
   scope.setContext('interaction', {
     id: interaction.id,
@@ -95,15 +120,25 @@ export function applyInteractionScope(
     commandName: interaction.commandName,
   })
   if (interaction.inGuild()) {
-    scope.setContext('guild', {
-      id: interaction.guildId,
-      name: interaction.guild?.name,
-    })
-    scope.setContext('channel', {
-      id: interaction.channelId,
-      name: interaction.channel?.name,
-      type: interaction.channel?.type,
-    })
+    scope.setContext(
+      'guild',
+      includePII
+        ? { id: interaction.guildId, name: interaction.guild?.name }
+        : { id: interaction.guildId },
+    )
+    scope.setContext(
+      'channel',
+      includePII
+        ? {
+            id: interaction.channelId,
+            name: interaction.channel?.name,
+            type: interaction.channel?.type,
+          }
+        : {
+            id: interaction.channelId,
+            type: interaction.channel?.type,
+          },
+    )
   } else {
     scope.setContext('dm', {
       channelId: interaction.channelId,
@@ -111,27 +146,114 @@ export function applyInteractionScope(
   }
 }
 
+/**
+ * Original trace contexts by interaction id, so error-reporting spans can
+ * link back to the command span that already ended. Entries are consumed by
+ * `captureInteractionError` and pruned when the map grows.
+ */
+const interactionTraceContexts = new Map<string, OTelSpanContext>()
+
+function rememberInteractionTrace(interactionId: string): void {
+  const active = trace.getSpan(context.active())?.spanContext()
+  if (active?.traceId) {
+    if (interactionTraceContexts.size > 1000) {
+      const oldest = interactionTraceContexts.keys().next()
+      if (!oldest.done) interactionTraceContexts.delete(oldest.value)
+    }
+    interactionTraceContexts.set(interactionId, active)
+  }
+}
+
+function takeInteractionTrace(
+  interactionId: string,
+): OTelSpanContext | undefined {
+  const stored = interactionTraceContexts.get(interactionId)
+  if (stored) interactionTraceContexts.delete(interactionId)
+  return stored
+}
+
+function linksForInteraction(interactionId: string): OTelLink[] {
+  const stored = takeInteractionTrace(interactionId)
+  return stored ? [{ context: stored }] : []
+}
+
+/** For tests: inspect or clear remembered trace links. */
+export function __clearInteractionTraces(): void {
+  interactionTraceContexts.clear()
+}
+
+export function __rememberInteractionTraceForTest(
+  interactionId: string,
+  spanContext: OTelSpanContext,
+): void {
+  interactionTraceContexts.set(interactionId, spanContext)
+}
+
 export async function withSpan<T>(
   name: string,
   attributes: Attributes,
   fn: () => Promise<T> | T,
+  parentContext?: OTelContext,
 ): Promise<T> {
   const tracer = getTracer()
+  const op =
+    typeof attributes['sentry.op'] === 'string'
+      ? (attributes['sentry.op'] as string)
+      : undefined
 
-  return tracer.startActiveSpan(
-    name,
+  return Sentry.startSpan(
     {
+      name,
+      op: op ?? 'discord',
       attributes,
     },
-    async (span) => {
+    async (sentrySpan) => {
+      const otelSpan = trace.getActiveSpan()
+      const runWithOtel = async (): Promise<T> => {
+        if (otelSpan) {
+          try {
+            return await fn()
+          } catch (error) {
+            try {
+              otelSpan.recordException(error as Error)
+              otelSpan.setStatus({ code: SpanStatusCode.ERROR })
+            } catch {
+              // Recording must never mask the original error.
+            }
+            throw error
+          }
+        }
+        const runFallback = async (fallback: Span): Promise<T> => {
+          try {
+            return await fn()
+          } catch (error) {
+            fallback.recordException(error as Error)
+            fallback.setStatus({ code: SpanStatusCode.ERROR })
+            throw error
+          } finally {
+            fallback.end()
+          }
+        }
+        if (parentContext) {
+          return tracer.startActiveSpan(
+            name,
+            { attributes },
+            parentContext,
+            runFallback,
+          )
+        }
+        return tracer.startActiveSpan(name, { attributes }, runFallback)
+      }
+
       try {
-        return await fn()
+        return await runWithOtel()
       } catch (error) {
-        span.recordException(error as Error)
-        span.setStatus({ code: SpanStatusCode.ERROR })
+        try {
+          sentrySpan.recordException(error)
+        } catch {
+          // ignore
+        }
         throw error
-      } finally {
-        span.end()
       }
     },
   )
@@ -150,7 +272,56 @@ export async function withInteractionSpan<T>(
 ): Promise<T> {
   return Sentry.withIsolationScope((scope) => {
     applyInteractionScope(scope, interaction)
-    return withSpan(name, attributes, fn)
+    return withSpan(name, attributes, async () => {
+      rememberInteractionTrace(interaction.id)
+      return fn()
+    })
+  })
+}
+
+/**
+ * Error-reporting span linked to the original command trace. The command
+ * span already ended when Sapphire emits the error event, so it cannot be
+ * the parent; a link preserves trace continuity instead.
+ */
+export async function withErrorSpan<T>(
+  name: string,
+  interaction: CommandInteraction,
+  attributes: Attributes,
+  fn: () => Promise<T> | T,
+): Promise<T> {
+  const tracer = getTracer()
+  const links = linksForInteraction(interaction.id)
+  const op =
+    typeof attributes['sentry.op'] === 'string'
+      ? (attributes['sentry.op'] as string)
+      : 'discord.error_reporting'
+
+  return Sentry.startSpan({ name, op, attributes }, async (sentrySpan) => {
+    try {
+      return await tracer.startActiveSpan(
+        name,
+        { attributes, links },
+        async (otelSpan: Span) => {
+          try {
+            return await fn()
+          } catch (error) {
+            otelSpan.recordException(error as Error)
+            otelSpan.setStatus({ code: SpanStatusCode.ERROR })
+            throw error
+          } finally {
+            otelSpan.end()
+          }
+        },
+      )
+    } catch (error) {
+      try {
+        sentrySpan.recordException(error)
+      } catch {
+        // ignore
+      }
+      throw error
+    }
   })
 }
 
