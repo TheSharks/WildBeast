@@ -1,4 +1,6 @@
 // @ts-check
+// TODO: add a link checker (e.g. starlight-links-validator) to CI so
+// renamed pages and asset moves fail the build instead of rotting.
 import starlight from '@astrojs/starlight'
 import { defineConfig } from 'astro/config'
 import { fileURLToPath } from 'node:url'
@@ -53,7 +55,7 @@ export default defineConfig({
         },
       ],
       editLink: {
-        baseUrl: 'https://github.com/TheSharks/WildBeast/edit/master/apps/docs/',
+        baseUrl: 'https://github.com/TheSharks/WildBeast/edit/feat/v9/apps/docs/',
       },
       sidebar: [
         {

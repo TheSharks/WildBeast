@@ -48,8 +48,21 @@ change: tags are namespaced per guild, where v8 tags were global. Each
 server now has its own tag list. See [Database](/development/database/)
 for the schema and how migrations are applied.
 
+There is no automatic v8 → v9 data migrator: treat tags and settings as
+a fresh installation and recreate the tags you still need by hand.
+
+Because v8 tags were global and v9 tags are per guild, merging exports
+from several servers can collide: within one guild, tag names are still
+unique, so two v8 tags with the same name landing in the same guild
+overwrite or reject each other. Deduplicate and rename before importing.
+
 ## Commands
 
 v9 speaks Discord slash commands only; the v8 prefix commands are gone.
 The ported set is smaller than v8's and grows with each release. The
 [command reference](/using/commands/) lists what's available today.
+
+Not yet ported from v8: the full v8 prefix-command set (including music,
+moderation, and other utility commands outside the slash reference).
+If a command you rely on isn't in the reference, it doesn't exist in v9
+yet — track its request on GitHub rather than expecting a hidden alias.

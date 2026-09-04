@@ -13,6 +13,8 @@ translation exists.
 :::note
 WildBeast 9 is under active development, and commands are still being
 ported over from version 8. This page grows with each release.
+Screenshots below were captured during v9 development and may lag the
+current UI slightly; the text descriptions are authoritative.
 :::
 
 ## General

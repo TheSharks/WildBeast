@@ -47,7 +47,10 @@ owns the database can apply it:
   suggestion when a tag isn't found.
 
 Both ship with every PostgreSQL distribution, including managed ones, so
-they add no hosting constraints.
+they add no hosting constraints. The migration enables them itself with
+`CREATE EXTENSION IF NOT EXISTS`, so there is nothing to set up by hand:
+on managed providers (RDS, Cloud SQL, Azure, ...) both extensions are on
+the allowlist and installable by the database owner.
 
 ## Current schema
 
@@ -62,6 +65,32 @@ The tables, defined in `packages/drizzle/src/schema.ts`:
 
 The schema module also exports inferred types (`Tag`, `NewTag`, `Guild`,
 `NewGuild`, ...) for use in application code.
+
+There are intentionally no foreign keys anywhere in the schema. Discord is
+the source of truth for guilds, users, and entitlements, and rows must
+survive references to guilds or users the bot has never seen (or that no
+longer exist), so the database does not enforce their presence.
+
+## Legacy global tags (sentinel guild 0)
+
+Before tags were namespaced per guild they were global, and the guild of an
+existing tag cannot be reconstructed. Migration `0004` therefore kept those
+rows under the unreachable sentinel guild `0` instead of failing the
+deploy. Real guild ids are never `0`, so the bot never reads or writes
+those rows. Once you have reviewed them, delete them:
+
+```sql
+-- Inspect first; these are pre-per-guild tags orphaned by the migration.
+SELECT id, name FROM "Tag" WHERE "guildId" = 0;
+-- Then remove them in one transaction.
+BEGIN;
+DELETE FROM "Tag" WHERE "guildId" = 0;
+COMMIT;
+```
+
+No lock coordination with the bot is needed: tag writes always target a
+real guild id (serialized per guild with a transaction-scoped advisory
+lock), so nothing live can touch `guildId = 0` while the cleanup runs.
 
 ## Changing the schema
 
@@ -89,6 +118,15 @@ While iterating locally you can use `pnpm --filter @thesharks/drizzle push`
 to sync the schema directly without writing a migration, and `... studio`
 opens Drizzle Studio, a browser UI over the database. Both are development
 conveniences; anything that merges needs a real migration.
+
+Migrations are forward-only: there is no down-migration support, so
+rolling back a schema change means writing a new migration that undoes it.
+The bot also never migrates on boot — production fleets apply migrations
+explicitly with `pnpm --filter @thesharks/drizzle migrate` before rolling
+the clusters (see [Running in
+production](/self-hosting/running-in-production/#database-migrations)),
+because clusters start at different times and must all observe the same
+schema.
 
 ## Next steps
 

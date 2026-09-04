@@ -51,7 +51,7 @@ either a Sapphire piece or its supporting data:
 | `commands/` | Application commands. Loaded recursively, so subdirectories (`slash/`) are just organization. |
 | `listeners/` | Event listeners, grouped by purpose (`metrics/`, `logging/`, `reporting/`). |
 | `scheduled-tasks/` | Recurring background jobs, backed by a BullMQ queue on Redis. |
-| `languages/` | i18next translation files, one directory per locale. |
+| `languages/` | i18next translation files, one directory per locale. English (`en-US`) is the only locale in the repository; other locales arrive via Crowdin and any missing key falls back to `en-US`. |
 | `features/` | Typed runtime flags, OFREP evaluation, command/task gates, and experiment telemetry. |
 | `premium/` | Subscription tiers, entitlement resolution, SKU mapping, and typed limits. |
 | `preconditions/` | Reusable Sapphire policy checks, including premium and runtime feature gates. |

@@ -157,7 +157,7 @@ const tokenizeTemplate = (source: string): Token[] => {
     is:inline
     type="application/json"
     data-config
-    set:html={JSON.stringify(config)}
+    set:html={JSON.stringify(config).replace(/</g, '\\u003c')}
   ></script>
 
   {

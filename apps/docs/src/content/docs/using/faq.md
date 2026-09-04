@@ -48,6 +48,11 @@ Yes. Translations are managed on
 translate the strings for your language. New source strings are always
 written in English (`en-US`).
 
+Crowdin locales ship incrementally, so a partially translated locale
+falls back to `en-US` per string: any key missing in your language
+resolves in English rather than erroring. The bot prefers your own
+client locale over the server locale when picking a language.
+
 ## Where do I report bugs or request features?
 
 Open an issue on [GitHub](https://github.com/TheSharks/WildBeast/issues).

@@ -126,7 +126,6 @@
 /* Softer corners across UI chrome. */
 .sl-link-button,
 .sidebar-pane,
-search-button,
 button[data-open-modal] {
   border-radius: 0.5rem;
 }

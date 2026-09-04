@@ -16,6 +16,12 @@ all fleet coordination state. Every cluster in a fleet must point at the
 same Redis; use `REDIS_DB` to give separate fleets separate database
 indexes on a shared server.
 
+Connect with `REDIS_URL` (a full `redis://`, `rediss://`, or `unix://`
+URL) or with the `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` /
+`REDIS_DB` parts. When `REDIS_URL` is set it takes precedence and the
+parts are ignored; see [Configuration](/self-hosting/configuration/#redis)
+for the full list.
+
 ## What's stored where
 
 | Data | Keys | Lifetime |

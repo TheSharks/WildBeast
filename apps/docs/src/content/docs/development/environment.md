@@ -31,9 +31,12 @@ yourself is a `DISCORD_TOKEN` in `apps/discord/.env`.
 ## Local setup
 
 You need [Node.js](https://nodejs.org/) 22 or later,
-[pnpm](https://pnpm.io/), and a Redis server (defaults work). PostgreSQL
-and an OTLP collector are optional; nothing in the current bot requires
-the database, and telemetry export stays disabled without an endpoint.
+[pnpm](https://pnpm.io/), a PostgreSQL database, and a Redis server
+(defaults work). PostgreSQL is required: `DATABASE_URL` is validated at
+boot and backs the tag system and the premium entitlement mirror. Redis
+is required even for a single cluster: it backs the scheduled task queue,
+identify rate limiting, and gateway session storage. An OTLP collector
+is optional; telemetry export stays disabled without an endpoint.
 
 ```bash
 git clone https://github.com/TheSharks/WildBeast.git

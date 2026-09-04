@@ -80,9 +80,9 @@ likely blocked on something during cleanup.
 - The bot needs the `applications.commands` OAuth scope. Reinvite it with
   the scope included; kicking it is not necessary.
 - During development, commands register to a specific development guild
-  (the `guildIds` option in the command class) rather than globally, so a
+  (via `WILDBEAST_DEV_GUILD_ID`) rather than globally, so a
   self-hosted instance won't see them in other servers until you adjust or
-  remove those ids.
+  unset that variable.
 - Globally registered commands can take up to an hour to propagate;
   guild-scoped ones appear immediately.
 

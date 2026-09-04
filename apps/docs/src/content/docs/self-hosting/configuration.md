@@ -58,16 +58,18 @@ registry, targeting context, command/task gates, and experiment behavior.
 
 ## Redis
 
-Redis backs the scheduled task queue and, in multi-cluster setups, all
-coordination state (identify rate limiting, shard leases, persisted gateway
-sessions).
+Redis is required in practice, even for a single cluster: it backs the
+scheduled task queue, identify rate limiting, and persisted gateway
+sessions, plus all coordination state in multi-cluster setups (see
+[Redis](/self-hosting/redis/)).
 
 | Variable | Default | Description |
 | --- | --- | --- |
+| `REDIS_URL` | — | Full URL (`redis://`, `rediss://`, or `unix://`). When set it overrides `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`/`REDIS_DB`; otherwise those parts apply. |
 | `REDIS_HOST` | `localhost` | Redis host. |
 | `REDIS_PORT` | `6379` | Redis port (1–65535). |
 | `REDIS_PASSWORD` | — | Optional password. |
-| `REDIS_DB` | — | Optional database index. |
+| `REDIS_DB` | — | Optional logical database index, 0–15 (Redis ships with 16 databases by default). |
 
 ## Sharding and clustering
 
@@ -88,7 +90,7 @@ See [Telemetry](/self-hosting/telemetry/) for the full story.
 | Variable | Description |
 | --- | --- |
 | `SENTRY_DSN` | Enables Sentry error reporting and tracing. |
-| `SENTRY_PROFILE_SESSION_SAMPLE_RATE` | Continuous profiling session rate for shard workers, 0 to 1. Defaults to 1. |
+| `SENTRY_PROFILE_SESSION_SAMPLE_RATE` | Continuous profiling session rate for shard workers, 0 to 1. Defaults to 0 (profiler off); the cluster manager never profiles. |
 | `SENTRY_SPOTLIGHT` | `true` streams events to a local Spotlight sidecar for development. |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Enables OTLP export of traces, metrics and logs. |
 | `OTEL_SERVICE_NAME` | Overrides the reported service name. |

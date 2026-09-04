@@ -7,6 +7,13 @@ on:
       - 'apps/docs/**'
       - 'packages/tagscript/**'
       - '.github/workflows/deploy-docs.yml'
+  # PR preview: build the site to validate docs changes without deploying.
+  # The deploy job below is skipped on pull_request, so PRs are build-only.
+  pull_request:
+    paths:
+      - 'apps/docs/**'
+      - 'packages/tagscript/**'
+      - '.github/workflows/deploy-docs.yml'
   # Deploy on demand for changes outside the watched paths.
   workflow_dispatch:
 
@@ -51,6 +58,8 @@ jobs:
           path: apps/docs/dist
 
   deploy:
+    # Preview only on PRs: build validates, but only pushes deploy to Pages.
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:

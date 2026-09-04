@@ -16,6 +16,22 @@ NODE_ENV=production node apps/discord/dist/cluster.mjs
 Configuration comes from the environment or `apps/discord/.env`, see
 [Configuration](/self-hosting/configuration/).
 
+## Database migrations
+
+The bot never migrates on boot. Apply the schema explicitly before
+starting or restarting the fleet:
+
+```bash
+pnpm --filter @thesharks/drizzle migrate
+```
+
+Every cluster must run against the same schema version, and in a fleet
+clusters start, stop, and upgrade at different times: a boot-time migrate
+would race across clusters and tie schema changes to process restarts.
+Migrating once, up front, keeps the rollout order obvious (migrate, then
+roll the clusters) and is safe to re-run — an already-migrated database is
+a no-op.
+
 Prebuilt multi-arch images (amd64 and arm64) are published to GitHub
 Container Registry:
 
