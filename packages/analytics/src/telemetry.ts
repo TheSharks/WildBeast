@@ -55,15 +55,10 @@ import {
 import { nodeProfilingIntegration } from '@sentry/profiling-node'
 import type { TelemetryConfig, TelemetryExporterConfig } from './types.js'
 
-// from @opentelemetry/semantic-conventions/incubating
-// recommendation is to copy relevant definitions into code base
+// Copied from semantic-conventions/incubating per upstream recommendation.
 const ATTR_DEPLOYMENT_ENVIRONMENT_NAME = 'deployment.environment.name'
 
-/**
- * Keys that must never leave the process in Sentry events or OTEL logs.
- * Discord usernames/tags, guild/channel names and secrets are PII: telemetry
- * stays id-only unless explicitly opted in.
- */
+/** Keys that must never leave the process in Sentry events or OTEL logs (id-only telemetry). */
 export const SENTRY_PII_DENYLIST = [
   'username',
   'tag',
@@ -101,7 +96,7 @@ function scrubValue(value: unknown, key?: string): unknown {
     return out
   }
   if (typeof value === 'string' && key === undefined) {
-    // Best-effort token redaction in free-form strings (bot tokens, bearer).
+    // Best-effort token redaction in free-form strings.
     return value
       .replace(
         /[A-Za-z0-9_-]{24}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27}/g,
@@ -112,10 +107,7 @@ function scrubValue(value: unknown, key?: string): unknown {
   return value
 }
 
-/**
- * Sentry `beforeSend` scrub: id-only by default. Drops denylisted keys from
- * user, contexts, extra and breadcrumb data. Exported for tests.
- */
+/** Sentry beforeSend scrub (id-only); exported for tests. */
 export function scrubSentryEvent<T>(event: T): T {
   if (!event || typeof event !== 'object') return event
   const record = event as Record<string, unknown>
@@ -124,8 +116,7 @@ export function scrubSentryEvent<T>(event: T): T {
     const user = record.user as Record<string, unknown>
     const scrubbed: Record<string, unknown> = {}
     if (typeof user.id === 'string') scrubbed.id = user.id
-    // Preserve an explicitly opted-in username only when the caller set it
-    // via includePII; otherwise drop it (id-only default).
+    // Keep opted-in username only (via includePII).
     record.user = scrubbed
   }
 
@@ -143,8 +134,7 @@ export function scrubSentryEvent<T>(event: T): T {
             scrubbed[k] = scrubValue(v, k)
           }
         }
-        // Guild/channel contexts stay id-only: drop redacted name markers
-        // entirely so no high-cardinality label survives.
+        // Guild/channel stay id-only; drop redacted name markers.
         if (ctxKey === 'guild' || ctxKey === 'channel') {
           delete scrubbed.name
         }
@@ -172,11 +162,7 @@ export function scrubSentryEvent<T>(event: T): T {
   return event
 }
 
-// --- Minimal W3C propagators (vendored to avoid a new @opentelemetry/core
-// dependency). Together with SentryPropagator they form the composite
-// propagator below: W3C traceparent/baggage for OTLP collectors plus
-// sentry-trace/baggage for Sentry.
-
+// Minimal W3C propagators (vendored to avoid @opentelemetry/core); paired with SentryPropagator below.
 const TRACE_PARENT_HEADER = 'traceparent'
 const TRACE_STATE_HEADER = 'tracestate'
 const BAGGAGE_HEADER = 'baggage'
@@ -193,7 +179,7 @@ function parseTraceParent(value: string | undefined) {
   return { traceId: traceId as string, spanId: spanId as string, flags }
 }
 
-/** W3C Trace Context propagator (traceparent/tracestate). */
+/** W3C traceparent/tracestate propagator. */
 export class W3CTraceContextPropagator implements TextMapPropagator {
   inject(ctx: Context, carrier: unknown, setter: TextMapSetter): void {
     const spanContext = trace.getSpanContext(ctx)
@@ -229,7 +215,7 @@ export class W3CTraceContextPropagator implements TextMapPropagator {
   }
 }
 
-/** W3C Baggage propagator (minimal pass-through). */
+/** W3C baggage pass-through. */
 export class W3CBaggagePropagator implements TextMapPropagator {
   inject(ctx: Context, carrier: unknown, setter: TextMapSetter): void {
     const baggage = propagation.getBaggage(ctx)
@@ -267,7 +253,7 @@ export class W3CBaggagePropagator implements TextMapPropagator {
   }
 }
 
-/** Fan-out propagator: injects/extracts via every member (W3C + Sentry). */
+/** Fan-out propagator (W3C + Sentry). */
 export class CompositePropagator implements TextMapPropagator {
   private readonly propagators: TextMapPropagator[]
 
@@ -280,7 +266,7 @@ export class CompositePropagator implements TextMapPropagator {
       try {
         propagator.inject(ctx, carrier, setter)
       } catch {
-        // One propagator must not break the others.
+        // Isolate propagator failures.
       }
     }
   }
@@ -291,7 +277,7 @@ export class CompositePropagator implements TextMapPropagator {
       try {
         next = propagator.extract(next, carrier, getter)
       } catch {
-        // ignore and continue with the next propagator
+        // Isolate propagator failures.
       }
     }
     return next
@@ -316,7 +302,7 @@ export function normalizeOtlpEndpointUrl(
     return value
   }
 
-  // gRPC exporters use a URL that looks like http(s)://host:4317
+  // gRPC exporters expect http(s)://host:4317 form.
   if (value.startsWith('grpc://')) {
     const normalized = `http://${value.slice('grpc://'.length)}`
     diag.warn(
@@ -330,7 +316,7 @@ export function normalizeOtlpEndpointUrl(
     }
   }
 
-  // If the user passed host:port, assume http.
+  // Assume http for bare host:port.
   if (!/^https?:\/\//.test(value)) {
     const normalized = `http://${value}`
     diag.warn(
@@ -439,7 +425,7 @@ function withSignalPath(
   signalPath: string,
   protocol: 'http' | 'grpc',
 ): string {
-  // gRPC OTLP endpoints are host:port only; per-signal paths apply to http/protobuf.
+  // gRPC is host:port only; per-signal paths are http-only.
   if (protocol === 'grpc') {
     return endpoint
   }
@@ -474,7 +460,7 @@ function resolveProtocol(
       return 'grpc'
     }
   } catch {
-    // Invalid URL, fall back to http
+    // Fall back to http.
   }
 
   return 'http'
@@ -522,7 +508,7 @@ export function resolveTransportConfig(
     process.env[`OTEL_EXPORTER_OTLP_${signal.toUpperCase()}_ENDPOINT`]
   const globalEndpointEnv = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
   if (signalEndpointEnv) {
-    // Signal-specific endpoints are used verbatim per the OTLP spec.
+    // Per-signal endpoints are verbatim per OTLP spec.
     envExporter.endpoint = signalEndpointEnv
   } else if (globalEndpointEnv) {
     envExporter.endpoint = withSignalPath(
@@ -542,8 +528,7 @@ export function resolveTransportConfig(
       ? exportersFromConfig
       : [exportersFromConfig]
 
-    // Only use otlp as fallback if it's a single config
-    // If otlp is an array, it's meant to be used directly, not as fallback
+    // Array otlp config is used directly, not as fallback.
     const otlpFallback = Array.isArray(otlpConfig) ? otlpConfig[0] : otlpConfig
 
     for (const configExporter of configExporters) {
@@ -556,8 +541,7 @@ export function resolveTransportConfig(
             '',
           protocolEnv,
         )
-      // Explicit per-signal endpoints are used verbatim; the shared otlp
-      // endpoint needs the signal path appended.
+      // Shared otlp endpoint needs signal path; per-signal endpoints are verbatim.
       const endpoint =
         configExporter.endpoint ??
         (otlpFallback?.endpoint
@@ -651,10 +635,7 @@ export function initOpenTelemetry(
 
   const environment =
     config?.environment ?? process.env.NODE_ENV ?? 'development'
-  // Published images bake SENTRY_RELEASE in at build time; npm scripts
-  // expose the package version; a bare `node dist/...` falls back to the
-  // commit when the image build provided one. || rather than ?? because
-  // Dockerfile ARGs surface as empty strings when unset.
+  // Release precedence: build-time SENTRY_RELEASE, else version/commit; || for empty Dockerfile ARGs.
   const release =
     config?.sentry?.release ??
     (process.env.SENTRY_RELEASE ||
@@ -671,20 +652,16 @@ export function initOpenTelemetry(
     tracesSampleRate:
       config?.sentry?.tracesSampleRate ??
       (environment === 'production' ? 0.2 : 1.0),
-    // Takes precedence over tracesSampleRate when provided.
+    // Overrides tracesSampleRate when set.
     tracesSampler: config?.sentry?.tracesSampler,
     environment: config?.sentry?.environment ?? environment,
     release,
-    // Enable Sentry Logs API (requires SDK 9.41.0+)
     enableLogs: config?.sentry?.enableLogs ?? true,
     enableMetrics: config?.sentry?.enableMetrics ?? true,
-    // Capture local variables in exception stack frames.
     includeLocalVariables: config?.sentry?.includeLocalVariables ?? true,
-    // Nothing downstream continues our traces, and tagscript {fetch:} can
-    // reach arbitrary hosts that must not see sentry-trace/baggage headers.
+    // Default []: no downstream traces continue, and {fetch:} must not leak trace headers.
     tracePropagationTargets: config?.sentry?.tracePropagationTargets ?? [],
-    // Id-only by default: scrub usernames, guild/channel names and secrets
-    // from every error event. Composes with a caller-provided beforeSend.
+    // Id-only scrub composes with caller beforeSend.
     beforeSend: (event, hint) => {
       const scrubbed = scrubSentryEvent(event)
       const custom = config?.sentry?.beforeSend
@@ -700,8 +677,7 @@ export function initOpenTelemetry(
     ...(config?.sentry?.tags
       ? { initialScope: { tags: config.sentry.tags } }
       : {}),
-    // Continuous profiling: profile chunks are collected while a sampled
-    // trace is active on this thread.
+    // Continuous profiling while a sampled trace is active.
     profileSessionSampleRate,
     profileLifecycle: 'trace',
     integrations: [
@@ -712,19 +688,13 @@ export function initOpenTelemetry(
           return frame
         },
       }),
-      // Keep Sentry's HTTP integration for request isolation. Under
-      // skipOpenTelemetrySetup it emits no spans, so it doesn't duplicate
-      // our undici instrumentation.
+      // Isolation only under skipOpenTelemetrySetup (no duplicate undici spans).
       Sentry.httpIntegration(),
-      // Flattens ZodError issues into readable event context.
       Sentry.zodErrorsIntegration(),
-      // Buffers feature flag evaluations (reported via addFeatureFlag by
-      // the app's OpenFeature hook) and attaches them to error events.
+      // Buffers OpenFeature evaluations for error events.
       Sentry.featureFlagsIntegration(),
-      // Captures non-standard error properties (discord.js errors carry
-      // code/status/method/url) as event context.
+      // Captures discord.js code/status/method/url context.
       Sentry.extraErrorDataIntegration(),
-      // Event loop, GC and memory metrics via the Sentry metrics product.
       Sentry.nodeRuntimeMetricsIntegration(),
       ...(profileSessionSampleRate > 0 ? [nodeProfilingIntegration()] : []),
       ...(eventLoopBlockThreshold !== false
@@ -732,9 +702,8 @@ export function initOpenTelemetry(
         : []),
     ],
 
-    // We own OpenTelemetry setup.
+    // We own OTEL setup; ESM loader hooks managed manually.
     skipOpenTelemetrySetup: true,
-    // We are ESM-only; we will manage loader hooks ourselves if/when needed.
     registerEsmLoaderHooks: false,
   })
 
@@ -767,9 +736,7 @@ export function initOpenTelemetry(
       ? config.enableExport
       : hasExporters
 
-  // enableExport: true requires an explicit endpoint. Silently falling back
-  // to the exporter libraries' localhost defaults would black-hole telemetry
-  // in production, so warn loudly and export nothing until one is set.
+  // Fail loudly when enableExport lacks an endpoint (avoids localhost black-hole).
   if (config?.enableExport === true && !hasExporters) {
     const message =
       '[telemetry] enableExport is true but no OTLP endpoint is configured ' +
@@ -809,9 +776,7 @@ export function initOpenTelemetry(
   })
 
   tracerProvider.register({
-    // W3C traceparent/baggage for OTLP collectors plus sentry-trace/baggage
-    // for Sentry. Outgoing Sentry headers are still gated by
-    // tracePropagationTargets (default []).
+    // Sentry headers still gated by tracePropagationTargets (default []).
     propagator: new CompositePropagator({
       propagators: [
         new W3CTraceContextPropagator(),
@@ -897,9 +862,7 @@ export function initOpenTelemetry(
   )
 
   registerInstrumentations({
-    // One registration per process: the SDK dedupes by instrumentation name,
-    // so repeated initOpenTelemetry calls (tests) must disable
-    // instrumentations they don't own to avoid re-patching modules.
+    // SDK dedupes by name; tests must disable instruments they don't own.
     instrumentations: [
       ...(pgEnabled ? [new PgInstrumentation()] : []),
       ...(undiciEnabled ? [new UndiciInstrumentation()] : []),
@@ -909,15 +872,13 @@ export function initOpenTelemetry(
     ],
   })
 
-  // Validate that the setup is correct (dev-only by default)
+  // Dev-only setup validation.
   if (process.env.SENTRY_VALIDATE_OTEL_SETUP === 'true') {
     Sentry.validateOpenTelemetrySetup()
   }
 
   async function shutdown(): Promise<void> {
-    // Bound the flush so a slow or unreachable collector can't eat the
-    // process supervisor's termination grace period (exporters retry with
-    // backoff, which we observed taking 15s+ against a dead endpoint).
+    // Bound flush so a dead collector can't eat supervisor grace period.
     const timeoutMillis = config?.shutdownTimeoutMillis ?? 10_000
 
     const work = (async () => {
@@ -939,7 +900,7 @@ export function initOpenTelemetry(
     }
 
     try {
-      // Sentry.flush applies its own timeout.
+      // Sentry.flush has its own timeout.
       await Sentry.flush(2_000)
     } catch (error) {
       diag.error('Sentry flush failed', error)
@@ -963,8 +924,7 @@ async function promiseWithDeadline(
     const result = await Promise.race([work, deadline])
     if (result === 'timeout') {
       diag.warn(`${what} did not finish within ${timeoutMillis}ms; abandoning`)
-      // Detach the abandoned work so a late rejection can't become an
-      // unhandled rejection after we've moved on.
+      // Avoid late rejection becoming unhandled.
       work.catch(() => undefined)
     }
   } finally {

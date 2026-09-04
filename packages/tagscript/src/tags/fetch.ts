@@ -4,9 +4,7 @@ import { RenderError } from '../runtime/errors.js'
 import { renderSegment } from '../runtime/renderer.js'
 import type { LazyTagHandler, RenderContext } from '../types.js'
 
-// Loopback, private, link-local and cloud-metadata ranges that must never be
-// reachable through the fetch tag. BlockList resolves IPv4-mapped IPv6 forms
-// (e.g. ::ffff:127.0.0.1) against the IPv4 rules automatically.
+// SSRF blocklist: loopback/private/link-local/metadata; BlockList handles IPv4-mapped IPv6.
 const blockedRanges = new BlockList()
 blockedRanges.addSubnet('0.0.0.0', 8, 'ipv4')
 blockedRanges.addSubnet('10.0.0.0', 8, 'ipv4')
@@ -50,18 +48,14 @@ function assertUrlAllowed(raw: string, allowedHosts?: string[]): URL {
     throw new RenderError(`Blocked fetch URL scheme: ${url.protocol}`)
   }
 
-  // Userinfo (https://user:pass@host/) smuggles credentials and confuses
-  // host parsing (https://example.com@evil.com/ reaches evil.com). Reject
-  // rather than silently stripping so templates fail closed.
+  // Reject userinfo to fail closed on credential smuggling/host confusion.
   if (url.username || url.password) {
     throw new RenderError('Blocked fetch URL with credentials')
   }
 
   const hostname = normalizeHostname(url.hostname)
 
-  // When the embedder supplies an allowlist only listed hostnames may be
-  // reached. The blocklist below still applies: an allowlist entry that is
-  // itself a private literal never grants access to it.
+  // Allowlist still subject to blocklist below.
   if (allowedHosts) {
     const normalizedAllowed = allowedHosts.map((host) =>
       normalizeHostname(host),
@@ -71,14 +65,12 @@ function assertUrlAllowed(raw: string, allowedHosts?: string[]): URL {
     }
   }
 
-  // localhost / *.localhost always resolve to a loopback target. The
-  // hostname is already stripped of its trailing dot above, so `localhost.`
-  // cannot bypass this check.
+  // SSRF: localhost always loopback (trailing dot already stripped).
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
     throw new RenderError(`Blocked fetch to private host: ${hostname}`)
   }
 
-  // IPv6 literals arrive wrapped in brackets, e.g. [::1].
+  // IPv6 literals arrive bracketed.
   const literal =
     hostname.startsWith('[') && hostname.endsWith(']')
       ? hostname.slice(1, -1)
@@ -91,11 +83,7 @@ function assertUrlAllowed(raw: string, allowedHosts?: string[]): URL {
     throw new RenderError(`Blocked fetch to private address: ${literal}`)
   }
 
-  // NOTE: DNS-rebinding limitation. Non-literal hostnames are not checked
-  // against the block ranges because pinning the resolved address would need a
-  // custom DNS lookup / agent, which is out of scope here. A hostname that
-  // resolves to a private address can therefore still be reached. Use
-  // fetchAllowedHosts to lock this down for untrusted templates.
+  // SSRF note: hostnames aren't DNS-pinned here; use fetchAllowedHosts for untrusted templates.
   return url
 }
 
@@ -125,7 +113,7 @@ async function readCapped(
       }
     }
   } finally {
-    // Cancel the stream to release the connection; ignore cancel errors.
+    // Release connection; ignore cancel errors.
     await reader.cancel().catch(() => undefined)
   }
   result += decoder.decode()
@@ -162,9 +150,7 @@ export const fetchHandler: LazyTagHandler = async (
   ctx.fetchRequests++
 
   const callerOptions = ctx.options.fetchOptions ?? {}
-  // Headers normalizes every HeadersInit form (plain object, Headers
-  // instance, tuple array). The default User-Agent survives unless the
-  // embedder supplies its own.
+  // Headers normalizes all HeadersInit forms; default UA survives unless overridden.
   const headers = new Headers(callerOptions.headers)
   if (!headers.has('user-agent')) {
     headers.set(
@@ -172,25 +158,19 @@ export const fetchHandler: LazyTagHandler = async (
       '@TheSharks/TagScript/1.0 #github.com/TheSharks/WildBeast',
     )
   }
-  // The timeout signal is created once so it caps the whole redirect chain,
-  // not each hop individually.
+  // Single timeout caps whole redirect chain.
   const signal = callerOptions.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS)
 
-  // Redirects are followed manually so every hop is validated against the
-  // same scheme/allowlist/private-address rules as the initial URL. Native
-  // fetch would follow them silently, letting an allowed public host bounce
-  // the request to localhost, metadata services, or a non-allowlisted host.
+  // Manual redirects so every hop revalidates SSRF/allowlist rules.
   let currentUrl = target
-  // Unknown or missing verbs fall back to GET so a typo cannot smuggle an
-  // arbitrary method (e.g. TRACE, CONNECT) to the target.
+  // Unknown verbs fall back to GET to block smuggled methods.
   const normalizedVerb = verb.trim().toUpperCase()
   let method =
     normalizedVerb && ALLOWED_VERBS.has(normalizedVerb) ? normalizedVerb : 'GET'
   let response: Response
 
   for (let hop = 0; ; hop++) {
-    // Spread callerOptions first: embedder-provided options are trusted and
-    // may override the tag's method, but redirect handling stays manual.
+    // Embedder options may override method; redirect handling stays manual.
     try {
       response = await fetch(currentUrl, {
         method,
@@ -232,8 +212,7 @@ export const fetchHandler: LazyTagHandler = async (
     }
     currentUrl = assertUrlAllowed(resolved.href, ctx.options.fetchAllowedHosts)
 
-    // Every redirect hop performs another request, so it counts against the
-    // same maxFetchRequests budget as the initial fetch.
+    // Redirect hops count against the same fetch budget.
     if (ctx.fetchRequests >= limits.maxFetchRequests) {
       throw new RenderError(
         `Exceeded maximum fetch requests of ${limits.maxFetchRequests}`,
@@ -241,8 +220,7 @@ export const fetchHandler: LazyTagHandler = async (
     }
     ctx.fetchRequests++
 
-    // Standard redirect semantics: 303 always switches to GET, and browsers
-    // treat 301/302 POSTs the same way.
+    // 303 always becomes GET; 301/302 POSTs match browser behavior.
     if (
       response.status === 303 ||
       ((response.status === 301 || response.status === 302) &&

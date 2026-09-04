@@ -1,16 +1,12 @@
 export interface Limits {
-  /**
-   * Maximum number of template expansions per render. Each deliberate
-   * re-execution of rendered text ({eval}, stored tags from a tagStore)
-   * counts as one expansion.
-   */
+  /** Template re-executions per render ({eval}, stored tags). */
   maxIterations: number
   maxOutputLength: number
   maxDepth: number
   regexPatternLength: number
   maxRegexInputLength: number
   maxFetchRequests: number
-  /** Maximum regex evaluations ({if} `?` operator, {replaceregex}) per render. */
+  /** Regex evaluations ({if} ?, {replaceregex}) per render. */
   maxRegexOperations: number
 }
 
@@ -25,7 +21,7 @@ export interface DiscordUser {
   id: string
   tag: string
   mention: string
-  /** Complete avatar URL. When set, {avatar} returns it verbatim. */
+  /** Full avatar URL; {avatar} returns verbatim when set. */
   avatarUrl?: string
   avatarBase?: string
   avatarFormat?: string
@@ -52,11 +48,11 @@ export interface RenderContext {
   tagStore?: TagStore
   sandbox?: import('./sandbox/types.js').Sandbox
   fetchRequests: number
-  /** Template expansions performed so far; bounded by limits.maxIterations. */
+  /** Expansions so far (bounded by maxIterations). */
   expansions: number
-  /** Regex evaluations performed so far; bounded by limits.maxRegexOperations. */
+  /** Regex evals so far (bounded by maxRegexOperations). */
   regexOperations: number
-  /** Attachment produced by a handler (e.g. a sandbox), surfaced on RenderResult. */
+  /** Handler-produced attachment surfaced on RenderResult. */
   attachment?: { data: Uint8Array; type: string }
 }
 
@@ -90,12 +86,7 @@ export interface RenderOptions extends Partial<Limits> {
   enableFetch?: boolean
   fetchOptions?: RequestInit
   /**
-   * Hostnames the fetch tag is allowed to request (exact match,
-   * case-insensitive). When provided, every other host is rejected — this is
-   * the recommended safeguard for attacker-controllable templates. When
-   * omitted, all hosts are allowed except loopback, private, link-local and
-   * metadata IP literals plus `localhost` names. Every redirect hop is
-   * revalidated against the same rules.
+   * Allowed fetch hosts (exact, case-insensitive); omitted allows all except SSRF literals/localhost, with every redirect revalidated.
    */
   fetchAllowedHosts?: string[]
   sandbox?: import('./sandbox/types.js').Sandbox

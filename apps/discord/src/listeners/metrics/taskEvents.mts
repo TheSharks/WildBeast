@@ -33,8 +33,7 @@ export function __setTaskStartTimeForTest(
   taskStartTimes.set(taskName, startTime)
 }
 
-// Pieces default their name to the file name; multiple listeners in one file
-// need explicit names or each insert unloads the previous one.
+// Explicit names prevent same-file listeners unloading each other.
 @ApplyOptions<ListenerOptions>({
   name: 'taskRunMetrics',
   event: ScheduledTaskEvents.ScheduledTaskRun,
@@ -76,8 +75,7 @@ export class TaskErrorMetricsListener extends Listener {
         status: 'error',
       })
     } else {
-      // No Run event observed (e.g. hot reload); still record a duration so
-      // failure latency stays visible, labelled by status.
+      // No Run seen (e.g. hot reload); still record zero duration.
       taskDuration.record(0, { task: name, status: 'error' })
     }
   }

@@ -18,17 +18,7 @@ import {
   tierAtLeast,
 } from './tiers.mjs'
 
-/**
- * A premium-style button opening Discord's purchase flow for the SKU that
- * grants `tier`. Undefined when no configured SKU fits, in which case the
- * surrounding message is just informational — callers can pass the result
- * straight to a reply's `components`.
- *
- * Pass the interaction's guildId when the reply goes to DMs: guild-scoped
- * purchase buttons are suppressed there (guildId null + scope guild), and
- * an 'any' request resolves to a user SKU so a guild-only SKU never
- * renders where it can't be bought.
- */
+// Purchase button for `tier`; undefined omits it. Pass guildId so DM replies never offer guild SKUs.
 export function premiumUpsellComponents(
   tier: PremiumTier,
   scope: PremiumScope | 'any' = 'any',
@@ -46,20 +36,13 @@ export function premiumUpsellComponents(
   ]
 }
 
-/**
- * The purchase button to attach to a limit-reached reply, or undefined when
- * upselling makes no sense: no higher tier raises this cap (the invoker
- * already holds the best applicable subscription) or no purchasable SKU is
- * configured. Keeps "you hit the cap" honest — a premium guild at its
- * premium cap must not be asked to buy premium again.
- */
+// Button for limit replies; undefined when no higher tier raises the cap or no SKU fits.
 export function upsellForLimit(
   interaction: BaseInteraction,
   key: LimitKey,
 ): ActionRowBuilder<ButtonBuilder>[] | undefined {
   const definition = describeLimit(key)
-  // Guild caps are free tier in DMs; a guild-SKU button there can't be
-  // bought in context, so stay informational instead of upselling.
+  // Guild caps are free in DMs where guild SKUs can't be bought; stay informational.
   if (!interaction.guildId && definition.scope === 'guild') return undefined
   const resolve = {
     user: userTierForInteraction,
@@ -72,7 +55,7 @@ export function upsellForLimit(
   return premiumUpsellComponents(target, definition.scope, interaction.guildId)
 }
 
-/** The lowest tier above `tier` with a higher cap for `key`, if any. */
+// Lowest tier above `tier` raising `key`, if any.
 function tierRaisingLimit(
   key: LimitKey,
   tier: PremiumTier,

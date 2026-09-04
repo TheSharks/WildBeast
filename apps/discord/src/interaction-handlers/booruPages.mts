@@ -25,11 +25,7 @@ interface BooruPageAction {
   position: number | 'random'
 }
 
-/**
- * Pagination for /booru. Stateless like the Urban Dictionary pager: the
- * custom id (`booru:<site>:<page>:<query>`) carries everything needed to
- * refetch, so buttons work across restarts.
- */
+/** Stateless /booru pagination; custom id carries site+page+query for refetch. */
 @ApplyOptions<GatedCommandInteractionHandlerOptions>({
   interactionHandlerType: InteractionHandlerTypes.Button,
   command: 'booru',
@@ -57,12 +53,10 @@ export class BooruPagesHandler extends GatedCommandInteractionHandler {
 
     try {
       const nsfwAllowed = channelAllowsNsfw(interaction)
-      // The query is reflected inside backticks; escape them so a hostile
-      // query cannot break out of the formatting.
+      // Escape backticks to block formatting breakout.
       const safeQuery = action.query.replace(/`/g, '\\`')
       const message = async (key: string) => ({
-        // The message carries IsComponentsV2, which can't be unset, so
-        // fallbacks must stay components rather than plain content.
+        // V2 flag is sticky; fallbacks must stay components.
         components: [
           new TextDisplayBuilder().setContent(
             (await resolveKey(interaction, key, {
@@ -74,7 +68,7 @@ export class BooruPagesHandler extends GatedCommandInteractionHandler {
         allowedMentions: { parse: [] },
       })
 
-      // A message can outlive its channel being flipped back to SFW.
+      // Recheck NSFW: channel may have flipped SFW since render.
       if (booruSites[action.site].gated && !nsfwAllowed) {
         return interaction.editReply(
           await message('commands/common:nsfwDisabled'),

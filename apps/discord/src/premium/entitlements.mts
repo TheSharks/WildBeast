@@ -34,24 +34,15 @@ import {
 } from './tiers.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
-/** Remote limit overrides that failed validation and fell back to the
- * registry, by limit key. */
+// Rejected remote limit overrides by key.
 export const limitOverrideFallbackCounter = meter.createCounter(
   'discord_premium_limit_override_fallbacks_total',
   { description: 'Remote limit overrides rejected as invalid' },
 )
 
-/**
- * Tier resolution from interactions. Discord attaches every applicable
- * active entitlement (the invoker's user subscriptions and the guild's
- * subscriptions) to each interaction, so these are synchronous, always
- * fresh, and need no caching — prefer them over the database variants
- * whenever an interaction is at hand. An entitlement's own shape decides
- * its scope: guildId set means guild subscription, unset means user
- * subscription.
- */
+// Interaction tiers are synchronous and fresh (Discord attaches all entitlements); prefer over DB.
 
-/** The tier the invoker's own subscriptions grant, wherever they are. */
+// Invoker's own tier, anywhere.
 export function userTierForInteraction(
   interaction: BaseInteraction,
 ): PremiumTier {
@@ -61,7 +52,7 @@ export function userTierForInteraction(
   )
 }
 
-/** The tier the current guild's subscriptions grant; free in DMs. */
+// Current guild's tier; free in DMs.
 export function guildTierForInteraction(
   interaction: BaseInteraction,
 ): PremiumTier {
@@ -72,11 +63,7 @@ export function guildTierForInteraction(
   )
 }
 
-/** The best tier from either scope — for perks where any subscription
- * (the invoker's own or the guild's) should count. This is the `anyTier`:
- * commandFlagContext (features/commandContext.mjs) reports it as `tier`
- * for gate targeting. Limit evaluation must NOT use it directly — use
- * enforcementTier below so a user subscription can't lift a guild cap. */
+// Best of either scope for gate targeting; never for limits (use enforcementTier below).
 export function tierForInteraction(interaction: BaseInteraction): PremiumTier {
   return highestTier([
     userTierForInteraction(interaction),
@@ -84,13 +71,7 @@ export function tierForInteraction(interaction: BaseInteraction): PremiumTier {
   ])
 }
 
-/**
- * The tier that enforces `scope` for `interaction`: the invoker's own for
- * 'user' limits, the current guild's (free in DMs) for 'guild' limits, the
- * best of either for 'any' limits. limitFor and upsellForLimit resolve
- * through here so scope handling stays in one place; commandContext.mts
- * re-exports it for limit call sites that need a scope-resolved tier.
- */
+// Scope-resolved tier for enforcement; single place for scope handling.
 export function enforcementTier(
   interaction: BaseInteraction,
   scope: PremiumScope | 'any',
@@ -102,35 +83,23 @@ export function enforcementTier(
   }[scope](interaction)
 }
 
-/** Warn once per invalid override without letting logging break the call. */
+// Warn on invalid overrides; logging/metrics must never break enforcement.
 function warnInvalidOverride(key: LimitKey, raw: unknown, fallback: number) {
   try {
     container.logger.warn(
       `Invalid limit override for ${limitFlagKey(key)}: ${String(raw)}; using registry fallback ${fallback}`,
     )
   } catch {
-    // Logging must never break limit enforcement.
+    // Never break enforcement.
   }
   try {
     limitOverrideFallbackCounter.add(1, { key })
   } catch {
-    // Metrics must never break limit enforcement either.
+    // Never break enforcement.
   }
 }
 
-/**
- * The cap for `key` at the invoker's tier — the one-call form commands use.
- * The registry entry's scope decides whose subscription counts: the
- * invoker's own for 'user' limits, the current guild's for 'guild' limits,
- * the best of either for 'any' limits.
- *
- * When an OFREP flag service is configured (features/client.mjs), the
- * registry value becomes the default of the `limits.<key>` flag and the
- * service can override it by any dimension of the context — a guild, a
- * user, a tier, an environment — or unconditionally for a global change.
- * Without a service, or when it's unreachable or has no rule, the registry
- * value stands.
- */
+// Cap for `key` at the invoker's tier; registry value is the flag default, remotely overridable.
 export async function limitFor(
   interaction: BaseInteraction,
   key: LimitKey,
@@ -154,14 +123,7 @@ export async function limitFor(
   return clamped
 }
 
-/**
- * The validated cap for a guild outside interactions (the demotion path).
- * Mirrors the reconcile task's capForGuild: resolve the mirrored tier, read
- * the same `limits.*` flag with the registry value as default, then clamp
- * the override exactly like limitFor. Shared clamp keeps enforcement and
- * demotion from diverging — an operator override that enforcement ignores
- * must not demote either.
- */
+// Validated guild cap for non-interaction paths; shared clamp keeps enforcement and demotion aligned.
 export async function capForGuild(
   guildId: bigint,
   key: LimitKey = 'tags.maxPromotedPerGuild',
@@ -196,28 +158,19 @@ function grantedByInteraction(
   return highestTier(tiers)
 }
 
-/** Rows that grant something right now: not soft-deleted and inside their
- * validity window (null bounds mean perpetual, e.g. test entitlements). */
+// Live rows: not soft-deleted and inside validity window (null bounds = perpetual).
 const activeNow = and(
   eq(entitlements.deleted, false),
   or(isNull(entitlements.startsAt), lte(entitlements.startsAt, sql`now()`)),
   or(isNull(entitlements.endsAt), gt(entitlements.endsAt, sql`now()`)),
 )
 
-/**
- * The tier a guild's subscriptions grant, from the locally mirrored
- * entitlements. For contexts without an interaction (scheduled tasks,
- * background jobs); accuracy depends on the sync listeners having run.
- */
+// Guild tier from the mirror; for non-interaction contexts (depends on sync listeners).
 export async function tierForGuild(guildId: bigint): Promise<PremiumTier> {
   return grantedFromMirror(and(eq(entitlements.guildId, guildId), activeNow))
 }
 
-/**
- * The tier a user's own subscriptions grant, from the locally mirrored
- * entitlements. Guild subscriptions don't count here: they benefit the
- * guild, not the buyer personally.
- */
+// User tier from the mirror; guild subscriptions don't count here.
 export async function tierForUser(userId: bigint): Promise<PremiumTier> {
   return grantedFromMirror(
     and(

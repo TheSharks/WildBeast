@@ -16,8 +16,7 @@ function resolveLimit(name: keyof Limits, value: number | undefined): number {
   if (value === undefined) {
     return DEFAULT_LIMITS[name]
   }
-  // NaN would make every comparison false and silently disable the
-  // safeguard, so invalid values are an embedder error.
+  // NaN disables comparisons; reject as embedder error.
   if (typeof value !== 'number' || Number.isNaN(value) || value < 0) {
     throw new RangeError(`Invalid limit for ${name}: ${value}`)
   }

@@ -1,8 +1,5 @@
 #!/usr/bin/env node
-// Full test run including the docker-gated integration suites: provisions a
-// disposable Postgres, Redis and an OpenTelemetry collector, applies the
-// Drizzle migrations, points the test env at them, runs `turbo run test`,
-// and tears everything down.
+// Disposable Postgres/Redis/OTEL setup for docker-gated suites; migrates, tests, tears down.
 import { execFile, spawn } from 'node:child_process'
 import { chmod, mkdtemp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -50,7 +47,7 @@ async function main() {
   await removeContainers()
 
   const otelOut = await mkdtemp(join(tmpdir(), 'wildbeast-otel-'))
-  // The collector runs as an unprivileged user and must write here.
+  // Collector runs unprivileged; needs write access.
   await chmod(otelOut, 0o777)
 
   console.log('Starting Postgres, Redis and OpenTelemetry collector containers...')
@@ -76,7 +73,7 @@ async function main() {
     '-p', `${OTEL_HTTP_PORT}:4318`,
     '-v', `${join(root, 'packages/analytics/test/fixtures/otel-collector.yaml')}:/etc/otelcol-contrib/config.yaml`,
     '-v', `${otelOut}:/out`,
-    // Pinned to match the devcontainer collector version.
+    // Pinned to devcontainer collector.
     'otel/opentelemetry-collector-contrib:0.143.1',
   )
 
@@ -93,8 +90,7 @@ async function main() {
     return `${stdout}${stderr}`.includes('Everything is ready')
   }, 'otel collector')
 
-  // The DB suites assume the schema already exists, so migrate the
-  // ephemeral database before running anything (mirrors the CI migrate step).
+  // DB suites need migrated schema (mirrors CI).
   console.log('Applying Drizzle migrations...')
   await execFileAsync('pnpm', ['--filter', '@thesharks/drizzle', 'migrate'], {
     cwd: root,

@@ -14,14 +14,7 @@ import {
 import { ownerIds } from '../../preconditions/OwnerOnly.mjs'
 import { TracedSubcommand } from '../../structures/subcommand.mjs'
 
-/**
- * Owner-only visibility into the runtime flag surface: every registered
- * gate, experiment and limit flag with its live value, evaluation source
- * and expiry. Registered globally — registering it into a support guild
- * would let Sapphire's bulk overwrite wipe that guild's promoted tag
- * commands — and hidden from members via default permissions '0'; the
- * OwnerOnly precondition does the real gating.
- */
+/** Owner-only live flag inspector; globally registered so guild overwrites never wipe tag commands. */
 @ApplyOptions<Subcommand.Options>({
   preconditions: ['OwnerOnly'],
   subcommands: [
@@ -89,7 +82,7 @@ export class FlagsCommand extends TracedSubcommand {
   public async chatInputList(
     interaction: Subcommand.ChatInputCommandInteraction,
   ) {
-    // Evaluations can stack up (one per flag); buy time up front.
+    // Flag fan-out is slow; defer up front.
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     const kind = interaction.options.getString('kind')

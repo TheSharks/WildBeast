@@ -20,11 +20,7 @@ const executionTime = meter.createHistogram(
   },
 )
 
-/**
- * Subcommand-based commands don't emit chatInputCommandSuccess; the
- * subcommands plugin emits its own event, so they need their own listener
- * to land in the same metrics.
- */
+/** Subcommand plugin emits its own event; mirror into same metrics. */
 export class SubcommandExecutedListener extends Listener {
   public constructor(
     context: Listener.LoaderContext,

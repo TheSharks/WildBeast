@@ -11,37 +11,18 @@ import {
   tierAtLeast,
 } from '../premium/tiers.mjs'
 
-/** Identifier carried by denial errors; commandDeniedReply.mts branches on
- * it to show the localized upsell. Named after Sapphire's own convention
- * (preconditionCooldown, ...). */
+// Denial identifier for the localized upsell in commandDeniedReply.
 export const PremiumPreconditionIdentifier = 'preconditionPremium'
 
 export interface PremiumPreconditionContext extends Precondition.Context {
   /** Minimum tier required to run the command. Defaults to 'premium'. */
   tier?: PremiumTier
-  /**
-   * Whose subscription satisfies the gate: the invoker's own ('user'), the
-   * current guild's ('guild'), or either ('any', the default). A 'guild'
-   * gate always denies in DMs.
-   */
+  /** Whose subscription satisfies the gate; 'guild' always denies in DMs. */
   scope?: PremiumScope | 'any'
 }
 
-/**
- * Gate a whole command behind a premium tier:
- *
- *   preconditions: ['Premium']
- *   preconditions: [{ name: 'Premium', context: { tier: 'premium', scope: 'guild' } }]
- *
- * For commands that stay usable on the free tier but with a cap, don't gate
- * here — read the cap via `limitFor` (premium/entitlements.mjs) instead.
- *
- * Sapphire only runs preconditions for command invocations, not for
- * autocomplete or later component clicks. Commands that gate here must
- * also guard those surfaces via installCommandPremiumGate (features/gates.mjs)
- * or the requirePremium helpers below, or autocomplete leaks gated work and
- * stale buttons outlive a lapsed subscription.
- */
+// Gate a command behind a tier; capped-but-usable commands use `limitFor` instead.
+// Sapphire skips preconditions for autocomplete/components, so guard those via gates.mjs too.
 export class PremiumPrecondition extends Precondition {
   public override chatInputRun(
     interaction: ChatInputCommandInteraction,
@@ -76,7 +57,7 @@ export class PremiumPrecondition extends Precondition {
   }
 }
 
-/** Normalize a precondition context to its effective tier + scope. */
+// Effective tier + scope for a precondition context.
 export function resolvePremiumRequirement(
   context: PremiumPreconditionContext = {},
 ): { requiredTier: PremiumTier; requiredScope: PremiumScope | 'any' } {
@@ -86,12 +67,7 @@ export function resolvePremiumRequirement(
   }
 }
 
-/**
- * The scope-resolved tier for a premium gate — the same rule the
- * precondition enforces. A 'guild' gate reads the guild subscription (free
- * in DMs, so it always denies there); 'user' reads the invoker's own;
- * 'any' takes the best of either.
- */
+// Scope-resolved tier under the same rule the precondition enforces.
 export function premiumTierForInteraction(
   interaction: BaseInteraction,
   context: PremiumPreconditionContext = {},
@@ -102,12 +78,7 @@ export function premiumTierForInteraction(
   )
 }
 
-/**
- * Whether `interaction` satisfies the premium gate. Synchronous — Discord
- * attaches fresh entitlements to every interaction. The primary helper for
- * autocomplete suppression and component re-checks (features/gates.mjs);
- * `requirePremium` is the same check under the name call sites read best.
- */
+// Synchronous gate check (entitlements ride the interaction); for autocomplete and component re-checks.
 export function isPremiumSatisfied(
   interaction: BaseInteraction,
   context: PremiumPreconditionContext = {},
@@ -116,15 +87,10 @@ export function isPremiumSatisfied(
   return tierAtLeast(enforcementTier(interaction, requiredScope), requiredTier)
 }
 
-/** Alias of isPremiumSatisfied for call-site readability. */
+// Readability alias of isPremiumSatisfied.
 export const requirePremium = isPremiumSatisfied
 
-/**
- * Autocomplete guard mirroring the Feature pattern: Sapphire never runs
- * command preconditions for autocomplete, so gated commands must suppress
- * their own suggestion work or disabled users hit databases/APIs as they
- * type. Returns true when the autocomplete body may run.
- */
+// Autocomplete guard; true when the body may run (preconditions never cover autocomplete).
 export function premiumAutocompleteAllowed(
   interaction: BaseInteraction,
   context: PremiumPreconditionContext = {},
@@ -132,11 +98,7 @@ export function premiumAutocompleteAllowed(
   return isPremiumSatisfied(interaction, context)
 }
 
-/**
- * Component re-check mirroring commandComponentEnabled: components outlive
- * the invocation that created them, so button/select handlers must re-verify
- * the gate instead of trusting the original precondition run.
- */
+// Component re-check; components outlive the invocation that created them.
 export function premiumComponentAllowed(
   interaction: BaseInteraction,
   context: PremiumPreconditionContext = {},

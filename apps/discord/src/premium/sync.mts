@@ -11,8 +11,7 @@ import type { Client, Entitlement as DiscordEntitlement } from 'discord.js'
 const FETCH_PAGE_SIZE = 100
 
 const meter = metrics.getMeter('@thesharks/discord')
-/** Mirror reconciliations by outcome, so an aborted empty-fetch is visible
- * in dashboards rather than silent. */
+// Mirror reconciliations by outcome.
 export const entitlementReconcileCounter = meter.createCounter(
   'discord_entitlement_reconcile_total',
   { description: 'Entitlement mirror reconciliations by result' },
@@ -28,7 +27,7 @@ function reconcileLogger() {
 
 type EntitlementCursor = 'before' | 'after'
 
-/** Map a gateway entitlement to its database mirror row. */
+// Gateway entitlement to mirror row.
 export function entitlementRow(
   entitlement: DiscordEntitlement,
 ): NewEntitlement {
@@ -52,10 +51,7 @@ export async function upsertEntitlement(row: NewEntitlement): Promise<void> {
     .onConflictDoUpdate({ target: entitlements.id, set: update })
 }
 
-/** Fetch every entitlement without assuming whether Discord's unbounded
- * first page is oldest-first or newest-first. A full first page is expanded
- * below its minimum id and above its maximum id; each cursor must make
- * strict progress or reconciliation aborts before its destructive phase. */
+// Fetch all entitlements bidirectionally; abort before deletes unless each cursor strictly progresses.
 export async function fetchAllEntitlementRows(
   client: Client<true>,
 ): Promise<NewEntitlement[]> {
@@ -116,37 +112,16 @@ function maxBigInt(values: bigint[]): bigint {
   return values.reduce((maximum, value) => (value > maximum ? value : maximum))
 }
 
-/**
- * Bring the local entitlement mirror in line with what Discord's API
- * reports: upsert everything the API returns and soft-delete rows it no
- * longer mentions (delete events missed while offline). Returns the number
- * of live entitlements. One reconcile per boot is enough — the gateway
- * listeners keep the mirror current afterwards.
- *
- * Snapshot race: the fetch and the transaction run back-to-back with no
- * await between them except the empty-fetch guard, but they are still two
- * separate snapshots. An entitlement granted after the fetch paginates past
- * it is missed until the next event/reconcile; one revoked after the fetch
- * but before the transaction is still upserted as live and corrected by the
- * following delete event. The window is one boot-reconcile wide by design.
- *
- * TODO(entitlements): close the window with a watermark (e.g. remember the
- * highest seen entitlement id / Discord's updated-after cursor and
- * re-fetch everything at/after it inside the transaction) instead of a
- * bare full-table diff.
- */
+// Mirror Discord's listing (upsert seen, soft-delete unseen); one boot-wide fetch/transaction race by design.
+// TODO(entitlements): close it with a watermark re-fetch inside the transaction.
 export async function reconcileEntitlements(
   client: Client<true>,
 ): Promise<number> {
-  // Fetch and transaction are back-to-back: no await may be inserted here
-  // except the empty-fetch guard below, to keep the snapshot window narrow.
+  // Keep fetch and transaction back-to-back to narrow the snapshot window.
   const rows = await fetchAllEntitlementRows(client)
 
   if (rows.length === 0) {
-    // An empty listing with a non-empty mirror almost certainly means the
-    // API call failed open (outage, unconfigured app id) rather than every
-    // subscriber churning at once. Soft-deleting the whole mirror here
-    // would demote every paying guild on the next reconcile run.
+    // Empty listing with non-empty mirror means failed-open fetch; never mass soft-delete here.
     const mirror = await db
       .select({ id: entitlements.id })
       .from(entitlements)
@@ -184,7 +159,7 @@ export async function reconcileEntitlements(
         .values(row)
         .onConflictDoUpdate({ target: entitlements.id, set: update })
     }
-    // Anything the API didn't return no longer exists upstream.
+    // Unreturned rows no longer exist upstream.
     const ids = rows.map((row) => row.id)
     const deleted = await tx
       .update(entitlements)

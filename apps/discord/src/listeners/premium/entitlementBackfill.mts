@@ -8,14 +8,13 @@ import { premiumSkuMap } from '../../premium/skus.mjs'
 import { reconcileEntitlements } from '../../premium/sync.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
-/** Failed backfill attempts by terminal outcome, for outage dashboards. */
+// Backfill failures by outcome.
 export const entitlementBackfillErrorCounter = meter.createCounter(
   'discord_entitlement_backfill_errors_total',
   { description: 'Entitlement backfill failures by outcome' },
 )
 
-/** Backoff between reconcile attempts; exported so tests stay fast by
- * injecting shorter delays. */
+// Backoff between attempts; exported for fast tests.
 export const BACKFILL_RETRY_DELAYS_MS = [1_000, 2_000]
 export const BACKFILL_MAX_ATTEMPTS = 1 + BACKFILL_RETRY_DELAYS_MS.length
 
@@ -30,17 +29,8 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms)
   })
 
-/**
- * Reconcile the entitlement mirror against Discord's API once on boot, to
- * catch grants/revocations that happened while the bot was offline. The
- * gateway listeners (entitlementSync.mts) take over from there. Retries
- * transient API failures with backoff; a failed mirror only degrades
- * background checks, so the run still never throws.
- *
- * When no premium SKUs are configured the run is skipped, but the check
- * happens on every ClientReady (not cached) so configuring SKUs later and
- * reconnecting re-triggers the backfill without a code change.
- */
+// Boot backfill for offline grants/revokes; gateway listeners take over after. Retries transient failures.
+// Skipped without SKUs; re-checked every ClientReady so late config still triggers it.
 @ApplyOptions<ListenerOptions>({
   event: Events.ClientReady,
   once: true,
@@ -59,8 +49,7 @@ export class EntitlementBackfillListener extends Listener {
       )
       return
     }
-    // Entitlements are app-global, not shard-affine: one worker reconciling
-    // is enough. Shard 0 exists in every topology.
+    // Entitlements are app-global; shard 0 alone reconciles.
     if (!client.ws.shards.has(0)) return
 
     const delays = options.delays ?? backfillDelays()
@@ -74,8 +63,7 @@ export class EntitlementBackfillListener extends Listener {
         )
         return
       } catch (error) {
-        // The mirror only backs non-interaction checks; interaction-time
-        // premium checks read fresh data regardless.
+        // Mirror only backs background checks; interactions read fresh data.
         if (attempt >= delays.length) {
           try {
             entitlementBackfillErrorCounter.add(1, { outcome: 'exhausted' })

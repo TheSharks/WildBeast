@@ -8,13 +8,7 @@ let pool: Pool | undefined
 let database: Database | undefined
 
 /**
- * Lazily create the pg pool and Drizzle client on first use. Reads
- * DATABASE_URL at call time (not import time) so `validateEnv()`/`loadEnv()`
- * in the cluster manager always runs first and misconfiguration fails at
- * boot with a readable message instead of deep inside pg.
- *
- * Callers must ensure the environment was validated before the first call;
- * importing this module alone never connects.
+ * Lazy pg pool + client; reads DATABASE_URL at call time so env validation runs first.
  */
 export function getDb(): Database {
   database ??= (() => {
@@ -28,7 +22,7 @@ export function getDb(): Database {
   return database
 }
 
-/** Close the underlying pg pool, e.g. during graceful shutdown. */
+/** Close pool for shutdown. */
 export async function closeDb(): Promise<void> {
   const current = pool
   pool = undefined
@@ -36,12 +30,7 @@ export async function closeDb(): Promise<void> {
   await current?.end()
 }
 
-/**
- * Lazily-initialized client for application code. Property access forwards
- * to `getDb()`, so importing `{ db }` never opens a connection: the pool is
- * created on the first query and `closeDb()` resets it. Prefer `getDb()`
- * in new code where an explicit call reads better.
- */
+/** Lazy client proxy; import never connects, first query creates pool. */
 export const db: Database = new Proxy({} as Database, {
   get(_target, property, receiver) {
     return Reflect.get(getDb() as object, property, receiver)

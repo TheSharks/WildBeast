@@ -16,27 +16,12 @@ import {
   tagCommandName,
 } from '../utils/guildTagCommands.mjs'
 
-// No interaction (and thus no locale) in task context: this is the en-US
-// `commands/descriptions:tagOptionArgs` value for recreated commands.
+// Task has no locale; en-US `tagOptionArgs` value for recreated commands.
 const TAG_ARGS_DESCRIPTION_FALLBACK =
   'Space-separated arguments passed to the tag'
 
-/**
- * Nightly reconciliation of promoted guild tag commands. Three jobs, in
- * order per guild:
- *
- * 1. Demote over-cap promotions, newest first. Promotion is blocked at the
- *    cap immediately, but an entitlement lapse leaves a guild over it; the
- *    daily cadence is the deliberate grace period so a billing hiccup or a
- *    stale entitlement mirror never insta-demotes a paying guild.
- * 2. Recreate commands the database says exist but Discord lacks.
- * 3. Delete guild commands of ours that no database row claims (e.g. a tag
- *    deletion whose REST cleanup failed).
- *
- * The dev guild is skipped: Sapphire's own registry bulk-overwrites its
- * command set on every boot, so promoted commands don't survive there
- * anyway and recreating them would fight that overwrite daily.
- */
+// Nightly per-guild jobs: demote over-cap newest-first (grace for billing hiccups), recreate missing, delete orphans.
+// Skips the dev guild (Sapphire bulk-overwrites it every boot).
 export class GuildTagCommandReconcileTask extends TracedScheduledTask {
   public constructor(
     context: ScheduledTask.LoaderContext,
@@ -63,8 +48,7 @@ export class GuildTagCommandReconcileTask extends TracedScheduledTask {
       try {
         await this.reconcileGuild(client, guildId)
       } catch (error) {
-        // One guild's failure (kicked bot, permissions, rate limits) must
-        // not abort the sweep.
+        // One guild's failure must not abort the sweep.
         failures += 1
         this.container.logger.warn(
           `Could not reconcile guild tag commands for guild ${guildId}`,
@@ -89,18 +73,16 @@ export class GuildTagCommandReconcileTask extends TracedScheduledTask {
       guildId: guildId.toString(),
     })
 
-    // Commands of ours that no row claims must go before anything else so
-    // a recreate below can't race its own orphan cleanup.
+    // Orphan cleanup first so recreates can't race it.
     const claimed = new Set(
       promoted.map((row) => row.commandId?.toString() ?? ''),
     )
     for (const command of registered.values()) {
       if (claimed.has(command.id)) continue
-      // Only tag-shaped commands are ours; never touch other guild commands.
+      // Only tag-shaped commands; never touch others.
       if (!isTagCommandShape(command)) continue
       try {
-        // Grace for in-flight promotes: the Discord command exists before
-        // its DB row is updated, so re-read before deleting.
+        // In-flight promotes exist before the DB flips; re-read before deleting.
         const claimedRow = await db.query.tags.findFirst({
           where: eq(tags.commandId, BigInt(command.id)),
         })
@@ -141,8 +123,7 @@ export class GuildTagCommandReconcileTask extends TracedScheduledTask {
       if (demote.has(row) || row.commandId === null) continue
       if (registered.has(row.commandId.toString())) continue
 
-      // The stored name may have become invalid relative to current
-      // reserved names (a new bot command); demote rather than recreate.
+      // Stored name may now collide with a new bot command; demote instead.
       const name = tagCommandName(row.name, reserved)
       if (!name.ok) {
         try {
@@ -177,12 +158,7 @@ export class GuildTagCommandReconcileTask extends TracedScheduledTask {
     }
   }
 
-  /**
-   * The guild's promoted-command cap: the registry value for its mirrored
-   * tier, overridable through the same `limits.*` flag interactions use —
-   * without honoring the override here, reconciliation would demote guilds
-   * an operator deliberately raised.
-   */
+  // Guild cap honoring the same `limits.*` override enforcement uses, so operators aren't demoted.
   private async capForGuild(guildId: bigint): Promise<number> {
     const tier = await tierForGuild(guildId)
     return limitFlagValue(

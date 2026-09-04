@@ -4,11 +4,7 @@ import { Listener } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
 import { Events, type Guild } from 'discord.js'
 
-// Joins and leaves go to Sentry metrics rather than OTel: the OTel side
-// already gauges the fleet-wide totals every minute (discord_guilds_total),
-// while these are rare discrete events where the per-item model shines —
-// each data point keeps the guild's size and shard for inspection without
-// creating a per-guild metric series.
+// Sentry per-item metrics fit rare join/leave events; OTel already gauges totals.
 
 function guildAttributes(guild: Guild) {
   return {

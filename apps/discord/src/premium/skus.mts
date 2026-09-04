@@ -9,24 +9,13 @@ import {
 export interface PremiumSku {
   /** The tier an active entitlement for this SKU grants. */
   tier: PremiumTier
-  /**
-   * The subscription kind the SKU is sold as in the developer portal. Tier
-   * resolution trusts the entitlement's own shape, not this — the scope
-   * exists so denial replies can offer the right SKU to purchase. 'any'
-   * (the default when omitted) matches every scope.
-   */
+  /** Declared sale scope; only used to pick the right SKU for denial upsells. */
   scope: PremiumScope | 'any'
 }
 
 const SCOPES: ReadonlyArray<PremiumSku['scope']> = ['user', 'guild', 'any']
 
-/**
- * Parse a WILDBEAST_PREMIUM_SKUS value: comma-separated `skuId:tier` or
- * `skuId:tier:scope` entries, e.g. `1315790123456789:premium:guild`. SKU
- * ids come from the Discord developer portal's monetization tab; tiers must
- * exist in PREMIUM_TIERS and scope is user or guild. Throws with a readable
- * message on malformed input so boot validation can surface it.
- */
+// Parse `skuId:tier[:scope]` list; throws readable errors for boot validation.
 export function parsePremiumSkus(
   raw: string | undefined,
 ): Map<string, PremiumSku> {
@@ -66,14 +55,7 @@ export function parsePremiumSkus(
 let cachedRaw: string | undefined
 let cachedMap: Map<string, PremiumSku> | undefined
 
-/**
- * The configured SKU mapping. Empty when premium is not configured, in
- * which case everything runs at the free tier and premium-gated commands
- * deny with a plain message (no purchase button). Parsed once per distinct
- * value: tier resolution consults this several times per interaction (gate
- * context, precondition, limit lookup), so it must stay allocation-free on
- * the hot path.
- */
+// Configured SKU map; empty means premium off. Cached per value for the interaction hot path.
 export function premiumSkuMap(
   env: NodeJS.ProcessEnv = process.env,
 ): Map<string, PremiumSku> {
@@ -85,13 +67,7 @@ export function premiumSkuMap(
   return cachedMap
 }
 
-/**
- * A purchasable SKU that grants at least `tier` for `scope`. Prefers the
- * cheapest (lowest) sufficient tier, and among equals a SKU declared for
- * exactly that scope over an 'any' one. Feeds the premium-style purchase
- * button on denial replies; undefined means no SKU fits and the button is
- * omitted.
- */
+// Cheapest SKU granting `tier` for `scope`; undefined omits the purchase button.
 export function skuIdForTier(
   tier: PremiumTier,
   scope: PremiumScope | 'any' = 'any',

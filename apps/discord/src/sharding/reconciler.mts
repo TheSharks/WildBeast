@@ -9,10 +9,7 @@ import {
   SHARD_STOP_GRACE_MILLIS,
 } from './lifecycle.mjs'
 
-/**
- * The subset of shard lifecycle operations the reconciler needs; cluster.mts
- * adapts ShardingManager to this, tests use a fake.
- */
+// Shard lifecycle surface the reconciler needs (ShardingManager adapter in cluster; fakes in tests).
 export interface ShardHost {
   currentShards(): number[]
   isAlive(shardId: number): boolean
@@ -21,9 +18,7 @@ export interface ShardHost {
   stop(shardId: number): Promise<void>
 }
 
-/** Redis coordination surface used here. Keeping the lifecycle algorithm
- * behind this interface makes timing and lease-loss invariants testable
- * without shortening production Redis TTLs. */
+// Redis coordination surface; keeps timing and lease-loss invariants testable.
 export interface ReconcilerCoordinator {
   ensureTotalShardsAgreement(): Promise<void>
   heartbeat(): Promise<void>
@@ -38,29 +33,15 @@ export interface ReconcilerCoordinator {
 export interface ReconcilerOptions {
   clusterId: string
   totalShards: number
-  /** Liveness and assignment interval. Default 5s. */
+  /** Liveness/assignment interval. Default 5s. */
   tickMillis?: number
-  /** How long membership must be stable before shards move. Default 10s. */
+  /** Membership stability required before moving shards. Default 10s. */
   settleMillis?: number
-  /**
-   * Stop serving shards when coordination has been unreachable this long.
-   * Together with the worker-stop grace this must fit inside the lease TTL,
-   * so we stop before another cluster can acquire our expired leases — and
-   * it must exceed the tick interval by enough that one transient
-   * coordination error doesn't stop every shard. Default 15s (three failed
-   * ticks); see DEFAULT_FENCE_AFTER_MILLIS for the full invariant.
-   */
+  /** Fencing deadline; CHECK: FENCE_AFTER + STOP_GRACE + margin <= LEASE_TTL. Default 15s. */
   fenceAfterMillis?: number
-  /**
-   * Lease TTL this reconciler's timing is budgeted against. Must satisfy
-   * FENCE_AFTER + STOP_GRACE + margin <= LEASE_TTL. Defaults to
-   * DEFAULT_LEASE_TTL_MILLIS (the coordinator's default).
-   */
+  /** Lease TTL this timing is budgeted against; same CHECK. Default 45s. */
   leaseTtlMillis?: number
-  /**
-   * Worst-case time to stop all owned shards. Defaults to
-   * SHARD_STOP_GRACE_MILLIS.
-   */
+  /** Worst-case stop time for all owned shards. */
   stopGraceMillis?: number
 }
 
@@ -71,10 +52,7 @@ export class ShardReconciler {
   private readonly leaseTtlMillis: number
   private readonly stopGraceMillis: number
 
-  // Instruments are created at construction, not module scope: the OTEL
-  // metrics API has no proxy provider (unlike traces), so instruments made
-  // before initOpenTelemetry() are permanently bound to the no-op meter —
-  // and this module is imported before telemetry initializes.
+  // Instruments at construction: pre-init instruments bind permanently to the no-op meter.
   private readonly handoffCounter
   private readonly coordinationErrorCounter
   private readonly memberGauge
@@ -90,9 +68,9 @@ export class ShardReconciler {
   private lastMembers: string[] = []
   private membersStableSince = 0
   private desired = new Set<number>()
-  /** Leases acquired by this reconciler, including shards still spawning. */
+  /** Held leases, including shards still spawning. */
   private readonly heldLeases = new Set<number>()
-  /** A lost lease fences only that shard until its local session is dead. */
+  // A lost lease fences only that shard until its local session dies.
   private readonly lostLeaseShards = new Set<number>()
   private readonly standDowns = new Map<number, Promise<void>>()
   private fenced = false
@@ -110,8 +88,7 @@ export class ShardReconciler {
     this.leaseTtlMillis = options.leaseTtlMillis ?? DEFAULT_LEASE_TTL_MILLIS
     this.stopGraceMillis = options.stopGraceMillis ?? SHARD_STOP_GRACE_MILLIS
 
-    // A fenced cluster must have stopped all its shards before another
-    // cluster can acquire their expired leases.
+    // CHECK: fenced clusters must stop shards before leases expire elsewhere.
     if (
       this.fenceAfterMillis +
         this.stopGraceMillis +
@@ -164,19 +141,13 @@ export class ShardReconciler {
     this.livenessLoop = this.runLiveness(this.loopAbort.signal)
   }
 
-  /**
-   * Heartbeats and renewals must never wait behind shard lifecycle work.
-   * A handoff can spend ten seconds draining and a cold spawn can wait much
-   * longer in the fleet-wide identify queue; either is longer than the
-   * membership cadence and must not consume a lease's renewal budget.
-   */
+  // Liveness must never wait behind lifecycle work (drains/spawns outlast the renewal budget).
   private async runLiveness(signal: AbortSignal): Promise<void> {
     while (this.running && !signal.aborted) {
       try {
         await this.livenessTick()
       } catch (error) {
-        // livenessTick handles coordination errors itself; anything reaching
-        // here is a bug, and the loop must survive it.
+        // livenessTick handles its own errors; anything here is a bug but must not kill the loop.
         this.logger.error(
           'Reconciler liveness tick failed unexpectedly:',
           error,
@@ -235,9 +206,7 @@ export class ShardReconciler {
   }
 
   private updateAssignment(members: string[]): void {
-    // Only move shards once membership has been stable for the settle
-    // window, so a rolling deploy or flapping cluster doesn't cause churn.
-    // Renewal continues independently while lifecycle work catches up.
+    // Move shards only after the settle window so deploys/flaps don't churn; renewals continue meanwhile.
     if (!sameMembers(members, this.lastMembers)) {
       this.logger.info(
         `Cluster membership changed: [${members.join(', ')}] (settling)`,
@@ -264,9 +233,7 @@ export class ShardReconciler {
     this.desired = next
   }
 
-  /** Coalesce assignment changes behind one lifecycle worker. Slow work may
-   * delay another rebalance, but can never delay the independent liveness
-   * loop or overlap another reconcile pass. */
+  // Coalesce rebalances behind one worker; liveness stays independent and passes never overlap.
   private requestReconcile(): void {
     if (!this.running || this.fenced) return
     this.reconcileRequested = true
@@ -299,17 +266,13 @@ export class ShardReconciler {
       ),
     )
 
-    // Draining shards is independent per worker. Do it concurrently so a
-    // large rebalance/shutdown consumes one grace window, not one per shard;
-    // retain each lease until that shard is actually dead.
+    // Drain concurrently in one grace window; retain each lease until its shard is dead.
     await Promise.allSettled(
       [...releasing].map((shardId) => this.releaseShard(shardId)),
     )
     if (!this.running || this.fenced) return
 
-    // Starts stay serial here. The Redis identify throttler is the authority
-    // that paces them fleet-wide; liveness continues in parallel no matter
-    // how long one spawn waits in that queue.
+    // Starts stay serial (Redis throttler paces them); liveness continues in parallel.
     for (const shardId of this.desired) {
       if (!this.running || this.fenced) return
       await this.ensureDesiredShard(shardId)
@@ -323,17 +286,14 @@ export class ShardReconciler {
         await this.host.stop(shardId)
       }
     } catch (error) {
-      // Keeping the lease is the safe failure mode: nobody else may start a
-      // shard whose local session we failed to stop. A later pass retries.
+      // Keep the lease on stop failure so no one else starts a live duplicate; retry later.
       this.logger.error(`Failed to stop shard ${shardId} for handoff:`, error)
       this.reconcileRequested = true
       return
     }
 
     if (this.heldLeases.has(shardId)) {
-      // The worker is dead now, so stop the liveness loop from racing this
-      // DEL with a renew-miss/reacquire sequence. If DEL fails, expiry is a
-      // safe (if slower) handoff because no local session remains.
+      // Worker is dead: DEL now so liveness can't race it; on DEL failure expiry still hands off safely.
       this.heldLeases.delete(shardId)
       try {
         await this.coordinator.releaseLease(shardId)
@@ -355,11 +315,7 @@ export class ShardReconciler {
     const alreadyRunning = this.host.currentShards().includes(shardId)
     let acquired = false
     if (!this.heldLeases.has(shardId)) {
-      // Reclaim path: a fence (or restart with the same cluster id) can
-      // leave Redis holding our id while local state thinks the lease is
-      // free. SET NX alone can't reacquire our own key, so try a renew
-      // first — only a confirmed loss (renew and acquire both fail) marks
-      // the shard lost.
+      // Reclaim path: renew first since SET NX can't reacquire our own key; only double-failure marks loss.
       if (await this.coordinator.renewLease(shardId)) {
         this.heldLeases.add(shardId)
         this.logger.info(`Reclaimed shard ${shardId} lease after recovery`)
@@ -390,8 +346,7 @@ export class ShardReconciler {
       await this.host.start(shardId)
     }
 
-    // Assignment or lease state may change while an unbounded spawn waits.
-    // Never leave the resulting session serving after its authority vanished.
+    // CHECK: never leave a spawn serving after its assignment/lease vanished while waiting.
     if (
       !this.running ||
       this.fenced ||
@@ -400,8 +355,7 @@ export class ShardReconciler {
       this.lostLeaseShards.has(shardId)
     ) {
       await this.host.stop(shardId)
-      // Release inline: the worker is dead, so DEL now instead of leaving
-      // the lease held until the next reconcile pass blocks another owner.
+      // Worker is dead: DEL inline so the next pass doesn't block another owner.
       if (this.heldLeases.has(shardId)) {
         this.heldLeases.delete(shardId)
         try {
@@ -450,11 +404,7 @@ export class ShardReconciler {
     })
   }
 
-  /**
-   * Without coordination we can't renew leases, so another cluster will
-   * eventually acquire our shards. Stop serving them before that can
-   * happen — a shard must never have two live sessions.
-   */
+  // CHECK: fence stops shards before another cluster acquires expired leases; never two live sessions.
   private async maybeFence(): Promise<void> {
     if (this.fenced) return
     if (Date.now() - this.lastCoordinationSuccess < this.fenceAfterMillis) {
@@ -466,25 +416,13 @@ export class ShardReconciler {
     this.logger.error(
       'Coordination unreachable beyond the fencing deadline; stopping all shards',
     )
-    // Retain heldLeases for renewal on recovery: the Redis keys still hold
-    // our id (no DEL here), so a later renew reclaims them without racing a
-    // SET NX that can never reacquire our own key. Leases leave this set
-    // only on confirmed loss (renew + acquire both fail in renewHeldLeases
-    // or ensureDesiredShard). Stopping without clearing also keeps the
-    // liveness loop renewing the right set the moment coordination returns.
+    // Retain leases (no DEL) so recovery renews rather than racing SET NX; drop only on confirmed loss.
     const shards = this.host.currentShards()
     await Promise.allSettled(shards.map((shardId) => this.host.stop(shardId)))
   }
 
-  /**
-   * Stop liveness without releasing anything; leases and the membership
-   * entry expire on their own, exactly as if the process had crashed.
-   * Waits for in-flight lifecycle work so it observes `running = false` and
-   * stops a newly-started shard before shutdown() releases its lease — a
-   * spawn can wait long in the identify queue, and returning while it is
-   * pending would let shutdown() release the lease of a shard that is still
-   * coming up.
-   */
+  // Halt liveness without releasing (leases/membership expire like a crash); wait for in-flight work.
+  // CHECK: a pending spawn must observe `running = false` before shutdown() releases its lease.
   public async halt(): Promise<void> {
     this.running = false
     this.reconcileRequested = false
@@ -515,7 +453,7 @@ export class ShardReconciler {
             await this.coordinator.releaseLease(shardId)
             this.heldLeases.delete(shardId)
           } catch {
-            // lease will expire on its own
+            // Lease expires on its own.
           }
         }
       }),
@@ -523,7 +461,7 @@ export class ShardReconciler {
     try {
       await this.coordinator.withdraw()
     } catch {
-      // membership entry will expire on its own
+      // Membership expires on its own.
     }
   }
 }

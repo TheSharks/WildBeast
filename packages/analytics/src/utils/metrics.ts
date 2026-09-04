@@ -7,35 +7,27 @@ export type {
   Link as OTelLink,
   SpanContext as OTelSpanContext,
 } from '@opentelemetry/api'
-// Re-exported for discord tracing without a direct @opentelemetry/api dep.
-// Instruments with the same meter + name + type are deduped by the SDK.
+// Shared meter/name/type dedupes instruments across listener files.
 export { context } from '@opentelemetry/api'
 
 type AttributeValue = Attributes[keyof Attributes]
 
-/**
- * Bucket boundaries for histograms recorded in seconds. The SDK's default
- * boundaries (5, 10, 25, ...) are scaled for milliseconds and would collapse
- * every sub-5-second measurement into the first bucket.
- */
+/** Second-scale buckets; SDK defaults collapse sub-5s measurements. */
 export const DURATION_SECONDS_BOUNDARIES = [
   0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60,
 ]
 
-/**
- * Resolve shard ID from interaction guild (preferred) or the container of any
- * piece (listener, command, task, ...)
- */
+/** Shard id from interaction guild, else piece container. */
 export function resolveShardId(
   interaction?: { guild?: Guild | null },
   piece?: Pick<Listener, 'container'>,
 ): string {
-  // Prefer interaction guild shard ID (most accurate per-interaction)
+  // Interaction guild is per-interaction accurate.
   if (interaction?.guild?.shardId !== undefined) {
     return interaction.guild.shardId.toString()
   }
 
-  // Fall back to the piece's container client shard
+  // Fall back to piece container shard.
   if (piece) {
     const shardId = piece.container.client.shard?.ids?.[0]
     if (typeof shardId === 'number') {
@@ -69,17 +61,7 @@ function buildAttributeKey(attributes: Attributes) {
 }
 
 /**
- * Create an observable gauge with set/clear/reset methods.
- *
- * Note: `clear`/`reset` stop future observations, but readers using
- * cumulative temporality (the OTLP default) retain a cleared series' last
- * value until the process restarts. Prefer `set(0, ...)` when downstream
- * dashboards must see the change.
- *
- * Instruments with the same meter + name + type are deduped by the SDK, so
- * shared counters/histograms declared in multiple listener files (e.g.
- * `discord_commands_total` in commandExecuted and subcommandExecuted) refer
- * to the same underlying instrument.
+ * Observable gauge with set/clear/reset; prefer set(0) over clear for dashboards (cumulative readers retain last value).
  */
 export function createGauge(
   meterName: string,

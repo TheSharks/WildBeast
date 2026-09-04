@@ -12,16 +12,14 @@ const errorCounter = meter.createCounter('discord_errors_total', {
   description: 'Total number of Discord errors',
 })
 
-// Pieces default their name to the file name; multiple listeners in one file
-// need explicit names or each insert unloads the previous one.
+// Explicit names prevent same-file listeners unloading each other.
 @ApplyOptions<ListenerOptions>({
   name: 'warnMetrics',
   event: Events.Warn,
 })
 export class WarnListener extends Listener {
   public run(...[message]: ClientEvents['warn']): void {
-    // The message text goes to logs; a metric label with free-form text would
-    // create a new time series per unique message.
+    // Keep free-form text out of labels to bound cardinality.
     warnCounter.add(1, { error_type: 'warning' })
     this.container.logger.warn(`Discord client warning: ${message}`)
   }

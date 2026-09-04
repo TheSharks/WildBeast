@@ -3,23 +3,8 @@ import type { ILogger } from '@sapphire/framework'
 import type { Redis } from 'ioredis'
 import { DEFAULT_MEMBERSHIP_TTL_MILLIS } from './coordination.mjs'
 
-/**
- * An epoch is one generation of the fleet with a fixed shard total. All
- * coordination state (membership, leases, sessions) is scoped to an epoch,
- * so two generations never see each other's state.
- *
- * Changing WILDBEAST_SHARDING_TOTAL is a fleet-wide event: guild→shard
- * routing is `(guild_id >> 22) % total`, so clusters with different totals
- * must never serve at the same time. Migration works with a rolling deploy:
- * clusters restarted with the new total park as *pending* members of the
- * next epoch while old-config clusters keep serving (absorbing shards as
- * their peers drain, v1 behavior). The moment the last old-config cluster
- * is gone, one pending cluster atomically promotes the new epoch and the
- * parked fleet starts serving. A cluster restarted with a *stale* total
- * parks harmlessly forever (the active epoch never empties while correctly
- * configured clusters serve) — visible in logs and metrics, fixed by
- * correcting its config.
- */
+// Epoch = one fleet generation with fixed shard total; all coordination state is epoch-scoped.
+// CHECK: mixed totals must never serve together since routing is `(guild_id >> 22) % total`.
 export interface EpochState {
   epoch: number
   totalShards: number
@@ -29,13 +14,7 @@ export function epochKeyPrefix(epoch: number, base = 'wildbeast'): string {
   return `${base}:e${epoch}`
 }
 
-/**
- * This cluster's shard total lost to a concurrent migration: another total
- * owns the proposal slot or was promoted under the epoch this cluster was
- * waiting on. Unrecoverable without a restart — the cluster must exit and
- * re-resolve its epoch (with corrected config where applicable) rather than
- * keep polling a migration that can no longer happen.
- */
+// Lost to a concurrent migration; requires restart, polling can never resolve it.
 export class EpochConflictError extends Error {
   public constructor(message: string) {
     super(message)
@@ -45,9 +24,7 @@ export class EpochConflictError extends Error {
 
 export const DEFAULT_PENDING_EPOCH_TTL_MILLIS = 45_000
 
-// Refresh only the proposal this caller joined. GET + PEXPIRE as separate
-// commands could extend a different proposal that replaced an expired key
-// between them.
+// Refresh only our own proposal; separate GET + PEXPIRE could extend a replacement.
 const REFRESH_PENDING = `
 if redis.call('GET', KEYS[1]) == ARGV[1] then
   redis.call('PEXPIRE', KEYS[1], ARGV[2])
@@ -56,10 +33,7 @@ end
 return 0
 `
 
-// Proposals written by versions before they had a TTL must not preserve the
-// original manual-Redis-surgery failure mode. Give such a legacy value one
-// expiry window, but never refresh a conflicting proposal that already has a
-// lease of its own.
+// Give TTL-less legacy proposals one expiry window; never refresh a conflicting leased proposal.
 const EXPIRE_LEGACY_PENDING = `
 if redis.call('GET', KEYS[1]) == ARGV[1] and redis.call('PTTL', KEYS[1]) < 0 then
   redis.call('PEXPIRE', KEYS[1], ARGV[2])
@@ -68,10 +42,7 @@ end
 return 0
 `
 
-// Promote the pending epoch iff the active epoch has no live members and
-// both the active and pending documents are exactly what the caller observed
-// (CAS). The pending comparison matters once stale proposals can expire and
-// be replaced while an old proposer is still recovering.
+// Promote iff active epoch drained and both docs match observed values (CAS).
 const PROMOTE = `
 local time = redis.call('TIME')
 local now = time[1] * 1000 + math.floor(time[2] / 1000)
@@ -95,10 +66,7 @@ export interface EpochCoordinatorOptions {
   keyPrefix?: string
   /** Must match the ClusterCoordinator's membership TTL. */
   membershipTtlMillis?: number
-  /**
-   * How long a proposal survives without a parked cluster refreshing it.
-   * Default 45s: three default membership TTLs and nine activation polls.
-   */
+  /** Proposal survival without refresh. Default 45s. */
   pendingTtlMillis?: number
 }
 
@@ -137,10 +105,7 @@ export class EpochCoordinator {
     return raw ? (JSON.parse(raw) as EpochState) : null
   }
 
-  /**
-   * Determine which epoch this cluster belongs to: the active one when the
-   * totals match, otherwise a pending next epoch it must wait on.
-   */
+  // Active epoch when totals match, else the pending epoch to wait on.
   public async resolve(): Promise<{
     state: EpochState
     role: 'active' | 'pending'
@@ -153,8 +118,7 @@ export class EpochCoordinator {
     const active = (await this.activeEpoch()) as EpochState
 
     if (active.totalShards === this.totalShards) {
-      // Clear a nonsensical leftover proposal for the total that is
-      // already active (e.g. a config flip-flop that never completed).
+      // Drop leftover proposals for the already-active total.
       const pendingRaw = await this.redis.get(this.pendingKey)
       if (pendingRaw) {
         const pending = JSON.parse(pendingRaw) as EpochState
@@ -182,9 +146,7 @@ export class EpochCoordinator {
     return { state: pending, role: 'pending' }
   }
 
-  /** Claim an empty proposal slot or refresh the identical proposal another
-   * pending cluster already created. A key can expire between SET and GET, so
-   * retry once rather than turning a recoverable race into a boot failure. */
+  // Claim the slot or join an identical proposal; retry once across a SET/GET expiry race.
   private async claimPending(proposedRaw: string): Promise<string> {
     for (let attempt = 0; attempt < 2; attempt++) {
       await this.redis.set(
@@ -227,12 +189,7 @@ export class EpochCoordinator {
     )
   }
 
-  /**
-   * Returns true once `pending` is the active epoch — either because this
-   * call promoted it (active epoch drained) or another cluster already did.
-   * Throws EpochConflictError when a conflicting migration replaced or won
-   * this proposal; waiting longer can never resolve that.
-   */
+  // True once pending is active; throws EpochConflictError when superseded (waiting can't help).
   public async tryPromote(pending: EpochState): Promise<boolean> {
     const activeRaw = await this.redis.get(this.epochKey)
     if (!activeRaw) {
@@ -265,10 +222,7 @@ export class EpochCoordinator {
 
     const pendingRaw = JSON.stringify(pending)
     if (!(await this.refreshPending(pendingRaw))) {
-      // This proposal expired (e.g. a Redis outage outlived the pending
-      // TTL). Re-claim the slot so the migration can still finish; if
-      // another total took it in the meantime, an old waiter must never
-      // promote itself over the replacement.
+      // Proposal expired: re-claim so migration can finish, never promote over a replacement.
       const currentRaw = await this.claimPending(pendingRaw)
       if (currentRaw !== pendingRaw) {
         const current = JSON.parse(currentRaw) as EpochState
@@ -293,14 +247,7 @@ export class EpochCoordinator {
   }
 }
 
-/**
- * Park until the pending epoch becomes active. Keeps heartbeating the
- * pending epoch's membership so the parked fleet's assignment converges the
- * instant promotion happens. Returns false when aborted (shutdown while
- * parked); throws EpochConflictError when a conflicting migration made this
- * one impossible, so the cluster exits and re-resolves instead of polling a
- * dead proposal forever.
- */
+// Park heartbeating pending membership until promotion; false when aborted, throws when superseded.
 export async function awaitEpochActivation(options: {
   epochs: EpochCoordinator
   pending: EpochState

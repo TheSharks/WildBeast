@@ -17,8 +17,7 @@ const gatewayEventCounter = meter.createCounter(
 })
 export class GatewayEventMetricsListener extends Listener {
   public run(...[packet, shardId]: ClientEvents['raw']): void {
-    // Dispatch packets carry the event name in `t`; other opcodes (heartbeat,
-    // hello, ...) are labelled by opcode. Both are small bounded sets.
+    // Label by dispatch name or opcode (both bounded).
     const data = packet as { t?: unknown; op?: unknown }
     const type =
       typeof data?.t === 'string'

@@ -31,12 +31,7 @@ import {
   getFlagDefinition,
 } from './registry.mjs'
 
-/**
- * The owner-facing view of the runtime flag surface: every registered gate
- * and experiment plus every `limits.*` flag from the premium registry,
- * evaluated live. Evaluation dispatch lives here so the /flags command
- * stays thin and the formatting is testable without Discord.
- */
+// Owner-facing live view of gates, experiments, and `limits.*`; dispatch here keeps /flags thin.
 
 export interface FlagInspection {
   key: string
@@ -56,7 +51,7 @@ export interface FlagInspection {
   variants?: readonly string[]
 }
 
-/** Every key /flags can evaluate, for autocomplete and validation. */
+// All keys /flags can evaluate.
 export function inspectableKeys(): string[] {
   return [...flagKeys, ...limitKeys.map((key) => limitFlagKey(key))]
 }
@@ -129,8 +124,7 @@ async function inspectLimit(
   }
 }
 
-/** The tier attribute contexts carry, or the free baseline. Limits need a
- * concrete tier to pick their fallback from the registry. */
+// Context tier or free baseline for limit fallbacks.
 function tierFromContext(context: EvaluationContext): PremiumTier {
   const tier = context.tier
   return typeof tier === 'string' && isPremiumTier(tier) ? tier : FREE_TIER
@@ -156,11 +150,7 @@ function isExpired(expiresAt: string | undefined, now = new Date()): boolean {
   return expiresAt !== undefined && Date.parse(expiresAt) <= now.getTime()
 }
 
-/**
- * The /flags list body, chunked to fit Discord's 2000-character message
- * limit. Expired flags are pinned to a warning section on top — they're the
- * reason an operator is usually here.
- */
+// /flags list chunked for Discord; expired flags pin to the top.
 export function formatFlagList(
   inspections: readonly FlagInspection[],
 ): string[] {
@@ -177,7 +167,7 @@ export function formatFlagList(
   return chunkLines(lines, 1_900)
 }
 
-/** Full detail for one flag, for /flags inspect. */
+// Full detail for one flag.
 export function formatFlagDetail(inspection: FlagInspection): string {
   const lines = [
     `\`${inspection.key}\` (${inspection.kind}, owner: ${inspection.owner})`,

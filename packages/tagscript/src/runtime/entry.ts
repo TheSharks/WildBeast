@@ -19,8 +19,7 @@ export async function renderWithDefaultRegistry(
   const enableJs = options.enableJs ?? false
   const sandbox = options.sandbox
 
-  // Normalize the fetch allowlist once so trailing-dot (`api.example.com.`)
-  // and case variants cannot bypass the exact-match check in the fetch tag.
+  // Normalize allowlist once (case/trailing-dot) for exact-match checks.
   const normalizedOptions: RenderOptions = options.fetchAllowedHosts
     ? {
         ...options,
@@ -50,8 +49,7 @@ export async function renderWithDefaultRegistry(
   try {
     result = await renderInternal(input, context, limits)
   } catch (error) {
-    // Last-resort error contract: encoding failures must surface as
-    // RenderError so embedders only handle one user-facing error type.
+    // Single user-facing error type for embedders.
     if (error instanceof RenderError) throw error
     if (error instanceof URIError) {
       throw new RenderError(`Invalid URL encoding: ${error.message}`)
@@ -63,7 +61,7 @@ export async function renderWithDefaultRegistry(
     for (const [key, value] of context.variables ?? []) {
       options.variables[key] = value
     }
-    // Handle deletions (keys present in options.variables but not in context.variables).
+    // Sync deletions back.
     for (const key of Object.keys(options.variables)) {
       if (!context.variables?.has(key)) {
         delete options.variables[key]

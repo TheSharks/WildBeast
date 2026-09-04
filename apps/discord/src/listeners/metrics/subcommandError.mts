@@ -9,11 +9,7 @@ const errorCounter = meter.createCounter('discord_command_errors_total', {
   description: 'Total number of Discord command errors',
 })
 
-/**
- * Subcommand-based commands don't emit chatInputCommandError; the
- * subcommands plugin emits its own event, so they need their own listener
- * to land in the same metrics.
- */
+/** Subcommand plugin emits its own event; mirror into same metrics. */
 export class SubcommandErrorListener extends Listener {
   public constructor(
     context: Listener.LoaderContext,

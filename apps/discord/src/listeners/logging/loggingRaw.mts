@@ -9,8 +9,7 @@ import type { ClientEvents } from 'discord.js'
 })
 export class LoggingRawListener extends Listener {
   public run(...[data]: ClientEvents['raw']): void {
-    // This fires for every gateway packet; skip the inspect() unless debug
-    // logging is actually enabled.
+    // Per-packet; skip inspect unless debug enabled.
     if (!this.container.logger.has(LogLevel.Debug)) {
       return
     }

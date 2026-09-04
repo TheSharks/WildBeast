@@ -6,25 +6,13 @@ export const UNLIMITED = Number.POSITIVE_INFINITY
 interface LimitDefinition {
   /** What the limit caps, for humans reading this registry. */
   description: string
-  /**
-   * Whose subscription raises the cap: 'user' limits follow the invoker's
-   * own subscription, 'guild' limits follow the subscription of the guild
-   * the interaction happens in (free tier in DMs), and 'any' limits take
-   * the best of both — the right choice for per-user caps that a guild
-   * subscription should also lift, e.g. in guild-subs-only deployments.
-   */
+  /** Whose subscription raises the cap ('guild' is free in DMs; 'any' takes the best). */
   scope: PremiumScope | 'any'
-  /** The cap per tier; every tier must be listed so raising a tier never
-   * accidentally falls back to a stricter default. */
+  /** Cap per tier; list every tier. */
   values: Record<PremiumTier, number>
 }
 
-/**
- * Every subscription-controlled limit in the bot, in one place. Features
- * look their cap up by key (`limitFor` in premium/entitlements.mjs resolves
- * the invoker's tier first); nothing outside this file hardcodes a
- * tier-dependent number. Key convention: `<feature>.<limit>`.
- */
+// All subscription-controlled limits; key convention `<feature>.<limit>`. No tier numbers elsewhere.
 const registry = {
   'tags.maxPerGuild': {
     description: 'Tags a guild may hold',
@@ -34,8 +22,7 @@ const registry = {
   'tags.maxPromotedPerGuild': {
     description: 'Tags a guild may promote to guild slash commands',
     scope: 'guild',
-    // Discord allows 100 guild commands per app; the premium cap stays far
-    // below so promoted tags never crowd out the daily create budget.
+    // Stays far below Discord's 100-command cap.
     values: { free: 2, premium: 25 },
   },
 } as const satisfies Record<string, LimitDefinition>
@@ -51,17 +38,10 @@ export function getLimit(key: LimitKey, tier: PremiumTier): number {
   return registry[key].values[tier]
 }
 
-/** Upper bound for remote limit overrides. The registry is trusted; the flag
- * service is not — values above this fall back to the registry. */
+// Upper bound for remote overrides; the registry is trusted, the flag service is not.
 export const MAX_LIMIT_OVERRIDE = 10_000
 
-/**
- * Clamp a remote limit override to the enforceable range: finite, >= 0,
- * floored to an integer, and at most MAX_LIMIT_OVERRIDE. Anything else
- * falls back to the registry value for the resolved tier (which may itself
- * be UNLIMITED). Pure so enforcement (limitFor) and demotion (capForGuild)
- * share one rule; callers warn + record a metric on fallback.
- */
+// Clamp remote overrides to [0, MAX_LIMIT_OVERRIDE] ints; fallback keeps enforcement and demotion aligned.
 export function clampLimitOverride(raw: unknown, fallback: number): number {
   if (typeof raw !== 'number' || !Number.isFinite(raw)) return fallback
   const floored = Math.floor(raw)
@@ -84,8 +64,7 @@ export function limitFlagKey(key: LimitKey): LimitFlagKey {
   return `limits.${key}`
 }
 
-/** The registry entry itself, for surfaces that display limits (e.g. a
- * future /premium status command). */
+// Registry entry for limit-display surfaces.
 export function describeLimit(key: LimitKey): LimitDefinition {
   return registry[key]
 }

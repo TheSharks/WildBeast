@@ -8,23 +8,17 @@ import { booleanFlagValue } from './client.mjs'
 import { commandFlagContext } from './commandContext.mjs'
 import { commandGateKey } from './registry.mjs'
 
-/**
- * Premium requirements registered per command for surfaces Sapphire
- * preconditions never reach (autocomplete, later component clicks).
- * Commands gating via the Premium precondition should register here with
- * installCommandPremiumGate so those surfaces stay behind the same tier.
- */
+// Premium requirements for surfaces preconditions miss (autocomplete, later clicks).
 const premiumGates = new Map<string, PremiumPreconditionContext>()
 
-/** The registered premium requirement for `command`, if any. */
+// Registered premium requirement, if any.
 export function premiumGateFor(
   command: string,
 ): PremiumPreconditionContext | undefined {
   return premiumGates.get(command)
 }
 
-/** Whether `interaction` satisfies the registered premium gate for
- * `command`; true when the command has no premium requirement. */
+// Gate check; true when the command has no requirement.
 export function commandPremiumAllowed(
   interaction: BaseInteraction,
   command: string,
@@ -34,10 +28,7 @@ export function commandPremiumAllowed(
   return isPremiumSatisfied(interaction, requirement)
 }
 
-/** Attach the typed gate for a command and suppress autocomplete work while
- * disabled. Sapphire does not run command preconditions for autocomplete,
- * so the wrapper is necessary to stop disabled commands hitting databases
- * and external APIs as users type. */
+// Gate command invocations and suppress autocomplete work while disabled.
 export function installCommandFeatureGate(command: Command): void {
   const key = commandGateKey(command.name)
   if (!key) return
@@ -55,11 +46,7 @@ export function installCommandFeatureGate(command: Command): void {
   }
 }
 
-/** Apply the same command kill switch to stateless component handlers.
- * Components outlive the command invocation that created them, so command
- * preconditions cannot protect later button clicks. Also re-checks the
- * registered premium gate: a lapsed subscription must not keep working
- * through a stale button. */
+// Kill switch for components, which outlive invocations; also re-checks the premium gate.
 export async function commandComponentEnabled(
   interaction: BaseInteraction,
   command: string,
@@ -71,13 +58,7 @@ export async function commandComponentEnabled(
     : true
 }
 
-/**
- * Gate a command behind a premium tier with the same autocomplete +
- * component coverage as installCommandFeatureGate. Appends the Premium
- * precondition for invocations and suppresses autocomplete work plus
- * component clicks while the gate denies — Sapphire runs preconditions
- * for neither surface.
- */
+// Premium-gate a command with autocomplete + component coverage (preconditions cover neither).
 export function installCommandPremiumGate(
   command: Command,
   context: PremiumPreconditionContext = {},
@@ -95,9 +76,7 @@ export function installCommandPremiumGate(
   }
 }
 
-/** Re-check helper for stateful component handlers owned by a gated
- * command. Prefer commandComponentEnabled (feature + premium together);
- * use this when only the premium gate applies. */
+// Premium-only component re-check; prefer commandComponentEnabled when both gates apply.
 export function premiumComponentAllowed(
   interaction: BaseInteraction,
   command: string,

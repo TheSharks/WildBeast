@@ -14,14 +14,10 @@ const identifyWait = meter.createHistogram('discord_identify_wait_seconds', {
   advice: { explicitBucketBoundaries: DURATION_SECONDS_BOUNDARIES },
 })
 
-// Discord requires 5s between identifies per bucket; a little margin covers
-// clock drift between clusters.
+// 5s identify spacing per bucket plus margin for clock drift.
 const IDENTIFY_WINDOW_MILLIS = 5_500
 
-/**
- * The subset of Redis commands the throttler needs; keeps the class testable
- * without a Redis server.
- */
+// Minimal Redis surface for testability.
 export interface IdentifyLockStore {
   set(
     key: string,
@@ -34,23 +30,13 @@ export interface IdentifyLockStore {
 }
 
 export interface IdentifyThrottlerOptions {
-  /**
-   * Redis key prefix for identify locks (without the trailing bucket).
-   * Defaults to `wildbeast:identify`. Different bots sharing one Redis must
-   * use different prefixes (see {@link identifyKeyPrefix}) or they throttle
-   * each other on the same keys.
-   */
+  /** Lock prefix; bots sharing Redis need distinct prefixes or they throttle each other. */
   keyPrefix?: string
   /** Sink for PTTL anomalies; defaults to console.warn. */
   onWarn?: (message: string) => void
 }
 
-/**
- * Namespace identify locks per bot so fleets sharing one Redis don't
- * throttle each other. The Discord token is hashed (never stored raw in a
- * key); an explicit `WILDBEAST_CLUSTER` namespace wins when set so
- * environments can isolate without exposing a token hash.
- */
+// Per-bot lock namespace (hashed token, never raw — PII); WILDBEAST_CLUSTER wins when set.
 export function identifyKeyPrefix(
   token?: string,
   namespaceEnv?: string,
@@ -64,15 +50,7 @@ export function identifyKeyPrefix(
   return `${base}:${hash}:identify`
 }
 
-/**
- * Discord allows one identify per 5 seconds per rate limit bucket
- * (shard_id % max_concurrency), enforced per bot token across ALL processes.
- * This throttler serializes identifies fleet-wide through a Redis lock per
- * bucket so multiple clusters can't trip each other into invalid sessions.
- *
- * The lock is deliberately never released: letting it expire after the
- * identify window is exactly the spacing Discord requires.
- */
+// Fleet-wide identify pacing per bucket; lock expiry is the spacing, never released early.
 export class RedisIdentifyThrottler implements IIdentifyThrottler {
   private readonly keyPrefix: string
   private readonly onWarn: (message: string) => void
@@ -112,21 +90,17 @@ export class RedisIdentifyThrottler implements IIdentifyThrottler {
         return
       }
 
-      // Wait out the current holder's window, with jitter so shards queued
-      // on the same bucket don't stampede the lock.
+      // Wait out the holder's window; jitter avoids a stampede.
       const remaining = await this.redis.pttl(key)
       let baseDelay: number
       if (remaining < 0) {
-        // -2: key vanished between SET and PTTL (expiry race) — the next
-        // acquire will likely succeed, but hammering every 100ms melts Redis
-        // when the store is flapping. -1: key exists without a TTL
-        // (legacy/manual write) and will never expire on its own.
+        // -2: expiry race; -1: key without TTL that never expires. Back off full window.
         this.onWarn(
           `Identify lock ${key} returned PTTL ${remaining}; backing off for the full identify window`,
         )
         baseDelay = this.windowMillis
       } else {
-        // Cap clock-skewed TTLs at the window: waiting longer only idles.
+        // Cap skew-inflated TTLs.
         baseDelay = Math.min(remaining, this.windowMillis)
       }
       const delay = baseDelay + Math.floor(Math.random() * 250)
@@ -135,9 +109,7 @@ export class RedisIdentifyThrottler implements IIdentifyThrottler {
   }
 }
 
-/**
- * Plugs into discord.js via `ClientOptions#ws.buildIdentifyThrottler`.
- */
+// discord.js `ClientOptions#ws.buildIdentifyThrottler` entrypoint.
 export const buildRedisIdentifyThrottler: NonNullable<
   WebSocketOptions['buildIdentifyThrottler']
 > = async (manager) => {

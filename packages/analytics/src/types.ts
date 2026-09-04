@@ -21,51 +21,29 @@ export interface TelemetrySentryConfig {
   dsn?: string
   tracesSampleRate?: number
   /**
-   * Per-span sampling decision; takes precedence over `tracesSampleRate`.
-   * Useful for biasing sampling towards interesting spans (commands) and
-   * away from noisy ones (recurring tasks).
+   * Sampling override; prefers interesting spans over noisy ones.
    */
   tracesSampler?: NodeOptions['tracesSampler']
   environment?: string
   release?: string
   enableLogs?: boolean
   /**
-   * Enable the Sentry metrics product. Defaults to true. Sentry metrics are
-   * per-item and trace-associated (no client-side aggregation), so they're
-   * reserved for low-volume measurements that OTel instruments don't cover;
-   * never mirror hot-path OTel counters into them.
+   * Sentry metrics for low-volume use only; never mirror hot OTel counters.
    */
   enableMetrics?: boolean
   /** Capture local variables in exception stack frames. Defaults to true. */
   includeLocalVariables?: boolean
-  /**
-   * URLs that receive `sentry-trace`/`baggage` headers on outgoing requests.
-   * Defaults to none: nothing downstream of the bot continues our traces,
-   * and user-controlled fetches (tagscript `{fetch:}`) reach arbitrary hosts
-   * that should not see trace headers.
-   */
+  /** No trace header propagation by default; keeps {fetch:} hosts from seeing trace headers. */
   tracePropagationTargets?: NodeOptions['tracePropagationTargets']
   /** Forward events to a local Spotlight sidecar for development. */
   spotlight?: boolean
   /** Tags applied to every event from this process (e.g. cluster.id). */
   tags?: Record<string, string>
-  /**
-   * Continuous profiling session sample rate (0-1), evaluated once at
-   * startup. Profiles are collected while a sampled trace is active.
-   * Defaults to 0 (profiler off, native addon never loaded).
-   */
+  /** Profiling sample rate 0-1; default 0 (off). */
   profileSessionSampleRate?: number
-  /**
-   * Event-loop-block detection threshold in milliseconds, or false to
-   * disable. Defaults to 1000. Only active when a DSN is configured; the
-   * watchdog runs on the main thread and observes worker threads too.
-   */
+  /** Event-loop-block threshold ms, or false to disable; default 1000. */
   eventLoopBlockThreshold?: number | false
-  /**
-   * Custom `beforeSend` hook. Runs after the built-in PII scrub (id-only
-   * user/guild/channel, denylist redaction), so custom logic sees an already
-   * scrubbed event. Return `null` to drop the event.
-   */
+  /** Runs after PII scrub; return null to drop the event. */
   beforeSend?: NodeOptions['beforeSend']
 }
 
@@ -78,12 +56,9 @@ export interface TelemetryConfig {
   shardId?: string
   diagnosticLogLevel?: 'none' | 'debug'
   enableExport?: boolean
-  /** Upper bound for flushing telemetry on shutdown. Defaults to 10 seconds. */
+  /** Max flush wait on shutdown; default 10s. */
   shutdownTimeoutMillis?: number
-  /**
-   * Extra resource attributes (e.g. `cluster.id`). Core attributes such as
-   * `service.name` take precedence on conflict.
-   */
+  /** Extra resource attributes; core keys win on conflict. */
   resourceAttributes?: Attributes
   exporters?: {
     otlp?: TelemetryExporterConfig | TelemetryExporterConfig[]

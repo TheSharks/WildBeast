@@ -27,10 +27,7 @@ export class ProcessErrorListener extends Listener {
   }
 
   private setupProcessHandlers() {
-    // The monitor hook observes crashes without changing Node's crash
-    // semantics (a plain uncaughtException handler would keep the process
-    // alive in an undefined state). Sentry's own integrations handle the
-    // exception capture and process exit.
+    // Monitor hook preserves crash semantics; Sentry handles capture/exit.
     process.on('uncaughtExceptionMonitor', (error, origin) => {
       uncaughtExceptionCounter.add(1, {
         origin,
@@ -45,9 +42,7 @@ export class ProcessErrorListener extends Listener {
 
       unhandledRejectionCounter.add(1, {
         error_name: error.name,
-        // Preserve the original rejection type: String(reason) above loses
-        // whether it was a string, number, object, ... Keep it as a
-        // low-cardinality label.
+        // Keep original rejection kind as low-cardinality label.
         reason_type: reason instanceof Error ? 'error' : typeof reason,
       })
 

@@ -10,11 +10,7 @@ export interface TaskSchedule {
   timezone: string
 }
 
-/**
- * Turn a piece name into a valid Sentry monitor slug (lowercase, `[a-z0-9_-]`,
- * max 50 characters). Piece names default to camelCase filenames, so
- * `metricsCollection` becomes `metrics-collection`.
- */
+/** Piece name to Sentry monitor slug (lowercase [a-z0-9_-], max 50). */
 export function monitorSlug(name: string): string {
   return name
     .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
@@ -24,12 +20,7 @@ export function monitorSlug(name: string): string {
     .slice(0, 50)
 }
 
-/**
- * Derive a Sentry cron monitor configuration from a scheduled task's
- * Sapphire options. Returns null when the schedule can't be expressed as a
- * Sentry monitor: manual (payload-driven) tasks, sub-minute intervals, and
- * intervals that aren't whole minutes (Sentry's smallest unit is a minute).
- */
+/** Sentry monitor from task schedule; null when inexpressible (manual, sub-minute, non-whole-minute). */
 export function monitorConfigFromSchedule(
   schedule: TaskSchedule,
 ): MonitorConfig | null {

@@ -9,11 +9,7 @@ import {
   withErrorSpan,
 } from '../../utils/tracing.mjs'
 
-/**
- * Same treatment as SentryChatInputErrorListener, for subcommand-based
- * commands: the subcommands plugin swallows chatInputCommandError and
- * emits its own event instead.
- */
+/** Subcommand plugin emits its own error event; mirror chat-input handling. */
 @ApplyOptions<ListenerOptions>({
   event: SubcommandPluginEvents.ChatInputSubcommandError,
 })

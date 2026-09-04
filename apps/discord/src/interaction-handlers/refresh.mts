@@ -15,10 +15,7 @@ import {
   refreshableBuilders,
 } from '../utils/funMessages.mjs'
 
-/**
- * The 🔄 button under cat/dog/inspire messages: rebuild the same message
- * with a fresh image. Stateless, so the buttons keep working forever.
- */
+/** Stateless 🔄 rebuild for cat/dog/inspire messages. */
 @ApplyOptions<GatedCommandInteractionHandlerOptions>({
   interactionHandlerType: InteractionHandlerTypes.Button,
   command: (kind) => kind as RefreshableKind,

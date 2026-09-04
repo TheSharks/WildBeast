@@ -8,8 +8,7 @@ export interface CoordinatorOptions {
   totalShards: number
   /** How long a cluster stays a member without a heartbeat. Default 15s. */
   membershipTtlMillis?: number
-  /** How long a shard lease survives without renewal. Default 45s; see
-   * DEFAULT_LEASE_TTL_MILLIS for the invariant tying it to fencing. */
+  /** Lease TTL; must satisfy the fencing invariant (see lifecycle). */
   leaseTtlMillis?: number
   keyPrefix?: string
 }
@@ -29,14 +28,7 @@ end
 return 0
 `
 
-/**
- * Redis-backed cluster coordination: a membership set (sorted set scored by
- * Redis server time, so cross-host clock skew doesn't matter) and one lease
- * per shard. Assignment is computed deterministically from membership; the
- * leases are the safety net that guarantees a shard never has two owners
- * even when assignment views diverge — a new owner's acquire fails until
- * the previous owner releases or its lease expires.
- */
+// Membership (server-time scored) + per-shard leases; leases prevent double-ownership when views diverge.
 export class ClusterCoordinator {
   private readonly clusterId: string
   private readonly totalShards: number
@@ -65,11 +57,7 @@ export class ClusterCoordinator {
     return Number(seconds) * 1_000 + Math.floor(Number(microseconds) / 1_000)
   }
 
-  /**
-   * Every cluster in a fleet must agree on the shard total; a mismatch means
-   * clusters would route the same guild to different shards. First cluster
-   * up wins; later ones must match it.
-   */
+  // CHECK: fleet must agree on total or guild routing diverges; first cluster wins.
   public async ensureTotalShardsAgreement(): Promise<void> {
     const key = this.key('total_shards')
     await this.redis.set(key, String(this.totalShards), 'NX')
@@ -117,7 +105,7 @@ export class ClusterCoordinator {
     return acquired === 'OK'
   }
 
-  /** Returns false when the lease is no longer held by this cluster. */
+  // False when this cluster no longer holds the lease.
   public async renewLease(shardId: number): Promise<boolean> {
     const result = await this.redis.eval(
       RENEW_LEASE,

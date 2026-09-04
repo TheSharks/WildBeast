@@ -41,7 +41,7 @@ export function resolveInteractionScope(
   return interaction.inGuild() ? 'guild' : 'dm'
 }
 
-/** Canonical low-cardinality labels shared by command metrics listeners. */
+/** Low-cardinality labels for command metrics. */
 export function commandMetricLabels(
   interaction: { guild?: Guild | null; inGuild(): boolean },
   command: string | undefined,
@@ -81,11 +81,7 @@ export function attributesFromInteraction(
 }
 
 export interface InteractionScopeOptions {
-  /**
-   * Opt-in to human-readable PII (username, guild/channel names). Default is
-   * id-only: user id, guild id, channel id and numeric types. Set explicitly
-   * or via `SENTRY_INCLUDE_PII=true` for debugging only.
-   */
+  /** Opt-in to PII (user/guild/channel names); default id-only. */
   includePII?: boolean
 }
 
@@ -94,14 +90,7 @@ function shouldIncludePII(options?: InteractionScopeOptions): boolean {
   return process.env.SENTRY_INCLUDE_PII === 'true'
 }
 
-/**
- * Populate a Sentry scope with everything we know about a command
- * interaction. Always use a local or isolation scope for this: the shared
- * global scope leaks user data between concurrently running interactions.
- *
- * Id-only by default (no username, guild/channel names). Pass
- * `{ includePII: true }` to opt into names for debugging.
- */
+/** Sentry scope for an interaction; use isolation scope to avoid cross-interaction leaks. Id-only unless includePII. */
 export function applyInteractionScope(
   scope: Sentry.Scope,
   interaction: CommandInteraction,
@@ -146,11 +135,7 @@ export function applyInteractionScope(
   }
 }
 
-/**
- * Original trace contexts by interaction id, so error-reporting spans can
- * link back to the command span that already ended. Entries are consumed by
- * `captureInteractionError` and pruned when the map grows.
- */
+/** Trace contexts by interaction id for linking error spans to ended command spans. */
 const interactionTraceContexts = new Map<string, OTelSpanContext>()
 
 function rememberInteractionTrace(interactionId: string): void {
@@ -218,7 +203,7 @@ export async function withSpan<T>(
               otelSpan.recordException(error as Error)
               otelSpan.setStatus({ code: SpanStatusCode.ERROR })
             } catch {
-              // Recording must never mask the original error.
+              // Never mask original error.
             }
             throw error
           }
@@ -259,11 +244,7 @@ export async function withSpan<T>(
   )
 }
 
-/**
- * Run `fn` inside a fresh Sentry isolation scope (so breadcrumbs, user and
- * tags don't bleed between concurrent interactions) and an active span (so
- * database/HTTP child spans nest under it).
- */
+/** Run fn in isolation scope + active span so children nest correctly. */
 export async function withInteractionSpan<T>(
   name: string,
   interaction: CommandInteraction,
@@ -279,11 +260,7 @@ export async function withInteractionSpan<T>(
   })
 }
 
-/**
- * Error-reporting span linked to the original command trace. The command
- * span already ended when Sapphire emits the error event, so it cannot be
- * the parent; a link preserves trace continuity instead.
- */
+/** Error span linked to ended command span (link, not parent). */
 export async function withErrorSpan<T>(
   name: string,
   interaction: CommandInteraction,
@@ -325,8 +302,7 @@ export async function withErrorSpan<T>(
   })
 }
 
-/** Capture and report a command failure with one consistent scope and
- * breadcrumb shape across chat-input, context-menu, and subcommand events. */
+/** Report command failure with consistent scope/breadcrumb shape. */
 export async function captureInteractionError(
   interaction: CommandInteraction,
   error: unknown,

@@ -6,11 +6,7 @@ const pkg = createRequire(import.meta.url)('../../package.json') as {
   repository: { url: string }
 }
 
-/**
- * Verbose on purpose: external API operators should be able to tell at a
- * glance who is calling them, where the code lives, and who to contact if
- * the traffic misbehaves.
- */
+/** Identifiable UA so API operators can contact us about traffic. */
 export const USER_AGENT = [
   `WildBeast/${pkg.version}`,
   `(+${pkg.homepage}; +${pkg.repository.url.replace(/\.git$/, '')};)`,

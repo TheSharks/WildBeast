@@ -5,13 +5,7 @@ import { MessageFlags } from 'discord.js'
 
 export type TagRenderOutcome = 'success' | 'renderError' | 'emptyOutput'
 
-/**
- * Render tag content and reply with the result — the one code path behind
- * both `/tag show` and promoted guild tag commands, so a tag behaves
- * identically however it's invoked. Reads the interaction's optional `args`
- * string option (both surfaces declare it with the same name) and splits it
- * exactly like `/tag show` always has.
- */
+// Render tag content for `/tag show` and promoted commands alike (shared `args` option).
 export async function replyWithRenderedTag(
   interaction: ChatInputCommandInteraction,
   content: string,
@@ -64,7 +58,7 @@ export async function replyWithRenderedTag(
 
   await interaction.reply({
     content: output,
-    // Tag content is user-authored: never let it ping anyone.
+    // User-authored content; never ping.
     allowedMentions: { parse: [] },
   })
   return 'success'

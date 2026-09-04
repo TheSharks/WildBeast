@@ -20,11 +20,7 @@ export interface UrbanDefinition {
   thumbs_down: number
 }
 
-/**
- * The query rides along in button custom ids (`urban:<page>:<query>`), so
- * pagination is stateless: every click refetches. Custom ids cap at 100
- * characters, hence the query option's max length of 80.
- */
+/** Stateless pagination via custom id; query capped for 100-char id limit. */
 export const URBAN_CUSTOM_ID_PREFIX = 'urban:'
 export const URBAN_QUERY_MAX_LENGTH = 80
 
@@ -45,10 +41,7 @@ export async function fetchCompletions(term: string): Promise<string[]> {
   )
 }
 
-/**
- * Urban Dictionary cross-references terms in [brackets]; turn them into
- * links like the website does.
- */
+/** Link [bracketed] terms like the website does. */
 function stylize(text: string): string {
   return text.replace(
     /\[([^\]]+)\]/g,

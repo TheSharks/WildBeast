@@ -9,13 +9,7 @@ import {
   RESTJSONErrorCodes,
 } from 'discord.js'
 
-/**
- * Promoted guild tag commands: the machinery that turns a stored tag into a
- * real guild-scoped slash command (`/hello` instead of `/tag show hello`).
- * Registration is strictly per-command REST — Sapphire's own registry bulk
- * overwrites any guild it registers into (the dev guild), and a bulk PUT
- * from here would do the same to everyone else's promoted commands.
- */
+// Promoted tags as real guild slash commands; strictly per-command REST (never bulk PUT).
 
 const meter = metrics.getMeter('@thesharks/discord')
 export const promotionsCounter = meter.createCounter(
@@ -38,13 +32,7 @@ export type TagCommandNameResult =
   | { ok: true; name: string }
   | { ok: false; reason: 'invalid' | 'reserved' }
 
-/**
- * The command name a tag would get, or why it can't have one. Lowercasing
- * is the only silent adjustment (Discord requires it and citext tag names
- * are case-insensitive anyway); anything else fails validation rather than
- * being mangled. `reservedNames` should hold the bot's own chat input
- * command names — a guild command may not shadow those.
- */
+// Command name for a tag, or why it can't have one; only lowercasing is silent.
 export function tagCommandName(
   tagName: string,
   reservedNames: ReadonlySet<string>,
@@ -55,7 +43,7 @@ export function tagCommandName(
   return { ok: true, name }
 }
 
-/** The bot's own chat input command names, all promotion-reserved. */
+// Bot command names; promotions may not shadow them.
 export function reservedCommandNames(): Set<string> {
   const names = new Set<string>()
   for (const command of container.stores.get('commands').values()) {
@@ -64,19 +52,10 @@ export function reservedCommandNames(): Set<string> {
   return names
 }
 
-// Discord caps descriptions at 100 characters.
+// Discord description cap.
 export const MAX_COMMAND_DESCRIPTION_LENGTH = 100
 
-/**
- * The full command payload for a promoted tag. Every promoted command
- * carries one optional `args` string option, forwarded to the tagscript
- * renderer exactly like `/tag show`'s — promoted tags stay programmable.
- * The option description is caller-supplied: promotion passes the localized
- * `commands/descriptions:tagOptionArgs` string, reconciliation (which has no
- * interaction and thus no locale) passes the en-US value. It deliberately
- * lives outside this module so the en-US source of truth stays in the
- * locale file.
- */
+// Promoted-tag payload with one optional `args` option; caller supplies the localized description.
 export function guildTagCommandData(
   name: string,
   description: string,
@@ -95,11 +74,7 @@ export function guildTagCommandData(
   }
 }
 
-/**
- * Whether a guild command looks like one of ours: a single optional string
- * `args` option. Reconciliation must only delete orphans with this shape so
- * it never removes guild commands owned by other features.
- */
+// Whether a guild command has our tag shape; only those are safe for orphan cleanup.
 export function isTagCommandShape(command: { options?: unknown }): boolean {
   if (!Array.isArray(command.options) || command.options.length !== 1) {
     return false
@@ -116,11 +91,7 @@ export function isTagCommandShape(command: { options?: unknown }): boolean {
   )
 }
 
-/**
- * Register the guild command for a tag and return the command id Discord
- * assigned. Throws on REST failure — callers run this inside the promotion
- * transaction so a failed registration rolls the database back.
- */
+// Register the guild command; throws so the promotion transaction rolls back.
 export async function createGuildTagCommand(
   client: Client<true>,
   guildId: string,
@@ -135,10 +106,7 @@ export async function createGuildTagCommand(
   return BigInt(command.id)
 }
 
-/**
- * Delete a promoted tag's guild command. An already-gone command is
- * success, not failure — demotion converges on "no command" either way.
- */
+// Delete a promoted command; already-gone counts as success.
 export async function deleteGuildTagCommand(
   client: Client<true>,
   guildId: string,
@@ -157,7 +125,7 @@ export async function deleteGuildTagCommand(
   }
 }
 
-/** Whether a REST failure means the guild hit Discord's command cap. */
+// Whether the error is Discord's guild command cap.
 export function isCommandCapError(error: unknown): boolean {
   return (
     error instanceof DiscordAPIError &&
@@ -165,13 +133,7 @@ export function isCommandCapError(error: unknown): boolean {
   )
 }
 
-/**
- * Which promoted rows a guild must demote to fit under `cap`: the newest
- * promotions go first, so long-standing commands survive an entitlement
- * lapse. Pure selection logic, shared by the reconcile task and its tests.
- * A null `promotedAt` (legacy rows) sorts as epoch zero, i.e. oldest and
- * therefore kept — pinned by test.
- */
+// Rows to demote over `cap`, newest first; null promotedAt counts as oldest.
 export function promotionsOverCap<Row extends Pick<Tag, 'promotedAt'>>(
   rows: readonly Row[],
   cap: number,

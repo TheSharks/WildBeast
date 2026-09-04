@@ -24,8 +24,7 @@ const shardResumeCounter = meter.createCounter('discord_shard_resume_total', {
   description: 'Total number of times a shard resumed',
 })
 
-// Pieces default their name to the file name; multiple listeners in one file
-// need explicit names or each insert unloads the previous one.
+// Explicit names prevent same-file listeners unloading each other.
 @ApplyOptions<ListenerOptions>({
   name: 'shardReadyMetrics',
   event: Events.ShardReady,

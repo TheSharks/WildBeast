@@ -24,11 +24,7 @@ function keepOnlyLinkButtons(
   return links.length > 0 ? [{ ...row, components: links }] : []
 }
 
-/**
- * The ✖️ button: strips interactive buttons from the message, keeping the
- * content and any link buttons. Works on any message that includes a
- * button with the `close` custom id.
- */
+/** ✖️ strips interactive buttons, keeping content and link buttons. */
 @ApplyOptions<InteractionHandler.Options>({
   interactionHandlerType: InteractionHandlerTypes.Button,
 })

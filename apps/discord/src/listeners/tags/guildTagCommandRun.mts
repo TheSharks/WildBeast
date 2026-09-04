@@ -16,13 +16,7 @@ import {
 } from '../../utils/guildTagCommands.mjs'
 import { replyWithRenderedTag } from '../../utils/tagRender.mjs'
 
-/**
- * Execute promoted guild tag commands. Sapphire has no piece for them —
- * they're registered per guild at promotion time — so they arrive as
- * unknown chat input commands. Matching by command id (not name) is
- * collision-proof against future commands of the bot's own and against
- * case differences with citext tag names.
- */
+// Promoted tags arrive as unknown commands; match by id, collision-proof against names/case.
 @ApplyOptions<ListenerOptions>({
   event: Events.UnknownChatInputCommand,
 })
@@ -31,8 +25,7 @@ export class GuildTagCommandRunListener extends Listener {
     const { interaction } = payload
     if (!interaction.guildId) return
 
-    // Promoted commands outlive any one invocation of /tag, so the tag
-    // command's own gate can't reach them; they get their own kill switch.
+    // Promoted commands outlive /tag invocations, so they need their own kill switch.
     const enabled = await booleanFlagValue(
       'features.tags.guildCommands',
       commandFlagContext(interaction, interaction.commandName),
@@ -50,12 +43,9 @@ export class GuildTagCommandRunListener extends Listener {
     const tag = await db.query.tags.findFirst({
       where: eq(tags.commandId, BigInt(interaction.commandId)),
     })
-    // Guild check is belt and braces: command ids are unique, but a tag
-    // must never render outside its own guild.
+    // CHECK: never render a tag outside its own guild.
     if (!tag || tag.guildId !== BigInt(interaction.guildId)) {
-      // Grace for in-flight promotes: the Discord command is registered
-      // before its DB row flips, so re-read once before treating it as
-      // orphaned.
+      // In-flight promotes register before the DB flips; re-read once before orphan handling.
       try {
         const reread = await db.query.tags.findFirst({
           where: eq(tags.commandId, BigInt(interaction.commandId)),
@@ -79,7 +69,7 @@ export class GuildTagCommandRunListener extends Listener {
         )) as string,
         flags: MessageFlags.Ephemeral,
       })
-      // Best effort; reconciliation mops up commands this misses.
+      // Best effort; reconciliation mops up misses.
       try {
         await deleteGuildTagCommand(
           interaction.client,

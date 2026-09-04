@@ -1,20 +1,9 @@
-/**
- * Premium tiers in ascending order of privilege. The first entry is the
- * baseline every user and guild has; later entries are granted by active
- * Discord entitlements for the SKUs configured in WILDBEAST_PREMIUM_SKUS.
- * Adding a tier here means giving it a value for every limit in
- * premium/limits.mts (the compiler enforces this).
- */
+// Tiers ascending; first is baseline. New tiers need values for every limit (compiler-enforced).
 export const PREMIUM_TIERS = ['free', 'premium'] as const
 
 export type PremiumTier = (typeof PREMIUM_TIERS)[number]
 
-/**
- * Who a subscription benefits. Discord sells both kinds: user subscriptions
- * follow the buyer everywhere, guild subscriptions benefit one guild and
- * everyone in it. An entitlement's own shape (guildId set or not) decides
- * its scope; limits and preconditions declare which scope they respect.
- */
+// Benefit scope; entitlement shape (guildId set or not) decides it.
 export type PremiumScope = 'user' | 'guild'
 
 /** The baseline tier used when no entitlement applies. */
@@ -29,11 +18,7 @@ export function tierAtLeast(tier: PremiumTier, minimum: PremiumTier): boolean {
   return PREMIUM_TIERS.indexOf(tier) >= PREMIUM_TIERS.indexOf(minimum)
 }
 
-/**
- * The most privileged tier among `tiers`; the free baseline when the
- * iterable is empty. Entitlement lookups can yield several tiers (a user
- * subscription and a guild subscription at once) — the best one wins.
- */
+// Best tier in `tiers`; free when empty.
 export function highestTier(tiers: Iterable<PremiumTier>): PremiumTier {
   let best = FREE_TIER
   for (const tier of tiers) {

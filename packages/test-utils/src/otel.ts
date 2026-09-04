@@ -26,16 +26,13 @@ export interface SpanCapture {
   shutdown(): Promise<void>
 }
 
-/**
- * Install an in-memory tracer provider as the global one and return the
- * captured spans. Call before the code under test acquires tracers.
- */
+/** Install in-memory tracer; call before acquiring tracers. */
 export function captureSpans(): SpanCapture {
   const exporter = new InMemorySpanExporter()
   const provider = new NodeTracerProvider({
     spanProcessors: [new SimpleSpanProcessor(exporter)],
   })
-  // Allow repeated capture setups within one process.
+  // Allow repeats in one process.
   trace.disable()
   provider.register()
   return {
@@ -51,10 +48,7 @@ export interface LogRecordCapture {
   shutdown(): Promise<void>
 }
 
-/**
- * Install an in-memory logger provider as the global one. Call before the
- * code under test acquires loggers.
- */
+/** Install in-memory logger; call before acquiring loggers. */
 export function captureLogRecords(): LogRecordCapture {
   const exporter = new InMemoryLogRecordExporter()
   const provider = new LoggerProvider({
@@ -70,19 +64,14 @@ export function captureLogRecords(): LogRecordCapture {
 }
 
 export interface MetricCapture {
-  /** Force a collection and return everything gathered so far. */
+  /** Force collection of everything gathered so far. */
   collect(): Promise<ResourceMetrics[]>
   reset(): void
   shutdown(): Promise<void>
 }
 
 /**
- * Install an in-memory meter provider as the global one. Call before the
- * code under test creates meters or instruments.
- *
- * `delta` temporality reports exactly what instruments observed since the
- * last collection; `cumulative` (the OTLP default) additionally retains
- * async-gauge series that stopped being observed.
+ * Install in-memory meter; call before creating instruments. Delta reports since last collect; cumulative retains stopped gauges.
  */
 export function captureMetrics(
   temporality: 'cumulative' | 'delta' = 'cumulative',
@@ -94,7 +83,7 @@ export function captureMetrics(
   )
   const reader = new PeriodicExportingMetricReader({
     exporter,
-    // Effectively never; collection happens through collect().
+    // Never auto-export; collect() drives it.
     exportIntervalMillis: 3_600_000,
   })
   const provider = new MeterProvider({ readers: [reader] })

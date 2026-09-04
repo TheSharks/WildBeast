@@ -13,12 +13,7 @@ import {
 } from 'discord.js'
 import { fetchJson, postJson } from './http.mjs'
 
-/**
- * One adapter per booru, normalizing wildly different APIs into the same
- * post shape so the command, the page builder and the pagination handler
- * stay site-agnostic. Adding a booru means adding an entry here.
- */
-
+/** One adapter per booru normalizing APIs to a shared post shape. */
 export interface BooruPost {
   imageUrl: string
   pageUrl: string
@@ -28,7 +23,7 @@ export interface BooruPost {
 }
 
 export interface BooruSite {
-  /** Refuses to run outside NSFW channels and DMs when true. */
+  /** True requires NSFW channel/DM. */
   gated: boolean
   footer: (nsfwAllowed: boolean) => string
   search: (query: string, nsfwAllowed: boolean) => Promise<BooruPost[]>
@@ -38,7 +33,7 @@ export interface BooruSite {
 export const BOORU_CUSTOM_ID_PREFIX = 'booru:'
 export const BOORU_QUERY_MAX_LENGTH = 75
 
-/** Discord's media gallery renders images, not videos. */
+/** Media gallery renders images only. */
 const IMAGE_URL = /\.(?:png|jpe?g|gif|webp)$/i
 
 interface E621Response {
@@ -52,7 +47,7 @@ interface E621Response {
 }
 
 const e621: BooruSite = {
-  // Not gated: SFW channels are served by the e926 mirror instead.
+  // SFW served via e926 mirror.
   gated: false,
   footer: (nsfwAllowed) => (nsfwAllowed ? 'e621.net' : 'e926.net'),
   async search(query, nsfwAllowed) {
@@ -125,8 +120,7 @@ const rule34: BooruSite = {
   gated: true,
   footer: () => 'rule34.paheal.net',
   async search(query) {
-    // Shimmie2's danbooru-compatible endpoint only speaks XML; its GraphQL
-    // extension is the JSON API.
+    // Shimmie2 XML endpoint lacks JSON; use GraphQL extension.
     const { data } = await postJson<PahealResponse>(
       'https://rule34.paheal.net/graphql',
       {
@@ -203,10 +197,7 @@ export function isBooruSiteName(value: string): value is BooruSiteName {
   return value in booruSites
 }
 
-/**
- * v8 semantics: DMs count as NSFW-capable, guild channels must be marked,
- * threads inherit from their parent.
- */
+/** DMs count as NSFW; threads inherit parent. */
 export function channelAllowsNsfw(interaction: Interaction): boolean {
   const { channel } = interaction
   if (!channel) return false

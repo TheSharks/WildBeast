@@ -63,10 +63,7 @@ const modalSubmitDuration = meter.createHistogram(
   },
 )
 
-/**
- * Custom ids commonly embed per-entity data after a ':' separator; label the
- * static prefix only so metric cardinality stays bounded.
- */
+/** Label static custom-id prefix only to bound cardinality. */
 function componentKey(customId: string): string {
   const separator = customId.indexOf(':')
   const key = separator === -1 ? customId : customId.slice(0, separator)
@@ -84,8 +81,7 @@ function componentLabels(
   }
 }
 
-// Pieces default their name to the file name; multiple listeners in one file
-// need explicit names or each insert unloads the previous one.
+// Explicit names prevent same-file listeners unloading each other.
 @ApplyOptions<ListenerOptions>({
   name: 'buttonInteractionMetrics',
   event: Events.InteractionCreate,

@@ -13,12 +13,7 @@ import {
 } from 'discord.js'
 import { fetchJson, fetchText } from './http.mjs'
 
-/**
- * Builders for the refreshable image commands (cat, dog, inspire). The
- * slash command and the 🔄 button handler produce the exact same message,
- * so both route through here. Payloads are Components V2.
- */
-
+/** Shared builders for refreshable image commands (Components V2). */
 export type RefreshableKind = 'cat' | 'dog' | 'inspire'
 
 function refreshRow(kind: RefreshableKind) {
@@ -62,11 +57,11 @@ async function imageMessage(
 }
 
 export async function buildCatMessage(interaction: Interaction) {
-  // The fact service is flaky; a cat without a fact beats no cat at all.
+  // Flaky fact service; cat without fact beats no cat.
   const fact = await fetchJson<{ fact: string }>('https://catfact.ninja/fact')
     .then((body) => body.fact)
     .catch(() => undefined)
-  // The query string busts caches so every refresh is a new cat.
+  // Query busts cache for fresh cat per refresh.
   return imageMessage(
     interaction,
     'cat',
@@ -80,13 +75,11 @@ export async function buildDogMessage(interaction: Interaction) {
   const { url } = await fetchJson<{ url: string }>(
     'https://random.dog/woof.json?filter=mp4,webm',
   )
-  // The media gallery only renders images; reject videos that slip past
-  // the API filter instead of sending a broken message.
+  // Gallery needs images; reject videos slipping past filter.
   if (!/\.(?:png|jpe?g|gif|webp)(?:\?.*)?$/i.test(url)) {
     throw new Error(`random.dog returned a non-image URL: ${url}`)
   }
-  // The fact service has a history of dying (it already lost its .ml
-  // domain once); a dog without a fact beats no dog at all.
+  // Fact service is unreliable; dog without fact beats no dog.
   const fact = await fetchJson<{ fact: string }>(
     'https://some-random-api.com/facts/dog',
   )

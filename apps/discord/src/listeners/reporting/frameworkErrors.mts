@@ -17,8 +17,7 @@ function report(
   piece: string,
   error: unknown,
 ): void {
-  // Never throw from an error reporter: a failure in the listenerError
-  // listener would re-emit listenerError and recurse.
+  // Never throw here to avoid listenerError recursion.
   try {
     frameworkErrorCounter.add(1, { source, piece })
     listener.container.logger.error(`${source} error in ${piece}:`, error)
@@ -32,8 +31,7 @@ function report(
   }
 }
 
-// Pieces default their name to the file name; multiple listeners in one file
-// need explicit names or each insert unloads the previous one.
+// Explicit names prevent same-file listeners unloading each other.
 @ApplyOptions<ListenerOptions>({
   name: 'listenerErrorReporting',
   event: Events.ListenerError,

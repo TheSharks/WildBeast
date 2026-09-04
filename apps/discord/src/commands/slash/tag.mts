@@ -41,8 +41,7 @@ import { replyWithRenderedTag } from '../../utils/tagRender.mjs'
 
 const MAX_LISTED_TAGS = 100
 
-// Tags are namespaced per guild, so the command needs one; registration
-// below also hides it outside guilds.
+// Tags are guild-namespaced; registration hides the command outside guilds.
 @ApplyOptions<Subcommand.Options>({
   runIn: [CommandOptionsRunTypeEnum.GuildAny],
   cooldownDelay: 3_000,
@@ -191,20 +190,17 @@ export class TagCommand extends TracedSubcommand {
     if (!interaction.guildId) return interaction.respond([])
     try {
       const focused = interaction.options.getFocused()
-      // % and _ are LIKE wildcards; a literal search must not let users match
-      // through them.
+      // Escape LIKE wildcards so search stays literal.
       const pattern = `%${focused.replace(/[\\%_]/g, '\\$&')}%`
       const rows = await db
         .select({ name: tags.name })
         .from(tags)
-        // Substring matches, plus trigram-similar names (the % operator) so
-        // typos still surface suggestions. Both are backed by the pg_trgm
-        // index; best match first.
+        // Substring plus trigram-similar matches for typos; best first.
         .where(
           and(
             eq(tags.guildId, BigInt(interaction.guildId)),
             or(ilike(tags.name, pattern), sql`${tags.name} % ${focused}`),
-            // Demoting only makes sense for promoted tags.
+            // Demote only applies to promoted tags.
             interaction.options.getSubcommand(false) === 'demote'
               ? isNotNull(tags.commandId)
               : undefined,
@@ -239,8 +235,7 @@ export class TagCommand extends TracedSubcommand {
     const name = interaction.options.getString('name', true).trim()
     const content = interaction.options.getString('content', true)
 
-    // Discord enforces minLength(1) on the raw option, but a whitespace-only
-    // name still passes it and would land as an empty tag after trimming.
+    // Trimmed-empty names still pass minLength(1); reject them here.
     if (!name) {
       return interaction.reply({
         content: (await resolveKey(
@@ -253,9 +248,7 @@ export class TagCommand extends TracedSubcommand {
       })
     }
 
-    // Subscription-controlled cap; see the registry in premium/limits.mts.
-    // Serialize creates per guild inside Postgres so concurrent interactions
-    // cannot both observe the last free slot and overshoot the cap.
+    // Cap from the limit registry; per-guild lock stops concurrent creates overshooting it.
     const limit = await limitFor(interaction, 'tags.maxPerGuild')
     const outcome = await db.transaction(async (tx) => {
       await tx.execute(
@@ -312,7 +305,7 @@ export class TagCommand extends TracedSubcommand {
     if (!tag) {
       return this.replyNotFound(interaction)
     }
-    // Tag authors may edit their own tags; guild managers may edit any tag.
+    // Authors edit own tags; managers edit any.
     if (
       tag.authorId !== BigInt(interaction.user.id) &&
       !this.canManageTagCommands(interaction)
@@ -350,8 +343,7 @@ export class TagCommand extends TracedSubcommand {
 
     await db.delete(tags).where(eq(tags.id, tag.id))
 
-    // The guild command must not outlive its tag; reconciliation mops up
-    // if this delete fails.
+    // Command must not outlive its tag; reconciliation mops up failures.
     if (tag.commandId !== null) {
       try {
         await deleteGuildTagCommand(
@@ -406,7 +398,7 @@ export class TagCommand extends TracedSubcommand {
     return interaction.reply({
       content: (await resolveKey(interaction, 'commands/tag:list', {
         count: rows.length,
-        // Promoted tags read as the slash command they answer to.
+        // Promoted tags display as their slash command.
         names: rows
           .map((row) =>
             row.commandId !== null
@@ -455,7 +447,7 @@ export class TagCommand extends TracedSubcommand {
       return this.replyNotFound(interaction)
     }
 
-    // Fit inside Discord's 2000-character message limit, fences included.
+    // Stay inside Discord's 2000-char limit including fences.
     const content = escapeCodeBlock(tag.content).slice(0, 1_900)
     return interaction.reply({
       content: `\`\`\`\n${content}\n\`\`\``,
@@ -511,10 +503,7 @@ export class TagCommand extends TracedSubcommand {
         { name: tag.name },
       )) as string)
 
-    // Subscription-controlled cap; same per-guild serialization as tag
-    // creation so concurrent promotions cannot overshoot it. Registering
-    // with Discord inside the transaction means a REST failure rolls the
-    // promotion back.
+    // Same per-guild cap serialization as creates; REST inside tx rolls back on failure.
     const limit = await limitFor(interaction, 'tags.maxPromotedPerGuild')
     const argsDescription = (await resolveKey(
       interaction,
@@ -538,8 +527,7 @@ export class TagCommand extends TracedSubcommand {
           if ((held?.value ?? 0) >= limit) return 'limit' as const
         }
 
-        // Re-select under the lock: a concurrent promote may have claimed
-        // the tag after our pre-transaction read.
+        // Re-select under lock; a concurrent promote may have claimed it.
         const [fresh] = await tx
           .select({ id: tags.id })
           .from(tags)
@@ -645,8 +633,7 @@ export class TagCommand extends TracedSubcommand {
         await tx.execute(
           sql`SELECT pg_advisory_xact_lock(hashtextextended(${interaction.guildId}, 0))`,
         )
-        // Re-read under the lock: a concurrent demote may have cleared the
-        // promotion, or a delete/recreate cycle may have replaced it.
+        // Re-read under lock; promotion may have changed concurrently.
         const [fresh] = await tx
           .select({ commandId: tags.commandId })
           .from(tags)
@@ -654,15 +641,13 @@ export class TagCommand extends TracedSubcommand {
         if (!fresh || fresh.commandId === null) return 'notPromoted' as const
         if (fresh.commandId !== expectedCommandId) return 'notPromoted' as const
 
-        // Discord first: if the delete fails the row stays promoted and the
-        // command keeps working, which is the consistent state.
+        // Discord first so failures leave a working promoted state.
         await deleteGuildTagCommand(
           interaction.client,
           interaction.guildId,
           expectedCommandId,
         )
-        // Conditional clear: only demote if the command id still matches
-        // what we read, so an interleaved promote is never wiped.
+        // Clear only if the id still matches, so interleaved promotes survive.
         const cleared = await tx
           .update(tags)
           .set({
@@ -715,8 +700,7 @@ export class TagCommand extends TracedSubcommand {
     })
   }
 
-  /** Registering a guild-wide slash command is guild administration, not an
-   * authorship perk — tag ownership deliberately doesn't count here. */
+  // Promoting is guild administration, not an authorship perk.
   private canManageTagCommands(
     interaction: Subcommand.ChatInputCommandInteraction<'cached'>,
   ): boolean {
@@ -760,8 +744,7 @@ export class TagCommand extends TracedSubcommand {
 
     let closest: { name: string } | undefined
     if (replyVariant === 'suggestion') {
-      // pg_trgm "did you mean": the closest existing name in this guild, if
-      // it's close enough to plausibly be a typo.
+      // Closest name in guild when plausibly a typo.
       const matches = await db
         .select({ name: tags.name })
         .from(tags)

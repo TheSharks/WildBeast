@@ -7,12 +7,7 @@ export type ClusteringConfig =
   | ({ mode: 'static' } & ShardingConfig)
   | { mode: 'autonomous'; totalShards: number }
 
-/**
- * `static` (default): this cluster runs a fixed shard range from
- * WILDBEAST_SHARDING_*. `autonomous`: clusters sharing a Redis discover each
- * other and split WILDBEAST_SHARDING_TOTAL shards among themselves,
- * rebalancing automatically as clusters come and go.
- */
+// `static`: fixed range from env. `autonomous`: Redis-discovered split with auto-rebalance.
 export function parseClusteringConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): ClusteringConfig {
@@ -43,14 +38,7 @@ export function parseClusteringConfig(
   return { mode, totalShards: total }
 }
 
-/**
- * Resolve this cluster's shard assignment from the environment.
- *
- * With none of the WILDBEAST_SHARDING_* variables set, the cluster runs
- * every shard Discord recommends (single-cluster mode). With them set, the
- * cluster runs shards START..END (inclusive) of TOTAL — every cluster in the
- * fleet must agree on TOTAL.
- */
+// Unset env runs all Discord-recommended shards; otherwise START..END of TOTAL (fleet must agree).
 export function parseShardingConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): ShardingConfig {

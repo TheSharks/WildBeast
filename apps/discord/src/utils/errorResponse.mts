@@ -9,13 +9,7 @@ import {
   TextDisplayBuilder,
 } from 'discord.js'
 
-/**
- * Send the user-facing report for a failed command as a Components V2
- * container. Handles both fresh and already acknowledged interactions.
- *
- * The user sees only a generic message plus the error code (uuid). The full
- * error is logged server-side so support can correlate via the uuid.
- */
+/** User-facing failure report; user sees generic message + uuid, full error logged for correlation. */
 export async function sendErrorReport(
   interaction: CommandInteraction,
   error: unknown,
@@ -24,7 +18,7 @@ export async function sendErrorReport(
   try {
     container.logger.error(`Command failed [${uuid}]:`, error)
   } catch {
-    // Logging must never break the user-facing reply.
+    // Never break user reply on logging failure.
   }
 
   const containerBuilder = new ContainerBuilder()
@@ -47,9 +41,7 @@ export async function sendErrorReport(
       ),
     )
 
-  // A deferred interaction is acknowledged too; reply() would throw. The
-  // IsComponentsV2 flag must be set on the edit as well, and any previous
-  // content and embeds must be cleared in the same call.
+  // Deferred counts as replied; V2 flag + clears must ride the edit.
   if (interaction.replied || interaction.deferred) {
     await interaction.editReply({
       content: null,

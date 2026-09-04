@@ -14,9 +14,7 @@ export const replaceHandler: TagHandler = (_ctx, args) => {
   let search: string | undefined
   let replacement: string | undefined
 
-  // JagTag syntax needs both markers: {replace:search|with:replacement|in:text}.
-  // Requiring both keeps native-syntax arguments that merely start with
-  // "with:" or "in:" from being misread as JagTag form.
+  // Require both markers so native args starting with with:/in: aren't misread.
   const withIndex = args.findIndex((a) => a.startsWith('with:'))
   const inIndex = args.findIndex((a) => a.startsWith('in:'))
 
@@ -30,8 +28,7 @@ export const replaceHandler: TagHandler = (_ctx, args) => {
     ;[text, search, replacement] = args
   }
 
-  // An empty search would make replaceAll insert the replacement between
-  // every character; treat it as a no-op instead.
+  // Empty search is a no-op (avoids replaceAll inter-char insertion).
   if (!search) return text ?? ''
   return (text ?? '').replaceAll(search, replacement ?? '')
 }
@@ -61,20 +58,19 @@ export const substringHandler: TagHandler = (_ctx, args) => {
   const textValue = text ?? ''
   const start = parseInt(startStr ?? '0', 10)
   const end = endStr ? parseInt(endStr, 10) : undefined
-  // slice semantics: no silent argument swapping when start > end,
-  // and negative indices count from the end
+  // Slice semantics: no arg swapping, negatives count from end.
   return end !== undefined
     ? textValue.slice(start, end)
     : textValue.slice(start)
 }
 
-// Replaces real newlines and the literal \n sequence (JagTag compatibility)
+// Handles real newlines and literal \n (JagTag compat).
 export const onelineHandler: TagHandler = (_ctx, args) =>
   (args[0] ?? '').replace(/\r\n|[\r\n]|\\n/g, ' ')
 
 export const hashHandler: TagHandler = (_ctx, args) => {
   const text = args[0] ?? ''
-  // Java-style hashCode (matches JagTag behavior)
+  // Java-style hashCode for JagTag parity.
   let hash = 0
   for (let i = 0; i < text.length; i++) {
     hash = (hash << 5) - hash + text.charCodeAt(i)
@@ -88,13 +84,12 @@ export const replaceregexHandler: TagHandler = async (
   args,
   limits: Limits,
 ) => {
-  // Support both TagScript syntax {replaceregex:text|pattern|replacement}
-  // and JagTag syntax {replaceregex:pattern|with:replacement|in:text}
+  // Supports TagScript and JagTag (with:/in:) forms.
   let text: string | undefined
   let pattern: string | undefined
   let replacement: string | undefined
 
-  // Both markers required, mirroring replaceHandler's disambiguation rule.
+  // Both markers required (mirrors replaceHandler).
   const withIndex = args.findIndex((a) => a.startsWith('with:'))
   const inIndex = args.findIndex((a) => a.startsWith('in:'))
 
@@ -110,17 +105,15 @@ export const replaceregexHandler: TagHandler = async (
 
   if (!text || !pattern) return text ?? ''
 
-  // Guard against excessively long patterns
   if (pattern.length > limits.regexPatternLength) {
     throw new RenderError('Regex pattern too long')
   }
 
-  // Guard against excessively long input strings
   if (text.length > limits.maxRegexInputLength) {
     throw new RenderError('Input text too long for regex operation')
   }
 
-  // Parse pattern string e.g. /search/flags
+  // Parses /body/flags form.
   const match = pattern.match(/^\/(.+)\/([gimsuy]*)$/)
 
   let patternBody: string
@@ -129,7 +122,7 @@ export const replaceregexHandler: TagHandler = async (
   if (match) {
     ;[, patternBody, flags] = match
   } else {
-    // Fallback: treat entire string as a global regex pattern
+    // Bare string means global pattern.
     patternBody = pattern
     flags = 'g'
   }
@@ -144,8 +137,8 @@ export const replaceregexHandler: TagHandler = async (
     throw new RenderError('Invalid regex: Unknown error')
   }
 
+  // Fail closed: only recheck-verified patterns run.
   consumeRegexBudget(ctx, limits)
-  // Fail closed: only patterns recheck positively verifies as safe run.
   if (!(await isRegexSafe(patternBody, flags))) {
     throw new RenderError('Potentially unsafe regex pattern')
   }

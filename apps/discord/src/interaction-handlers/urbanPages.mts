@@ -21,11 +21,7 @@ interface UrbanPageAction {
   position: number | 'random'
 }
 
-/**
- * Pagination for /urbandictionary. The custom id carries the query and
- * target page (`urban:<page>:<query>`), so paging refetches instead of
- * holding state and works across restarts.
- */
+/** Stateless /urbandictionary pagination; custom id carries query+page for refetch. */
 @ApplyOptions<GatedCommandInteractionHandlerOptions>({
   interactionHandlerType: InteractionHandlerTypes.Button,
   command: 'urbandictionary',
@@ -53,8 +49,7 @@ export class UrbanPagesHandler extends GatedCommandInteractionHandler {
     try {
       const definitions = await fetchDefinitions(action.query)
       if (definitions.length === 0) {
-        // The message carries IsComponentsV2, which can't be unset, so the
-        // fallback must stay a component rather than plain content.
+        // V2 flag is sticky; fallback must stay a component.
         return interaction.editReply({
           components: [
             new TextDisplayBuilder().setContent(

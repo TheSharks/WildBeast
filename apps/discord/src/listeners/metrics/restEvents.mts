@@ -20,16 +20,12 @@ const rateLimitCounter = meter.createCounter(
 export class RestRateLimitedListener extends Listener {
   public run(rateLimitInfo: RateLimitData): void {
     rateLimitCounter.add(1, {
-      // The bucket route (e.g. /channels/:id/messages), not the raw URL, so
-      // cardinality stays bounded. `global` is a string to keep OTel and
-      // Sentry label types consistent.
+      // Bucket route (not URL) keeps cardinality bounded; global as string.
       route: rateLimitInfo.route,
       method: rateLimitInfo.method,
       global: String(rateLimitInfo.global),
     })
-    // Severity of the limit, not just its occurrence (the OTel counter has
-    // the count). Sentry metrics are per-item and trace-associated, which
-    // fits this: rate limits are rare and worth inspecting individually.
+    // Per-item Sentry distribution fits rare rate limits.
     Sentry.metrics.distribution(
       'discord.rest.rate_limit.wait',
       rateLimitInfo.retryAfter,

@@ -11,8 +11,7 @@ const deniedCounter = meter.createCounter('discord_command_denied_total', {
     'Commands blocked by preconditions (permissions, cooldowns, ...)',
 })
 
-// Pieces default their name to the file name; multiple listeners in one file
-// need explicit names or each insert unloads the previous one.
+// Explicit names prevent same-file listeners unloading each other.
 @ApplyOptions<ListenerOptions>({
   name: 'chatInputDeniedMetrics',
   event: Events.ChatInputCommandDenied,
@@ -24,8 +23,7 @@ export class ChatInputCommandDeniedListener extends Listener {
     deniedCounter.add(
       1,
       commandMetricLabels(payload.interaction, payload.command.name, this, {
-        // The precondition identifier (e.g. Cooldown, UserPermissions) — a
-        // small bounded set, unlike the human-readable message.
+        // Bounded precondition id, not free-form message.
         identifier: error.identifier,
       }),
     )

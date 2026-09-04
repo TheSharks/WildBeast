@@ -4,11 +4,7 @@ import { LogLevel } from '@sapphire/framework'
 import { Logger as SapphireLogger } from '@sapphire/plugin-logger'
 import * as Sentry from '@sentry/node'
 
-/**
- * Attribute/body keys that must never leave the process in telemetry.
- * Log values are inspected into strings, so scrub both structured keys and
- * common secret patterns in free-form text.
- */
+/** Keys that must never leave the process in telemetry. */
 export const LOGGER_PII_DENYLIST = [
   'token',
   'authorization',
@@ -58,11 +54,9 @@ export class AnalyticsLogger extends SapphireLogger {
   private readonly otelLogger = logs.getLogger('@thesharks/sapphire-logger')
 
   public override write(level: LogLevel, ...values: readonly unknown[]): void {
-    // Call parent write method to maintain existing functionality (console output)
     super.write(level, ...values)
 
-    // The configured level applies to telemetry too, otherwise trace/debug
-    // logging floods OTEL and Sentry regardless of environment.
+    // Respect level for telemetry to avoid flooding OTEL/Sentry.
     if (level < this.level) {
       return
     }

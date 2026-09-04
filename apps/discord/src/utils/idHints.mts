@@ -10,12 +10,7 @@ import {
   type NewApplicationCommandId,
 } from '@thesharks/drizzle'
 
-/**
- * Application command ids live in Postgres, keyed by piece name, so
- * Sapphire can match existing commands across boots (and renames) instead
- * of recreating them. Individual commands never deal with idHints: the
- * traced base classes route registration through here.
- */
+// Command ids in Postgres keyed by piece name, so boots match instead of recreating.
 
 export async function fetchStoredIdHints(piece: Piece): Promise<string[]> {
   try {
@@ -25,8 +20,7 @@ export async function fetchStoredIdHints(piece: Piece): Promise<string[]> {
       .where(eq(applicationCommandIds.name, piece.name))
     return rows.map((row) => row.commandId.toString())
   } catch (error) {
-    // Registration must survive the database being unreachable; Sapphire
-    // falls back to matching by name.
+    // Registration survives DB outages; Sapphire falls back to name matching.
     piece.container.logger.warn(
       `Could not load id hints for ${piece.name}, continuing without`,
       error,
@@ -35,13 +29,7 @@ export async function fetchStoredIdHints(piece: Piece): Promise<string[]> {
   }
 }
 
-/**
- * Wrap a registry so every register call carries the stored id hints
- * (merged with any the command supplies itself) and, when
- * WILDBEAST_DEV_GUILD_ID is set, defaults to registering in that guild
- * instead of globally. Development environments set it for instant
- * command updates; production leaves it unset and registers globally.
- */
+// Registry carrying stored id hints; dev guild set means guild registration for instant updates.
 export function withRegistrationDefaults(
   registry: ApplicationCommandRegistry,
   hints: readonly string[],
@@ -73,12 +61,7 @@ export function withRegistrationDefaults(
   })
 }
 
-/**
- * Replace a command's `registerApplicationCommands` with one that first
- * loads the stored hints and hands the subclass a hint-injecting registry.
- * Called from the traced base class constructors, so extending those is
- * all a new command needs to do.
- */
+// Route a command's registration through stored id hints (wired by traced base classes).
 export function installIdHintTracking(command: Command): void {
   const registerApplicationCommands =
     command.registerApplicationCommands?.bind(command)
@@ -90,11 +73,7 @@ export function installIdHintTracking(command: Command): void {
     )
 }
 
-/**
- * Persist the ids Discord assigned during this boot's registry sync.
- * Runs after every sync: stale rows for a piece are dropped and current
- * ids upserted, so renamed or re-scoped commands self-heal.
- */
+// Persist this boot's assigned ids; stale rows drop so renames self-heal.
 export async function persistCommandIds(
   registries: Map<string, ApplicationCommandRegistry>,
 ): Promise<void> {
@@ -122,8 +101,7 @@ export async function persistCommandIds(
         .delete(applicationCommandIds)
         .where(eq(applicationCommandIds.name, name))
       if (rows.length > 0) {
-        // Every cluster syncs registries at boot; concurrent writers all
-        // insert the same rows, so conflicts are not errors.
+        // Concurrent clusters insert identical rows; conflicts are not errors.
         await tx
           .insert(applicationCommandIds)
           .values(rows)

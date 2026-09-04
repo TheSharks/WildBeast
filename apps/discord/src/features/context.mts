@@ -1,9 +1,7 @@
 import type { EvaluationContext } from '@openfeature/server-sdk'
 import type { BaseInteraction } from 'discord.js'
 
-// Worker threads share process.env, so a per-shard value must stay in the
-// worker's module isolate rather than being written to SHARD_ID. index.mts
-// resolves discord.js's process/worker-data variants once and sets it here.
+// Per-shard value stays in module isolate (workers share process.env).
 let taskShardId: string | undefined
 
 export function setTaskFlagShardId(shardId: string | undefined): void {
@@ -13,23 +11,13 @@ export function setTaskFlagShardId(shardId: string | undefined): void {
 export interface InteractionFlagContextOptions {
   command?: string
   subcommand?: string
-  /**
-   * Premium tier for targeting. Gate contexts carry the anyTier (best of
-   * user/guild); limit evaluations carry the scope-resolved enforcement
-   * tier — see enforcementTier in premium/entitlements.mjs and
-   * commandContext.mjs. The service must treat it as a targeting hint, not
-   * as proof of payment.
-   */
+  /** Targeting hint only, not proof of payment; gates carry anyTier, limits carry enforcement tier. */
   tier?: string
   /** Override the natural guild-first targeting key (used by user limits). */
   targetingKey?: string
 }
 
-/**
- * The one interaction context shared by gates, experiments and remote limit
- * overrides. Optional fields are omitted rather than sent as undefined so an
- * OFREP service can distinguish "not applicable" from a real value.
- */
+// Shared interaction context; omit unset fields so OFREP sees "not applicable" distinctly.
 export function interactionFlagContext(
   interaction: BaseInteraction,
   options: InteractionFlagContextOptions = {},

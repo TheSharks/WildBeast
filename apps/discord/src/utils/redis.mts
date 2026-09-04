@@ -6,9 +6,9 @@ export interface RedisConnectionOptions {
   port: number
   password?: string
   db?: number
-  /** Unix socket path for unix:// URLs. */
+  /** Unix socket path. */
   path?: string
-  /** Set for rediss:// URLs so ioredis negotiates TLS. */
+  /** Set for rediss:// for TLS. */
   tls?: Record<string, unknown>
 }
 
@@ -39,12 +39,7 @@ function parseDb(raw: unknown, source: string): number {
 }
 
 /**
- * Resolve ioredis connection options from a validated Env (preferred) or
- * the raw process environment. A full REDIS_URL (redis://, rediss:// or
- * unix://) overrides the REDIS_HOST/PORT/PASSWORD/DB parts when set;
- * otherwise those parts apply with localhost:6379 defaults. Ports and DB
- * indexes are range-checked so misconfiguration fails at boot instead of
- * deep inside ioredis.
+ * Resolve ioredis options from Env or process.env; REDIS_URL overrides parts, else localhost:6379 with range-checked ports/DB.
  */
 export function redisConnectionOptions(
   env?: Env | NodeJS.ProcessEnv,
@@ -86,7 +81,7 @@ export function redisConnectionOptions(
       const password = url.password
         ? decodeURIComponent(url.password)
         : (passwordRaw ?? undefined)
-      // A unix:// URL may carry ?db=N; otherwise fall back to REDIS_DB.
+      // unix:// ?db=N else REDIS_DB.
       const queryDb = url.searchParams.get('db')
       const dbSource =
         queryDb ?? (dbRaw !== undefined ? String(dbRaw) : undefined)
@@ -110,7 +105,7 @@ export function redisConnectionOptions(
     const password = url.password
       ? decodeURIComponent(url.password)
       : (passwordRaw ?? undefined)
-    // Path "/3" selects DB 3; otherwise REDIS_DB applies.
+    // Path "/3" selects DB 3, else REDIS_DB.
     const pathDb =
       url.pathname && url.pathname !== '/'
         ? url.pathname.slice(1).split('/')[0]
@@ -154,16 +149,13 @@ export function redisConnectionOptions(
 
 let sharedWorkerRedis: Redis | undefined
 
-/**
- * One connection per shard worker, shared by the identify throttler and the
- * session store.
- */
+/** One connection per shard worker (throttler + session store). */
 export function getSharedWorkerRedis(env?: Env | NodeJS.ProcessEnv): Redis {
   sharedWorkerRedis ??= new Redis(redisConnectionOptions(env))
   return sharedWorkerRedis
 }
 
-/** Disconnect the shared worker connection, e.g. during shutdown. */
+/** Disconnect shared worker connection. */
 export async function closeSharedWorkerRedis(): Promise<void> {
   const current = sharedWorkerRedis
   sharedWorkerRedis = undefined

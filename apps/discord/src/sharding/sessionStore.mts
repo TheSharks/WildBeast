@@ -1,9 +1,6 @@
 import type { Client, SessionInfo } from 'discord.js'
 
-/**
- * The subset of Redis commands the store needs; keeps it testable without a
- * Redis server.
- */
+// Minimal Redis surface for testability.
 export interface SessionKV {
   get(key: string): Promise<string | null>
   set(
@@ -17,28 +14,18 @@ export interface SessionKV {
 
 export interface SessionStoreOptions {
   keyPrefix?: string
-  /** How often dirty sessions are written to Redis. Default 1s. */
+  /** Dirty-session flush cadence. Default 1s. */
   flushIntervalMillis?: number
-  /** How long a persisted session stays retrievable. Default 15 minutes. */
+  /** Persisted session lifetime. Default 15m. */
   sessionTtlMillis?: number
   onError?: (error: unknown) => void
 }
 
-/**
- * Persists gateway sessions (session id, sequence, resume URL) in Redis so a
- * shard moving to another cluster can RESUME instead of re-identifying —
- * no identify budget spent, and Discord replays the events missed during
- * the handoff gap.
- *
- * @discordjs/ws updates the sequence on every dispatch, so writes are
- * debounced through an in-memory cache; the cache is authoritative within
- * the process, Redis is the handoff medium. Call {@link close} (which
- * flushes) before exiting.
- */
+// Persists gateway sessions so handed-off shards RESUME instead of re-identifying.
+// In-memory cache is authoritative locally; Redis is the handoff medium. Flush via close() before exit.
 export class RedisSessionStore {
   private readonly cache = new Map<number, SessionInfo | null>()
-  /** Revision per dirty shard. A write only clears the revision it observed,
-   * so an update racing an in-flight Redis command remains dirty. */
+  // Dirty revision per shard; writes clear only the revision observed so racing updates stay dirty.
   private readonly dirty = new Map<number, number>()
   private readonly prefix: string
   private readonly flushIntervalMillis: number
@@ -64,8 +51,7 @@ export class RedisSessionStore {
   }
 
   public async retrieve(shardId: number): Promise<SessionInfo | null> {
-    // The cache is authoritative once warm: it holds newer state than Redis
-    // between flushes, and retrieve() runs on the gateway hot path.
+    // Warm cache wins (newer than Redis between flushes) on this hot path.
     if (this.cache.has(shardId)) {
       return this.cache.get(shardId) ?? null
     }
@@ -74,9 +60,7 @@ export class RedisSessionStore {
     try {
       raw = await this.redis.get(this.key(shardId))
     } catch (error) {
-      // Fail open: a Redis outage must read as "no session" (fresh
-      // identify), not crash the shard worker mid-connect. Don't poison the
-      // cache so a later retry can still recover the session.
+      // Fail open as "no session" so a Redis outage never crashes connect; keep cache clean for retry.
       this.onError(error)
       return null
     }
@@ -85,14 +69,12 @@ export class RedisSessionStore {
       try {
         session = JSON.parse(raw) as SessionInfo
       } catch (error) {
-        // A corrupt persisted session must read as "no session" (falling
-        // back to a fresh identify), not crash the shard: the hook contract
-        // with @discordjs/ws is SessionInfo | null.
+        // Corrupt session reads as "no session" (fresh identify), never a crash.
         this.onError(error)
         try {
           await this.redis.del(this.key(shardId))
         } catch {
-          // the corrupt key will age out via its TTL
+          // Corrupt key ages out via TTL.
         }
       }
     }
@@ -104,14 +86,11 @@ export class RedisSessionStore {
     this.cache.set(shardId, session)
     this.dirty.set(shardId, ++this.revision)
 
-    // Null updates also need a retry path: their eager delete can fail, and
-    // leaving the old Redis value until its 15-minute TTL would hand a future
-    // owner a session Discord has already invalidated.
+    // Null updates need retries too: a failed delete would hand the next owner an invalidated session.
     this.ensureFlushTimer()
 
     if (session === null) {
-      // Invalidations shouldn't linger in the debounce window; a stale
-      // session in Redis would send the next owner into a doomed resume.
+      // Flush invalidations eagerly; a stale session dooms the next owner's resume.
       void this.flush().catch(this.onError)
       return
     }
@@ -122,15 +101,13 @@ export class RedisSessionStore {
       this.timer = setInterval(() => {
         void this.flush().catch(this.onError)
       }, this.flushIntervalMillis)
-      // The flush loop must never keep an exiting worker alive.
+      // Never keep an exiting worker alive.
       this.timer.unref()
     }
   }
 
   public async flush(): Promise<void> {
-    // Concurrent callers join the active pass, then re-check dirty state:
-    // an update can land after that pass took its snapshot but before it
-    // resolves, and the caller that observed the update must not return early.
+    // Concurrent callers join the active pass then re-check; updates racing the snapshot stay dirty.
     while (this.dirty.size > 0) {
       const work = this.flushWork ?? this.flushPass()
       this.flushWork = work
@@ -163,8 +140,7 @@ export class RedisSessionStore {
           this.dirty.delete(shardId)
         }
       } catch (error) {
-        // Leave the observed revision dirty. Continue with other shards so
-        // one unavailable key does not discard or starve unrelated sessions.
+        // Stay dirty and continue so one bad key starves no other shard.
         firstError ??= error
       }
     }
@@ -180,8 +156,7 @@ export class RedisSessionStore {
     try {
       await this.flush()
     } catch (error) {
-      // Shutdown/handoff must not throw when Redis is down; the sessions
-      // simply won't be resumable and the next owner will identify fresh.
+      // Shutdown must not throw; unpersisted sessions just identify fresh.
       this.onError(error)
     }
   }
@@ -194,13 +169,7 @@ interface SessionHookHost {
   }
 }
 
-/**
- * discord.js hardcodes the @discordjs/ws session hooks to an in-memory map
- * and only exposes buildIdentifyThrottler/buildStrategy for passthrough, so
- * the hooks are redirected by intercepting the internal manager the moment
- * discord.js assigns it (it consults `manager.options` dynamically on every
- * call, so rewiring the options object is sufficient).
- */
+// discord.js hardcodes session hooks in-memory, so intercept the internal manager to redirect them.
 export function installSessionPersistence(
   client: Client,
   store: RedisSessionStore,
@@ -214,13 +183,9 @@ export function installSessionPersistence(
   const ws = client.ws as unknown as { _ws: SessionHookHost | null }
   let backing = ws._ws
 
-  // discord.js keeps its own in-memory copy on each WebSocketShard, which
-  // internal packet handlers (e.g. RESUMED reading sessionInfo.sequence)
-  // consume directly. Our hooks displace the defaults that maintained that
-  // copy, so it must be kept in sync or resumes crash the client.
+  // Mirror discord.js's per-shard in-memory copy or resumes crash reading sessionInfo.
   const mirror = (shardId: number, session: SessionInfo | null) => {
-    // sessionInfo is typed private, but discord.js's own hooks assign it
-    // exactly like this (WebSocketManager#connect).
+    // Mirrors discord.js's own assignment in WebSocketManager#connect.
     const shard = client.ws.shards.get(shardId) as unknown as
       | { sessionInfo: SessionInfo | null }
       | undefined

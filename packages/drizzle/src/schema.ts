@@ -14,10 +14,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
 
-/**
- * Case-insensitive text from the citext extension: comparisons and unique
- * constraints ignore case at the type level.
- */
+/** Case-insensitive text (citext): comparisons/uniques ignore case. */
 const citext = customType<{ data: string }>({
   dataType() {
     return 'citext'
@@ -28,30 +25,25 @@ export const tags = pgTable(
   'Tag',
   {
     id: serial('id').primaryKey(),
-    // Tags are namespaced per guild: names only collide within one guild.
+    // Per-guild namespace.
     guildId: bigint('guildId', { mode: 'bigint' }).notNull(),
     name: citext('name').notNull(),
     content: text('content').notNull(),
-    // Discord snowflakes exceed Number.MAX_SAFE_INTEGER, so they must map
-    // to JS BigInt rather than number.
+    // Snowflakes exceed MAX_SAFE_INTEGER; use BigInt.
     authorId: bigint('authorId', { mode: 'bigint' }).notNull(),
-    // Set when the tag is promoted to a guild-scoped slash command: the
-    // command id Discord assigned. Null means not promoted.
+    // Discord-assigned id when promoted; null when not.
     commandId: bigint('commandId', { mode: 'bigint' }),
-    // The description sent to Discord at promotion, kept so reconciliation
-    // can recreate the command verbatim.
+    // Promotion description for verbatim reconcile.
     commandDescription: text('commandDescription'),
     promotedBy: bigint('promotedBy', { mode: 'bigint' }),
     promotedAt: timestamp('promotedAt', { withTimezone: true }),
   },
   (table) => [
     unique('Tag_guildId_name_key').on(table.guildId, table.name),
-    // Trigram index (pg_trgm) backing substring autocomplete and
-    // similarity() suggestions; queries always filter by guild first.
+    // Trigram index for substring autocomplete/suggestions (guild-scoped).
     index('Tag_name_trgm_idx').using('gin', table.name.op('gin_trgm_ops')),
     uniqueIndex('Tag_commandId_key').on(table.commandId),
-    // Promoted tags per guild: cap counting and reconcile scans only ever
-    // read promoted rows, so keep the index that small.
+    // Promoted-only index keeps cap/reconcile scans small.
     index('Tag_promoted_guildId_idx')
       .on(table.guildId)
       .where(sql`"commandId" IS NOT NULL`),
@@ -62,56 +54,38 @@ export const guilds = pgTable('Guild', {
   id: bigint('id', { mode: 'bigint' }).primaryKey(),
 })
 
-/**
- * Application command ids as Discord assigned them, keyed back to the
- * Sapphire piece that registered them. Fed to the command registry as
- * idHints on the next boot so commands are updated instead of recreated.
- */
+/** Command ids keyed by Sapphire piece; fed as idHints to avoid recreates. */
 export const applicationCommandIds = pgTable(
   'ApplicationCommandId',
   {
-    // Discord's command id; snowflakes exceed Number.MAX_SAFE_INTEGER.
+    // Snowflake; exceeds MAX_SAFE_INTEGER.
     commandId: bigint('commandId', { mode: 'bigint' }).primaryKey(),
-    // The Sapphire piece name (registry key), not the localized command name.
+    // Sapphire piece name, not localized command name.
     name: text('name').notNull(),
-    // Null for globally registered commands.
+    // Null for global commands.
     guildId: bigint('guildId', { mode: 'bigint' }),
   },
   (table) => [index('ApplicationCommandId_name_idx').on(table.name)],
 )
 
-/**
- * Discord entitlements (premium app subscriptions) as delivered by the
- * gateway, mirrored locally so premium checks work outside interactions
- * (scheduled tasks, background jobs) without hitting the API. Rows are
- * upserted by the entitlement listeners and reconciled on boot; interaction
- * handlers should prefer `interaction.entitlements`, which is always fresh.
- *
- * Exactly one of userId/guildId is set, enforced by a CHECK constraint:
- * a user subscription has only userId, a guild subscription only guildId.
- * There are intentionally no foreign keys: Discord is the source of truth
- * and rows must survive guilds/users the bot has never seen.
- */
+/** Discord entitlements mirrored for non-interaction checks; Discord is source of truth, no FKs. */
 export const entitlements = pgTable(
   'Entitlement',
   {
-    // Discord's entitlement id; snowflakes exceed Number.MAX_SAFE_INTEGER.
+    // Snowflake; exceeds MAX_SAFE_INTEGER.
     id: bigint('id', { mode: 'bigint' }).primaryKey(),
     skuId: bigint('skuId', { mode: 'bigint' }).notNull(),
-    // Exactly one of userId/guildId is set, depending on whether the SKU is
-    // a user or a guild subscription.
+    // Exactly one of userId/guildId is set (CHECK).
     userId: bigint('userId', { mode: 'bigint' }),
     guildId: bigint('guildId', { mode: 'bigint' }),
-    // Discord's EntitlementType (purchase, subscription, test, ...).
+    // Discord EntitlementType.
     type: integer('type').notNull(),
-    // Discord soft-deletes entitlements (refunds, test cleanup); keeping the
-    // flag mirrors their model and preserves history.
+    // Mirrors Discord soft-delete; preserves history.
     deleted: boolean('deleted').notNull().default(false),
-    // Null bounds mean a perpetual entitlement (e.g. test entitlements).
+    // Null bounds mean perpetual (e.g. test entitlements).
     startsAt: timestamp('startsAt', { withTimezone: true }),
     endsAt: timestamp('endsAt', { withTimezone: true }),
-    // Last time this row was written. Defaults to now() on insert so
-    // backfilled rows get a sensible value without application changes.
+    // Last write; defaults to now() for backfills.
     updatedAt: timestamp('updatedAt', { withTimezone: true })
       .defaultNow()
       .notNull(),
