@@ -24,6 +24,20 @@ const MAX_REDIRECTS = 5
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308])
 
+const ALLOWED_VERBS = new Set([
+  'GET',
+  'POST',
+  'PUT',
+  'DELETE',
+  'PATCH',
+  'HEAD',
+  'OPTIONS',
+])
+
+function normalizeHostname(host: string): string {
+  return host.toLowerCase().replace(/\.+$/, '')
+}
+
 function assertUrlAllowed(raw: string, allowedHosts?: string[]): URL {
   let url: URL
   try {
@@ -36,18 +50,30 @@ function assertUrlAllowed(raw: string, allowedHosts?: string[]): URL {
     throw new RenderError(`Blocked fetch URL scheme: ${url.protocol}`)
   }
 
-  const hostname = url.hostname.toLowerCase()
-
-  // When the embedder supplies an allowlist it is the sole authority: only the
-  // listed hostnames may be reached, everything else is rejected.
-  if (allowedHosts) {
-    if (!allowedHosts.some((host) => host.toLowerCase() === hostname)) {
-      throw new RenderError(`Fetch host not in allowlist: ${hostname}`)
-    }
-    return url
+  // Userinfo (https://user:pass@host/) smuggles credentials and confuses
+  // host parsing (https://example.com@evil.com/ reaches evil.com). Reject
+  // rather than silently stripping so templates fail closed.
+  if (url.username || url.password) {
+    throw new RenderError('Blocked fetch URL with credentials')
   }
 
-  // localhost / *.localhost always resolve to a loopback target.
+  const hostname = normalizeHostname(url.hostname)
+
+  // When the embedder supplies an allowlist only listed hostnames may be
+  // reached. The blocklist below still applies: an allowlist entry that is
+  // itself a private literal never grants access to it.
+  if (allowedHosts) {
+    const normalizedAllowed = allowedHosts.map((host) =>
+      normalizeHostname(host),
+    )
+    if (!normalizedAllowed.includes(hostname)) {
+      throw new RenderError(`Fetch host not in allowlist: ${hostname}`)
+    }
+  }
+
+  // localhost / *.localhost always resolve to a loopback target. The
+  // hostname is already stripped of its trailing dot above, so `localhost.`
+  // cannot bypass this check.
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
     throw new RenderError(`Blocked fetch to private host: ${hostname}`)
   }
@@ -155,19 +181,29 @@ export const fetchHandler: LazyTagHandler = async (
   // fetch would follow them silently, letting an allowed public host bounce
   // the request to localhost, metadata services, or a non-allowlisted host.
   let currentUrl = target
-  let method = verb.toUpperCase()
+  // Unknown or missing verbs fall back to GET so a typo cannot smuggle an
+  // arbitrary method (e.g. TRACE, CONNECT) to the target.
+  const normalizedVerb = verb.trim().toUpperCase()
+  let method =
+    normalizedVerb && ALLOWED_VERBS.has(normalizedVerb) ? normalizedVerb : 'GET'
   let response: Response
 
   for (let hop = 0; ; hop++) {
     // Spread callerOptions first: embedder-provided options are trusted and
     // may override the tag's method, but redirect handling stays manual.
-    response = await fetch(currentUrl, {
-      method,
-      ...callerOptions,
-      headers,
-      signal,
-      redirect: 'manual',
-    })
+    try {
+      response = await fetch(currentUrl, {
+        method,
+        ...callerOptions,
+        headers,
+        signal,
+        redirect: 'manual',
+      })
+    } catch (error) {
+      throw new RenderError(
+        `Fetch request failed: ${error instanceof Error ? error.message : String(error)}`,
+      )
+    }
 
     if (!REDIRECT_STATUSES.has(response.status)) {
       break
@@ -195,6 +231,15 @@ export const fetchHandler: LazyTagHandler = async (
       throw new RenderError(`Invalid fetch redirect URL: ${location}`)
     }
     currentUrl = assertUrlAllowed(resolved.href, ctx.options.fetchAllowedHosts)
+
+    // Every redirect hop performs another request, so it counts against the
+    // same maxFetchRequests budget as the initial fetch.
+    if (ctx.fetchRequests >= limits.maxFetchRequests) {
+      throw new RenderError(
+        `Exceeded maximum fetch requests of ${limits.maxFetchRequests}`,
+      )
+    }
+    ctx.fetchRequests++
 
     // Standard redirect semantics: 303 always switches to GET, and browsers
     // treat 301/302 POSTs the same way.

@@ -30,7 +30,10 @@ export const replaceHandler: TagHandler = (_ctx, args) => {
     ;[text, search, replacement] = args
   }
 
-  return (text ?? '').replaceAll(search ?? '', replacement ?? '')
+  // An empty search would make replaceAll insert the replacement between
+  // every character; treat it as a no-op instead.
+  if (!search) return text ?? ''
+  return (text ?? '').replaceAll(search, replacement ?? '')
 }
 
 const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' })
@@ -43,8 +46,15 @@ export const reverseHandler: TagHandler = (_ctx, args) => {
     .join('')
 }
 
-export const urlHandler: TagHandler = (_ctx, args) =>
-  encodeURIComponent(args[0] ?? '')
+export const urlHandler: TagHandler = (_ctx, args) => {
+  try {
+    return encodeURIComponent(args[0] ?? '')
+  } catch (error) {
+    throw new RenderError(
+      `Invalid URL encoding: ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
+}
 
 export const substringHandler: TagHandler = (_ctx, args) => {
   const [text, startStr, endStr] = args

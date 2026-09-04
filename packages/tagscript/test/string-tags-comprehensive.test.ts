@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { render } from '../src/index.js'
+import { RenderError, render } from '../src/index.js'
 
 describe('string tags comprehensive', () => {
   describe('upper and lower', () => {
@@ -53,6 +53,12 @@ describe('string tags comprehensive', () => {
     ])('%s evaluates to %s', async (input, expected) => {
       const result = await render(input)
       expect(result.output).toBe(expected)
+    })
+
+    it('treats an empty search as a no-op', async () => {
+      // replaceAll('', repl) would interleave repl between every character.
+      expect((await render('{replace:abc|||x}')).output).toBe('abc')
+      expect((await render('{replace:hello||world}')).output).toBe('hello')
     })
   })
 
@@ -121,6 +127,14 @@ describe('string tags comprehensive', () => {
     ])('%s: %s', async (tag, input, expected) => {
       const result = await render(input)
       expect(result.output).toBe(expected)
+    })
+
+    it('wraps encodeURIComponent URIError as RenderError', async () => {
+      // Lone surrogates make encodeURIComponent throw URIError.
+      await expect(render('{url:\uD800}')).rejects.toBeInstanceOf(RenderError)
+      await expect(render('{url:\uD800}')).rejects.toThrow(
+        'Invalid URL encoding',
+      )
     })
   })
 

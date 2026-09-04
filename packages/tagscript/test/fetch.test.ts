@@ -282,7 +282,12 @@ describe('fetch tag', () => {
     it('caps the number of redirect hops', async () => {
       const fn = mockFetch(() => redirect('https://example.com/loop'))
       await expect(
-        render('{fetch:https://example.com/start}', { enableFetch: true }),
+        render('{fetch:https://example.com/start}', {
+          enableFetch: true,
+          // Redirect hops count toward the fetch budget, so raise it to
+          // isolate the redirect cap.
+          maxFetchRequests: 10,
+        }),
       ).rejects.toThrow('Fetch exceeded maximum of 5 redirects')
       expect(fn).toHaveBeenCalledTimes(6)
     })
@@ -310,6 +315,131 @@ describe('fetch tag', () => {
         enableFetch: true,
       })
       expect(fn.mock.calls[1][1].method).toBe('POST')
+    })
+  })
+
+  describe('SSRF hardening (trailing dot, userinfo, allowlist)', () => {
+    const redirectTo = (location: string, status = 302) =>
+      new Response(null, { status, headers: { location } })
+
+    it.each([
+      'http://localhost./',
+      'http://LOCALHOST./',
+      'http://api.localhost./',
+    ])('blocks the trailing-dot localhost %s', async (url) => {
+      const fn = mockFetch()
+      await expect(
+        render(`{fetch:${url}}`, { enableFetch: true }),
+      ).rejects.toThrow('Blocked fetch to private host')
+      expect(fn).not.toHaveBeenCalled()
+    })
+
+    it.each([
+      'https://user:pass@example.com/',
+      'https://example.com@evil.com/',
+      'http://user@example.com/',
+    ])('rejects userinfo in %s', async (url) => {
+      const fn = mockFetch()
+      await expect(
+        render(`{fetch:${url}}`, { enableFetch: true }),
+      ).rejects.toThrow('Blocked fetch URL with credentials')
+      expect(fn).not.toHaveBeenCalled()
+    })
+
+    it('rejects userinfo in redirect targets', async () => {
+      const fn = mockFetch((url) =>
+        url === 'https://example.com/start'
+          ? redirectTo('https://user:pass@example.com/')
+          : new Response('ok', { status: 200 }),
+      )
+      await expect(
+        render('{fetch:https://example.com/start}', { enableFetch: true }),
+      ).rejects.toThrow('Blocked fetch URL with credentials')
+      expect(fn).toHaveBeenCalledOnce()
+    })
+
+    it('enforces the blocklist even under an allowlist', async () => {
+      const fn = mockFetch()
+      await expect(
+        render('{fetch:http://127.0.0.1/}', {
+          enableFetch: true,
+          fetchAllowedHosts: ['127.0.0.1'],
+        }),
+      ).rejects.toThrow(/Blocked fetch to private address/)
+      expect(fn).not.toHaveBeenCalled()
+    })
+
+    it('blocks trailing-dot localhost even when allowlisted', async () => {
+      const fn = mockFetch()
+      await expect(
+        render('{fetch:http://localhost./}', {
+          enableFetch: true,
+          fetchAllowedHosts: ['localhost'],
+        }),
+      ).rejects.toThrow('Blocked fetch to private host')
+      expect(fn).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('verb allowlist and error wrapping', () => {
+    const redirectTo = (location: string, status = 302) =>
+      new Response(null, { status, headers: { location } })
+
+    it('defaults unknown verbs to GET', async () => {
+      const fn = mockFetch(() => new Response('ok', { status: 200 }))
+      await render('{fetch:https://example.com/data|TRACE}', {
+        enableFetch: true,
+      })
+      expect(fn.mock.calls[0][1].method).toBe('GET')
+    })
+
+    it('defaults an empty verb to GET', async () => {
+      const fn = mockFetch(() => new Response('ok', { status: 200 }))
+      // The verb segment renders empty, so the handler must fall back.
+      await render('{fetch:https://example.com/data|{note:}}', {
+        enableFetch: true,
+      })
+      expect(fn.mock.calls[0][1].method).toBe('GET')
+    })
+
+    it('normalizes verb casing', async () => {
+      const fn = mockFetch(() => new Response('ok', { status: 200 }))
+      await render('{fetch:https://example.com/data|post}', {
+        enableFetch: true,
+      })
+      expect(fn.mock.calls[0][1].method).toBe('POST')
+    })
+
+    it('wraps network failures as RenderError', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => {
+          throw new TypeError('fetch failed')
+        }),
+      )
+      await expect(
+        render('{fetch:https://example.com/data}', { enableFetch: true }),
+      ).rejects.toThrow(RenderError)
+      await expect(
+        render('{fetch:https://example.com/data}', { enableFetch: true }),
+      ).rejects.toThrow('Fetch request failed')
+    })
+
+    it('counts redirect hops toward maxFetchRequests', async () => {
+      const fn = mockFetch((url) =>
+        url === 'https://example.com/start'
+          ? redirectTo('https://example.com/next')
+          : new Response('final', { status: 200 }),
+      )
+      // One initial fetch plus one redirect hop = 2 requests; a budget of 1
+      // must therefore fail on the redirect.
+      await expect(
+        render('{fetch:https://example.com/start}', {
+          enableFetch: true,
+          maxFetchRequests: 1,
+        }),
+      ).rejects.toThrow('Exceeded maximum fetch requests of 1')
+      expect(fn).toHaveBeenCalledTimes(1)
     })
   })
 })
