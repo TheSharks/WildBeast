@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   type IdentifyLockStore,
+  identifyKeyPrefix,
   RedisIdentifyThrottler,
 } from '../src/sharding/identifyThrottler.mjs'
 
@@ -103,6 +104,80 @@ describe('RedisIdentifyThrottler', () => {
     await expect(
       throttler.waitForIdentify(0, AbortSignal.abort()),
     ).rejects.toThrow()
+    expect(store.holder('wildbeast:identify:0')).toBeUndefined()
+  })
+
+  it('backs off for the full window (not 100ms) when PTTL reports no key', async () => {
+    let pttlCalls = 0
+    const warnings: string[] = []
+    const store: IdentifyLockStore = {
+      set: async () => null,
+      pttl: async () => {
+        pttlCalls += 1
+        return -2
+      },
+    }
+    const throttler = new RedisIdentifyThrottler(store, 1, 300, {
+      onWarn: (message) => warnings.push(message),
+    })
+
+    const controller = new AbortController()
+    const waiting = throttler.waitForIdentify(0, controller.signal)
+    setTimeout(() => controller.abort(), 150)
+    await expect(waiting).rejects.toThrow()
+
+    // A 100ms hammer would have polled at least twice in 150ms; the capped
+    // backoff waits the full 300ms window, so only one PTTL probe happens.
+    expect(pttlCalls).toBe(1)
+    expect(warnings.length).toBeGreaterThanOrEqual(1)
+    expect(warnings[0]).toMatch(/PTTL -2/)
+  })
+
+  it('warns and backs off when PTTL reports a key without expiry', async () => {
+    let pttlCalls = 0
+    const warnings: string[] = []
+    const store: IdentifyLockStore = {
+      set: async () => null,
+      pttl: async () => {
+        pttlCalls += 1
+        return -1
+      },
+    }
+    const throttler = new RedisIdentifyThrottler(store, 1, 300, {
+      onWarn: (message) => warnings.push(message),
+    })
+
+    const controller = new AbortController()
+    const waiting = throttler.waitForIdentify(0, controller.signal)
+    setTimeout(() => controller.abort(), 150)
+    await expect(waiting).rejects.toThrow()
+
+    expect(pttlCalls).toBe(1)
+    expect(warnings.length).toBeGreaterThanOrEqual(1)
+    expect(warnings[0]).toMatch(/PTTL -1/)
+  })
+
+  it('namespaces identify keys per token hash or WILDBEAST_CLUSTER', () => {
+    const a = identifyKeyPrefix('token-a')
+    const b = identifyKeyPrefix('token-b')
+    expect(a).not.toBe(b)
+    expect(a).not.toContain('token-a')
+    expect(a).toMatch(/^wildbeast:[0-9a-f]{12}:identify$/)
+
+    expect(identifyKeyPrefix('token-a')).toBe(a)
+    expect(identifyKeyPrefix(undefined, 'fleet-x')).toBe(
+      'wildbeast:fleet-x:identify',
+    )
+  })
+
+  it('isolates locks by keyPrefix', async () => {
+    const store = new FakeLockStore()
+    const throttler = new RedisIdentifyThrottler(store, 1, WINDOW, {
+      keyPrefix: 'wildbeast:abc123:identify',
+    })
+
+    await throttler.waitForIdentify(0, new AbortController().signal)
+    expect(store.holder('wildbeast:abc123:identify:0')).toBe('0')
     expect(store.holder('wildbeast:identify:0')).toBeUndefined()
   })
 })

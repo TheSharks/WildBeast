@@ -239,6 +239,36 @@ describe('RedisSessionStore', () => {
       sequence: 42,
     })
   })
+
+  it('fails open to null when Redis reads throw', async () => {
+    const kv = new FakeKV()
+    const errors: unknown[] = []
+    const store = new RedisSessionStore(kv, {
+      onError: (error) => errors.push(error),
+    })
+    kv.get = async () => {
+      throw new Error('redis down')
+    }
+
+    await expect(store.retrieve(0)).resolves.toBeNull()
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toMatchObject({ message: 'redis down' })
+    await store.close()
+  })
+
+  it('closes gracefully when the final flush fails', async () => {
+    const kv = new FailingKV()
+    const errors: unknown[] = []
+    const store = new RedisSessionStore(kv, {
+      flushIntervalMillis: 60_000,
+      onError: (error) => errors.push(error),
+    })
+    store.update(0, session(1))
+    kv.failedSets = 10
+
+    await expect(store.close()).resolves.toBeUndefined()
+    expect(errors.length).toBeGreaterThanOrEqual(1)
+  })
 })
 
 describe('installSessionPersistence', () => {

@@ -2,7 +2,12 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import type { ILogger } from '@sapphire/framework'
 import { createGauge, metrics } from '@thesharks/analytics'
 import { shardsFor } from './assignment.mjs'
-import { DEFAULT_FENCE_AFTER_MILLIS } from './lifecycle.mjs'
+import {
+  DEFAULT_FENCE_AFTER_MILLIS,
+  DEFAULT_LEASE_TTL_MILLIS,
+  FENCING_SAFETY_MARGIN_MILLIS,
+  SHARD_STOP_GRACE_MILLIS,
+} from './lifecycle.mjs'
 
 /**
  * The subset of shard lifecycle operations the reconciler needs; cluster.mts
@@ -46,12 +51,25 @@ export interface ReconcilerOptions {
    * ticks); see DEFAULT_FENCE_AFTER_MILLIS for the full invariant.
    */
   fenceAfterMillis?: number
+  /**
+   * Lease TTL this reconciler's timing is budgeted against. Must satisfy
+   * FENCE_AFTER + STOP_GRACE + margin <= LEASE_TTL. Defaults to
+   * DEFAULT_LEASE_TTL_MILLIS (the coordinator's default).
+   */
+  leaseTtlMillis?: number
+  /**
+   * Worst-case time to stop all owned shards. Defaults to
+   * SHARD_STOP_GRACE_MILLIS.
+   */
+  stopGraceMillis?: number
 }
 
 export class ShardReconciler {
   private readonly tickMillis: number
   private readonly settleMillis: number
   private readonly fenceAfterMillis: number
+  private readonly leaseTtlMillis: number
+  private readonly stopGraceMillis: number
 
   // Instruments are created at construction, not module scope: the OTEL
   // metrics API has no proxy provider (unlike traces), so instruments made
@@ -89,6 +107,22 @@ export class ShardReconciler {
     this.settleMillis = options.settleMillis ?? 10_000
     this.fenceAfterMillis =
       options.fenceAfterMillis ?? DEFAULT_FENCE_AFTER_MILLIS
+    this.leaseTtlMillis = options.leaseTtlMillis ?? DEFAULT_LEASE_TTL_MILLIS
+    this.stopGraceMillis = options.stopGraceMillis ?? SHARD_STOP_GRACE_MILLIS
+
+    // A fenced cluster must have stopped all its shards before another
+    // cluster can acquire their expired leases.
+    if (
+      this.fenceAfterMillis +
+        this.stopGraceMillis +
+        FENCING_SAFETY_MARGIN_MILLIS >
+      this.leaseTtlMillis
+    ) {
+      throw new Error(
+        `Invalid fencing timing: FENCE_AFTER (${this.fenceAfterMillis}ms) + STOP_GRACE (${this.stopGraceMillis}ms) + ` +
+          `margin (${FENCING_SAFETY_MARGIN_MILLIS}ms) must fit inside LEASE_TTL (${this.leaseTtlMillis}ms)`,
+      )
+    }
 
     const meter = metrics.getMeter('@thesharks/discord-manager')
     this.handoffCounter = meter.createCounter(
@@ -321,20 +355,30 @@ export class ShardReconciler {
     const alreadyRunning = this.host.currentShards().includes(shardId)
     let acquired = false
     if (!this.heldLeases.has(shardId)) {
-      if (!(await this.coordinator.acquireLease(shardId))) {
-        if (alreadyRunning) {
-          this.markLeaseLost(shardId)
-        } else {
-          const holder = await this.coordinator.leaseHolder(shardId)
-          this.logger.debug(
-            `Waiting for shard ${shardId} lease (held by ${holder ?? 'nobody'})`,
-          )
+      // Reclaim path: a fence (or restart with the same cluster id) can
+      // leave Redis holding our id while local state thinks the lease is
+      // free. SET NX alone can't reacquire our own key, so try a renew
+      // first — only a confirmed loss (renew and acquire both fail) marks
+      // the shard lost.
+      if (await this.coordinator.renewLease(shardId)) {
+        this.heldLeases.add(shardId)
+        this.logger.info(`Reclaimed shard ${shardId} lease after recovery`)
+      } else {
+        if (!(await this.coordinator.acquireLease(shardId))) {
+          if (alreadyRunning) {
+            this.markLeaseLost(shardId)
+          } else {
+            const holder = await this.coordinator.leaseHolder(shardId)
+            this.logger.debug(
+              `Waiting for shard ${shardId} lease (held by ${holder ?? 'nobody'})`,
+            )
+          }
+          return
         }
-        return
+        this.heldLeases.add(shardId)
+        acquired = true
+        this.logger.info(`Acquired shard ${shardId}`)
       }
-      this.heldLeases.add(shardId)
-      acquired = true
-      this.logger.info(`Acquired shard ${shardId}`)
     }
 
     if (!this.host.isAlive(shardId)) {
@@ -356,6 +400,19 @@ export class ShardReconciler {
       this.lostLeaseShards.has(shardId)
     ) {
       await this.host.stop(shardId)
+      // Release inline: the worker is dead, so DEL now instead of leaving
+      // the lease held until the next reconcile pass blocks another owner.
+      if (this.heldLeases.has(shardId)) {
+        this.heldLeases.delete(shardId)
+        try {
+          await this.coordinator.releaseLease(shardId)
+        } catch (error) {
+          this.logger.warn(
+            `Failed to release shard ${shardId} lease after aborted spawn:`,
+            error,
+          )
+        }
+      }
       return
     }
 
@@ -409,15 +466,14 @@ export class ShardReconciler {
     this.logger.error(
       'Coordination unreachable beyond the fencing deadline; stopping all shards',
     )
+    // Retain heldLeases for renewal on recovery: the Redis keys still hold
+    // our id (no DEL here), so a later renew reclaims them without racing a
+    // SET NX that can never reacquire our own key. Leases leave this set
+    // only on confirmed loss (renew + acquire both fail in renewHeldLeases
+    // or ensureDesiredShard). Stopping without clearing also keeps the
+    // liveness loop renewing the right set the moment coordination returns.
     const shards = this.host.currentShards()
-    this.heldLeases.clear()
-    for (const shardId of shards) this.lostLeaseShards.add(shardId)
     await Promise.allSettled(shards.map((shardId) => this.host.stop(shardId)))
-    for (const shardId of shards) {
-      if (!this.host.currentShards().includes(shardId)) {
-        this.lostLeaseShards.delete(shardId)
-      }
-    }
   }
 
   /**

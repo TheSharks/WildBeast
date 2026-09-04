@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { DURATION_SECONDS_BOUNDARIES, metrics } from '@thesharks/analytics'
 import type { IIdentifyThrottler, WebSocketOptions } from 'discord.js'
@@ -32,6 +33,37 @@ export interface IdentifyLockStore {
   pttl(key: string): Promise<number>
 }
 
+export interface IdentifyThrottlerOptions {
+  /**
+   * Redis key prefix for identify locks (without the trailing bucket).
+   * Defaults to `wildbeast:identify`. Different bots sharing one Redis must
+   * use different prefixes (see {@link identifyKeyPrefix}) or they throttle
+   * each other on the same keys.
+   */
+  keyPrefix?: string
+  /** Sink for PTTL anomalies; defaults to console.warn. */
+  onWarn?: (message: string) => void
+}
+
+/**
+ * Namespace identify locks per bot so fleets sharing one Redis don't
+ * throttle each other. The Discord token is hashed (never stored raw in a
+ * key); an explicit `WILDBEAST_CLUSTER` namespace wins when set so
+ * environments can isolate without exposing a token hash.
+ */
+export function identifyKeyPrefix(
+  token?: string,
+  namespaceEnv?: string,
+  base = 'wildbeast',
+): string {
+  const namespace = namespaceEnv ?? process.env.WILDBEAST_CLUSTER
+  if (namespace) return `${base}:${namespace}:identify`
+  const secret = token ?? process.env.DISCORD_TOKEN
+  if (!secret) return `${base}:identify`
+  const hash = createHash('sha256').update(secret).digest('hex').slice(0, 12)
+  return `${base}:${hash}:identify`
+}
+
 /**
  * Discord allows one identify per 5 seconds per rate limit bucket
  * (shard_id % max_concurrency), enforced per bot token across ALL processes.
@@ -42,18 +74,25 @@ export interface IdentifyLockStore {
  * identify window is exactly the spacing Discord requires.
  */
 export class RedisIdentifyThrottler implements IIdentifyThrottler {
+  private readonly keyPrefix: string
+  private readonly onWarn: (message: string) => void
+
   public constructor(
     private readonly redis: IdentifyLockStore,
     private readonly maxConcurrency: number,
     private readonly windowMillis: number = IDENTIFY_WINDOW_MILLIS,
-  ) {}
+    options: IdentifyThrottlerOptions = {},
+  ) {
+    this.keyPrefix = options.keyPrefix ?? 'wildbeast:identify'
+    this.onWarn = options.onWarn ?? ((message) => console.warn(message))
+  }
 
   public async waitForIdentify(
     shardId: number,
     signal: AbortSignal,
   ): Promise<void> {
     const bucket = shardId % this.maxConcurrency
-    const key = `wildbeast:identify:${bucket}`
+    const key = `${this.keyPrefix}:${bucket}`
     const labels = { bucket: String(bucket) }
     const startedAt = Date.now()
 
@@ -76,7 +115,21 @@ export class RedisIdentifyThrottler implements IIdentifyThrottler {
       // Wait out the current holder's window, with jitter so shards queued
       // on the same bucket don't stampede the lock.
       const remaining = await this.redis.pttl(key)
-      const delay = Math.max(remaining, 100) + Math.floor(Math.random() * 250)
+      let baseDelay: number
+      if (remaining < 0) {
+        // -2: key vanished between SET and PTTL (expiry race) — the next
+        // acquire will likely succeed, but hammering every 100ms melts Redis
+        // when the store is flapping. -1: key exists without a TTL
+        // (legacy/manual write) and will never expire on its own.
+        this.onWarn(
+          `Identify lock ${key} returned PTTL ${remaining}; backing off for the full identify window`,
+        )
+        baseDelay = this.windowMillis
+      } else {
+        // Cap clock-skewed TTLs at the window: waiting longer only idles.
+        baseDelay = Math.min(remaining, this.windowMillis)
+      }
+      const delay = baseDelay + Math.floor(Math.random() * 250)
       await sleep(delay, undefined, { signal })
     }
   }
@@ -92,5 +145,7 @@ export const buildRedisIdentifyThrottler: NonNullable<
   return new RedisIdentifyThrottler(
     getSharedWorkerRedis(),
     info.session_start_limit.max_concurrency,
+    IDENTIFY_WINDOW_MILLIS,
+    { keyPrefix: identifyKeyPrefix() },
   )
 }

@@ -70,7 +70,16 @@ export class RedisSessionStore {
       return this.cache.get(shardId) ?? null
     }
 
-    const raw = await this.redis.get(this.key(shardId))
+    let raw: string | null
+    try {
+      raw = await this.redis.get(this.key(shardId))
+    } catch (error) {
+      // Fail open: a Redis outage must read as "no session" (fresh
+      // identify), not crash the shard worker mid-connect. Don't poison the
+      // cache so a later retry can still recover the session.
+      this.onError(error)
+      return null
+    }
     let session: SessionInfo | null = null
     if (raw) {
       try {
@@ -168,7 +177,13 @@ export class RedisSessionStore {
       clearInterval(this.timer)
       this.timer = undefined
     }
-    await this.flush()
+    try {
+      await this.flush()
+    } catch (error) {
+      // Shutdown/handoff must not throw when Redis is down; the sessions
+      // simply won't be resumable and the next owner will identify fresh.
+      this.onError(error)
+    }
   }
 }
 

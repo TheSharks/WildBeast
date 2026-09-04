@@ -219,4 +219,36 @@ describe('EpochCoordinator pending proposal expiry', () => {
       }),
     ).rejects.toBeInstanceOf(EpochConflictError)
   })
+
+  it('throws a terminal conflict when the active epoch superseded the waiter', async () => {
+    const redis = new FakeEpochRedis()
+    await epochs(redis, 8).resolve()
+    const old = epochs(redis, 16)
+    const { state: pending } = await old.resolve()
+
+    // The fleet moved two epochs ahead while this cluster waited: its
+    // proposal can never promote, so fail fast instead of returning false.
+    await redis.set(
+      'wildbeast:epoch',
+      JSON.stringify({ epoch: 3, totalShards: 32 }),
+    )
+
+    await expect(old.tryPromote(pending)).rejects.toBeInstanceOf(
+      EpochConflictError,
+    )
+    await expect(old.tryPromote(pending)).rejects.toThrow(/superseded/)
+  })
+
+  it('throws a terminal error when the active epoch key is missing', async () => {
+    const redis = new FakeEpochRedis()
+    await epochs(redis, 8).resolve()
+    const migrating = epochs(redis, 16)
+    const { state: pending } = await migrating.resolve()
+
+    await redis.del('wildbeast:epoch')
+
+    await expect(migrating.tryPromote(pending)).rejects.toBeInstanceOf(
+      EpochConflictError,
+    )
+  })
 })

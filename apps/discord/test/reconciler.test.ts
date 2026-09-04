@@ -65,6 +65,20 @@ class FakeCoordinator implements ReconcilerCoordinator {
   }
 }
 
+/**
+ * Models real Redis SET NX: acquiring fails when the key already exists,
+ * even when it holds our own id. A fence that clears local state without
+ * DEL deadlocks against this unless the recovery path renews first.
+ */
+class StrictNxCoordinator extends FakeCoordinator {
+  public override async acquireLease(shardId: number): Promise<boolean> {
+    if (this.forceLeaseLoss) return false
+    if (this.leases.has(shardId)) return false
+    this.leases.add(shardId)
+    return true
+  }
+}
+
 class ControlledHost implements ShardHost {
   public readonly shards = new Set<number>()
   public readonly starts: number[] = []
@@ -233,5 +247,88 @@ describe('ShardReconciler liveness', () => {
     await shuttingDown
     expect(coordinator.releases.sort()).toEqual([0, 1, 2])
     expect(coordinator.withdrawals).toBe(1)
+  })
+
+  it('rejects fencing timings that exceed the lease TTL', () => {
+    const coordinator = new FakeCoordinator()
+    const host = new ControlledHost()
+    expect(
+      () =>
+        new ShardReconciler(
+          coordinator,
+          host,
+          {
+            clusterId: 'cluster-a',
+            totalShards: 1,
+            tickMillis: 10,
+            settleMillis: 0,
+            fenceAfterMillis: 30_000,
+          },
+          silentLogger,
+        ),
+    ).toThrow(/FENCE_AFTER.*STOP_GRACE.*LEASE_TTL/)
+  })
+
+  it('reclaims its own Redis lease on startup instead of waiting forever', async () => {
+    // Redis still holds our id (a fence cleared local state without DEL).
+    // SET NX alone can never reacquire our own key.
+    const coordinator = new StrictNxCoordinator()
+    coordinator.leases.add(0)
+    const host = new ControlledHost()
+    const subject = reconciler(coordinator, host)
+    await subject.start()
+
+    await waitUntil(() => host.shards.has(0), {
+      timeoutMillis: 1_000,
+      intervalMillis: 10,
+    })
+    expect(coordinator.renewals).toBeGreaterThanOrEqual(1)
+    await subject.shutdown()
+  })
+
+  it('retains leases across fencing and renews them on recovery', async () => {
+    const coordinator = new StrictNxCoordinator()
+    const host = new ControlledHost()
+    const subject = reconciler(coordinator, host)
+    await subject.start()
+    await waitUntil(() => host.shards.has(0))
+
+    // Outage past the fence deadline: shards stop, but Redis still holds
+    // our id (no DEL on the fence path).
+    coordinator.failHeartbeats = Number.POSITIVE_INFINITY
+    await waitUntil(() => !host.shards.has(0))
+    expect(coordinator.leases.has(0)).toBe(true)
+
+    // Recovery must renew (not SET NX, which can't reacquire our own key).
+    coordinator.failHeartbeats = 0
+    await waitUntil(() => host.shards.has(0), {
+      timeoutMillis: 2_000,
+      intervalMillis: 10,
+    })
+    await subject.shutdown()
+  })
+
+  it('releases a just-spawned lease inline instead of waiting a tick', async () => {
+    const coordinator = new FakeCoordinator()
+    const host = new ControlledHost()
+    const start = deferred()
+    host.startGate = start.promise
+    const subject = reconciler(coordinator, host)
+    await subject.start()
+    await waitUntil(() => host.starts.length === 1)
+
+    // Fence while the spawn is blocked; the post-spawn guard will stop it.
+    coordinator.failHeartbeats = Number.POSITIVE_INFINITY
+    await new Promise((resolve) => setTimeout(resolve, 150))
+
+    start.resolve()
+    await waitUntil(() => host.stops.includes(0), {
+      timeoutMillis: 1_000,
+      intervalMillis: 10,
+    })
+    // Inline DEL: no extra reconcile tick needed while still fenced.
+    expect(coordinator.releases).toContain(0)
+    coordinator.failHeartbeats = 0
+    await subject.shutdown()
   })
 })

@@ -29,3 +29,10 @@ export const SHARD_STOP_GRACE_MILLIS = 20_000
  */
 export const DEFAULT_LEASE_TTL_MILLIS = 45_000
 export const DEFAULT_FENCE_AFTER_MILLIS = 15_000
+
+/**
+ * Safety margin in the fencing invariant: even after the stop grace elapses,
+ * allow this much slack for scheduling jitter and Redis TIME skew before a
+ * lease may expire. See DEFAULT_LEASE_TTL_MILLIS for the full invariant.
+ */
+export const FENCING_SAFETY_MARGIN_MILLIS = 10_000

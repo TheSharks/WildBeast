@@ -235,7 +235,12 @@ export class EpochCoordinator {
    */
   public async tryPromote(pending: EpochState): Promise<boolean> {
     const activeRaw = await this.redis.get(this.epochKey)
-    if (!activeRaw) return false
+    if (!activeRaw) {
+      throw new EpochConflictError(
+        `Epoch state missing while waiting on epoch ${pending.epoch} (${pending.totalShards} shards): ` +
+          `the active epoch key is gone. Fix the fleet configuration and restart this cluster rather than polling forever.`,
+      )
+    }
 
     const active = JSON.parse(activeRaw) as EpochState
     if (active.epoch === pending.epoch) {
@@ -246,6 +251,13 @@ export class EpochCoordinator {
         )
       }
       return true
+    }
+    if (active.epoch > pending.epoch) {
+      throw new EpochConflictError(
+        `Conflicting shard total migrations: active epoch moved to ${active.epoch} (${active.totalShards} shards) ` +
+          `while this cluster waited on epoch ${pending.epoch} (${pending.totalShards} shards). ` +
+          `This proposal is superseded; fix the fleet configuration and restart this cluster.`,
+      )
     }
     if (active.epoch !== pending.epoch - 1) {
       return false
