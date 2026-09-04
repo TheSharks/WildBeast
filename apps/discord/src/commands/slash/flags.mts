@@ -11,6 +11,7 @@ import {
   inspectableKeys,
   inspectFlag,
 } from '../../features/inspect.mjs'
+import { ownerIds } from '../../preconditions/OwnerOnly.mjs'
 import { TracedSubcommand } from '../../structures/subcommand.mjs'
 
 /**
@@ -75,6 +76,9 @@ export class FlagsCommand extends TracedSubcommand {
   public override async autocompleteRun(
     interaction: Command.AutocompleteInteraction,
   ) {
+    if (!ownerIds().has(interaction.user.id)) {
+      return interaction.respond([])
+    }
     const focused = interaction.options.getFocused().toLowerCase()
     const keys = inspectableKeys()
       .filter((key) => key.toLowerCase().includes(focused))

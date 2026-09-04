@@ -126,5 +126,6 @@ export async function buildUrbanPage(
   return {
     components: [container],
     flags: MessageFlags.IsComponentsV2 as const,
+    allowedMentions: { parse: [] },
   }
 }

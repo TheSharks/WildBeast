@@ -1,7 +1,11 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import { InteractionHandlerTypes } from '@sapphire/framework'
 import { resolveKey } from '@sapphire/plugin-i18next'
-import { type ButtonInteraction, TextDisplayBuilder } from 'discord.js'
+import {
+  type ButtonInteraction,
+  MessageFlags,
+  TextDisplayBuilder,
+} from 'discord.js'
 import {
   GatedCommandInteractionHandler,
   type GatedCommandInteractionHandlerOptions,
@@ -51,49 +55,73 @@ export class BooruPagesHandler extends GatedCommandInteractionHandler {
   public async run(interaction: ButtonInteraction, action: BooruPageAction) {
     await interaction.deferUpdate()
 
-    const nsfwAllowed = channelAllowsNsfw(interaction)
-    const message = async (key: string) => ({
-      // The message carries IsComponentsV2, which can't be unset, so
-      // fallbacks must stay components rather than plain content.
-      components: [
-        new TextDisplayBuilder().setContent(
-          (await resolveKey(interaction, key, {
-            query: action.query,
-          })) as string,
-        ),
-      ],
-    })
+    try {
+      const nsfwAllowed = channelAllowsNsfw(interaction)
+      // The query is reflected inside backticks; escape them so a hostile
+      // query cannot break out of the formatting.
+      const safeQuery = action.query.replace(/`/g, '\\`')
+      const message = async (key: string) => ({
+        // The message carries IsComponentsV2, which can't be unset, so
+        // fallbacks must stay components rather than plain content.
+        components: [
+          new TextDisplayBuilder().setContent(
+            (await resolveKey(interaction, key, {
+              query: safeQuery,
+            })) as string,
+          ),
+        ],
+        flags: MessageFlags.IsComponentsV2 as const,
+        allowedMentions: { parse: [] },
+      })
 
-    // A message can outlive its channel being flipped back to SFW.
-    if (booruSites[action.site].gated && !nsfwAllowed) {
-      return interaction.editReply(
-        await message('commands/common:nsfwDisabled'),
-      )
-    }
+      // A message can outlive its channel being flipped back to SFW.
+      if (booruSites[action.site].gated && !nsfwAllowed) {
+        return interaction.editReply(
+          await message('commands/common:nsfwDisabled'),
+        )
+      }
 
-    const posts = await booruSites[action.site].search(
-      action.query,
-      nsfwAllowed,
-    )
-    if (posts.length === 0) {
-      return interaction.editReply(
-        await message('commands/common:noResultsFor'),
-      )
-    }
-
-    const position =
-      action.position === 'random'
-        ? Math.floor(Math.random() * posts.length)
-        : action.position
-
-    return interaction.editReply(
-      await buildBooruPage(
-        interaction,
-        action.site,
+      const posts = await booruSites[action.site].search(
         action.query,
-        posts,
-        position,
-      ),
-    )
+        nsfwAllowed,
+      )
+      if (posts.length === 0) {
+        return interaction.editReply(
+          await message('commands/common:noResultsFor'),
+        )
+      }
+
+      const position =
+        action.position === 'random'
+          ? Math.floor(Math.random() * posts.length)
+          : Number.isInteger(action.position)
+            ? action.position
+            : 0
+
+      return interaction.editReply(
+        await buildBooruPage(
+          interaction,
+          action.site,
+          action.query,
+          posts,
+          position,
+        ),
+      )
+    } catch {
+      let content: string
+      try {
+        content = (await resolveKey(
+          interaction,
+          'system/errors:try_again',
+        )) as string
+      } catch {
+        content = 'Something went wrong. Try again later.'
+      }
+      return interaction.editReply({
+        components: [new TextDisplayBuilder().setContent(content)],
+        flags: MessageFlags.IsComponentsV2,
+        allowedMentions: { parse: [] },
+      })
+    }
   }
 }

@@ -57,13 +57,15 @@ async function imageMessage(
   return {
     components: [container],
     flags: MessageFlags.IsComponentsV2 as const,
+    allowedMentions: { parse: [] },
   }
 }
 
 export async function buildCatMessage(interaction: Interaction) {
-  const { fact } = await fetchJson<{ fact: string }>(
-    'https://catfact.ninja/fact',
-  )
+  // The fact service is flaky; a cat without a fact beats no cat at all.
+  const fact = await fetchJson<{ fact: string }>('https://catfact.ninja/fact')
+    .then((body) => body.fact)
+    .catch(() => undefined)
   // The query string busts caches so every refresh is a new cat.
   return imageMessage(
     interaction,
@@ -78,6 +80,11 @@ export async function buildDogMessage(interaction: Interaction) {
   const { url } = await fetchJson<{ url: string }>(
     'https://random.dog/woof.json?filter=mp4,webm',
   )
+  // The media gallery only renders images; reject videos that slip past
+  // the API filter instead of sending a broken message.
+  if (!/\.(?:png|jpe?g|gif|webp)(?:\?.*)?$/i.test(url)) {
+    throw new Error(`random.dog returned a non-image URL: ${url}`)
+  }
   // The fact service has a history of dying (it already lost its .ml
   // domain once); a dog without a fact beats no dog at all.
   const fact = await fetchJson<{ fact: string }>(
@@ -89,7 +96,9 @@ export async function buildDogMessage(interaction: Interaction) {
 }
 
 export async function buildInspireMessage(interaction: Interaction) {
-  const url = await fetchText('https://inspirobot.me/api?generate=true')
+  const url = (
+    await fetchText('https://inspirobot.me/api?generate=true')
+  ).trim()
   return imageMessage(interaction, 'inspire', url, 'inspirobot.me')
 }
 

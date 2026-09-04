@@ -1,7 +1,11 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import { InteractionHandlerTypes } from '@sapphire/framework'
 import { resolveKey } from '@sapphire/plugin-i18next'
-import { type ButtonInteraction, TextDisplayBuilder } from 'discord.js'
+import {
+  type ButtonInteraction,
+  MessageFlags,
+  TextDisplayBuilder,
+} from 'discord.js'
 import {
   GatedCommandInteractionHandler,
   type GatedCommandInteractionHandlerOptions,
@@ -46,29 +50,51 @@ export class UrbanPagesHandler extends GatedCommandInteractionHandler {
   public async run(interaction: ButtonInteraction, action: UrbanPageAction) {
     await interaction.deferUpdate()
 
-    const definitions = await fetchDefinitions(action.query)
-    if (definitions.length === 0) {
-      // The message carries IsComponentsV2, which can't be unset, so the
-      // fallback must stay a component rather than plain content.
+    try {
+      const definitions = await fetchDefinitions(action.query)
+      if (definitions.length === 0) {
+        // The message carries IsComponentsV2, which can't be unset, so the
+        // fallback must stay a component rather than plain content.
+        return interaction.editReply({
+          components: [
+            new TextDisplayBuilder().setContent(
+              (await resolveKey(
+                interaction,
+                'commands/urbandictionary:notFound',
+                { query: action.query.replace(/`/g, '\\`') },
+              )) as string,
+            ),
+          ],
+          flags: MessageFlags.IsComponentsV2,
+          allowedMentions: { parse: [] },
+        })
+      }
+
+      const position =
+        action.position === 'random'
+          ? Math.floor(Math.random() * definitions.length)
+          : Number.isInteger(action.position)
+            ? action.position
+            : 0
+
+      return interaction.editReply(
+        await buildUrbanPage(interaction, action.query, definitions, position),
+      )
+    } catch {
+      let content: string
+      try {
+        content = (await resolveKey(
+          interaction,
+          'system/errors:try_again',
+        )) as string
+      } catch {
+        content = 'Something went wrong. Try again later.'
+      }
       return interaction.editReply({
-        components: [
-          new TextDisplayBuilder().setContent(
-            (await resolveKey(
-              interaction,
-              'commands/urbandictionary:notFound',
-            )) as string,
-          ),
-        ],
+        components: [new TextDisplayBuilder().setContent(content)],
+        flags: MessageFlags.IsComponentsV2,
+        allowedMentions: { parse: [] },
       })
     }
-
-    const position =
-      action.position === 'random'
-        ? Math.floor(Math.random() * definitions.length)
-        : action.position
-
-    return interaction.editReply(
-      await buildUrbanPage(interaction, action.query, definitions, position),
-    )
   }
 }

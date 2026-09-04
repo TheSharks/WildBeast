@@ -17,6 +17,9 @@ export class EightBallCommand extends TracedCommand {
     const choices = (await resolveKey(interaction, 'commands/8ball:choices', {
       returnObjects: true,
     })) as unknown as string[]
+    if (!Array.isArray(choices) || choices.length === 0) {
+      throw new Error('8ball choices are not configured')
+    }
     const response = choices[Math.floor(Math.random() * choices.length)]
 
     return interaction.reply(

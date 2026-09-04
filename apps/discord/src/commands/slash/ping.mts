@@ -1,6 +1,7 @@
 import { isMessageInstance } from '@sapphire/discord.js-utilities'
 import type { Command } from '@sapphire/framework'
 import { applyLocalizedBuilder, resolveKey } from '@sapphire/plugin-i18next'
+import { MessageFlags } from 'discord.js'
 import { TracedCommand } from '../../structures/command.mjs'
 
 export class PingCommand extends TracedCommand {
@@ -20,7 +21,7 @@ export class PingCommand extends TracedCommand {
         interaction,
         'commands/ping:success',
       )) as string,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
       fetchReply: true,
     })
 

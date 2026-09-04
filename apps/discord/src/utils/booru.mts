@@ -288,5 +288,6 @@ export async function buildBooruPage(
   return {
     components: [container],
     flags: MessageFlags.IsComponentsV2 as const,
+    allowedMentions: { parse: [] },
   }
 }

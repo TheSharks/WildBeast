@@ -19,7 +19,14 @@ export class InviteCommand extends TracedCommand {
 
     const override = process.env.WILDBEAST_INVITE_OVERRIDE
     if (override) {
-      return this.replyEphemeral(interaction, 'done', { invite: override })
+      try {
+        const url = new URL(override)
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+          return this.replyEphemeral(interaction, 'done', { invite: override })
+        }
+      } catch {
+        // Invalid override falls through to a generated invite.
+      }
     }
 
     const application = await client.application?.fetch()
