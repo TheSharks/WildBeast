@@ -23,17 +23,32 @@ export const envSchema = z
       ),
     NODE_ENV: z.string().optional(),
     TRACE: z.string().optional(),
-    REDIS_HOST: z.string().optional(),
+    // Full Redis URL (redis://, rediss:// or unix://). When set it
+    // overrides REDIS_HOST/PORT/PASSWORD/DB; otherwise those parts apply.
+    REDIS_URL: z
+      .string()
+      .min(1)
+      .refine(
+        (value) =>
+          value.startsWith('redis://') ||
+          value.startsWith('rediss://') ||
+          value.startsWith('unix://'),
+        'REDIS_URL must be a redis://, rediss:// or unix:// URL',
+      )
+      .optional(),
+    REDIS_HOST: z.string().min(1).optional(),
     REDIS_PORT: z.coerce.number().int().min(1).max(65_535).optional(),
     REDIS_PASSWORD: z.string().optional(),
-    REDIS_DB: z.coerce.number().int().nonnegative().optional(),
+    // Redis logical database index. Redis ships with 16 databases (0-15)
+    // by default; higher indexes need a custom `databases` setting.
+    REDIS_DB: z.coerce.number().int().min(0).max(15).optional(),
     SENTRY_DSN: z.url().optional(),
     SENTRY_PROFILE_SESSION_SAMPLE_RATE: z.coerce
       .number()
       .min(0)
       .max(1)
       .optional(),
-    WILDBEAST_CLUSTER_ID: z.string().optional(),
+    WILDBEAST_CLUSTER_ID: z.string().min(1).optional(),
     WILDBEAST_CLUSTERING_MODE: z.enum(['static', 'autonomous']).optional(),
     // When set, commands register in this guild instead of globally, so
     // development iterations show up instantly.
@@ -78,6 +93,10 @@ export const envSchema = z
     WILDBEAST_SHARDING_START: z.coerce.number().int().nonnegative().optional(),
     WILDBEAST_SHARDING_END: z.coerce.number().int().nonnegative().optional(),
     WILDBEAST_SHARDING_TOTAL: z.coerce.number().int().positive().optional(),
+    // Fleet epoch assigned by the cluster manager to shard workers
+    // (autonomous mode). Validated numerically so a corrupt value fails at
+    // boot instead of scoping sessions to a NaN prefix.
+    WILDBEAST_EPOCH: z.coerce.number().int().nonnegative().optional(),
   })
   .superRefine((env, ctx) => {
     // Command registration bulk-overwrites each scope with the full desired

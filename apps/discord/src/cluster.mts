@@ -27,12 +27,19 @@ import { redisConnectionOptions } from './utils/redis.mjs'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // Load and validate the environment before telemetry so SENTRY_DSN/OTEL_*
-// are picked up.
-loadEnv()
+// are picked up. Keep the validated Env and thread it through telemetry,
+// logging, Redis and clustering below instead of re-reading process.env:
+// the first getDb() (in workers) happens after this, so misconfiguration
+// fails here with a readable message.
+const env = loadEnv()
 
 // Resolve the cluster identity once and write it back so worker threads
-// (which share this env) and telemetry agree on it.
-const clusterId = process.env.WILDBEAST_CLUSTER_ID ?? hostname()
+// (which share this env) and telemetry agree on it. Defaults include the
+// pid so two clusters on the same host never share an id (shared ids would
+// overwrite each other's heartbeats and leases); production fleets should
+// still set an explicit stable WILDBEAST_CLUSTER_ID (StatefulSet ordinal,
+// machine name) so restarts hash back to the same shards.
+const clusterId = env.WILDBEAST_CLUSTER_ID ?? `${hostname()}-${process.pid}`
 process.env.WILDBEAST_CLUSTER_ID = clusterId
 
 const telemetry = initOpenTelemetry({
@@ -42,16 +49,18 @@ const telemetry = initOpenTelemetry({
   sentry: {
     tags: { 'cluster.id': clusterId },
     // The manager's event loop coordinates handoffs and respawns; profiling
-    // it adds nothing, but block detection matters (the watchdog it spawns
-    // also observes the shard worker threads in this process).
+    // it adds nothing, so it stays off even when shard workers opt in via
+    // SENTRY_PROFILE_SESSION_SAMPLE_RATE (default 0). Block detection
+    // matters, and the watchdog it spawns also observes the shard worker
+    // threads in this process.
     profileSessionSampleRate: 0,
   },
 })
 
 const logger = new AnalyticsLogger({
-  level: process.env.TRACE
+  level: env.TRACE
     ? LogLevel.Trace
-    : process.env.NODE_ENV === 'development'
+    : env.NODE_ENV === 'development'
       ? LogLevel.Debug
       : LogLevel.Info,
 })
@@ -94,7 +103,7 @@ const epochParkedGauge = createGauge(
 const clustering = parseClusteringConfig()
 
 const manager = new ShardingManager(join(__dirname, './index.mjs'), {
-  token: process.env.DISCORD_TOKEN,
+  token: env.DISCORD_TOKEN,
   totalShards: clustering.totalShards,
   ...(clustering.mode === 'static' ? { shardList: clustering.shardList } : {}),
   mode: 'worker',
@@ -252,10 +261,12 @@ const shardHost: ShardHost = {
 let reconciler: ShardReconciler | undefined
 let parkedCoordinator: ClusterCoordinator | undefined
 let epochWatchdog: NodeJS.Timeout | undefined
+let autonomousRedis: Redis | undefined
 const shutdownAbort = new AbortController()
 
 async function startAutonomous(totalShards: number): Promise<void> {
-  const redis = new Redis(redisConnectionOptions())
+  const redis = new Redis(redisConnectionOptions(env))
+  autonomousRedis = redis
   const epochs = new EpochCoordinator(redis, { totalShards })
   const coordinatorFor = (state: EpochState) =>
     new ClusterCoordinator(redis, {
@@ -284,11 +295,23 @@ async function startAutonomous(totalShards: number): Promise<void> {
       signal: shutdownAbort.signal,
       logger,
     })
-    parkedCoordinator = undefined
     if (!activated) {
-      // Shut down while parked.
+      // Shut down while parked: withdraw the pending-epoch membership so
+      // it does not linger until its TTL, then clear the reference so the
+      // shutdown path below does not double-withdraw.
+      try {
+        await parkedCoordinator?.withdraw()
+      } catch {
+        // membership entry will expire on its own
+      }
+      parkedCoordinator = undefined
       return
     }
+    // Promotion keeps the same epoch key and member id the parked
+    // heartbeats already established, so the reconciler's coordinator
+    // simply continues that membership: drop the parked reference without
+    // withdrawing (reconciler.shutdown() owns the withdraw from here).
+    parkedCoordinator = undefined
     logger.info(`Epoch ${epoch.epoch} activated (${totalShards} shards)`)
   }
 
@@ -388,6 +411,19 @@ async function shutdown(code = 0) {
     }
   }
 
+  try {
+    const { closeDb } = await import('@thesharks/drizzle')
+    await closeDb()
+  } catch {
+    // the manager rarely holds a DB pool; workers own theirs
+  }
+  try {
+    autonomousRedis?.disconnect()
+  } catch {
+    // disconnect never throws synchronously worth dying over
+  }
+  autonomousRedis = undefined
+
   await telemetry.shutdown()
   process.exit(code)
 }
@@ -408,6 +444,17 @@ try {
 } catch (error) {
   logger.fatal('Failed to start cluster:', error)
   Sentry.captureException(error)
+  try {
+    const { closeDb } = await import('@thesharks/drizzle')
+    await closeDb()
+  } catch {
+    // pool may never have been created
+  }
+  try {
+    autonomousRedis?.disconnect()
+  } catch {
+    // ignore
+  }
   await telemetry.shutdown()
   process.exit(1)
 }

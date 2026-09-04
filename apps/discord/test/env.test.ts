@@ -115,6 +115,49 @@ describe('validateEnv', () => {
     ).toThrow(/WILDBEAST_CLUSTERING_MODE/)
   })
 
+  it('accepts a REDIS_URL override and rejects other schemes', () => {
+    expect(
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'token',
+        REDIS_URL: 'redis://localhost:6379',
+      }),
+    ).toMatchObject({ REDIS_URL: 'redis://localhost:6379' })
+    expect(() =>
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'token',
+        REDIS_URL: 'http://localhost:6379',
+      }),
+    ).toThrow(/REDIS_URL/)
+  })
+
+  it('bounds REDIS_DB to the default 0-15 range', () => {
+    expect(
+      validateEnv({ ...database, DISCORD_TOKEN: 'token', REDIS_DB: '3' }),
+    ).toMatchObject({ REDIS_DB: 3 })
+    expect(() =>
+      validateEnv({ ...database, DISCORD_TOKEN: 'token', REDIS_DB: '16' }),
+    ).toThrow(/Invalid environment/)
+  })
+
+  it('validates WILDBEAST_EPOCH numerically', () => {
+    expect(
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'token',
+        WILDBEAST_EPOCH: '4',
+      }),
+    ).toMatchObject({ WILDBEAST_EPOCH: 4 })
+    expect(() =>
+      validateEnv({
+        ...database,
+        DISCORD_TOKEN: 'token',
+        WILDBEAST_EPOCH: '-1',
+      }),
+    ).toThrow(/Invalid environment/)
+  })
+
   it('validates the premium SKU mapping', () => {
     expect(
       validateEnv({

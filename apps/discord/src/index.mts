@@ -2,8 +2,15 @@ import { parentPort, workerData } from 'node:worker_threads'
 import type { SapphireClient } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
 import { initOpenTelemetry } from '@thesharks/analytics'
+import { validateEnv } from './env.mjs'
 import { setTaskFlagShardId } from './features/context.mjs'
 import { WORKER_TELEMETRY_SHUTDOWN_TIMEOUT_MILLIS } from './sharding/lifecycle.mjs'
+
+// Validate before anything else touches the DB or Redis: workers inherit the
+// manager's already-validated environment, but a direct `node dist/index.mjs`
+// must fail here with a readable message instead of deep inside pg/ioredis.
+// This also guarantees validateEnv runs before the first getDb().
+const env = validateEnv()
 
 // discord.js exposes the shard id as SHARDS: via env in process mode, via
 // workerData in worker mode (where all shards share one pid, so falling back
@@ -18,11 +25,11 @@ const shardId =
 // targeting cannot be contaminated by another shard.
 setTaskFlagShardId(shardId)
 
-const environment = process.env.NODE_ENV ?? 'development'
+const environment = env.NODE_ENV ?? 'development'
 const baseTracesSampleRate = environment === 'production' ? 0.2 : 1.0
 
 // The manager resolves the cluster id and shares it via env.
-const clusterId = process.env.WILDBEAST_CLUSTER_ID
+const clusterId = env.WILDBEAST_CLUSTER_ID
 
 // Must run as early as possible.
 const telemetry = initOpenTelemetry({
@@ -39,10 +46,9 @@ const telemetry = initOpenTelemetry({
       ...(clusterId ? { 'cluster.id': clusterId } : {}),
     },
     // Profile chunks are only collected while a sampled trace is active, so
-    // the tracesSampler below already bounds profiling volume.
-    profileSessionSampleRate: process.env.SENTRY_PROFILE_SESSION_SAMPLE_RATE
-      ? Number(process.env.SENTRY_PROFILE_SESSION_SAMPLE_RATE)
-      : 1.0,
+    // the tracesSampler below already bounds profiling volume. Defaults to
+    // 0 (profiler off); set SENTRY_PROFILE_SESSION_SAMPLE_RATE to opt in.
+    profileSessionSampleRate: env.SENTRY_PROFILE_SESSION_SAMPLE_RATE ?? 0,
     // We can't tail-sample errors client-side, so bias instead: always keep
     // command traces (low volume, where the user-facing errors are), keep a
     // sliver of the always-on scheduled task runs, and sample everything
@@ -74,6 +80,33 @@ async function shutdown() {
     await client?.destroy()
   } catch {
     // continue shutting down telemetry even if the client fails to close
+  }
+  try {
+    // Clean shutdown invalidates the persisted gateway session: destroy()
+    // closed the connection with code 1000, which invalidates the session
+    // on Discord's side, so leaving the Redis copy would send the next boot
+    // into a doomed resume. Handoffs (handoffExit) keep it instead.
+    if (sessionStore && shardId !== undefined) {
+      const numericId = Number(shardId)
+      if (Number.isInteger(numericId)) {
+        sessionStore.update(numericId, null)
+      }
+    }
+    await sessionStore?.close()
+  } catch {
+    // session invalidation is best-effort; a stale key ages out via TTL
+  }
+  try {
+    const { closeSharedWorkerRedis } = await import('./utils/redis.mjs')
+    await closeSharedWorkerRedis()
+  } catch {
+    // redis teardown is best-effort
+  }
+  try {
+    const { closeDb } = await import('@thesharks/drizzle')
+    await closeDb()
+  } catch {
+    // pool may never have been created
   }
   try {
     const { closeFeatureFlags } = await import('./features/client.mjs')
@@ -108,6 +141,18 @@ async function handoffExit() {
       'Failed to flush session store during handoff:',
       error,
     )
+  }
+  try {
+    const { closeSharedWorkerRedis } = await import('./utils/redis.mjs')
+    await closeSharedWorkerRedis()
+  } catch {
+    // best-effort
+  }
+  try {
+    const { closeDb } = await import('@thesharks/drizzle')
+    await closeDb()
+  } catch {
+    // best-effort
   }
   try {
     await telemetry.shutdown()
@@ -153,13 +198,19 @@ try {
   // flag service never blocks login (in-code defaults apply).
   const { initFeatureFlags } = await import('./features/client.mjs')
   await initFeatureFlags({ logger: client.logger })
-  await client.login(process.env.DISCORD_TOKEN)
+  await client.login(env.DISCORD_TOKEN)
   client.logger.info('Logged in')
 } catch (error) {
   Sentry.captureException(error)
   if (client) {
     client.logger?.fatal(error)
     await client.destroy()
+  }
+  try {
+    const { closeDb } = await import('@thesharks/drizzle')
+    await closeDb()
+  } catch {
+    // ignore
   }
   await Sentry.flush(2000)
   process.exit(1)
