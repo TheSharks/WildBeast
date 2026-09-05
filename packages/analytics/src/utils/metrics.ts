@@ -130,6 +130,7 @@ export const METRIC_CONTRACT: Record<string, readonly string[]> = {
   discord_guild_member_total: ['scope'],
   discord_guild_tag_command_executions_total: ['outcome'],
   discord_guild_tag_command_promotions_total: ['action', 'trigger'],
+  discord_guild_tag_reconcile_deferred_total: ['reason'],
   discord_guilds_total: ['scope'],
   discord_identifies_total: ['bucket'],
   discord_identify_wait_seconds: ['bucket'],

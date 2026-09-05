@@ -91,4 +91,48 @@ describe('AnalyticsLogger OTEL bridge', () => {
     expect(record.body).toContain('Bearer [Redacted]')
     expect(record.body).not.toContain('abcdef12345')
   })
+
+  it('preserves Error message, stack and cause', () => {
+    capture.reset()
+    makeLogger().error(
+      new Error('outer boom', { cause: new Error('inner cause') }),
+    )
+
+    const [record] = capture.records()
+    expect(record.body).toContain('outer boom')
+    expect(record.body).toContain('inner cause')
+    expect(record.body).toMatch(/at /)
+  })
+
+  it('formats Dates as ISO strings', () => {
+    capture.reset()
+    makeLogger().info('at', new Date('2026-01-01T00:00:00.000Z'))
+
+    const [record] = capture.records()
+    expect(record.body).toContain('2026-01-01T00:00:00.000Z')
+  })
+
+  it('converts Maps and Sets to inspectable entries', () => {
+    capture.reset()
+    makeLogger().info(
+      'm',
+      new Map<string, unknown>([
+        ['answer', 42],
+        ['token', 'secret-token'],
+      ]),
+    )
+
+    const [mapRecord] = capture.records()
+    expect(mapRecord.body).toContain('answer')
+    expect(mapRecord.body).toContain('42')
+    expect(mapRecord.body).toContain('[Redacted]')
+    expect(mapRecord.body).not.toContain('secret-token')
+
+    capture.reset()
+    makeLogger().info('s', new Set(['a', 'b']))
+
+    const [setRecord] = capture.records()
+    expect(setRecord.body).toContain('a')
+    expect(setRecord.body).toContain('b')
+  })
 })

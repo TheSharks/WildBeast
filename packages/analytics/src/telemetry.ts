@@ -59,6 +59,7 @@ import type { TelemetryConfig, TelemetryExporterConfig } from './types.js'
 const ATTR_DEPLOYMENT_ENVIRONMENT_NAME = 'deployment.environment.name'
 
 /** Keys that must never leave the process in Sentry events or OTEL logs (id-only telemetry). */
+// Keep in sync with LOGGER_PII_DENYLIST in bridges/sapphire-logger.ts; drift leaks PII one way.
 export const SENTRY_PII_DENYLIST = [
   'username',
   'tag',
@@ -71,7 +72,7 @@ export const SENTRY_PII_DENYLIST = [
   'secret',
   'guild_name',
   'channel_name',
-  'name',
+  // No bare "name": it over-redacts runtime.name/os.name/error names; guild/channel stay id-only below.
 ] as const
 
 function isDenylistedKey(key: string): boolean {
@@ -79,6 +80,16 @@ function isDenylistedKey(key: string): boolean {
   return (SENTRY_PII_DENYLIST as readonly string[]).some(
     (denied) => lower === denied || lower.endsWith(`_${denied}`),
   )
+}
+
+// Best-effort token redaction in free-form strings.
+function scrubStringTokens(value: string): string {
+  return value
+    .replace(
+      /[A-Za-z0-9_-]{24}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27}/g,
+      '[Redacted]',
+    )
+    .replace(/Bearer\s+[A-Za-z0-9._~-]+/gi, 'Bearer [Redacted]')
 }
 
 function scrubValue(value: unknown, key?: string): unknown {
@@ -95,14 +106,9 @@ function scrubValue(value: unknown, key?: string): unknown {
     }
     return out
   }
-  if (typeof value === 'string' && key === undefined) {
-    // Best-effort token redaction in free-form strings.
-    return value
-      .replace(
-        /[A-Za-z0-9_-]{24}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27}/g,
-        '[Redacted]',
-      )
-      .replace(/Bearer\s+[A-Za-z0-9._~-]+/gi, 'Bearer [Redacted]')
+  // Why: secrets hide in nested values too, so value patterns run at every node, not just keyless roots.
+  if (typeof value === 'string') {
+    return scrubStringTokens(value)
   }
   return value
 }
@@ -179,9 +185,87 @@ function parseTraceParent(value: string | undefined) {
   return { traceId: traceId as string, spanId: spanId as string, flags }
 }
 
-/** W3C traceparent/tracestate propagator. */
+// Why: undici injects into bare header carriers (no URL), so W3C gating reads the
+// client span's url.full/http.url instead; Sentry headers keep their own tracePropagationTargets gating.
+function getSpanRequestUrl(ctx: Context): string | undefined {
+  const span = trace.getSpan(ctx) as unknown as
+    | { attributes?: Record<string, unknown> }
+    | undefined
+    | null
+  const attributes = span?.attributes
+  if (attributes && typeof attributes === 'object') {
+    for (const key of ['url.full', 'http.url']) {
+      const candidate = attributes[key]
+      if (typeof candidate === 'string' && candidate) return candidate
+    }
+  }
+  return undefined
+}
+
+function getCarrierRequestUrl(carrier: unknown): string | undefined {
+  if (!carrier || typeof carrier !== 'object') return undefined
+  const record = carrier as Record<string, unknown>
+  for (const key of ['url', 'URL', 'href']) {
+    const candidate = record[key]
+    if (typeof candidate === 'string' && candidate) return candidate
+  }
+  if (typeof record.origin === 'string' && typeof record.path === 'string') {
+    try {
+      return new URL(record.path, record.origin).toString()
+    } catch {
+      return undefined
+    }
+  }
+  return undefined
+}
+
+/** True for loopback/RFC1918/link-local/single-label/intranet hosts; fail-open when the target is unknown. */
+export function isInternalTraceTarget(raw: string | undefined): boolean {
+  if (!raw) return true
+  let hostname: string
+  try {
+    hostname = new URL(raw).hostname.toLowerCase()
+  } catch {
+    return true
+  }
+  if (!hostname) return true
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) return true
+  if (hostname === '127.0.0.1' || hostname.startsWith('127.')) return true
+  if (hostname === '::1' || hostname === '[::1]') return true
+  if (/^10\.\d+\.\d+\.\d+$/.test(hostname)) return true
+  if (/^192\.168\.\d+\.\d+$/.test(hostname)) return true
+  if (/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(hostname)) return true
+  if (/^169\.254\.\d+\.\d+$/.test(hostname)) return true
+  if (!hostname.includes('.')) return true // Single-label intranet names (e.g. docker-compose services).
+  if (
+    [
+      '.svc',
+      '.svc.cluster.local',
+      '.cluster.local',
+      '.internal',
+      '.local',
+      '.lan',
+    ].some(
+      (suffix) => hostname === suffix.slice(1) || hostname.endsWith(suffix),
+    )
+  ) {
+    return true
+  }
+  const extra = (process.env.OTEL_TRACE_INTERNAL_TARGETS ?? '')
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+  if (extra.some((entry) => hostname === entry || hostname.endsWith(entry))) {
+    return true
+  }
+  return false
+}
+
+/** W3C traceparent/tracestate propagator (internal targets only; see isInternalTraceTarget). */
 export class W3CTraceContextPropagator implements TextMapPropagator {
   inject(ctx: Context, carrier: unknown, setter: TextMapSetter): void {
+    const target = getSpanRequestUrl(ctx) ?? getCarrierRequestUrl(carrier)
+    if (!isInternalTraceTarget(target)) return
     const spanContext = trace.getSpanContext(ctx)
     if (!spanContext) return
     const flags = spanContext.traceFlags & 1 ? '01' : '00'
@@ -215,9 +299,11 @@ export class W3CTraceContextPropagator implements TextMapPropagator {
   }
 }
 
-/** W3C baggage pass-through. */
+/** W3C baggage pass-through (internal targets only; see isInternalTraceTarget). */
 export class W3CBaggagePropagator implements TextMapPropagator {
   inject(ctx: Context, carrier: unknown, setter: TextMapSetter): void {
+    const target = getSpanRequestUrl(ctx) ?? getCarrierRequestUrl(carrier)
+    if (!isInternalTraceTarget(target)) return
     const baggage = propagation.getBaggage(ctx)
     if (!baggage?.getAllEntries) return
     const header = (baggage.getAllEntries() ?? [])
@@ -776,7 +862,7 @@ export function initOpenTelemetry(
   })
 
   tracerProvider.register({
-    // Sentry headers still gated by tracePropagationTargets (default []).
+    // Sentry headers gated by tracePropagationTargets (default []); W3C self-gates to internal targets.
     propagator: new CompositePropagator({
       propagators: [
         new W3CTraceContextPropagator(),

@@ -5,6 +5,7 @@ import { Logger as SapphireLogger } from '@sapphire/plugin-logger'
 import * as Sentry from '@sentry/node'
 
 /** Keys that must never leave the process in telemetry. */
+// Keep in sync with SENTRY_PII_DENYLIST in telemetry.ts; drift leaks PII one way.
 export const LOGGER_PII_DENYLIST = [
   'token',
   'authorization',
@@ -13,6 +14,8 @@ export const LOGGER_PII_DENYLIST = [
   'email',
   'username',
   'tag',
+  'globalName',
+  'displayName',
   'guild_name',
   'channel_name',
 ] as const
@@ -30,6 +33,23 @@ function redactLoggerValue(value: unknown, key?: string): unknown {
   }
   if (Array.isArray(value)) {
     return value.map((entry) => redactLoggerValue(entry))
+  }
+  // Why: rebuilding from enumerable entries drops message/stack/cause, so Errors pass through for inspect.
+  if (value instanceof Error) {
+    return value
+  }
+  // Why: Dates/Maps/Sets have no enumerable payload, so normalize before inspect to keep contents visible.
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? 'Invalid Date' : value.toISOString()
+  }
+  if (value instanceof Map) {
+    return Array.from(value.entries(), ([k, v]) => [
+      k,
+      redactLoggerValue(v, typeof k === 'string' ? k : undefined),
+    ])
+  }
+  if (value instanceof Set) {
+    return Array.from(value, (entry) => redactLoggerValue(entry))
   }
   if (value && typeof value === 'object') {
     const out: Record<string, unknown> = {}

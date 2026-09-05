@@ -1,7 +1,9 @@
+import type { Span } from '@opentelemetry/api'
 import { snapshotEnv } from '@thesharks/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   CompositePropagator,
+  isInternalTraceTarget,
   normalizeOtlpEndpointUrl,
   resolveTransportConfig,
   SENTRY_PII_DENYLIST,
@@ -290,6 +292,45 @@ describe('PII redaction', () => {
     expect(event.extra.safe).toBe('ok')
     expect(event.breadcrumbs[0].data.username).toBe('[Redacted]')
   })
+
+  it('redacts token patterns nested inside extra/contexts/breadcrumb data', () => {
+    const discordToken = `${'a'.repeat(24)}.${'b'.repeat(6)}.${'c'.repeat(27)}`
+    const event = scrubSentryEvent({
+      contexts: {
+        run: { note: `leaked ${discordToken}` },
+      },
+      extra: { auth: 'Bearer abcdef12345', nested: { deep: discordToken } },
+      breadcrumbs: [{ data: { detail: `saw ${discordToken}` } }],
+    } as unknown as Record<string, unknown>) as unknown as {
+      contexts: Record<string, Record<string, unknown>>
+      extra: Record<string, unknown>
+      breadcrumbs: Array<{ data: Record<string, unknown> }>
+    }
+
+    expect(JSON.stringify(event)).not.toContain(discordToken)
+    expect(JSON.stringify(event)).not.toContain('abcdef12345')
+    expect(event.extra.auth).toBe('Bearer [Redacted]')
+    expect(event.contexts.run.note).toBe('leaked [Redacted]')
+    expect(event.breadcrumbs[0].data.detail).toBe('saw [Redacted]')
+  })
+
+  it('keeps non-PII name keys like contexts.runtime.name', () => {
+    const event = scrubSentryEvent({
+      contexts: {
+        runtime: { name: 'node', version: '22' },
+        os: { name: 'linux' },
+        guild: { id: '1', name: 'Secret Guild' },
+      },
+    } as unknown as Record<string, unknown>) as unknown as {
+      contexts: Record<string, Record<string, unknown>>
+    }
+
+    expect(event.contexts.runtime.name).toBe('node')
+    expect(event.contexts.os.name).toBe('linux')
+    // Guild/channel stay id-only even without a bare "name" denylist entry.
+    expect(event.contexts.guild).not.toHaveProperty('name')
+    expect(event.contexts.guild.id).toBe('1')
+  })
 })
 
 describe('composite propagator', () => {
@@ -316,5 +357,67 @@ describe('composite propagator', () => {
     })
     expect(carrier.traceparent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-/)
     span.end()
+  })
+
+  it('withholds traceparent/baggage from arbitrary external hosts', async () => {
+    const composite = new CompositePropagator({
+      propagators: [
+        new W3CTraceContextPropagator(),
+        new W3CBaggagePropagator(),
+      ],
+    })
+    const { context, propagation, trace } = await import('@opentelemetry/api')
+    // Fake client span carrying the request URL, as undici sets url.full before inject.
+    const fakeSpan = {
+      attributes: { 'url.full': 'https://tagscript.example.com/v1/run' },
+      spanContext: () => ({
+        traceId: 'd'.repeat(32),
+        spanId: 'e'.repeat(16),
+        traceFlags: 1,
+      }),
+    }
+    const ctx = propagation.setBaggage(
+      trace.setSpan(context.active(), fakeSpan as unknown as Span),
+      propagation.createBaggage({ foo: { value: 'bar' } }),
+    )
+    const carrier: Record<string, string> = {}
+    composite.inject(ctx, carrier, {
+      set: (c: Record<string, string>, k: string, v: string) => {
+        c[k] = v
+      },
+    })
+    expect(carrier).not.toHaveProperty('traceparent')
+    expect(carrier).not.toHaveProperty('baggage')
+  })
+
+  it('still injects traceparent for internal targets', async () => {
+    const propagator = new W3CTraceContextPropagator()
+    const { context, trace } = await import('@opentelemetry/api')
+    const fakeSpan = {
+      attributes: { 'url.full': 'http://localhost:4318/v1/traces' },
+      spanContext: () => ({
+        traceId: 'd'.repeat(32),
+        spanId: 'e'.repeat(16),
+        traceFlags: 1,
+      }),
+    }
+    const ctx = trace.setSpan(context.active(), fakeSpan as unknown as Span)
+    const carrier: Record<string, string> = {}
+    propagator.inject(ctx, carrier, {
+      set: (c: Record<string, string>, k: string, v: string) => {
+        c[k] = v
+      },
+    })
+    expect(carrier.traceparent).toMatch(/^00-/)
+  })
+
+  it('classifies internal vs external trace targets', () => {
+    expect(isInternalTraceTarget(undefined)).toBe(true)
+    expect(isInternalTraceTarget('http://localhost:4318/v1/traces')).toBe(true)
+    expect(isInternalTraceTarget('http://10.0.0.5/x')).toBe(true)
+    expect(isInternalTraceTarget('https://tagscript.example.com/run')).toBe(
+      false,
+    )
+    expect(isInternalTraceTarget('https://discord.com/api')).toBe(false)
   })
 })
