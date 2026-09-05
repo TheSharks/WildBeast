@@ -4,6 +4,8 @@ import type { Env } from '../env.mjs'
 export interface RedisConnectionOptions {
   host: string
   port: number
+  /** ACL username from REDIS_URL (ioredis `username` option); absent means the default user. */
+  username?: string
   password?: string
   db?: number
   /** Unix socket path. */
@@ -29,10 +31,11 @@ function parsePort(raw: unknown, source: string): number {
 }
 
 function parseDb(raw: unknown, source: string): number {
+  // Redis allows up to 16383 databases with `databases` configured (default 16).
   const db = typeof raw === 'number' ? raw : Number.parseInt(String(raw), 10)
-  if (!Number.isInteger(db) || db < 0 || db > 15) {
+  if (!Number.isInteger(db) || db < 0 || db > 16_383) {
     throw new Error(
-      `${source} must be an integer Redis database index 0-15, got ${JSON.stringify(raw)}`,
+      `${source} must be an integer Redis database index 0-16383, got ${JSON.stringify(raw)}`,
     )
   }
   return db
@@ -71,6 +74,13 @@ export function redisConnectionOptions(
       )
     }
 
+    // REDIS_URL is wholly authoritative: credentials/host/port/db come from
+    // the URL alone (it overrides the parts), so the parts are ignored here.
+    const username = url.username ? decodeURIComponent(url.username) : undefined
+    const urlPassword = url.password
+      ? decodeURIComponent(url.password)
+      : undefined
+
     if (url.protocol === 'unix:') {
       const path = url.pathname || undefined
       if (!path) {
@@ -78,51 +88,34 @@ export function redisConnectionOptions(
           `REDIS_URL unix:// must include a socket path, got ${JSON.stringify(redisUrl)}`,
         )
       }
-      const password = url.password
-        ? decodeURIComponent(url.password)
-        : (passwordRaw ?? undefined)
-      // unix:// ?db=N else REDIS_DB.
+      // unix:// ?db=N only; REDIS_DB is ignored while REDIS_URL is set.
       const queryDb = url.searchParams.get('db')
-      const dbSource =
-        queryDb ?? (dbRaw !== undefined ? String(dbRaw) : undefined)
       return {
         host: 'localhost',
         port: 6379,
-        ...(password ? { password } : {}),
-        ...(dbSource !== undefined
-          ? { db: parseDb(dbSource, 'REDIS_URL ?db / REDIS_DB') }
-          : {}),
+        ...(username ? { username } : {}),
+        ...(urlPassword ? { password: urlPassword } : {}),
+        ...(queryDb !== null ? { db: parseDb(queryDb, 'REDIS_URL ?db') } : {}),
         path,
       }
     }
 
-    const host = url.hostname || hostRaw || 'localhost'
-    const port = url.port
-      ? parsePort(url.port, 'REDIS_URL port')
-      : portRaw !== undefined && asText(portRaw) !== undefined
-        ? parsePort(portRaw, 'REDIS_PORT')
-        : 6379
-    const password = url.password
-      ? decodeURIComponent(url.password)
-      : (passwordRaw ?? undefined)
-    // Path "/3" selects DB 3, else REDIS_DB.
+    const host = url.hostname || 'localhost'
+    const port = url.port ? parsePort(url.port, 'REDIS_URL port') : 6379
+    // Path "/3" selects DB 3; REDIS_DB is ignored while REDIS_URL is set.
     const pathDb =
       url.pathname && url.pathname !== '/'
         ? url.pathname.slice(1).split('/')[0]
         : undefined
-    const dbSource =
-      pathDb !== undefined && pathDb !== ''
-        ? pathDb
-        : dbRaw !== undefined && asText(dbRaw) !== undefined
-          ? dbRaw
-          : undefined
+    const dbSource = pathDb !== undefined && pathDb !== '' ? pathDb : undefined
 
     return {
       host,
       port,
-      ...(password ? { password } : {}),
+      ...(username ? { username } : {}),
+      ...(urlPassword ? { password: urlPassword } : {}),
       ...(dbSource !== undefined
-        ? { db: parseDb(dbSource, 'REDIS_URL path / REDIS_DB') }
+        ? { db: parseDb(dbSource, 'REDIS_URL path') }
         : {}),
       ...(url.protocol === 'rediss:' ? { tls: {} } : {}),
     }

@@ -132,12 +132,22 @@ describe('validateEnv', () => {
     ).toThrow(/REDIS_URL/)
   })
 
-  it('bounds REDIS_DB to the default 0-15 range', () => {
+  it('bounds REDIS_DB to the Redis 0-16383 range', () => {
     expect(
       validateEnv({ ...database, DISCORD_TOKEN: 'token', REDIS_DB: '3' }),
     ).toMatchObject({ REDIS_DB: 3 })
-    expect(() =>
+    // Defaults ship 16 databases, but `databases` can raise it to 16383.
+    expect(
       validateEnv({ ...database, DISCORD_TOKEN: 'token', REDIS_DB: '16' }),
+    ).toMatchObject({ REDIS_DB: 16 })
+    expect(
+      validateEnv({ ...database, DISCORD_TOKEN: 'token', REDIS_DB: '16383' }),
+    ).toMatchObject({ REDIS_DB: 16_383 })
+    expect(() =>
+      validateEnv({ ...database, DISCORD_TOKEN: 'token', REDIS_DB: '16384' }),
+    ).toThrow(/Invalid environment/)
+    expect(() =>
+      validateEnv({ ...database, DISCORD_TOKEN: 'token', REDIS_DB: '-1' }),
     ).toThrow(/Invalid environment/)
   })
 

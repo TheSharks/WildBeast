@@ -110,12 +110,24 @@ export class EpochCoordinator {
     state: EpochState
     role: 'active' | 'pending'
   }> {
-    await this.redis.set(
-      this.epochKey,
-      JSON.stringify({ epoch: 1, totalShards: this.totalShards }),
-      'NX',
-    )
-    const active = (await this.activeEpoch()) as EpochState
+    const stored = await this.activeEpoch()
+    if (!stored) {
+      // Active key absent: first boot or a lost key. Park on a pending
+      // proposal (rejoin) rather than auto-creating epoch 1 (usurp).
+      const parked = await this.parkOnPendingProposal()
+      if (parked) {
+        return parked
+      }
+      // No proposal in flight, so no fleet to usurp: bootstrap epoch 1.
+      await this.redis.set(
+        this.epochKey,
+        JSON.stringify({ epoch: 1, totalShards: this.totalShards }),
+        'NX',
+      )
+      // Re-resolve so a racing bootstrap with another total parks normally.
+      return this.resolve()
+    }
+    const active = stored
 
     if (active.totalShards === this.totalShards) {
       // Drop leftover proposals for the already-active total.
@@ -137,6 +149,26 @@ export class EpochCoordinator {
     const pendingRaw = await this.claimPending(proposedRaw)
     const pending = JSON.parse(pendingRaw) as EpochState
 
+    if (pending.totalShards !== this.totalShards) {
+      throw new EpochConflictError(
+        `Conflicting shard total migrations: a migration to ${pending.totalShards} shards is already pending, ` +
+          `this cluster proposes ${this.totalShards}. Fix the fleet configuration; an abandoned proposal expires automatically.`,
+      )
+    }
+    return { state: pending, role: 'pending' }
+  }
+
+  // Pending proposal to park on when the active key is absent; null on first
+  // boot (or total state loss), where bootstrapping epoch 1 usurps nobody.
+  private async parkOnPendingProposal(): Promise<{
+    state: EpochState
+    role: 'pending'
+  } | null> {
+    const pendingRaw = await this.redis.get(this.pendingKey)
+    if (!pendingRaw) {
+      return null
+    }
+    const pending = JSON.parse(pendingRaw) as EpochState
     if (pending.totalShards !== this.totalShards) {
       throw new EpochConflictError(
         `Conflicting shard total migrations: a migration to ${pending.totalShards} shards is already pending, ` +
@@ -189,14 +221,13 @@ export class EpochCoordinator {
     )
   }
 
-  // True once pending is active; throws EpochConflictError when superseded (waiting can't help).
+  // True once pending is active; false while waiting (incl. a missing active
+  // key — stay parked, never throw: throwing restarts into a usurping epoch-1
+  // bootstrap); throws EpochConflictError when superseded (waiting can't help).
   public async tryPromote(pending: EpochState): Promise<boolean> {
     const activeRaw = await this.redis.get(this.epochKey)
     if (!activeRaw) {
-      throw new EpochConflictError(
-        `Epoch state missing while waiting on epoch ${pending.epoch} (${pending.totalShards} shards): ` +
-          `the active epoch key is gone. Fix the fleet configuration and restart this cluster rather than polling forever.`,
-      )
+      return false
     }
 
     const active = JSON.parse(activeRaw) as EpochState

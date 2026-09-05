@@ -7,7 +7,9 @@
   "features": {
     "ghcr.io/devcontainers-extra/features/pnpm:2": {}
   },
-  "forwardPorts": [5432, 6379, 4317, 4318],
+  // String ports (schema requires strings; numbers are dropped): app forwards
+  // the compose services' default ports — db 5432, redis 6379, otel 4317/4318.
+  "forwardPorts": ["5432", "6379", "4317", "4318"],
   "portsAttributes": {
     "5432": { "label": "PostgreSQL" },
     "6379": { "label": "Redis" },

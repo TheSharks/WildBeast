@@ -39,9 +39,9 @@ export const envSchema = z
     REDIS_HOST: z.string().min(1).optional(),
     REDIS_PORT: z.coerce.number().int().min(1).max(65_535).optional(),
     REDIS_PASSWORD: z.string().optional(),
-    // Redis logical database index. Redis ships with 16 databases (0-15)
-    // by default; higher indexes need a custom `databases` setting.
-    REDIS_DB: z.coerce.number().int().min(0).max(15).optional(),
+    // Redis logical database index: 0-15 on defaults, up to 16383 with a
+    // custom `databases` setting, so only the Redis hard limit is enforced.
+    REDIS_DB: z.coerce.number().int().min(0).max(16_383).optional(),
     SENTRY_DSN: z.url().optional(),
     SENTRY_PROFILE_SESSION_SAMPLE_RATE: z.coerce
       .number()

@@ -37,6 +37,7 @@ export interface IdentifyThrottlerOptions {
 }
 
 // Per-bot lock namespace (hashed token, never raw — PII); WILDBEAST_CLUSTER wins when set.
+// feat/v9 changed this prefix: interim mixed fleets throttle independently (accepted, no fallback).
 export function identifyKeyPrefix(
   token?: string,
   namespaceEnv?: string,

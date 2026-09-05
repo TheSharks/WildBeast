@@ -2,6 +2,7 @@ import { parentPort, workerData } from 'node:worker_threads'
 import type { SapphireClient } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
 import { initOpenTelemetry } from '@thesharks/analytics'
+import type { SessionInfo } from 'discord.js'
 import { validateEnv } from './env.mjs'
 import { setTaskFlagShardId } from './features/context.mjs'
 import { WORKER_TELEMETRY_SHUTDOWN_TIMEOUT_MILLIS } from './sharding/lifecycle.mjs'
@@ -122,11 +123,13 @@ async function shutdown() {
 }
 
 /**
- * Handoff exit: flush the persisted session and leave WITHOUT closing the
- * gateway. client.destroy() would close with code 1000, which invalidates
- * the session on Discord's side; a dead socket keeps it resumable, so the
- * cluster taking this shard over can RESUME (no identify spent, missed
- * events replayed) instead of starting cold.
+ * Handoff exit: stop processing first, then flush the persisted session and
+ * leave. Destroying the client halts event handling so the sequence cannot
+ * advance while Redis/telemetry tear down (otherwise the next owner resumes
+ * from a stale session and replays already-handled events). The session is
+ * preserved for a best-effort resume — contrast shutdown(), which invalidates
+ * it. Either way the next owner never double-processes: it resumes or
+ * identifies fresh.
  */
 async function handoffExit() {
   if (shuttingDown) {
@@ -134,7 +137,33 @@ async function handoffExit() {
   }
   shuttingDown = true
 
+  // Snapshot before destroy: destroy() nulls the session via updateSessionInfo.
+  let preserved: SessionInfo | null = null
+  if (sessionStore && shardId !== undefined) {
+    const numericId = Number(shardId)
+    if (Number.isInteger(numericId)) {
+      try {
+        preserved = await sessionStore.retrieve(numericId)
+      } catch {
+        // Without a snapshot the next owner just identifies fresh.
+      }
+    }
+  }
   try {
+    // Destroy first: stops event processing + heartbeats immediately.
+    await client?.destroy()
+  } catch (error) {
+    client?.logger?.error('Failed to destroy client during handoff:', error)
+  }
+  try {
+    // Restore the snapshot over destroy's null-write so close() flushes the
+    // session instead of deleting it; shutdown() does the opposite (nulls it).
+    if (preserved && sessionStore && shardId !== undefined) {
+      const numericId = Number(shardId)
+      if (Number.isInteger(numericId)) {
+        sessionStore.update(numericId, preserved)
+      }
+    }
     await sessionStore?.close()
   } catch (error) {
     client?.logger?.error(

@@ -239,7 +239,7 @@ describe('EpochCoordinator pending proposal expiry', () => {
     await expect(old.tryPromote(pending)).rejects.toThrow(/superseded/)
   })
 
-  it('throws a terminal error when the active epoch key is missing', async () => {
+  it('stays parked instead of throwing when the active epoch key is missing', async () => {
     const redis = new FakeEpochRedis()
     await epochs(redis, 8).resolve()
     const migrating = epochs(redis, 16)
@@ -247,8 +247,43 @@ describe('EpochCoordinator pending proposal expiry', () => {
 
     await redis.del('wildbeast:epoch')
 
-    await expect(migrating.tryPromote(pending)).rejects.toBeInstanceOf(
-      EpochConflictError,
+    // Waiting can't resolve a missing key, but throwing would restart into a
+    // usurping epoch-1 bootstrap; poll on until the key reappears instead.
+    expect(await migrating.tryPromote(pending)).toBe(false)
+  })
+
+  it('rejoins the pending proposal instead of usurping epoch 1 when the active key is lost', async () => {
+    const redis = new FakeEpochRedis()
+    await epochs(redis, 8).resolve()
+    const migrating = epochs(redis, 16)
+    await migrating.resolve()
+
+    // The active key is lost while a migration is in flight; a restart must
+    // park on the proposal, not create epoch 1 with its own total.
+    await redis.del('wildbeast:epoch')
+    await expect(epochs(redis, 16).resolve()).resolves.toEqual({
+      state: { epoch: 2, totalShards: 16 },
+      role: 'pending',
+    })
+    expect(await redis.get('wildbeast:epoch')).toBeNull()
+  })
+
+  it('rejects a mismatched pending proposal when the active key is absent', async () => {
+    const redis = new FakeEpochRedis()
+    await epochs(redis, 8).resolve()
+    await epochs(redis, 16).resolve()
+    await redis.del('wildbeast:epoch')
+
+    await expect(epochs(redis, 32).resolve()).rejects.toThrow(
+      /Conflicting shard total migrations/,
     )
+  })
+
+  it('bootstraps epoch 1 only when no proposal is in flight', async () => {
+    const redis = new FakeEpochRedis()
+    await expect(epochs(redis, 8).resolve()).resolves.toEqual({
+      state: { epoch: 1, totalShards: 8 },
+      role: 'active',
+    })
   })
 })
