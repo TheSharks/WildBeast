@@ -75,7 +75,7 @@ export const entitlements = pgTable(
     // Snowflake; exceeds MAX_SAFE_INTEGER.
     id: bigint('id', { mode: 'bigint' }).primaryKey(),
     skuId: bigint('skuId', { mode: 'bigint' }).notNull(),
-    // Exactly one of userId/guildId is set (CHECK).
+    // Exactly one of userId/guildId is set (CHECK); guild subs arrive with both, mirror keeps guild-only.
     userId: bigint('userId', { mode: 'bigint' }),
     guildId: bigint('guildId', { mode: 'bigint' }),
     // Discord EntitlementType.

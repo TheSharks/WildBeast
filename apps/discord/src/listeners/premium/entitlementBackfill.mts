@@ -17,6 +17,8 @@ export const entitlementBackfillErrorCounter = meter.createCounter(
 // Backoff between attempts; exported for fast tests.
 export const BACKFILL_RETRY_DELAYS_MS = [1_000, 2_000]
 export const BACKFILL_MAX_ATTEMPTS = 1 + BACKFILL_RETRY_DELAYS_MS.length
+// Deferred re-attempt once immediate retries are spent; keeps a revoked mirror from going stale.
+export const BACKFILL_RESCHEDULE_DELAY_MS = 5 * 60 * 1_000
 
 export function backfillDelays(
   delays: readonly number[] = BACKFILL_RETRY_DELAYS_MS,
@@ -33,7 +35,8 @@ const sleep = (ms: number) =>
 // Skipped without SKUs; re-checked every ClientReady so late config still triggers it.
 @ApplyOptions<ListenerOptions>({
   event: Events.ClientReady,
-  once: true,
+  // Every ClientReady re-triggers, so a failed boot backfill retries on the next reconnect.
+  once: false,
 })
 export class EntitlementBackfillListener extends Listener {
   public async run(
@@ -41,6 +44,8 @@ export class EntitlementBackfillListener extends Listener {
     options: {
       delays?: readonly number[]
       sleep?: (ms: number) => Promise<void>
+      rescheduleDelay?: number
+      schedule?: (ms: number, task: () => void) => void
     } = {},
   ) {
     if (premiumSkuMap().size === 0) {
@@ -54,6 +59,15 @@ export class EntitlementBackfillListener extends Listener {
 
     const delays = options.delays ?? backfillDelays()
     const wait = options.sleep ?? sleep
+    const rescheduleDelay =
+      options.rescheduleDelay ?? BACKFILL_RESCHEDULE_DELAY_MS
+    const schedule =
+      options.schedule ??
+      ((ms: number, task: () => void) => {
+        const timer = setTimeout(task, ms)
+        // Never hold the process open for a background retry.
+        timer.unref?.()
+      })
     let attempt = 0
     for (;;) {
       try {
@@ -71,9 +85,18 @@ export class EntitlementBackfillListener extends Listener {
             // Metrics must never break boot.
           }
           this.container.logger.warn(
-            `Could not reconcile entitlements after ${attempt + 1} attempt(s), giving up until the next event or reboot`,
+            `Could not reconcile entitlements after ${attempt + 1} attempt(s), retrying in the background`,
             error,
           )
+          // Reschedule beyond the immediate attempts; each rerun retries again, staying periodic until success.
+          schedule(rescheduleDelay, () => {
+            void this.run(client, {
+              delays,
+              sleep: wait,
+              rescheduleDelay,
+              schedule,
+            })
+          })
           return
         }
         try {

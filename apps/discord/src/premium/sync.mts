@@ -27,11 +27,17 @@ function reconcileLogger() {
 
 type EntitlementCursor = 'before' | 'after'
 
+// discord.js sets both userId+guildId on guild subs; the CHECK wants exactly one, so guild wins.
+export function toMirrorRow(row: NewEntitlement): NewEntitlement {
+  if (row.guildId != null && row.userId != null) return { ...row, userId: null }
+  return row
+}
+
 // Gateway entitlement to mirror row.
 export function entitlementRow(
   entitlement: DiscordEntitlement,
 ): NewEntitlement {
-  return {
+  return toMirrorRow({
     id: BigInt(entitlement.id),
     skuId: BigInt(entitlement.skuId),
     userId: entitlement.userId ? BigInt(entitlement.userId) : null,
@@ -40,14 +46,15 @@ export function entitlementRow(
     deleted: entitlement.deleted,
     startsAt: entitlement.startsAt,
     endsAt: entitlement.endsAt,
-  }
+  })
 }
 
 export async function upsertEntitlement(row: NewEntitlement): Promise<void> {
-  const { id: _id, ...update } = row
+  const normalized = toMirrorRow(row)
+  const { id: _id, ...update } = normalized
   await db
     .insert(entitlements)
-    .values(row)
+    .values(normalized)
     .onConflictDoUpdate({ target: entitlements.id, set: update })
 }
 
@@ -118,54 +125,65 @@ export async function reconcileEntitlements(
   client: Client<true>,
 ): Promise<number> {
   // Keep fetch and transaction back-to-back to narrow the snapshot window.
-  const rows = await fetchAllEntitlementRows(client)
+  // A throw means the fetch errored mid-pagination; only a clean return (even empty) may revoke.
+  let rows: NewEntitlement[]
+  try {
+    rows = await fetchAllEntitlementRows(client)
+  } catch (error) {
+    try {
+      entitlementReconcileCounter.add(1, { result: 'fetch_failed' })
+    } catch {
+      // Metrics must never break the guard.
+    }
+    reconcileLogger()?.warn(
+      `Refusing to reconcile entitlements: fetch failed before completing; aborting before soft-delete`,
+      error,
+    )
+    throw error
+  }
 
   if (rows.length === 0) {
-    // Empty listing with non-empty mirror means failed-open fetch; never mass soft-delete here.
+    // Genuine zero with an empty mirror is a no-op; otherwise fall through and revoke.
     const mirror = await db
       .select({ id: entitlements.id })
       .from(entitlements)
       .limit(1)
-    if (mirror.length > 0) {
+    if (mirror.length === 0) {
       try {
-        entitlementReconcileCounter.add(1, { result: 'empty_aborted' })
+        entitlementReconcileCounter.add(1, { result: 'ok_empty' })
       } catch {
-        // Metrics must never break the guard.
+        // ignore
       }
-      reconcileLogger()?.warn(
-        `Refusing to reconcile entitlements: API returned 0 rows while the mirror is non-empty; aborting before soft-delete`,
+      reconcileLogger()?.info(
+        'Entitlement mirror reconciled: 0 live entitlement(s), 0 soft-deleted (mirror already empty)',
       )
-      throw new Error(
-        'Entitlement fetch returned no rows while the mirror is non-empty; aborting reconcile to avoid mass soft-delete',
-      )
+      return 0
     }
-    try {
-      entitlementReconcileCounter.add(1, { result: 'ok_empty' })
-    } catch {
-      // ignore
-    }
-    reconcileLogger()?.info(
-      'Entitlement mirror reconciled: 0 live entitlement(s), 0 soft-deleted (mirror already empty)',
-    )
-    return 0
   }
 
   let softDeleted = 0
   await db.transaction(async (tx) => {
     for (const row of rows) {
-      const { id: _id, ...update } = row
+      const normalized = toMirrorRow(row)
+      const { id: _id, ...update } = normalized
       await tx
         .insert(entitlements)
-        .values(row)
+        .values(normalized)
         .onConflictDoUpdate({ target: entitlements.id, set: update })
     }
-    // Unreturned rows no longer exist upstream.
+    // Unreturned rows no longer exist upstream; empty listing revokes the whole mirror.
     const ids = rows.map((row) => row.id)
-    const deleted = await tx
-      .update(entitlements)
-      .set({ deleted: true })
-      .where(notInArray(entitlements.id, ids))
-      .returning({ id: entitlements.id })
+    const deleted =
+      ids.length === 0
+        ? await tx
+            .update(entitlements)
+            .set({ deleted: true })
+            .returning({ id: entitlements.id })
+        : await tx
+            .update(entitlements)
+            .set({ deleted: true })
+            .where(notInArray(entitlements.id, ids))
+            .returning({ id: entitlements.id })
     softDeleted = deleted.length
   })
 

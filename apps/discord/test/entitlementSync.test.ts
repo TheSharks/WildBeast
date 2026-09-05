@@ -31,9 +31,11 @@ const {
   EntitlementUpdateListener,
   EntitlementDeleteListener,
 } = await import('../src/listeners/premium/entitlementSync.mjs')
-const { BACKFILL_RETRY_DELAYS_MS, EntitlementBackfillListener } = await import(
-  '../src/listeners/premium/entitlementBackfill.mjs'
-)
+const {
+  BACKFILL_RESCHEDULE_DELAY_MS,
+  BACKFILL_RETRY_DELAYS_MS,
+  EntitlementBackfillListener,
+} = await import('../src/listeners/premium/entitlementBackfill.mjs')
 
 container.logger = silentLogger
 
@@ -118,6 +120,21 @@ describe('entitlement sync listeners', () => {
     )
     await expect(listener.run(gatewayEntitlement)).resolves.toBeUndefined()
   })
+
+  it('stores guild subscriptions as guild-only rows when both ids are set', async () => {
+    const listener = instantiate(
+      EntitlementCreateListener,
+      'entitlementCreateSync',
+    )
+    await listener.run({
+      ...gatewayEntitlement,
+      userId: '456',
+      guildId: '789',
+    } as never)
+    expect(upsertEntitlement).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 900n, userId: null, guildId: 789n }),
+    )
+  })
 })
 
 describe('entitlement backfill', () => {
@@ -142,7 +159,7 @@ describe('entitlement backfill', () => {
     expect(sleep).toHaveBeenCalledWith(BACKFILL_RETRY_DELAYS_MS[0])
   })
 
-  it('gives up after exhausting attempts without throwing', async () => {
+  it('reschedules after exhausting attempts without throwing', async () => {
     process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
     reconcileEntitlements.mockRejectedValue(new Error('still down'))
     const listener = instantiate(
@@ -150,14 +167,46 @@ describe('entitlement backfill', () => {
       'entitlementBackfill',
     )
     const sleep = vi.fn(async () => undefined)
+    const schedule = vi.fn((_ms: number, _task: () => void) => undefined)
 
     await expect(
-      listener.run(shardClient(), { sleep }),
+      listener.run(shardClient(), { sleep, schedule }),
     ).resolves.toBeUndefined()
     expect(reconcileEntitlements).toHaveBeenCalledTimes(
       1 + BACKFILL_RETRY_DELAYS_MS.length,
     )
     expect(sleep).toHaveBeenCalledTimes(BACKFILL_RETRY_DELAYS_MS.length)
+    expect(schedule).toHaveBeenCalledOnce()
+    expect(schedule).toHaveBeenCalledWith(
+      BACKFILL_RESCHEDULE_DELAY_MS,
+      expect.any(Function),
+    )
+  })
+
+  it('retries beyond the immediate attempts when the reschedule fires', async () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    reconcileEntitlements.mockRejectedValue(new Error('still down'))
+    const listener = instantiate(
+      EntitlementBackfillListener,
+      'entitlementBackfill',
+    )
+    const sleep = vi.fn(async () => undefined)
+    const tasks: Array<() => void> = []
+    const schedule = vi.fn((_ms: number, task: () => void) => {
+      tasks.push(task)
+    })
+
+    await listener.run(shardClient(), { sleep, schedule })
+    expect(schedule).toHaveBeenCalledOnce()
+
+    // Firing the rescheduled rerun attempts the reconcile again past attempt 3.
+    tasks[0]!()
+    await vi.waitFor(() => {
+      expect(schedule).toHaveBeenCalledTimes(2)
+    })
+    expect(reconcileEntitlements.mock.calls.length).toBeGreaterThan(
+      1 + BACKFILL_RETRY_DELAYS_MS.length,
+    )
   })
 
   it('keeps the shard-0 gate: other shards never reconcile', async () => {

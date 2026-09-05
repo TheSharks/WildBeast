@@ -21,6 +21,7 @@ import {
 import {
   entitlementRow,
   fetchAllEntitlementRows,
+  toMirrorRow,
 } from '../src/premium/sync.mjs'
 import {
   FREE_TIER,
@@ -268,6 +269,58 @@ describe('entitlementRow', () => {
       startsAt,
       endsAt: null,
     })
+  })
+
+  it('stores guild subscriptions as guild-only rows when both ids are set', () => {
+    const row = entitlementRow({
+      id: '901',
+      skuId: '123',
+      userId: '456',
+      guildId: '789',
+      type: 8,
+      deleted: false,
+      startsAt: null,
+      endsAt: null,
+    } as never)
+    expect(row).toMatchObject({ userId: null, guildId: 789n })
+  })
+
+  it('keeps user-only and guild-only rows as-is', () => {
+    const base = {
+      id: 902n,
+      skuId: 123n,
+      type: 8,
+      deleted: false,
+      startsAt: null,
+      endsAt: null,
+    } as const
+    expect(toMirrorRow({ ...base, userId: 456n, guildId: null })).toMatchObject(
+      { userId: 456n, guildId: null },
+    )
+    expect(toMirrorRow({ ...base, userId: null, guildId: 789n })).toMatchObject(
+      { userId: null, guildId: 789n },
+    )
+  })
+
+  it('normalizes both-set payloads seen during paginated fetch', async () => {
+    const entitlements = [
+      {
+        id: '1',
+        skuId: '123',
+        userId: '456',
+        guildId: '789',
+        type: 8,
+        deleted: false,
+        startsAt: null,
+        endsAt: null,
+      },
+    ]
+    const fetch = async () => new Map(entitlements.map((row) => [row.id, row]))
+    const rows = await fetchAllEntitlementRows({
+      application: { entitlements: { fetch } },
+    } as never)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ userId: null, guildId: 789n })
   })
 
   it('paginates a newest-first entitlement listing without skipping rows', async () => {
@@ -522,7 +575,48 @@ describe('GateEvaluation tier split (evaluation.mts)', () => {
 })
 
 describe('reconcileEntitlements empty-fetch guard', () => {
-  it('aborts without mass soft-delete when the API is empty but the mirror is not', async () => {
+  it('revokes the whole mirror when a clean fetch returns zero rows', async () => {
+    vi.resetModules()
+    vi.doMock('@thesharks/drizzle', async () => {
+      const actual =
+        await vi.importActual<typeof import('@thesharks/drizzle')>(
+          '@thesharks/drizzle',
+        )
+      const returning = async () => [{ id: 1n }]
+      return {
+        ...actual,
+        db: {
+          select: vi.fn(() => ({
+            from: vi.fn(() => ({
+              limit: vi.fn(async () => [{ id: 1n }]),
+            })),
+          })),
+          transaction: vi.fn(async (work: (tx: unknown) => Promise<void>) => {
+            await work({
+              insert: () => ({
+                values: () => ({ onConflictDoUpdate: async () => undefined }),
+              }),
+              update: () => ({
+                set: () => ({ where: () => ({ returning }), returning }),
+              }),
+            })
+          }),
+        },
+      }
+    })
+    const sync = await import('../src/premium/sync.mjs')
+    const { db } = await import('@thesharks/drizzle')
+    const client = {
+      application: { entitlements: { fetch: async () => new Map() } },
+    } as never
+
+    await expect(sync.reconcileEntitlements(client)).resolves.toBe(0)
+    expect(vi.mocked(db.transaction)).toHaveBeenCalledOnce()
+    vi.doUnmock('@thesharks/drizzle')
+    vi.resetModules()
+  })
+
+  it('aborts before any soft-delete when the fetch itself fails', async () => {
     vi.resetModules()
     vi.doMock('@thesharks/drizzle', async () => {
       const actual =
@@ -544,11 +638,17 @@ describe('reconcileEntitlements empty-fetch guard', () => {
     const sync = await import('../src/premium/sync.mjs')
     const { db } = await import('@thesharks/drizzle')
     const client = {
-      application: { entitlements: { fetch: async () => new Map() } },
+      application: {
+        entitlements: {
+          fetch: async () => {
+            throw new Error('api is down')
+          },
+        },
+      },
     } as never
 
     await expect(sync.reconcileEntitlements(client)).rejects.toThrow(
-      /non-empty/,
+      /api is down/,
     )
     expect(vi.mocked(db.transaction)).not.toHaveBeenCalled()
     vi.doUnmock('@thesharks/drizzle')
