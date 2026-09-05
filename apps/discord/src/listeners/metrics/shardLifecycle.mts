@@ -5,21 +5,29 @@ import { metrics } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['discord_shard_ready_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const shardReadyCounter = meter.createCounter('discord_shard_ready_total', {
   description: 'Total number of times a shard became ready',
 })
+// Labels frozen by METRIC_CONTRACT['discord_shard_disconnect_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const shardDisconnectCounter = meter.createCounter(
   'discord_shard_disconnect_total',
   {
     description: 'Total number of shard disconnects',
   },
 )
+// Labels frozen by METRIC_CONTRACT['discord_shard_reconnect_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const shardReconnectCounter = meter.createCounter(
   'discord_shard_reconnect_total',
   {
     description: 'Total number of shard reconnections',
   },
 )
+// Labels frozen by METRIC_CONTRACT['discord_shard_resume_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const shardResumeCounter = meter.createCounter('discord_shard_resume_total', {
   description: 'Total number of times a shard resumed',
 })

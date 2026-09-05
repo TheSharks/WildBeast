@@ -4,12 +4,16 @@ import { Events, Listener } from '@sapphire/framework'
 import { metrics } from '@thesharks/analytics'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['process_uncaught_exception_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const uncaughtExceptionCounter = meter.createCounter(
   'process_uncaught_exception_total',
   {
     description: 'Total number of uncaught exceptions',
   },
 )
+// Labels frozen by METRIC_CONTRACT['process_unhandled_rejection_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const unhandledRejectionCounter = meter.createCounter(
   'process_unhandled_rejection_total',
   {

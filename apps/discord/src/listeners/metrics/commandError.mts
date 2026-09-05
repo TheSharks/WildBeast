@@ -4,6 +4,8 @@ import { metrics } from '@thesharks/analytics'
 import { commandMetricLabels } from '../../utils/tracing.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['discord_command_errors_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const errorCounter = meter.createCounter('discord_command_errors_total', {
   description: 'Total number of Discord command errors',
 })

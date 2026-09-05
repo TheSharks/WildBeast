@@ -75,6 +75,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check metrics contract
+        run: node scripts/check-metrics.mjs
+
       - name: Typecheck
         run: pnpm --filter @thesharks/docs typecheck
 

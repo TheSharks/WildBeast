@@ -5,6 +5,8 @@ import { metrics } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['discord_gateway_events_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const gatewayEventCounter = meter.createCounter(
   'discord_gateway_events_total',
   {

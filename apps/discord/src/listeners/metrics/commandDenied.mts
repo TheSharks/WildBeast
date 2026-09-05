@@ -6,6 +6,8 @@ import type { ClientEvents } from 'discord.js'
 import { commandMetricLabels } from '../../utils/tracing.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['discord_command_denied_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const deniedCounter = meter.createCounter('discord_command_denied_total', {
   description:
     'Commands blocked by preconditions (permissions, cooldowns, ...)',

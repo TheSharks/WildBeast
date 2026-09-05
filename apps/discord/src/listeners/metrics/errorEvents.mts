@@ -5,9 +5,13 @@ import { metrics } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['discord_warnings_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const warnCounter = meter.createCounter('discord_warnings_total', {
   description: 'Total number of Discord warnings',
 })
+// Labels frozen by METRIC_CONTRACT['discord_errors_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const errorCounter = meter.createCounter('discord_errors_total', {
   description: 'Total number of Discord errors',
 })

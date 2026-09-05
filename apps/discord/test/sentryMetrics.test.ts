@@ -45,6 +45,74 @@ const captured: CapturedMetric[] = []
 // modules are dynamically imported so their meters bind to it.
 const otelCapture = captureMetrics('delta')
 
+interface OTelPoint {
+  attributes: Record<string, unknown>
+  value: unknown
+}
+
+/** Drain one delta collection, grouped by metric name. */
+async function collectPoints(
+  ...names: string[]
+): Promise<Map<string, OTelPoint[]>> {
+  const batches = await otelCapture.collect()
+  const out = new Map<string, OTelPoint[]>()
+  for (const name of names) out.set(name, [])
+  for (const batch of batches) {
+    for (const scope of batch.scopeMetrics ?? []) {
+      for (const metric of scope.metrics) {
+        const bucket = out.get(metric.descriptor.name)
+        if (!bucket) continue
+        for (const p of metric.dataPoints as Array<{
+          attributes: Record<string, unknown>
+          // biome-ignore lint/suspicious/noExplicitAny: SDK point shape
+          value: any
+        }>) {
+          bucket.push({
+            attributes: { ...(p.attributes as Record<string, unknown>) },
+            value: p.value as unknown,
+          })
+        }
+      }
+    }
+  }
+  return out
+}
+
+function numericValue(raw: unknown): number {
+  if (typeof raw === 'number') return raw
+  if (raw && typeof raw === 'object') {
+    const rec = raw as Record<string, unknown>
+    if (typeof rec.sum === 'number') return rec.sum
+    if (typeof rec.asDouble === 'number') return rec.asDouble
+    if (typeof rec.asInt === 'number') return rec.asInt
+  }
+  return Number.NaN
+}
+
+/** Pin the exact label-key set for a point (contract freeze). */
+function expectLabelKeys(
+  attributes: Record<string, unknown>,
+  expected: string[],
+): void {
+  expect(Object.keys(attributes).sort()).toEqual([...expected].sort())
+}
+
+// SDK injects these on every Sentry metric; contract pins only our keys.
+const SENTRY_SDK_ATTRS = new Set([
+  'sentry.sdk.name',
+  'sentry.sdk.version',
+  'server.address',
+])
+
+/** Same as expectLabelKeys but ignores SDK-injected attributes. */
+function expectSentryLabelKeys(
+  attributes: Record<string, unknown>,
+  expected: string[],
+): void {
+  const ours = Object.keys(attributes).filter((k) => !SENTRY_SDK_ATTRS.has(k))
+  expect(ours.sort()).toEqual([...expected].sort())
+}
+
 beforeAll(() => {
   Sentry.init({ skipOpenTelemetrySetup: true, registerEsmLoaderHooks: false })
   const client = Sentry.getClient()
@@ -73,6 +141,10 @@ describe('guild membership metrics', () => {
       value: 1,
       attributes: { shard_id: '3', member_count: 1500 },
     })
+    expectSentryLabelKeys(captured[0].attributes as Record<string, unknown>, [
+      'member_count',
+      'shard_id',
+    ])
   })
 
   it('counts leaves', () => {
@@ -86,6 +158,10 @@ describe('guild membership metrics', () => {
       name: 'discord.guild.left',
       value: 1,
     })
+    expectSentryLabelKeys(captured[0].attributes as Record<string, unknown>, [
+      'member_count',
+      'shard_id',
+    ])
   })
 })
 
@@ -114,6 +190,11 @@ describe('rate limit metrics', () => {
         global: 'false',
       },
     })
+    expectSentryLabelKeys(distribution?.attributes as Record<string, unknown>, [
+      'global',
+      'method',
+      'route',
+    ])
   })
 
   it('stringifies the global flag for label consistency', () => {
@@ -205,6 +286,61 @@ describe('task failure duration', () => {
     const errorPoint = points.find((p) => p.attributes.status === 'error')
     expect(errorPoint).toBeDefined()
     expect(Number(errorPoint?.value)).toBeGreaterThan(0)
+    expectLabelKeys(errorPoint?.attributes ?? {}, ['status', 'task'])
+    expect(errorPoint?.attributes.status).toBe('error')
+  })
+
+  it('pins the task counter schema for success and error', async () => {
+    const mod = await import('../src/listeners/metrics/taskEvents.mjs')
+    const {
+      TaskSuccessMetricsListener,
+      TaskErrorMetricsListener,
+      __clearTaskStartTimes,
+    } = mod as unknown as Record<
+      string,
+      new (
+        ctx: never,
+        opts: Record<string, unknown>,
+      ) => {
+        run: (...args: never[]) => void
+      }
+    >
+    __clearTaskStartTimes()
+    const okName = `test-task-success-${Date.now()}`
+    const failName = `test-task-error-${Date.now()}`
+    new TaskSuccessMetricsListener(pieceContext('taskSuccessMetrics'), {}).run(
+      { name: okName } as never,
+      undefined as never,
+      undefined as never,
+      1500 as never,
+    )
+    new TaskErrorMetricsListener(pieceContext('taskErrorMetrics'), {}).run(
+      new Error('x') as never,
+      { name: failName } as never,
+      undefined as never,
+    )
+
+    const byName = await collectPoints(
+      'discord_tasks_total',
+      'discord_task_duration_seconds',
+    )
+    const counters = byName.get('discord_tasks_total') ?? []
+    const okCounter = counters.find((p) => p.attributes.task === okName)
+    expect(okCounter).toBeDefined()
+    expectLabelKeys(okCounter?.attributes ?? {}, ['status', 'task'])
+    expect(okCounter?.attributes.status).toBe('success')
+    expect(numericValue(okCounter?.value)).toBe(1)
+    const failCounter = counters.find((p) => p.attributes.task === failName)
+    expect(failCounter).toBeDefined()
+    expectLabelKeys(failCounter?.attributes ?? {}, ['status', 'task'])
+    expect(failCounter?.attributes.status).toBe('error')
+    expect(numericValue(failCounter?.value)).toBe(1)
+
+    const durations = byName.get('discord_task_duration_seconds') ?? []
+    const okDuration = durations.find((p) => p.attributes.task === okName)
+    expect(okDuration).toBeDefined()
+    expectLabelKeys(okDuration?.attributes ?? {}, ['status', 'task'])
+    expect(numericValue(okDuration?.value)).toBeCloseTo(1.5)
   })
 
   it('falls back to unknown for unnamed tasks', async () => {
@@ -229,6 +365,24 @@ describe('task failure duration', () => {
         undefined as never,
       ),
     ).not.toThrow()
+
+    // Unnamed tasks still emit with task='unknown' (contract freeze).
+    errorListener.run(new Error('y') as never, {} as never, undefined as never)
+    const byName = await collectPoints(
+      'discord_tasks_total',
+      'discord_task_duration_seconds',
+    )
+    const unknownCounter = (byName.get('discord_tasks_total') ?? []).find(
+      (p) => p.attributes.task === 'unknown',
+    )
+    expect(unknownCounter).toBeDefined()
+    expectLabelKeys(unknownCounter?.attributes ?? {}, ['status', 'task'])
+    expect(unknownCounter?.attributes.status).toBe('error')
+    const unknownDuration = (
+      byName.get('discord_task_duration_seconds') ?? []
+    ).find((p) => p.attributes.task === 'unknown')
+    expect(unknownDuration).toBeDefined()
+    expectLabelKeys(unknownDuration?.attributes ?? {}, ['status', 'task'])
   })
 })
 

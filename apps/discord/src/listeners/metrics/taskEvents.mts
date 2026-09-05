@@ -6,9 +6,13 @@ import { DURATION_SECONDS_BOUNDARIES, metrics } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['discord_tasks_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const taskCounter = meter.createCounter('discord_tasks_total', {
   description: 'Total number of scheduled task runs by status',
 })
+// Labels frozen by METRIC_CONTRACT['discord_task_duration_seconds'] in
+// packages/analytics/src/utils/metrics.ts.
 const taskDuration = meter.createHistogram('discord_task_duration_seconds', {
   description: 'Scheduled task run duration',
   unit: 's',

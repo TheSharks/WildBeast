@@ -7,9 +7,13 @@ import {
 } from '../../utils/tracing.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['discord_commands_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const commandCounter = meter.createCounter('discord_commands_total', {
   description: 'Total number of Discord commands executed',
 })
+// Labels frozen by METRIC_CONTRACT['discord_command_duration_seconds'] in
+// packages/analytics/src/utils/metrics.ts.
 const executionTime = meter.createHistogram(
   'discord_command_duration_seconds',
   {

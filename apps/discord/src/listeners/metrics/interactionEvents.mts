@@ -12,9 +12,13 @@ import { InteractionType } from 'discord.js'
 import { resolveInteractionScope } from '../../utils/tracing.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['discord_button_interaction_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const buttonCounter = meter.createCounter('discord_button_interaction_total', {
   description: 'Total number of button interactions',
 })
+// Labels frozen by METRIC_CONTRACT['discord_button_duration_seconds'] in
+// packages/analytics/src/utils/metrics.ts.
 const buttonDuration = meter.createHistogram(
   'discord_button_duration_seconds',
   {
@@ -23,12 +27,18 @@ const buttonDuration = meter.createHistogram(
     advice: { explicitBucketBoundaries: DURATION_SECONDS_BOUNDARIES },
   },
 )
+// Labels frozen by
+// METRIC_CONTRACT['discord_select_menu_interaction_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const selectMenuCounter = meter.createCounter(
   'discord_select_menu_interaction_total',
   {
     description: 'Total number of select menu interactions',
   },
 )
+// Labels frozen by
+// METRIC_CONTRACT['discord_select_menu_duration_seconds'] in
+// packages/analytics/src/utils/metrics.ts.
 const selectMenuDuration = meter.createHistogram(
   'discord_select_menu_duration_seconds',
   {
@@ -37,12 +47,18 @@ const selectMenuDuration = meter.createHistogram(
     advice: { explicitBucketBoundaries: DURATION_SECONDS_BOUNDARIES },
   },
 )
+// Labels frozen by
+// METRIC_CONTRACT['discord_autocomplete_interaction_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const autocompleteCounter = meter.createCounter(
   'discord_autocomplete_interaction_total',
   {
     description: 'Total number of autocomplete interactions',
   },
 )
+// Labels frozen by
+// METRIC_CONTRACT['discord_autocomplete_duration_seconds'] in
+// packages/analytics/src/utils/metrics.ts.
 const autocompleteDuration = meter.createHistogram(
   'discord_autocomplete_duration_seconds',
   {
@@ -51,9 +67,13 @@ const autocompleteDuration = meter.createHistogram(
     advice: { explicitBucketBoundaries: DURATION_SECONDS_BOUNDARIES },
   },
 )
+// Labels frozen by METRIC_CONTRACT['discord_modal_submit_total'] in
+// packages/analytics/src/utils/metrics.ts.
 const modalSubmitCounter = meter.createCounter('discord_modal_submit_total', {
   description: 'Total number of modal submit interactions',
 })
+// Labels frozen by METRIC_CONTRACT['discord_modal_submit_duration_seconds']
+// in packages/analytics/src/utils/metrics.ts.
 const modalSubmitDuration = meter.createHistogram(
   'discord_modal_submit_duration_seconds',
   {

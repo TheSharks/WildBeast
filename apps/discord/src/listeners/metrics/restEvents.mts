@@ -6,6 +6,9 @@ import { metrics } from '@thesharks/analytics'
 import { type RateLimitData, RESTEvents } from 'discord.js'
 
 const meter = metrics.getMeter('@thesharks/discord')
+// Labels frozen by METRIC_CONTRACT['discord_rest_rate_limited_total'] and
+// SENTRY_METRIC_CONTRACT['discord.rest.rate_limit.wait'] in
+// packages/analytics/src/utils/metrics.ts.
 const rateLimitCounter = meter.createCounter(
   'discord_rest_rate_limited_total',
   {
