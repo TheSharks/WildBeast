@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   findFirstResults: [] as unknown[],
   findManyResults: [] as unknown[],
   selectDistinctResults: [] as unknown[],
+  dbSelectResults: [] as unknown[],
   updateCalls: [] as unknown[],
   order: [] as string[],
   create: vi.fn(
@@ -44,6 +45,20 @@ vi.mock('@thesharks/drizzle', async (importOriginal) => {
     ...actual,
     db: {
       transaction: async (fn: (tx: unknown) => Promise<unknown>) => fn(tx),
+      select: vi.fn(() => ({
+        from: () => {
+          // One entry per select().from(); guild-row query chains .where().limit(), watermark awaits directly.
+          const rows =
+            mocks.dbSelectResults.length > 0
+              ? (mocks.dbSelectResults.shift() as unknown[])
+              : [{ id: 1n }]
+          const builder = Promise.resolve(rows) as Promise<unknown[]> & {
+            where: () => { limit: () => Promise<unknown[]> }
+          }
+          builder.where = () => ({ limit: async () => rows })
+          return builder
+        },
+      })),
       query: {
         tags: {
           findFirst: async () => {
@@ -117,6 +132,7 @@ beforeEach(() => {
   mocks.findFirstResults.length = 0
   mocks.findManyResults.length = 0
   mocks.selectDistinctResults.length = 0
+  mocks.dbSelectResults.length = 0
   mocks.updateCalls.length = 0
   mocks.order.length = 0
   mocks.create.mockClear()
@@ -248,6 +264,46 @@ describe('promote', () => {
       }),
     ).resolves.toBe('alreadyPromoted')
     expect(mocks.promoAdd).not.toHaveBeenCalled()
+  })
+
+  it('compensates the just-created command when the race is lost after REST', async () => {
+    // Concurrent delete zeroed the update; the created command must not leak.
+    mocks.selectResults.push([{ value: 0 }], [{ id: 1 }])
+    mocks.create.mockResolvedValueOnce(777n)
+    mocks.updateResults.push([])
+    await expect(
+      TagCommands.promote(client, {
+        guildId: '10',
+        tagId: 1,
+        tagName: 'hello',
+        userId: '5',
+        description: 'd',
+        argsDescription: 'a',
+        limit: 2,
+        reserved: NO_RESERVED,
+      }),
+    ).resolves.toBe('alreadyPromoted')
+    expect(mocks.delete).toHaveBeenCalledWith(client, '10', 777n)
+    expect(mocks.promoAdd).not.toHaveBeenCalled()
+  })
+
+  it('still returns alreadyPromoted when compensation delete fails', async () => {
+    mocks.selectResults.push([{ value: 0 }], [{ id: 1 }])
+    mocks.create.mockResolvedValueOnce(888n)
+    mocks.updateResults.push([])
+    mocks.delete.mockRejectedValueOnce(new Error('delete down'))
+    await expect(
+      TagCommands.promote(client, {
+        guildId: '10',
+        tagId: 1,
+        tagName: 'hello',
+        userId: '5',
+        description: 'd',
+        argsDescription: 'a',
+        limit: 2,
+        reserved: NO_RESERVED,
+      }),
+    ).resolves.toBe('alreadyPromoted')
   })
 
   it('propagates REST failures so the transaction rolls back', async () => {
@@ -421,6 +477,8 @@ describe('reconcileGuild', () => {
       tagRow({ id: 2, name: 'mid', commandId: 22n, promotedAt: at(20) }),
       tagRow({ id: 3, name: 'new', commandId: 33n, promotedAt: at(30) }),
     ])
+    // Fresh mirror (guild has a row) proves the cap; demotion proceeds.
+    mocks.dbSelectResults.push([{ id: 1n }])
     const clientWithCommands = fetchClient([
       { id: '11', shape: tagShape('11') },
       { id: '22', shape: tagShape('22') },
@@ -437,6 +495,69 @@ describe('reconcileGuild', () => {
       action: 'demote',
       trigger: 'reconcile',
     })
+  })
+
+  it('defers over-cap demotion when the mirror is empty (never synced)', async () => {
+    const at = (min: number) => new Date(Date.UTC(2026, 0, 1, 0, min))
+    mocks.findManyResults.push([
+      tagRow({ id: 1, name: 'old', commandId: 11n, promotedAt: at(10) }),
+      tagRow({ id: 2, name: 'new', commandId: 22n, promotedAt: at(20) }),
+    ])
+    // No guild row + empty global mirror: payer grant may be unmirrored, keep commands.
+    mocks.dbSelectResults.push([], [])
+    const clientWithCommands = fetchClient([
+      { id: '11', shape: tagShape('11') },
+      { id: '22', shape: tagShape('22') },
+    ])
+    const stats = await TagCommands.reconcileGuild(clientWithCommands, 10n, {
+      cap: 1,
+      reserved: NO_RESERVED,
+    })
+    expect(stats.demoted).toBe(0)
+    expect(mocks.delete).not.toHaveBeenCalled()
+  })
+
+  it('defers over-cap demotion when the mirror watermark is stale', async () => {
+    const at = (min: number) => new Date(Date.UTC(2026, 0, 1, 0, min))
+    mocks.findManyResults.push([
+      tagRow({ id: 1, name: 'old', commandId: 11n, promotedAt: at(10) }),
+      tagRow({ id: 2, name: 'new', commandId: 22n, promotedAt: at(20) }),
+    ])
+    // No guild row + stale global watermark: don't demote on stale data.
+    mocks.dbSelectResults.push(
+      [],
+      [{ maxUpdatedAt: new Date(Date.UTC(2020, 0, 1)) }],
+    )
+    const clientWithCommands = fetchClient([
+      { id: '11', shape: tagShape('11') },
+      { id: '22', shape: tagShape('22') },
+    ])
+    const stats = await TagCommands.reconcileGuild(clientWithCommands, 10n, {
+      cap: 1,
+      reserved: NO_RESERVED,
+    })
+    expect(stats.demoted).toBe(0)
+    expect(mocks.delete).not.toHaveBeenCalled()
+  })
+
+  it('demotes when the mirror is fresh and the guild is genuinely free', async () => {
+    const at = (min: number) => new Date(Date.UTC(2026, 0, 1, 0, min))
+    mocks.findManyResults.push([
+      tagRow({ id: 1, name: 'old', commandId: 11n, promotedAt: at(10) }),
+      tagRow({ id: 2, name: 'new', commandId: 22n, promotedAt: at(20) }),
+    ])
+    // No guild row but fresh global mirror proves absence means free.
+    mocks.dbSelectResults.push([], [{ maxUpdatedAt: new Date() }])
+    const clientWithCommands = fetchClient([
+      { id: '11', shape: tagShape('11') },
+      { id: '22', shape: tagShape('22') },
+    ])
+    const stats = await TagCommands.reconcileGuild(clientWithCommands, 10n, {
+      cap: 1,
+      reserved: NO_RESERVED,
+    })
+    expect(stats.demoted).toBe(1)
+    expect(mocks.delete).toHaveBeenCalledWith(clientWithCommands, '10', 22n)
   })
 
   it('recreates missing commands verbatim and demotes newly-reserved names', async () => {

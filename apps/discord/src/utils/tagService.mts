@@ -1,8 +1,10 @@
 import { container } from '@sapphire/framework'
+import { metrics } from '@thesharks/analytics'
 import {
   and,
   count,
   db,
+  entitlements,
   eq,
   isNotNull,
   isNull,
@@ -21,6 +23,19 @@ import {
   reservedCommandNames,
   tagCommandName,
 } from './guildTagCommands.mjs'
+
+const meter = metrics.getMeter('@thesharks/discord')
+// Deferred over-cap demotions when the entitlement mirror can't prove the cap is fresh.
+export const reconcileDeferCounter = meter.createCounter(
+  'discord_guild_tag_reconcile_deferred_total',
+  {
+    description:
+      'Guild tag reconciliations deferred on stale entitlement mirror',
+  },
+)
+
+// Mirror older than this can't prove a guild is free; demotion waits for a fresh sync.
+export const ENTITLEMENT_MIRROR_STALE_AFTER_MS = 24 * 60 * 60 * 1_000
 
 // DB<->Discord invariant for promoted tags lives here; callers only map outcomes to replies.
 //
@@ -138,7 +153,18 @@ async function promote(
       })
       .where(and(eq(tags.id, input.tagId), isNull(tags.commandId)))
       .returning({ id: tags.id })
-    if (updated.length === 0) return 'alreadyPromoted' as const
+    if (updated.length === 0) {
+      // Lost race after REST create (concurrent delete/demote zeroed the update); compensate so no orphan leaks.
+      try {
+        await deleteGuildTagCommand(client, input.guildId, commandId)
+      } catch (error) {
+        container.logger.warn(
+          `Could not clean up orphaned guild command ${commandId} in guild ${input.guildId}`,
+          error,
+        )
+      }
+      return 'alreadyPromoted' as const
+    }
     return 'promoted' as const
   })
 
@@ -251,6 +277,40 @@ export interface ReconcileGuildOptions {
   argsDescription?: string
 }
 
+// Mirror freshness for over-cap demotes; a guild with no row must not lose commands on stale data.
+export async function shouldDeferOverCapDemotion(
+  guildId: bigint,
+): Promise<{ defer: boolean; reason?: string }> {
+  try {
+    const guildRows = await db
+      .select({ id: entitlements.id })
+      .from(entitlements)
+      .where(eq(entitlements.guildId, guildId))
+      .limit(1)
+    // Affirmative mirror row means the cap isn't based on absence; demotion is safe.
+    if (guildRows.length > 0) return { defer: false }
+    const [watermark] = await db
+      .select({
+        maxUpdatedAt: sql<Date | null>`max(${entitlements.updatedAt})`,
+      })
+      .from(entitlements)
+    const max = watermark?.maxUpdatedAt ?? null
+    // Empty mirror never synced; stale mirror may miss a payer's grant.
+    if (max === null) return { defer: true, reason: 'empty-mirror' }
+    if (Date.now() - max.getTime() > ENTITLEMENT_MIRROR_STALE_AFTER_MS) {
+      return { defer: true, reason: 'stale-mirror' }
+    }
+    return { defer: false }
+  } catch (error) {
+    // Fail closed on watermark errors; never demote payers on unreadable mirror.
+    container.logger.warn(
+      `Deferring over-cap demotion for guild ${guildId}: entitlement watermark unreadable`,
+      error,
+    )
+    return { defer: true, reason: 'watermark-error' }
+  }
+}
+
 // Rebuild one guild's promoted set: orphans first (so recreates can't race them),
 // then over-cap demotes newest-first (grace for billing hiccups), then recreates.
 async function reconcileGuild(
@@ -300,6 +360,21 @@ async function reconcileGuild(
   }
 
   const demote = new Set(promotionsOverCap(promoted, cap))
+  if (demote.size > 0) {
+    // Stale mirror demotes payers; skip over-cap demotes when freshness can't be proven.
+    const decision = await shouldDeferOverCapDemotion(guildId)
+    if (decision.defer) {
+      container.logger.warn(
+        `Deferring over-cap demotion for guild ${guildId}: entitlement mirror ${decision.reason}; keeping ${promoted.length} commands (cap ${cap})`,
+      )
+      try {
+        reconcileDeferCounter.add(1, { reason: decision.reason ?? 'unknown' })
+      } catch {
+        // Metrics must never block reconciliation.
+      }
+      demote.clear()
+    }
+  }
   for (const row of demote) {
     if (row.commandId === null) continue
     try {

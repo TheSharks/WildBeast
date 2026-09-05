@@ -324,6 +324,100 @@ describe('TagCommands service surface (DB<->Discord invariant black box)', () =>
   })
 })
 
+describe('unknown-command orphan guard (shape + delayed re-read)', () => {
+  it('never deletes non-tag commands, even when unclaimed (rolling-deploy safe)', () => {
+    const claimed = new Set<string>()
+    const shouldDelete = (command: { id: string; options?: unknown }) =>
+      !claimed.has(command.id) && isTagCommandShape(command)
+    // Bare or foreign shapes seen during deploys must not delete.
+    expect(shouldDelete({ id: '1' })).toBe(false)
+    expect(
+      shouldDelete({
+        id: '2',
+        options: [{ name: 'args', type: ApplicationCommandOptionType.String }],
+      }),
+    ).toBe(true)
+    expect(
+      shouldDelete({
+        id: '3',
+        options: [{ name: 'other', type: ApplicationCommandOptionType.String }],
+      }),
+    ).toBe(false)
+  })
+
+  it('exposes a short re-check delay covering the create-to-commit window', async () => {
+    const { ORPHAN_RECHECK_DELAY_MS } = await import(
+      '../src/listeners/tags/guildTagCommandRun.mjs'
+    )
+    // Short delay: long enough for the DB flip, short enough to stay interactive.
+    expect(ORPHAN_RECHECK_DELAY_MS).toBeGreaterThanOrEqual(500)
+    expect(ORPHAN_RECHECK_DELAY_MS).toBeLessThanOrEqual(5_000)
+  })
+})
+
+describe('tag locale dedicated messages (demoteFailed / invalidName)', () => {
+  it('defines demoteFailed and invalidName with the expected placeholders', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const { dirname, join } = await import('node:path')
+    const { fileURLToPath } = await import('node:url')
+    const here = dirname(fileURLToPath(import.meta.url))
+    const raw = await readFile(
+      join(here, '..', 'src', 'languages', 'en-US', 'commands', 'tag.json'),
+      'utf8',
+    )
+    const json = JSON.parse(raw) as Record<string, string>
+    expect(typeof json.demoteFailed).toBe('string')
+    expect(typeof json.invalidName).toBe('string')
+    expect(json.demoteFailed).toContain('{{name}}')
+    expect(json.demoteFailed).toContain('{{error}}')
+    expect(json.invalidName).toContain('{{name}}')
+    // Demote copy must not reuse the promote register wording.
+    expect(json.demoteFailed).not.toBe(json.promoteFailed)
+  })
+})
+
+describe('fetch SSRF literals (:: and NAT64)', () => {
+  it('blocks unspecified :: and 64:ff9b::/96 literals', async () => {
+    const { render } = await import('@thesharks/tagscript')
+    const { vi: vitestVi } = await import('vitest')
+    const fetchMock = vitestVi.fn(async () => new Response('ok'))
+    vitestVi.stubGlobal('fetch', fetchMock)
+    try {
+      await expect(
+        render('{fetch:http://[::]/}', { enableFetch: true }),
+      ).rejects.toThrow(/Blocked fetch to private address/)
+      await expect(
+        render('{fetch:http://[64:ff9b::7f00:1]/}', { enableFetch: true }),
+      ).rejects.toThrow(/Blocked fetch to private address/)
+      expect(fetchMock).not.toHaveBeenCalled()
+    } finally {
+      vitestVi.unstubAllGlobals()
+    }
+  })
+})
+
+describe('inspect limit enforced tier (any vs enforced display)', () => {
+  it('prefers scope-resolved tierEnforced for the fallback value', async () => {
+    const { inspectFlag } = await import('../src/features/inspect.mjs')
+    const { getLimit } = await import('../src/premium/limits.mjs')
+    const context = { targetingKey: '500', environment: 'test' }
+    // Legacy: tier only (any) still resolves.
+    const legacy = await inspectFlag('limits.tags.maxPerGuild', {
+      ...context,
+      tier: 'premium',
+    })
+    expect(legacy?.value).toBe(String(getLimit('tags.maxPerGuild', 'premium')))
+    // Scope-resolved: enforced free wins for the fallback, any shown in description.
+    const enforced = await inspectFlag('limits.tags.maxPerGuild', {
+      ...context,
+      tier: 'premium',
+      tierEnforced: 'free',
+    } as never)
+    expect(enforced?.value).toBe(String(getLimit('tags.maxPerGuild', 'free')))
+    expect(enforced?.description).toContain('free')
+  })
+})
+
 describe('replyWithRenderedTag caps and allowedMentions', () => {
   function fakeInteraction(args: string | null, content: string) {
     void content

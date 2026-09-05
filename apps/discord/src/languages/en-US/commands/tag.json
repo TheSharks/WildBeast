@@ -22,6 +22,8 @@
   "promoteNameCollision": "`{{name}}` would clash with one of the bot's own commands.",
   "promoteMissingPermission": "You need the Manage Server permission to manage tag commands.",
   "promoteFailed": "Discord wouldn't register `/{{name}}`: {{error}}",
+  "demoteFailed": "Discord wouldn't remove `/{{name}}`: {{error}}",
+  "invalidName": "`{{name}}` can't be used as a tag name. Names can't be blank.",
   "promotedCommandGone": "The tag behind this command no longer exists, so the command is being removed.",
   "defaultCommandDescription": "Tag \"{{name}}\" from this server"
 }

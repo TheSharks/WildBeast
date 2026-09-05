@@ -14,6 +14,7 @@ import {
 import {
   FREE_TIER,
   isPremiumTier,
+  type PremiumScope,
   type PremiumTier,
 } from '../premium/tiers.mjs'
 import {
@@ -109,14 +110,17 @@ async function inspectLimit(
   context: EvaluationContext,
 ): Promise<FlagInspection> {
   const definition = describeLimit(key)
-  const tier = tierFromContext(context)
+  const anyTier = tierFromContext(context)
+  // Enforcement uses scope-resolved tier (see evaluation.mts tierEnforced), not tierAny.
+  const enforced = enforcedTierFromContext(context, definition.scope)
+  const tier = enforced ?? anyTier
   const fallback = getLimit(key, tier)
   const details = await limitFlagDetails(limitFlagKey(key), fallback, context)
   return {
     key: limitFlagKey(key),
     kind: 'limit',
     owner: 'premium',
-    description: `${definition.description} (${definition.scope} scope, evaluated at tier ${tier})`,
+    description: `${definition.description} (${definition.scope} scope, evaluated at tier ${tier}${enforced && enforced !== anyTier ? `, any ${anyTier}` : ''})`,
     value: formatValue(details.value),
     ...evaluationFields(details),
     expired: false,
@@ -128,6 +132,18 @@ async function inspectLimit(
 function tierFromContext(context: EvaluationContext): PremiumTier {
   const tier = context.tier
   return typeof tier === 'string' && isPremiumTier(tier) ? tier : FREE_TIER
+}
+
+// Scope-resolved tier when callers pass it (tierEnforced); undefined keeps legacy tierAny behavior.
+function enforcedTierFromContext(
+  context: EvaluationContext,
+  scope: PremiumScope | 'any',
+): PremiumTier | undefined {
+  void scope
+  const enforced = (context as { tierEnforced?: unknown }).tierEnforced
+  return typeof enforced === 'string' && isPremiumTier(enforced)
+    ? enforced
+    : undefined
 }
 
 function evaluationFields(details: EvaluationDetails<FlagValue>): {

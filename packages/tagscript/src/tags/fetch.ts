@@ -13,9 +13,13 @@ blockedRanges.addSubnet('127.0.0.0', 8, 'ipv4')
 blockedRanges.addSubnet('169.254.0.0', 16, 'ipv4')
 blockedRanges.addSubnet('172.16.0.0', 12, 'ipv4')
 blockedRanges.addSubnet('192.168.0.0', 16, 'ipv4')
+// Unspecified ::/128 would otherwise bypass literal checks (no route, but fail closed).
+blockedRanges.addAddress('::', 'ipv6')
 blockedRanges.addAddress('::1', 'ipv6')
 blockedRanges.addSubnet('fe80::', 10, 'ipv6')
 blockedRanges.addSubnet('fc00::', 7, 'ipv6')
+// NAT64 well-known prefix can launder IPv4 privates via IPv6 literals.
+blockedRanges.addSubnet('64:ff9b::', 96, 'ipv6')
 
 const FETCH_TIMEOUT_MS = 10_000
 const MAX_REDIRECTS = 5
@@ -83,7 +87,7 @@ function assertUrlAllowed(raw: string, allowedHosts?: string[]): URL {
     throw new RenderError(`Blocked fetch to private address: ${literal}`)
   }
 
-  // SSRF note: hostnames aren't DNS-pinned here; use fetchAllowedHosts for untrusted templates.
+  // SSRF note: hostnames aren't DNS-pinned (resolved IPs aren't re-validated, TOCTOU); use fetchAllowedHosts for untrusted templates.
   return url
 }
 

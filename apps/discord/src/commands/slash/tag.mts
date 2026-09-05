@@ -232,12 +232,11 @@ export class TagCommand extends TracedSubcommand {
 
     // Trimmed-empty names still pass minLength(1); reject them here.
     if (!name) {
+      // Whitespace-only is a create-input error, not a promote-name error.
       return interaction.reply({
-        content: (await resolveKey(
-          interaction,
-          'commands/tag:promoteInvalidName',
-          { name: interaction.options.getString('name', true) },
-        )) as string,
+        content: (await resolveKey(interaction, 'commands/tag:invalidName', {
+          name: interaction.options.getString('name', true),
+        })) as string,
         flags: MessageFlags.Ephemeral,
         allowedMentions: { parse: [] },
       })
@@ -602,8 +601,9 @@ export class TagCommand extends TracedSubcommand {
         `Could not demote tag ${tag.name} in guild ${interaction.guildId}`,
         error,
       )
+      // Demote failures need their own copy; promoteFailed misleads about direction.
       return interaction.reply({
-        content: (await resolveKey(interaction, 'commands/tag:promoteFailed', {
+        content: (await resolveKey(interaction, 'commands/tag:demoteFailed', {
           name: tag.name.toLowerCase(),
           error: error instanceof Error ? error.message : String(error),
         })) as string,
