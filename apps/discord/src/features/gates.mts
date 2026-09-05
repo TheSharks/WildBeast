@@ -1,21 +1,24 @@
 import type { Command } from '@sapphire/framework'
 import type { AutocompleteInteraction, BaseInteraction } from 'discord.js'
+import type { PremiumPreconditionContext } from '../preconditions/Premium.mjs'
+import { tierAtLeast } from '../premium/tiers.mjs'
 import {
-  isPremiumSatisfied,
-  type PremiumPreconditionContext,
-} from '../preconditions/Premium.mjs'
-import { booleanFlagValue } from './client.mjs'
-import { commandFlagContext } from './commandContext.mjs'
+  evaluateGates,
+  type GatePremiumRequirement,
+  isAllowed,
+  premiumRequirementFor,
+  registerPremiumGate,
+  subjectFromInteraction,
+  tierEnforced,
+} from './evaluation.mjs'
 import { commandGateKey } from './registry.mjs'
-
-// Premium requirements for surfaces preconditions miss (autocomplete, later clicks).
-const premiumGates = new Map<string, PremiumPreconditionContext>()
 
 // Registered premium requirement, if any.
 export function premiumGateFor(
   command: string,
 ): PremiumPreconditionContext | undefined {
-  return premiumGates.get(command)
+  const requirement = premiumRequirementFor(command)
+  return requirement as PremiumPreconditionContext | undefined
 }
 
 // Gate check; true when the command has no requirement.
@@ -23,26 +26,54 @@ export function commandPremiumAllowed(
   interaction: BaseInteraction,
   command: string,
 ): boolean {
-  const requirement = premiumGates.get(command)
+  const requirement = premiumRequirementFor(command)
   if (!requirement) return true
-  return isPremiumSatisfied(interaction, requirement)
+  const tier = requirement.tier ?? 'premium'
+  const scope = requirement.scope ?? 'any'
+  return tierAtLeast(
+    tierEnforced(subjectFromInteraction(interaction), scope),
+    tier,
+  )
+}
+
+// Subcommand for flag targeting; only chat/autocomplete interactions carry one.
+function subcommandOf(interaction: BaseInteraction): string | undefined {
+  try {
+    if (
+      typeof interaction.isChatInputCommand === 'function' &&
+      interaction.isChatInputCommand()
+    ) {
+      return interaction.options.getSubcommand(false) ?? undefined
+    }
+    if (
+      typeof interaction.isAutocomplete === 'function' &&
+      interaction.isAutocomplete()
+    ) {
+      return interaction.options.getSubcommand(false) ?? undefined
+    }
+  } catch {
+    return undefined
+  }
+  return undefined
 }
 
 // Gate command invocations and suppress autocomplete work while disabled.
 export function installCommandFeatureGate(command: Command): void {
   const key = commandGateKey(command.name)
   if (!key) return
-
   command.preconditions.append({ name: 'Feature', context: { key } })
 
   const autocompleteRun = command.autocompleteRun?.bind(command)
   if (!autocompleteRun) return
   command.autocompleteRun = async (interaction) => {
-    const enabled = await booleanFlagValue(
-      key,
-      commandFlagContext(interaction, command.name),
+    const evaluation = await evaluateGates(
+      subjectFromInteraction(interaction),
+      command.name,
+      subcommandOf(interaction),
     )
-    return enabled ? autocompleteRun(interaction) : interaction.respond([])
+    return evaluation.flagEnabled
+      ? autocompleteRun(interaction)
+      : interaction.respond([])
   }
 }
 
@@ -51,11 +82,11 @@ export async function commandComponentEnabled(
   interaction: BaseInteraction,
   command: string,
 ): Promise<boolean> {
-  if (!commandPremiumAllowed(interaction, command)) return false
-  const key = commandGateKey(command)
-  return key
-    ? booleanFlagValue(key, commandFlagContext(interaction, command))
-    : true
+  const evaluation = await evaluateGates(
+    subjectFromInteraction(interaction),
+    command,
+  )
+  return isAllowed(evaluation)
 }
 
 // Premium-gate a command with autocomplete + component coverage (preconditions cover neither).
@@ -63,13 +94,18 @@ export function installCommandPremiumGate(
   command: Command,
   context: PremiumPreconditionContext = {},
 ): void {
-  premiumGates.set(command.name, context)
+  registerPremiumGate(command.name, context as GatePremiumRequirement)
   command.preconditions.append({ name: 'Premium', context })
 
   const autocompleteRun = command.autocompleteRun?.bind(command)
   if (!autocompleteRun) return
   command.autocompleteRun = async (interaction: AutocompleteInteraction) => {
-    if (!isPremiumSatisfied(interaction, context)) {
+    const evaluation = await evaluateGates(
+      subjectFromInteraction(interaction),
+      command.name,
+      subcommandOf(interaction),
+    )
+    if (!evaluation.premiumAllowed) {
       return interaction.respond([])
     }
     return autocompleteRun(interaction)

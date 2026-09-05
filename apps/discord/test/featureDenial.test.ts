@@ -12,6 +12,7 @@ import { silentLogger } from '@thesharks/test-utils'
 import { MessageFlags } from 'discord.js'
 import { describe, expect, it, vi } from 'vitest'
 import { FeaturePreconditionIdentifier } from '../src/preconditions/Feature.mjs'
+import { PremiumPreconditionIdentifier } from '../src/preconditions/Premium.mjs'
 
 vi.mock('@sapphire/plugin-i18next', async () => {
   const actual = await vi.importActual('@sapphire/plugin-i18next')
@@ -96,6 +97,47 @@ describe('feature gate denial reply', () => {
 
     expect(reply).toHaveBeenCalledWith({
       content: 'system/errors:feature_unavailable',
+      flags: MessageFlags.Ephemeral,
+    })
+  })
+})
+
+describe('premium gate denial reply', () => {
+  it('turns a premium precondition denial into a localized upsell reply', async () => {
+    const listener = new CommandDeniedReplyListener(
+      {
+        name: 'commandDeniedReply',
+        path: fileURLToPath(import.meta.url),
+        root: dirname(fileURLToPath(import.meta.url)),
+        store: new ListenerStore(),
+      } as never,
+      {},
+    )
+    const reply = vi.fn(async () => undefined)
+
+    await listener.run(
+      {
+        identifier: PremiumPreconditionIdentifier,
+        context: {
+          requiredTier: 'premium',
+          requiredScope: 'guild',
+          currentTier: 'free',
+        },
+        message: 'This command requires a premium subscription.',
+      } as never,
+      {
+        interaction: {
+          guildId: '500',
+          replied: false,
+          deferred: false,
+          reply,
+        },
+      } as never,
+    )
+
+    expect(reply).toHaveBeenCalledWith({
+      content: expect.stringContaining('system/errors:premium_required'),
+      components: undefined,
       flags: MessageFlags.Ephemeral,
     })
   })

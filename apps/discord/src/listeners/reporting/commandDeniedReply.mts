@@ -10,6 +10,7 @@ import {
   type ContextMenuCommandInteraction,
   MessageFlags,
 } from 'discord.js'
+import { denialReason } from '../../features/evaluation.mjs'
 import { FeaturePreconditionIdentifier } from '../../preconditions/Feature.mjs'
 import { OwnerOnlyPreconditionIdentifier } from '../../preconditions/OwnerOnly.mjs'
 import { PremiumPreconditionIdentifier } from '../../preconditions/Premium.mjs'
@@ -79,7 +80,12 @@ async function describeDenial(
       })) as string,
     }
   }
-  if (error.identifier === FeaturePreconditionIdentifier) {
+  // Single gate vocabulary; identifiers map to an evaluation slice below.
+  const reason = denialReason({
+    flagEnabled: error.identifier !== FeaturePreconditionIdentifier,
+    premiumAllowed: error.identifier !== PremiumPreconditionIdentifier,
+  })
+  if (reason === 'feature') {
     return {
       content: (await resolveKey(
         interaction,
@@ -95,7 +101,7 @@ async function describeDenial(
       )) as string,
     }
   }
-  if (error.identifier === PremiumPreconditionIdentifier) {
+  if (reason === 'premium') {
     const context = Object(error.context)
     const required = String(Reflect.get(context, 'requiredTier') ?? 'premium')
     const rawScope = Reflect.get(context, 'requiredScope')

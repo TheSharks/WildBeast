@@ -7,8 +7,10 @@ import type {
   ChatInputCommandInteraction,
   ContextMenuCommandInteraction,
 } from 'discord.js'
-import { booleanFlagValue } from '../features/client.mjs'
-import { commandFlagContext } from '../features/commandContext.mjs'
+import {
+  evaluateGates,
+  subjectFromInteraction,
+} from '../features/evaluation.mjs'
 import type { GateFlagKey } from '../features/registry.mjs'
 
 export const FeaturePreconditionIdentifier = 'preconditionFeature'
@@ -42,17 +44,29 @@ export class FeaturePrecondition extends Precondition {
     command: string,
     context: FeaturePreconditionContext,
   ) {
-    const enabled = await booleanFlagValue(
-      context.key,
-      commandFlagContext(interaction, command),
+    // Single gate boundary; this precondition enforces the flag slice only.
+    const evaluation = await evaluateGates(
+      subjectFromInteraction(interaction),
+      command,
+      subcommandOf(interaction),
     )
-    if (enabled) return this.ok()
+    if (evaluation.flagEnabled) return this.ok()
     return this.error({
       identifier: FeaturePreconditionIdentifier,
       message: 'This command is temporarily unavailable.',
       context: { ...context, command },
     })
   }
+}
+
+// Chat-input subcommand for flag targeting; context menus carry none.
+function subcommandOf(
+  interaction: ChatInputCommandInteraction | ContextMenuCommandInteraction,
+): string | undefined {
+  if (interaction.isChatInputCommand()) {
+    return interaction.options.getSubcommand(false) ?? undefined
+  }
+  return undefined
 }
 
 declare module '@sapphire/framework' {

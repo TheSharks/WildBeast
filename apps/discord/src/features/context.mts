@@ -11,7 +11,7 @@ export function setTaskFlagShardId(shardId: string | undefined): void {
 export interface InteractionFlagContextOptions {
   command?: string
   subcommand?: string
-  /** Targeting hint only, not proof of payment; gates carry anyTier, limits carry enforcement tier. */
+  /** Targeting hint only, never proof of payment; evaluation.mts splits anyTier (flags) from enforced tier (limits). */
   tier?: string
   /** Override the natural guild-first targeting key (used by user limits). */
   targetingKey?: string

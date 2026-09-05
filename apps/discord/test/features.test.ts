@@ -278,6 +278,53 @@ describe.sequential('OFREP-backed gates', () => {
       commandComponentEnabled(fakeInteraction('42'), 'booru'),
     ).resolves.toBe(false)
   })
+
+  it('runs autocomplete work while a command is enabled', async () => {
+    await initFeatureFlags({
+      logger: silentLogger,
+      provider: new InMemoryProvider({
+        'features.commands.booru': {
+          disabled: false,
+          variants: { enabled: true },
+          defaultVariant: 'enabled',
+        },
+      }),
+    })
+    const autocompleteRun = vi.fn(async () => undefined)
+    const append = vi.fn()
+    const command = {
+      name: 'booru',
+      preconditions: { append },
+      autocompleteRun,
+    }
+    installCommandFeatureGate(command as never)
+    const respond = vi.fn(async () => undefined)
+
+    await command.autocompleteRun({
+      ...fakeInteraction(),
+      respond,
+    } as never)
+
+    expect(autocompleteRun).toHaveBeenCalledOnce()
+    expect(respond).not.toHaveBeenCalled()
+  })
+
+  it('allows stateless command components while the gate is enabled', async () => {
+    await initFeatureFlags({
+      logger: silentLogger,
+      provider: new InMemoryProvider({
+        'features.commands.booru': {
+          disabled: false,
+          variants: { enabled: true },
+          defaultVariant: 'enabled',
+        },
+      }),
+    })
+
+    await expect(
+      commandComponentEnabled(fakeInteraction('42'), 'booru'),
+    ).resolves.toBe(true)
+  })
 })
 
 class GatedFixtureTask extends TracedScheduledTask {

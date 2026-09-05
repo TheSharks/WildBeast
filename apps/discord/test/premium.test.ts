@@ -473,6 +473,54 @@ describe.sequential('limitFor OFREP clamp', () => {
   })
 })
 
+describe('GateEvaluation tier split (evaluation.mts)', () => {
+  it('keeps user subscriptions out of guild enforcement while targeting sees the best tier', async () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    const {
+      denialReason,
+      evaluateGates,
+      isAllowed,
+      registerPremiumGate,
+      subjectFromInteraction,
+    } = await import('../src/features/evaluation.mjs')
+    registerPremiumGate('eval-tier-fixture', { scope: 'guild' })
+
+    const userEval = await evaluateGates(
+      subjectFromInteraction(fakeInteraction([{ skuId: '123' }])),
+      'eval-tier-fixture',
+    )
+    expect(userEval.tierAny).toBe('premium')
+    expect(userEval.tierEnforced).toBe('free')
+    expect(userEval.premiumAllowed).toBe(false)
+    expect(isAllowed(userEval)).toBe(false)
+    expect(denialReason(userEval)).toBe('premium')
+
+    const guildEval = await evaluateGates(
+      subjectFromInteraction(
+        fakeInteraction([{ skuId: '123', guildId: '500' }]),
+      ),
+      'eval-tier-fixture',
+    )
+    expect(guildEval.tierAny).toBe('premium')
+    expect(guildEval.tierEnforced).toBe('premium')
+    expect(isAllowed(guildEval)).toBe(true)
+    expect(denialReason(guildEval)).toBeUndefined()
+  })
+
+  it('reports feature denials before premium denials', async () => {
+    const { denialReason } = await import('../src/features/evaluation.mjs')
+    expect(denialReason({ flagEnabled: false, premiumAllowed: false })).toBe(
+      'feature',
+    )
+    expect(denialReason({ flagEnabled: true, premiumAllowed: false })).toBe(
+      'premium',
+    )
+    expect(
+      denialReason({ flagEnabled: true, premiumAllowed: true }),
+    ).toBeUndefined()
+  })
+})
+
 describe('reconcileEntitlements empty-fetch guard', () => {
   it('aborts without mass soft-delete when the API is empty but the mirror is not', async () => {
     vi.resetModules()

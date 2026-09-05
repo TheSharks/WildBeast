@@ -12,12 +12,19 @@ import {
   type SQL,
   sql,
 } from '@thesharks/drizzle'
-import type { BaseInteraction, Entitlement } from 'discord.js'
+import type { BaseInteraction } from 'discord.js'
 import { limitFlagValue } from '../features/client.mjs'
 import {
   interactionFlagContext,
   taskFlagContext,
 } from '../features/context.mjs'
+import {
+  guildTierForSubject,
+  subjectFromInteraction,
+  tierAny,
+  tierEnforced,
+  userTierForSubject,
+} from '../features/evaluation.mjs'
 import {
   clampLimitOverride,
   describeLimit,
@@ -41,34 +48,25 @@ export const limitOverrideFallbackCounter = meter.createCounter(
 )
 
 // Interaction tiers are synchronous and fresh (Discord attaches all entitlements); prefer over DB.
+// Tier math lives in evaluation.mts; these stay as interaction-shaped aliases.
 
 // Invoker's own tier, anywhere.
 export function userTierForInteraction(
   interaction: BaseInteraction,
 ): PremiumTier {
-  return grantedByInteraction(
-    interaction,
-    (entitlement) => entitlement.guildId === null,
-  )
+  return userTierForSubject(subjectFromInteraction(interaction))
 }
 
 // Current guild's tier; free in DMs.
 export function guildTierForInteraction(
   interaction: BaseInteraction,
 ): PremiumTier {
-  if (!interaction.guildId) return FREE_TIER
-  return grantedByInteraction(
-    interaction,
-    (entitlement) => entitlement.guildId === interaction.guildId,
-  )
+  return guildTierForSubject(subjectFromInteraction(interaction))
 }
 
 // Best of either scope for gate targeting; never for limits (use enforcementTier below).
 export function tierForInteraction(interaction: BaseInteraction): PremiumTier {
-  return highestTier([
-    userTierForInteraction(interaction),
-    guildTierForInteraction(interaction),
-  ])
+  return tierAny(subjectFromInteraction(interaction))
 }
 
 // Scope-resolved tier for enforcement; single place for scope handling.
@@ -76,11 +74,7 @@ export function enforcementTier(
   interaction: BaseInteraction,
   scope: PremiumScope | 'any',
 ): PremiumTier {
-  return {
-    user: userTierForInteraction,
-    guild: guildTierForInteraction,
-    any: tierForInteraction,
-  }[scope](interaction)
+  return tierEnforced(subjectFromInteraction(interaction), scope)
 }
 
 // Warn on invalid overrides; logging/metrics must never break enforcement.
@@ -140,22 +134,6 @@ export async function capForGuild(
   const clamped = clampLimitOverride(raw, fallback)
   if (clamped !== raw) warnInvalidOverride(key, raw, fallback)
   return clamped
-}
-
-function grantedByInteraction(
-  interaction: BaseInteraction,
-  applies: (entitlement: Entitlement) => boolean,
-): PremiumTier {
-  const skus = premiumSkuMap()
-  if (skus.size === 0) return FREE_TIER
-
-  const tiers: PremiumTier[] = []
-  for (const entitlement of interaction.entitlements.values()) {
-    if (!entitlement.isActive() || !applies(entitlement)) continue
-    const sku = skus.get(entitlement.skuId)
-    if (sku) tiers.push(sku.tier)
-  }
-  return highestTier(tiers)
 }
 
 // Live rows: not soft-deleted and inside validity window (null bounds = perpetual).

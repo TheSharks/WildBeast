@@ -4,7 +4,10 @@ import type {
   ChatInputCommandInteraction,
   ContextMenuCommandInteraction,
 } from 'discord.js'
-import { enforcementTier } from '../premium/entitlements.mjs'
+import {
+  subjectFromInteraction,
+  tierEnforced,
+} from '../features/evaluation.mjs'
 import {
   type PremiumScope,
   type PremiumTier,
@@ -45,7 +48,10 @@ export class PremiumPrecondition extends Precondition {
     context: PremiumPreconditionContext,
   ) {
     const { requiredTier, requiredScope } = resolvePremiumRequirement(context)
-    const currentTier = enforcementTier(interaction, requiredScope)
+    const currentTier = tierEnforced(
+      subjectFromInteraction(interaction),
+      requiredScope,
+    )
     if (tierAtLeast(currentTier, requiredTier)) {
       return this.ok()
     }
@@ -72,8 +78,8 @@ export function premiumTierForInteraction(
   interaction: BaseInteraction,
   context: PremiumPreconditionContext = {},
 ): PremiumTier {
-  return enforcementTier(
-    interaction,
+  return tierEnforced(
+    subjectFromInteraction(interaction),
     resolvePremiumRequirement(context).requiredScope,
   )
 }
@@ -84,7 +90,10 @@ export function isPremiumSatisfied(
   context: PremiumPreconditionContext = {},
 ): boolean {
   const { requiredTier, requiredScope } = resolvePremiumRequirement(context)
-  return tierAtLeast(enforcementTier(interaction, requiredScope), requiredTier)
+  return tierAtLeast(
+    tierEnforced(subjectFromInteraction(interaction), requiredScope),
+    requiredTier,
+  )
 }
 
 // Readability alias of isPremiumSatisfied.

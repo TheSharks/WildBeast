@@ -216,4 +216,57 @@ describe('requirePremium helpers (autocomplete + component re-checks)', () => {
       true,
     )
   })
+
+  it('covers async component re-checks through the unified evaluation', async () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    const { commandComponentEnabled, installCommandPremiumGate } = await import(
+      '../src/features/gates.mjs'
+    )
+
+    const command = {
+      name: 'premium-component-fixture',
+      preconditions: { append: vi.fn() },
+    }
+    installCommandPremiumGate(command as never, { scope: 'guild' })
+
+    // No flag provider is active here, so the flag slice defaults on and only premium decides.
+    await expect(
+      commandComponentEnabled(
+        fakeInteraction([{ skuId: '123', guildId: '500' }]),
+        'premium-component-fixture',
+      ),
+    ).resolves.toBe(true)
+    await expect(
+      commandComponentEnabled(fakeInteraction([]), 'premium-component-fixture'),
+    ).resolves.toBe(false)
+  })
+
+  it('suppresses premium autocomplete while the flag slice defaults on', async () => {
+    process.env.WILDBEAST_PREMIUM_SKUS = '123:premium'
+    const { installCommandPremiumGate } = await import(
+      '../src/features/gates.mjs'
+    )
+
+    const autocompleteRun = vi.fn(async () => 'ran')
+    const command = {
+      name: 'premium-autocomplete-fixture',
+      preconditions: { append: vi.fn() },
+      autocompleteRun,
+    }
+    installCommandPremiumGate(command as never, { scope: 'guild' })
+
+    const respond = vi.fn(async () => undefined)
+    await (command as never as { autocompleteRun: Function }).autocompleteRun({
+      ...fakeInteraction([{ skuId: '123', guildId: '500' }]),
+      respond,
+    } as never)
+    expect(autocompleteRun).toHaveBeenCalledOnce()
+    autocompleteRun.mockClear()
+    await (command as never as { autocompleteRun: Function }).autocompleteRun({
+      ...fakeInteraction([]),
+      respond,
+    } as never)
+    expect(autocompleteRun).not.toHaveBeenCalled()
+    expect(respond).toHaveBeenCalledWith([])
+  })
 })
