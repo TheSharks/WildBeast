@@ -11,7 +11,6 @@ import {
   eq,
   ilike,
   isNotNull,
-  isNull,
   or,
   sql,
   tags,
@@ -29,15 +28,11 @@ import { limitFor } from '../../premium/entitlements.mjs'
 import { upsellForLimit } from '../../premium/upsell.mjs'
 import { TracedSubcommand } from '../../structures/subcommand.mjs'
 import {
-  createGuildTagCommand,
-  deleteGuildTagCommand,
   isCommandCapError,
   MAX_COMMAND_DESCRIPTION_LENGTH,
-  promotionsCounter,
-  reservedCommandNames,
-  tagCommandName,
 } from '../../utils/guildTagCommands.mjs'
 import { replyWithRenderedTag } from '../../utils/tagRender.mjs'
+import { type DemoteOutcome, TagCommands } from '../../utils/tagService.mjs'
 
 const MAX_LISTED_TAGS = 100
 
@@ -346,12 +341,13 @@ export class TagCommand extends TracedSubcommand {
     // Command must not outlive its tag; reconciliation mops up failures.
     if (tag.commandId !== null) {
       try {
-        await deleteGuildTagCommand(
+        // Single REST+metric owner; already-gone counts as success.
+        await TagCommands.deleteCommand(
           interaction.client,
           interaction.guildId,
           tag.commandId,
+          'tagDelete',
         )
-        promotionsCounter.add(1, { action: 'demote', trigger: 'tagDelete' })
       } catch (error) {
         this.container.logger.warn(
           `Could not delete the guild command of deleted tag ${tag.name}`,
@@ -480,21 +476,6 @@ export class TagCommand extends TracedSubcommand {
       })
     }
 
-    const commandName = tagCommandName(tag.name, reservedCommandNames())
-    if (!commandName.ok) {
-      return interaction.reply({
-        content: (await resolveKey(
-          interaction,
-          commandName.reason === 'reserved'
-            ? 'commands/tag:promoteNameCollision'
-            : 'commands/tag:promoteInvalidName',
-          { name: tag.name },
-        )) as string,
-        flags: MessageFlags.Ephemeral,
-        allowedMentions: { parse: [] },
-      })
-    }
-
     const description =
       interaction.options.getString('description') ??
       ((await resolveKey(
@@ -503,56 +484,25 @@ export class TagCommand extends TracedSubcommand {
         { name: tag.name },
       )) as string)
 
-    // Same per-guild cap serialization as creates; REST inside tx rolls back on failure.
+    // Cap resolved here; enforcement plus name validation live in the service.
     const limit = await limitFor(interaction, 'tags.maxPromotedPerGuild')
     const argsDescription = (await resolveKey(
       interaction,
       'commands/descriptions:tagOptionArgs',
     )) as string
+    let outcome: Awaited<ReturnType<typeof TagCommands.promote>>
+    // Service lowercases valid names; mirrors its normalization for replies.
+    const commandName = tag.name.toLowerCase()
     try {
-      const outcome = await db.transaction(async (tx) => {
-        await tx.execute(
-          sql`SELECT pg_advisory_xact_lock(hashtextextended(${interaction.guildId}, 0))`,
-        )
-        if (Number.isFinite(limit)) {
-          const [held] = await tx
-            .select({ value: count() })
-            .from(tags)
-            .where(
-              and(
-                eq(tags.guildId, BigInt(interaction.guildId)),
-                isNotNull(tags.commandId),
-              ),
-            )
-          if ((held?.value ?? 0) >= limit) return 'limit' as const
-        }
-
-        // Re-select under lock; a concurrent promote may have claimed it.
-        const [fresh] = await tx
-          .select({ id: tags.id })
-          .from(tags)
-          .where(and(eq(tags.id, tag.id), isNull(tags.commandId)))
-        if (!fresh) return 'alreadyPromoted' as const
-
-        const commandId = await createGuildTagCommand(
-          interaction.client,
-          interaction.guildId,
-          commandName.name,
-          description,
-          argsDescription,
-        )
-        const updated = await tx
-          .update(tags)
-          .set({
-            commandId,
-            commandDescription: description,
-            promotedBy: BigInt(interaction.user.id),
-            promotedAt: new Date(),
-          })
-          .where(and(eq(tags.id, tag.id), isNull(tags.commandId)))
-          .returning({ id: tags.id })
-        if (updated.length === 0) return 'alreadyPromoted' as const
-        return 'promoted' as const
+      // Thin delegate; lock/tx/REST ordering owned by the service.
+      outcome = await TagCommands.promote(interaction.client, {
+        guildId: interaction.guildId,
+        tagId: tag.id,
+        tagName: tag.name,
+        userId: interaction.user.id,
+        description,
+        argsDescription,
+        limit,
       })
 
       if (outcome === 'limit') {
@@ -577,6 +527,19 @@ export class TagCommand extends TracedSubcommand {
           allowedMentions: { parse: [] },
         })
       }
+      if (outcome === 'invalidName' || outcome === 'reserved') {
+        return interaction.reply({
+          content: (await resolveKey(
+            interaction,
+            outcome === 'reserved'
+              ? 'commands/tag:promoteNameCollision'
+              : 'commands/tag:promoteInvalidName',
+            { name: tag.name },
+          )) as string,
+          flags: MessageFlags.Ephemeral,
+          allowedMentions: { parse: [] },
+        })
+      }
     } catch (error) {
       if (!isCommandCapError(error)) {
         this.container.logger.warn(
@@ -586,7 +549,7 @@ export class TagCommand extends TracedSubcommand {
       }
       return interaction.reply({
         content: (await resolveKey(interaction, 'commands/tag:promoteFailed', {
-          name: commandName.name,
+          name: commandName,
           error: error instanceof Error ? error.message : String(error),
         })) as string,
         flags: MessageFlags.Ephemeral,
@@ -594,11 +557,10 @@ export class TagCommand extends TracedSubcommand {
       })
     }
 
-    promotionsCounter.add(1, { action: 'promote', trigger: 'command' })
     return interaction.reply({
       content: (await resolveKey(interaction, 'commands/tag:promoted', {
         name: tag.name,
-        command: commandName.name,
+        command: commandName,
       })) as string,
       flags: MessageFlags.Ephemeral,
       allowedMentions: { parse: [] },
@@ -627,42 +589,13 @@ export class TagCommand extends TracedSubcommand {
     }
 
     const expectedCommandId = tag.commandId
-    let outcome: 'demoted' | 'notPromoted'
+    let outcome: DemoteOutcome
     try {
-      outcome = await db.transaction(async (tx) => {
-        await tx.execute(
-          sql`SELECT pg_advisory_xact_lock(hashtextextended(${interaction.guildId}, 0))`,
-        )
-        // Re-read under lock; promotion may have changed concurrently.
-        const [fresh] = await tx
-          .select({ commandId: tags.commandId })
-          .from(tags)
-          .where(eq(tags.id, tag.id))
-        if (!fresh || fresh.commandId === null) return 'notPromoted' as const
-        if (fresh.commandId !== expectedCommandId) return 'notPromoted' as const
-
-        // Discord first so failures leave a working promoted state.
-        await deleteGuildTagCommand(
-          interaction.client,
-          interaction.guildId,
-          expectedCommandId,
-        )
-        // Clear only if the id still matches, so interleaved promotes survive.
-        const cleared = await tx
-          .update(tags)
-          .set({
-            commandId: null,
-            commandDescription: null,
-            promotedBy: null,
-            promotedAt: null,
-          })
-          .where(
-            and(eq(tags.id, tag.id), eq(tags.commandId, expectedCommandId)),
-          )
-          .returning({ id: tags.id })
-        return cleared.length > 0
-          ? ('demoted' as const)
-          : ('notPromoted' as const)
+      // Thin delegate; re-read, Discord-first delete, and conditional clear owned by the service.
+      outcome = await TagCommands.demote(interaction.client, {
+        guildId: interaction.guildId,
+        tagId: tag.id,
+        expectedCommandId,
       })
     } catch (error) {
       this.container.logger.warn(
@@ -689,7 +622,6 @@ export class TagCommand extends TracedSubcommand {
       })
     }
 
-    promotionsCounter.add(1, { action: 'demote', trigger: 'command' })
     return interaction.reply({
       content: (await resolveKey(interaction, 'commands/tag:demoted', {
         name: tag.name,

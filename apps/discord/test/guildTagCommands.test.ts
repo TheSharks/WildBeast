@@ -15,6 +15,11 @@ import {
   tagCommandName,
 } from '../src/utils/guildTagCommands.mjs'
 import { replyWithRenderedTag } from '../src/utils/tagRender.mjs'
+import {
+  isDevGuild,
+  TAG_ARGS_DESCRIPTION_FALLBACK,
+  TagCommands,
+} from '../src/utils/tagService.mjs'
 
 const NO_RESERVED = new Set<string>()
 
@@ -297,6 +302,25 @@ describe('reconcile sweep guards', () => {
     expect(shouldDelete(tagOrphan)).toBe(true)
     expect(shouldDelete(foreignCommand)).toBe(false)
     expect(shouldDelete(bareCommand)).toBe(false)
+  })
+})
+
+describe('TagCommands service surface (DB<->Discord invariant black box)', () => {
+  it('exposes promote, demote, reconcile, resolve, and deleteCommand', () => {
+    for (const method of [
+      'promote',
+      'demote',
+      'resolve',
+      'deleteCommand',
+      'reconcileGuild',
+      'reconcileAll',
+    ] as const) {
+      expect(typeof TagCommands[method]).toBe('function')
+    }
+    expect(typeof isDevGuild).toBe('function')
+    expect(TAG_ARGS_DESCRIPTION_FALLBACK).toBe(
+      'Space-separated arguments passed to the tag',
+    )
   })
 })
 

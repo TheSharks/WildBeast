@@ -5,16 +5,12 @@ import type {
 } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
 import { resolveKey } from '@sapphire/plugin-i18next'
-import { db, eq, tags } from '@thesharks/drizzle'
 import { MessageFlags } from 'discord.js'
 import { booleanFlagValue } from '../../features/client.mjs'
 import { commandFlagContext } from '../../features/commandContext.mjs'
-import {
-  deleteGuildTagCommand,
-  executionsCounter,
-  promotionsCounter,
-} from '../../utils/guildTagCommands.mjs'
+import { executionsCounter } from '../../utils/guildTagCommands.mjs'
 import { replyWithRenderedTag } from '../../utils/tagRender.mjs'
+import { TagCommands } from '../../utils/tagService.mjs'
 
 // Promoted tags arrive as unknown commands; match by id, collision-proof against names/case.
 @ApplyOptions<ListenerOptions>({
@@ -40,27 +36,12 @@ export class GuildTagCommandRunListener extends Listener {
       })
     }
 
-    const tag = await db.query.tags.findFirst({
-      where: eq(tags.commandId, BigInt(interaction.commandId)),
+    // Thin delegate; guild scope plus one in-flight re-read live in the service.
+    const result = await TagCommands.resolve({
+      commandId: interaction.commandId,
+      guildId: interaction.guildId,
     })
-    // CHECK: never render a tag outside its own guild.
-    if (!tag || tag.guildId !== BigInt(interaction.guildId)) {
-      // In-flight promotes register before the DB flips; re-read once before orphan handling.
-      try {
-        const reread = await db.query.tags.findFirst({
-          where: eq(tags.commandId, BigInt(interaction.commandId)),
-        })
-        if (reread && reread.guildId === BigInt(interaction.guildId)) {
-          const outcome = await replyWithRenderedTag(
-            interaction,
-            reread.content,
-          )
-          executionsCounter.add(1, { outcome })
-          return
-        }
-      } catch {
-        // Fall through to orphan handling on re-read failure.
-      }
+    if (result.kind === 'miss') {
       executionsCounter.add(1, { outcome: 'orphaned' })
       await interaction.reply({
         content: (await resolveKey(
@@ -71,12 +52,12 @@ export class GuildTagCommandRunListener extends Listener {
       })
       // Best effort; reconciliation mops up misses.
       try {
-        await deleteGuildTagCommand(
+        await TagCommands.deleteCommand(
           interaction.client,
           interaction.guildId,
           BigInt(interaction.commandId),
+          'orphanCleanup',
         )
-        promotionsCounter.add(1, { action: 'demote', trigger: 'orphanCleanup' })
       } catch (error) {
         this.container.logger.warn(
           `Could not delete orphaned guild command ${interaction.commandId}`,
@@ -86,7 +67,7 @@ export class GuildTagCommandRunListener extends Listener {
       return
     }
 
-    const outcome = await replyWithRenderedTag(interaction, tag.content)
+    const outcome = await replyWithRenderedTag(interaction, result.tag.content)
     executionsCounter.add(1, { outcome })
   }
 }
