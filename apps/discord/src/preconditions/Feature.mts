@@ -7,10 +7,6 @@ import type {
   ChatInputCommandInteraction,
   ContextMenuCommandInteraction,
 } from 'discord.js'
-import {
-  evaluateGates,
-  subjectFromInteraction,
-} from '../features/evaluation.mjs'
 import type { GateFlagKey } from '../features/registry.mjs'
 
 export const FeaturePreconditionIdentifier = 'preconditionFeature'
@@ -19,9 +15,7 @@ export interface FeaturePreconditionContext extends Precondition.Context {
   key: GateFlagKey
 }
 
-/** OFREP-backed command gate. TracedCommand/TracedSubcommand attach the
- * command's registered gate automatically; commands stay registered in
- * Discord and receive a localized denial when their flag resolves false. */
+/** Commands stay registered in Discord and receive a localized denial when off. */
 export class FeaturePrecondition extends Precondition {
   public override chatInputRun(
     interaction: ChatInputCommandInteraction,
@@ -44,11 +38,9 @@ export class FeaturePrecondition extends Precondition {
     command: string,
     context: FeaturePreconditionContext,
   ) {
-    // Single gate boundary; this precondition enforces the flag slice only.
-    const evaluation = await evaluateGates(
-      subjectFromInteraction(interaction),
+    const evaluation = await this.container.app.gates.evaluateInteraction(
+      interaction,
       command,
-      subcommandOf(interaction),
     )
     if (evaluation.flagEnabled) return this.ok()
     return this.error({
@@ -57,16 +49,6 @@ export class FeaturePrecondition extends Precondition {
       context: { ...context, command },
     })
   }
-}
-
-// Chat-input subcommand for flag targeting; context menus carry none.
-function subcommandOf(
-  interaction: ChatInputCommandInteraction | ContextMenuCommandInteraction,
-): string | undefined {
-  if (interaction.isChatInputCommand()) {
-    return interaction.options.getSubcommand(false) ?? undefined
-  }
-  return undefined
 }
 
 declare module '@sapphire/framework' {

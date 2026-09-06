@@ -1,10 +1,8 @@
 /**
  * Runtime flags owned by WildBeast. The provider may decide their values,
  * but their types, safe defaults and lifecycle metadata live with the code
- * that consumes them. This keeps misspelled/ad-hoc flag keys out of feature
- * code and makes adding a command or task gate an explicit review decision.
+ * that consumes them.
  */
-
 export type FlagTarget =
   | 'environment'
   | 'guild'
@@ -37,7 +35,17 @@ export interface ExperimentFlagDefinition<Variant extends string = string>
   surface: 'command'
 }
 
-export type FlagDefinition = GateFlagDefinition | ExperimentFlagDefinition
+/** Operator-tuned string value; no variants, any string is accepted. */
+export interface SettingFlagDefinition extends FlagDefinitionBase {
+  kind: 'setting'
+  type: 'string'
+  defaultValue: string
+}
+
+export type FlagDefinition =
+  | GateFlagDefinition
+  | ExperimentFlagDefinition
+  | SettingFlagDefinition
 
 const interactionTargets = [
   'environment',
@@ -59,11 +67,6 @@ function commandGate(name: string): GateFlagDefinition {
   }
 }
 
-/**
- * Default-on gates for command pieces, keyed by piece name. Adding a
- * command means adding its name here — the framework structure test fails
- * until it appears.
- */
 function commandGates<const Names extends readonly string[]>(
   names: Names,
 ): {
@@ -73,18 +76,6 @@ function commandGates<const Names extends readonly string[]>(
     names.map((name) => [`features.commands.${name}`, commandGate(name)]),
   ) as {
     [Name in Names[number] as `features.commands.${Name}`]: GateFlagDefinition
-  }
-}
-
-function guildTagCommandsGate(): GateFlagDefinition {
-  return {
-    kind: 'gate',
-    type: 'boolean',
-    defaultValue: true,
-    surface: 'command',
-    description: 'Whether promoted guild tag commands may run',
-    owner: 'discord',
-    targets: interactionTargets,
   }
 }
 
@@ -104,13 +95,12 @@ function experiment<const Variants extends readonly [string, ...string[]]>(
   definition: Omit<
     ExperimentFlagDefinition<Variants[number]>,
     'kind' | 'type'
-  > & {
-    variants: Variants
-  },
+  > & { variants: Variants },
 ): ExperimentFlagDefinition<Variants[number]> {
   return { kind: 'experiment', type: 'string', ...definition }
 }
 
+/** Command names are Sapphire piece names; a command without a gate fails the structure test. */
 export const flagRegistry = {
   ...commandGates([
     '8ball',
@@ -127,18 +117,40 @@ export const flagRegistry = {
     'tag',
     'urbandictionary',
   ]),
-  'features.tasks.bullMQMetrics': taskGate(
-    'Whether BullMQ queue metrics collection may run',
-  ),
   'features.tasks.metricsCollection': taskGate(
     'Whether runtime and Discord metrics collection may run',
   ),
   'features.tasks.guildTagCommandReconcile': taskGate(
     'Whether promoted guild tag command reconciliation may run',
   ),
-  // Promoted guild tag commands run outside any Sapphire command piece, so
-  // the tag command's gate can't cover them; this one does.
-  'features.tags.guildCommands': guildTagCommandsGate(),
+  'features.tasks.entitlementRefresh': taskGate(
+    'Whether the periodic full entitlement snapshot may run',
+  ),
+  'features.tasks.operatorCommandReconcile': taskGate(
+    'Whether operator command placement may be reconciled',
+  ),
+  'features.tasks.bullMQMetrics': taskGate(
+    'Whether BullMQ queue metrics collection may run',
+  ),
+  // Promoted guild tag commands run outside any Sapphire command piece.
+  'features.tags.guildCommands': {
+    kind: 'gate',
+    type: 'boolean',
+    defaultValue: true,
+    surface: 'command',
+    description: 'Whether promoted guild tag commands may run',
+    owner: 'discord',
+    targets: interactionTargets,
+  },
+  'operators.commandGuilds': {
+    kind: 'setting',
+    type: 'string',
+    defaultValue: '',
+    description:
+      'Comma-separated guild ids where operator commands are placed; merged with WILDBEAST_OPERATOR_GUILD_IDS',
+    owner: 'platform',
+    targets: ['environment'],
+  },
   'experiments.tags.notFoundReply': experiment({
     defaultValue: 'suggestion',
     variants: ['plain', 'suggestion'],
@@ -161,6 +173,7 @@ type KeysOfKind<Kind extends FlagDefinition['kind']> = {
 
 export type GateFlagKey = KeysOfKind<'gate'>
 export type ExperimentFlagKey = KeysOfKind<'experiment'>
+export type SettingFlagKey = KeysOfKind<'setting'>
 export type CommandGateFlagKey = Extract<
   GateFlagKey,
   `features.commands.${string}`
@@ -200,7 +213,7 @@ export function taskGateKey(taskName: string): TaskGateFlagKey | undefined {
 
 export function expiredFlagKeys(now = new Date()): FlagKey[] {
   return flagKeys.filter((key) => {
-    const expiresAt = getFlagDefinition(key).expiresAt
+    const expiresAt = (getFlagDefinition(key) as FlagDefinition).expiresAt
     return expiresAt !== undefined && Date.parse(expiresAt) <= now.getTime()
   })
 }

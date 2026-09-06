@@ -1,57 +1,88 @@
+import { container } from '@sapphire/framework'
 import { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
 import * as Sentry from '@sentry/node'
-import { booleanFlagValue } from '../features/client.mjs'
-import { taskFlagContext } from '../features/context.mjs'
-import { withExperimentOutcomes } from '../features/experiments.mjs'
 import { taskGateKey } from '../features/registry.mjs'
+import { WorkRejected } from '../runtime/work.mjs'
+import { spanName, withSpan } from '../telemetry/spans.mjs'
 import { monitorConfigFromSchedule, monitorSlug } from '../utils/crons.mjs'
-import { spanName, withSpan } from '../utils/tracing.mjs'
+
+/** Thrown when this worker must not run the job now; BullMQ retries it elsewhere. */
+export class TaskDeferred extends Error {
+  public constructor(reason: string) {
+    super(`Task deferred: ${reason}`)
+    this.name = 'TaskDeferred'
+  }
+}
+
+export interface AppScheduledTaskOptions extends ScheduledTask.Options {
+  /**
+   * Cluster-dependent work: only the worker holding this shard may run the
+   * job. Other workers defer it so a retry lands on the owner.
+   */
+  requiresShard?: number
+}
+
+/** Retry cadence for deferred jobs; whichever worker owns the shard picks one up. */
+export const DEFERRED_JOB_OPTIONS = {
+  attempts: 30,
+  backoff: { type: 'fixed', delay: 30_000 },
+  removeOnComplete: true,
+  removeOnFail: 50,
+} as const
 
 /**
- * ScheduledTask base class that runs every task inside an active
- * OpenTelemetry span and an isolated Sentry scope. Subclasses implement
- * `run` exactly like a regular scheduled task; the constructor wraps it, so
- * database/HTTP spans created during the task nest under the task span.
- *
- * Tasks with a derivable schedule (a cron pattern or a whole-minute
- * interval) also report Sentry cron check-ins, so missed or failing runs
- * alert even when they produce no exception. BullMQ runs each repeated job
- * on exactly one worker, so a run checks in once fleet-wide.
+ * Every scheduled task run is admitted through the runtime (so draining waits
+ * for it), gated by its runtime flag, traced, and checked in as a Sentry
+ * monitor. BullMQ runs each repeat job on one worker fleet-wide; ownership
+ * requirements route cluster-dependent jobs to the right worker.
  */
-export abstract class TracedScheduledTask extends ScheduledTask {
+export abstract class AppScheduledTask extends ScheduledTask {
+  public readonly requiresShard: number | undefined
+
   public constructor(
     context: ScheduledTask.LoaderContext,
-    options: ScheduledTask.Options,
+    options: AppScheduledTaskOptions,
   ) {
-    super(context, options)
-
-    const monitorConfig = monitorConfigFromSchedule(this)
+    super(context, {
+      ...options,
+      customJobOptions: {
+        ...DEFERRED_JOB_OPTIONS,
+        ...options.customJobOptions,
+      },
+    })
+    this.requiresShard = options.requiresShard
+    const monitor = monitorConfigFromSchedule(this)
     const slug = monitorSlug(this.name)
     const gateKey = taskGateKey(this.name)
-
     const run = this.run.bind(this)
     this.run = (payload) =>
-      Sentry.withIsolationScope((scope) => {
+      Sentry.withIsolationScope(async (scope) => {
         scope.setTag('task', this.name)
+        const app = this.container.app
+        if (
+          this.requiresShard !== undefined &&
+          !this.container.client.ws.shards.has(this.requiresShard)
+        ) {
+          throw new TaskDeferred(
+            `${this.name} requires shard ${this.requiresShard}, which this worker does not own`,
+          )
+        }
         const execute = () =>
           withSpan(
             spanName(`task.${this.name}`),
-            {
-              'discord.task.name': this.name,
-              'sentry.op': 'discord.task',
-            },
+            { 'discord.task.name': this.name, 'sentry.op': 'discord.task' },
             () =>
-              withExperimentOutcomes(
+              app.experiments.run(
                 { kind: 'task', name: this.name },
                 async () => {
                   if (
                     gateKey &&
-                    !(await booleanFlagValue(
-                      gateKey,
-                      taskFlagContext(this.name),
-                    ))
+                    !(await app.flags.enabled(gateKey, {
+                      targetingKey: `task:${this.name}`,
+                      task: this.name,
+                    }))
                   ) {
-                    this.container.logger?.debug(
+                    this.container.logger.debug(
                       `Scheduled task ${this.name} disabled by ${gateKey}`,
                     )
                     return undefined
@@ -60,9 +91,15 @@ export abstract class TracedScheduledTask extends ScheduledTask {
                 },
               ),
           )
-        return monitorConfig
-          ? Sentry.withMonitor(slug, execute, monitorConfig)
-          : execute()
+        try {
+          return await app.work.run(() =>
+            monitor ? Sentry.withMonitor(slug, execute, monitor) : execute(),
+          )
+        } catch (error) {
+          if (error instanceof WorkRejected)
+            throw new TaskDeferred('this worker is stopping')
+          throw error
+        }
       })
   }
 }

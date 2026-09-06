@@ -1,121 +1,164 @@
-import type { Command } from '@sapphire/framework'
-import type { AutocompleteInteraction, BaseInteraction } from 'discord.js'
-import type { PremiumPreconditionContext } from '../preconditions/Premium.mjs'
-import { tierAtLeast } from '../premium/tiers.mjs'
+import type { EvaluationContext } from '@openfeature/server-sdk'
+import type { BaseInteraction } from 'discord.js'
 import {
-  evaluateGates,
-  type GatePremiumRequirement,
-  isAllowed,
-  premiumRequirementFor,
-  registerPremiumGate,
+  type PremiumSubject,
   subjectFromInteraction,
-  tierEnforced,
-} from './evaluation.mjs'
-import { commandGateKey } from './registry.mjs'
+  tierForSubject,
+} from '../premium/interaction.mjs'
+import { tierAtLeast } from '../premium/limits.mjs'
+import type { Scope, Tier } from '../premium/model.mjs'
+import type { PremiumService } from '../premium/service.mjs'
+import type { FeatureFlags } from './flags.mjs'
+import { type CommandGateFlagKey, commandGateKey } from './registry.mjs'
 
-// Registered premium requirement, if any.
-export function premiumGateFor(
-  command: string,
-): PremiumPreconditionContext | undefined {
-  const requirement = premiumRequirementFor(command)
-  return requirement as PremiumPreconditionContext | undefined
+export interface PremiumRequirement {
+  tier?: Tier
+  scope?: Scope | 'any'
 }
 
-// Gate check; true when the command has no requirement.
-export function commandPremiumAllowed(
-  interaction: BaseInteraction,
-  command: string,
-): boolean {
-  const requirement = premiumRequirementFor(command)
-  if (!requirement) return true
-  const tier = requirement.tier ?? 'premium'
-  const scope = requirement.scope ?? 'any'
-  return tierAtLeast(
-    tierEnforced(subjectFromInteraction(interaction), scope),
-    tier,
-  )
+/** One evaluation for every surface: chat, autocomplete, components and tasks. */
+export interface GateEvaluation {
+  subject: PremiumSubject
+  command: string
+  subcommand?: string
+  scope: Scope | 'any'
+  requiredTier: Tier
+  /** Best of user/guild tiers; targeting and display only, never limits. */
+  tierAny: Tier
+  /** Scope-resolved tier; the only tier enforcement may use. */
+  tierEnforced: Tier
+  flagKey?: CommandGateFlagKey
+  flagEnabled: boolean
+  premiumAllowed: boolean
 }
 
-// Subcommand for flag targeting; only chat/autocomplete interactions carry one.
-function subcommandOf(interaction: BaseInteraction): string | undefined {
-  try {
-    if (
-      typeof interaction.isChatInputCommand === 'function' &&
-      interaction.isChatInputCommand()
-    ) {
-      return interaction.options.getSubcommand(false) ?? undefined
-    }
-    if (
-      typeof interaction.isAutocomplete === 'function' &&
-      interaction.isAutocomplete()
-    ) {
-      return interaction.options.getSubcommand(false) ?? undefined
-    }
-  } catch {
-    return undefined
+export type DenialReason = 'feature' | 'premium'
+
+export function denialReason(
+  evaluation: Pick<GateEvaluation, 'flagEnabled' | 'premiumAllowed'>,
+): DenialReason | undefined {
+  if (!evaluation.flagEnabled) return 'feature'
+  if (!evaluation.premiumAllowed) return 'premium'
+  return undefined
+}
+
+export function isAllowed(evaluation: GateEvaluation): boolean {
+  return evaluation.flagEnabled && evaluation.premiumAllowed
+}
+
+export function resolveRequirement(requirement: PremiumRequirement = {}): {
+  requiredTier: Tier
+  requiredScope: Scope | 'any'
+} {
+  return {
+    requiredTier: requirement.tier ?? 'premium',
+    requiredScope: requirement.scope ?? 'any',
+  }
+}
+
+export function subcommandOf(interaction: BaseInteraction): string | undefined {
+  if (interaction.isChatInputCommand() || interaction.isAutocomplete()) {
+    return interaction.options.getSubcommand(false) ?? undefined
   }
   return undefined
 }
 
-// Gate command invocations and suppress autocomplete work while disabled.
-export function installCommandFeatureGate(command: Command): void {
-  const key = commandGateKey(command.name)
-  if (!key) return
-  command.preconditions.append({ name: 'Feature', context: { key } })
+/** Command gates shared by preconditions, autocomplete, components and replies. */
+export class CommandGates {
+  private readonly requirements = new Map<string, PremiumRequirement>()
 
-  const autocompleteRun = command.autocompleteRun?.bind(command)
-  if (!autocompleteRun) return
-  command.autocompleteRun = async (interaction) => {
-    const evaluation = await evaluateGates(
-      subjectFromInteraction(interaction),
-      command.name,
-      subcommandOf(interaction),
-    )
-    return evaluation.flagEnabled
-      ? autocompleteRun(interaction)
-      : interaction.respond([])
+  public constructor(
+    private readonly flags: FeatureFlags,
+    private readonly premium: PremiumService,
+  ) {}
+
+  /** Preconditions cover neither autocomplete nor components; the gate does. */
+  public requirePremium(
+    command: string,
+    requirement: PremiumRequirement = {},
+  ): void {
+    this.requirements.set(command, { ...requirement })
   }
-}
 
-// Kill switch for components, which outlive invocations; also re-checks the premium gate.
-export async function commandComponentEnabled(
-  interaction: BaseInteraction,
-  command: string,
-): Promise<boolean> {
-  const evaluation = await evaluateGates(
-    subjectFromInteraction(interaction),
-    command,
-  )
-  return isAllowed(evaluation)
-}
+  public requirementFor(command: string): PremiumRequirement | undefined {
+    const requirement = this.requirements.get(command)
+    return requirement ? { ...requirement } : undefined
+  }
 
-// Premium-gate a command with autocomplete + component coverage (preconditions cover neither).
-export function installCommandPremiumGate(
-  command: Command,
-  context: PremiumPreconditionContext = {},
-): void {
-  registerPremiumGate(command.name, context as GatePremiumRequirement)
-  command.preconditions.append({ name: 'Premium', context })
-
-  const autocompleteRun = command.autocompleteRun?.bind(command)
-  if (!autocompleteRun) return
-  command.autocompleteRun = async (interaction: AutocompleteInteraction) => {
-    const evaluation = await evaluateGates(
-      subjectFromInteraction(interaction),
-      command.name,
-      subcommandOf(interaction),
-    )
-    if (!evaluation.premiumAllowed) {
-      return interaction.respond([])
+  public flagContext(
+    subject: PremiumSubject,
+    options: {
+      command?: string
+      subcommand?: string
+      tier?: Tier
+      targetingKey?: string
+    } = {},
+  ): EvaluationContext {
+    return {
+      targetingKey:
+        options.targetingKey ?? (subject.guildId ?? subject.userId).toString(),
+      userId: subject.userId.toString(),
+      ...(subject.guildId !== null
+        ? { guildId: subject.guildId.toString() }
+        : {}),
+      tier: options.tier ?? tierForSubject(this.premium, subject, 'any'),
+      ...(options.command ? { command: options.command } : {}),
+      ...(options.subcommand ? { subcommand: options.subcommand } : {}),
+      ...(subject.shardId !== undefined
+        ? { shardId: String(subject.shardId) }
+        : {}),
     }
-    return autocompleteRun(interaction)
   }
-}
 
-// Premium-only component re-check; prefer commandComponentEnabled when both gates apply.
-export function premiumComponentAllowed(
-  interaction: BaseInteraction,
-  command: string,
-): boolean {
-  return commandPremiumAllowed(interaction, command)
+  public async evaluate(
+    subject: PremiumSubject,
+    command: string,
+    subcommand?: string,
+  ): Promise<GateEvaluation> {
+    const registered = this.requirements.get(command)
+    const requiredTier = registered?.tier ?? (registered ? 'premium' : 'free')
+    const scope = registered?.scope ?? 'any'
+    const tierAny = tierForSubject(this.premium, subject, 'any')
+    const tierEnforced = tierForSubject(this.premium, subject, scope)
+    const flagKey = commandGateKey(command)
+    const flagEnabled = flagKey
+      ? await this.flags.enabled(
+          flagKey,
+          this.flagContext(subject, { command, subcommand, tier: tierAny }),
+        )
+      : true
+    return {
+      subject,
+      command,
+      ...(subcommand ? { subcommand } : {}),
+      scope,
+      requiredTier,
+      tierAny,
+      tierEnforced,
+      ...(flagKey ? { flagKey } : {}),
+      flagEnabled,
+      premiumAllowed: registered
+        ? tierAtLeast(tierEnforced, requiredTier)
+        : true,
+    }
+  }
+
+  public evaluateInteraction(interaction: BaseInteraction, command: string) {
+    return this.evaluate(
+      subjectFromInteraction(interaction),
+      command,
+      subcommandOf(interaction),
+    )
+  }
+
+  /** Synchronous premium slice for surfaces that cannot await. */
+  public premiumAllowed(subject: PremiumSubject, command: string): boolean {
+    const requirement = this.requirements.get(command)
+    if (!requirement) return true
+    const { requiredTier, requiredScope } = resolveRequirement(requirement)
+    return tierAtLeast(
+      tierForSubject(this.premium, subject, requiredScope),
+      requiredTier,
+    )
+  }
 }
