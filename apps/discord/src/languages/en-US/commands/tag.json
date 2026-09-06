@@ -21,6 +21,7 @@
   "promoteInvalidName": "`{{name}}` can't be a command name. Command names can hold up to 32 letters, numbers, dashes and underscores.",
   "promoteNameCollision": "`{{name}}` would clash with one of the bot's own commands.",
   "promoteMissingPermission": "You need the Manage Server permission to manage tag commands.",
+  "promoteCleanupPending": "A previous `/{{name}}` command is still being cleaned up. Try again in a moment.",
   "promoteFailed": "Discord wouldn't register `/{{name}}`: {{error}}",
   "demoteFailed": "Discord wouldn't remove `/{{name}}`: {{error}}",
   "invalidName": "`{{name}}` can't be used as a tag name. Names can't be blank.",

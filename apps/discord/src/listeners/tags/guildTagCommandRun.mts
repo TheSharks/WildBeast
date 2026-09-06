@@ -1,4 +1,3 @@
-import { setTimeout as sleep } from 'node:timers/promises'
 import { ApplyOptions } from '@sapphire/decorators'
 import type {
   ListenerOptions,
@@ -6,32 +5,58 @@ import type {
 } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
 import { resolveKey } from '@sapphire/plugin-i18next'
+import { metrics } from '@thesharks/analytics'
 import { MessageFlags } from 'discord.js'
-import { booleanFlagValue } from '../../features/client.mjs'
-import { commandFlagContext } from '../../features/commandContext.mjs'
+import { subjectFromInteraction } from '../../premium/interaction.mjs'
+import { WorkRejected } from '../../runtime/work.mjs'
+import { replyWithRenderedTag } from '../../tags/render.mjs'
 import {
-  executionsCounter,
-  isTagCommandShape,
-} from '../../utils/guildTagCommands.mjs'
-import { replyWithRenderedTag } from '../../utils/tagRender.mjs'
-import { TagCommands } from '../../utils/tagService.mjs'
+  attributesFromInteraction,
+  spanName,
+  withInteractionSpan,
+} from '../../telemetry/spans.mjs'
 
-// Delay before orphan delete so a REST-create that precedes its DB commit isn't mistaken for garbage.
-export const ORPHAN_RECHECK_DELAY_MS = 1_500
+const meter = metrics.getMeter('@thesharks/discord')
+export const executionsCounter = meter.createCounter(
+  'discord_guild_tag_command_executions_total',
+  { description: 'Promoted guild tag command invocations' },
+)
 
-// Promoted tags arrive as unknown commands; match by id, collision-proof against names/case.
-@ApplyOptions<ListenerOptions>({
-  event: Events.UnknownChatInputCommand,
-})
+/** Promoted tags arrive as unknown commands; match by id, never by name. */
+@ApplyOptions<ListenerOptions>({ event: Events.UnknownChatInputCommand })
 export class GuildTagCommandRunListener extends Listener {
   public async run(payload: UnknownChatInputCommandPayload) {
     const { interaction } = payload
     if (!interaction.guildId) return
+    const app = this.container.app
+    try {
+      await app.work.run(() =>
+        withInteractionSpan(
+          spanName('command.guild_tag'),
+          interaction,
+          {
+            ...attributesFromInteraction(interaction, this),
+            'discord.command.name': 'guild_tag',
+            'discord.command.type': 'chat_input',
+            'sentry.op': 'discord.command',
+          },
+          () => this.execute(payload),
+        ),
+      )
+    } catch (error) {
+      if (!(error instanceof WorkRejected)) throw error
+    }
+  }
 
-    // Promoted commands outlive /tag invocations, so they need their own kill switch.
-    const enabled = await booleanFlagValue(
+  private async execute({ interaction }: UnknownChatInputCommandPayload) {
+    const app = this.container.app
+    const guildId = BigInt(interaction.guildId!)
+    // Promoted commands outlive /tag invocations, so they need their own switch.
+    const enabled = await app.flags.enabled(
       'features.tags.guildCommands',
-      commandFlagContext(interaction, interaction.commandName),
+      app.gates.flagContext(subjectFromInteraction(interaction), {
+        command: interaction.commandName,
+      }),
     )
     if (!enabled) {
       return interaction.reply({
@@ -42,13 +67,8 @@ export class GuildTagCommandRunListener extends Listener {
         flags: MessageFlags.Ephemeral,
       })
     }
-
-    // Thin delegate; guild scope plus one in-flight re-read live in the service.
-    const result = await TagCommands.resolve({
-      commandId: interaction.commandId,
-      guildId: interaction.guildId,
-    })
-    if (result.kind === 'miss') {
+    const tag = await app.tags.resolve(guildId, BigInt(interaction.commandId))
+    if (!tag) {
       executionsCounter.add(1, { outcome: 'orphaned' })
       await interaction.reply({
         content: (await resolveKey(
@@ -57,44 +77,18 @@ export class GuildTagCommandRunListener extends Listener {
         )) as string,
         flags: MessageFlags.Ephemeral,
       })
-      // Best effort; reconciliation mops up misses.
-      try {
-        // Never delete non-tag commands; rolling deploys can surface unknown ids for other features.
-        let tagShaped = false
-        try {
-          const command = await interaction.client.application.commands.fetch(
-            interaction.commandId,
-            { guildId: interaction.guildId },
-          )
-          tagShaped = isTagCommandShape(command)
-        } catch {
-          // Fetch failed (already gone or API blip); skip, reconcile handles confirmed orphans.
-          return
-        }
-        if (!tagShaped) return
-        // Create-to-commit window: REST create can precede the DB flip, so delay + re-check before delete.
-        await sleep(ORPHAN_RECHECK_DELAY_MS)
-        const reread = await TagCommands.resolve({
-          commandId: interaction.commandId,
-          guildId: interaction.guildId,
-        })
-        if (reread.kind === 'hit') return
-        await TagCommands.deleteCommand(
-          interaction.client,
-          interaction.guildId,
-          BigInt(interaction.commandId),
-          'orphanCleanup',
+      // Repair only removes commands the durable intents own.
+      void app.tagReconciler
+        .reconcileGuild(guildId, app.work.signal)
+        .catch((error: unknown) =>
+          this.container.logger.warn(
+            `Could not repair tag commands for guild ${guildId}`,
+            error,
+          ),
         )
-      } catch (error) {
-        this.container.logger.warn(
-          `Could not delete orphaned guild command ${interaction.commandId}`,
-          error,
-        )
-      }
       return
     }
-
-    const outcome = await replyWithRenderedTag(interaction, result.tag.content)
+    const outcome = await replyWithRenderedTag(interaction, tag.content)
     executionsCounter.add(1, { outcome })
   }
 }
