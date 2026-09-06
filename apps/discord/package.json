@@ -9,6 +9,7 @@
     "dev:watch": "tsc --watch",
     "dev:run": "npm run start",
     "start": "node dist/cluster.mjs",
+    "start:worker": "node dist/main.mjs",
     "postbuild": "cp -r src/languages dist/languages",
     "build": "rimraf dist && tsc",
     "test": "vitest run"

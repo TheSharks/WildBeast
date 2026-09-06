@@ -4,7 +4,7 @@ The Discord app of WildBeast (`@thesharks/discord`): a
 [Sapphire](https://www.sapphirejs.dev/)/discord.js bot with slash commands,
 scheduled tasks, and OpenTelemetry instrumentation. The entry point is the
 cluster manager (`dist/cluster.mjs`), which runs every shard as a worker
-thread inside one process.
+thread (`dist/main.mjs`) inside one process.
 
 ## Commands
 
@@ -15,6 +15,7 @@ All commands are run from this directory (or via turbo from the repo root):
 | `pnpm dev`   | Build the workspace and run in watch mode     |
 | `pnpm build` | Compile to `dist/`                            |
 | `pnpm start` | Run the cluster manager (`node dist/cluster.mjs`) |
+| `pnpm start:worker` | Run one shard worker directly (`node dist/main.mjs`) |
 | `pnpm test`  | Run unit tests                                |
 
 ## Configuration
