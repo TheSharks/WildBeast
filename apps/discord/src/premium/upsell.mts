@@ -1,33 +1,47 @@
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js'
+import type { PremiumSku } from '../premium/skus.mjs'
 import {
-  ActionRowBuilder,
-  type BaseInteraction,
-  ButtonBuilder,
-  ButtonStyle,
-} from 'discord.js'
-import {
-  guildTierForInteraction,
-  tierForInteraction,
-  userTierForInteraction,
-} from './entitlements.mjs'
-import { describeLimit, getLimit, type LimitKey } from './limits.mjs'
-import { skuIdForTier } from './skus.mjs'
-import {
-  PREMIUM_TIERS,
-  type PremiumScope,
-  type PremiumTier,
+  describeLimit,
+  type LimitKey,
   tierAtLeast,
-} from './tiers.mjs'
+  tierRaisingLimit,
+} from './limits.mjs'
+import type { Scope, Tier } from './model.mjs'
 
-// Purchase button for `tier`; undefined omits it. Pass guildId so DM replies never offer guild SKUs.
+export type SkuCatalog = ReadonlyMap<string, PremiumSku>
+
+/** Cheapest SKU granting `tier` for `scope`; undefined omits the purchase button. */
+export function skuIdForTier(
+  catalog: SkuCatalog,
+  tier: Tier,
+  scope: Scope | 'any' = 'any',
+): string | undefined {
+  let best: { skuId: string; sku: PremiumSku } | undefined
+  for (const [skuId, sku] of catalog) {
+    if (!tierAtLeast(sku.tier, tier)) continue
+    if (scope !== 'any' && sku.scope !== 'any' && sku.scope !== scope) continue
+    if (best === undefined) {
+      best = { skuId, sku }
+      continue
+    }
+    const cheaper = !tierAtLeast(sku.tier, best.sku.tier)
+    const sameTier = sku.tier === best.sku.tier
+    const moreExact = sku.scope === scope && best.sku.scope !== scope
+    if (cheaper || (sameTier && moreExact)) best = { skuId, sku }
+  }
+  return best?.skuId
+}
+
+/** Purchase button for `tier`; DM replies never offer guild SKUs. */
 export function premiumUpsellComponents(
-  tier: PremiumTier,
-  scope: PremiumScope | 'any' = 'any',
-  guildId?: string | null,
+  catalog: SkuCatalog,
+  tier: Tier,
+  scope: Scope | 'any' = 'any',
+  guildId: bigint | null = null,
 ): ActionRowBuilder<ButtonBuilder>[] | undefined {
-  const effectiveScope =
-    guildId === null && scope === 'any' ? ('user' as const) : scope
+  const effectiveScope = guildId === null && scope === 'any' ? 'user' : scope
   if (guildId === null && effectiveScope === 'guild') return undefined
-  const skuId = skuIdForTier(tier, effectiveScope)
+  const skuId = skuIdForTier(catalog, tier, effectiveScope)
   if (!skuId) return undefined
   return [
     new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -36,33 +50,16 @@ export function premiumUpsellComponents(
   ]
 }
 
-// Button for limit replies; undefined when no higher tier raises the cap or no SKU fits.
+/** Button for limit replies; undefined when no higher tier raises the cap. */
 export function upsellForLimit(
-  interaction: BaseInteraction,
+  catalog: SkuCatalog,
   key: LimitKey,
+  currentTier: Tier,
+  guildId: bigint | null,
 ): ActionRowBuilder<ButtonBuilder>[] | undefined {
   const definition = describeLimit(key)
-  // Guild caps are free in DMs where guild SKUs can't be bought; stay informational.
-  if (!interaction.guildId && definition.scope === 'guild') return undefined
-  const resolve = {
-    user: userTierForInteraction,
-    guild: guildTierForInteraction,
-    any: tierForInteraction,
-  }[definition.scope]
-  const tier = resolve(interaction)
-  const target = tierRaisingLimit(key, tier)
+  if (guildId === null && definition.scope === 'guild') return undefined
+  const target = tierRaisingLimit(key, currentTier)
   if (!target) return undefined
-  return premiumUpsellComponents(target, definition.scope, interaction.guildId)
-}
-
-// Lowest tier above `tier` raising `key`, if any.
-function tierRaisingLimit(
-  key: LimitKey,
-  tier: PremiumTier,
-): PremiumTier | undefined {
-  const current = getLimit(key, tier)
-  return PREMIUM_TIERS.find(
-    (candidate) =>
-      !tierAtLeast(tier, candidate) && getLimit(key, candidate) > current,
-  )
+  return premiumUpsellComponents(catalog, target, definition.scope, guildId)
 }

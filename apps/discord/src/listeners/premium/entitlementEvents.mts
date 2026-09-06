@@ -3,24 +3,27 @@ import type { ListenerOptions } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
 import type { ClientEvents, Entitlement } from 'discord.js'
 import { Events } from 'discord.js'
-import { entitlementRow, upsertEntitlement } from '../../premium/sync.mjs'
+import { grantFromEntitlement } from '../../premium/interaction.mjs'
+import { WorkRejected } from '../../runtime/work.mjs'
 
 /**
- * Mirror entitlement lifecycle events into the database so premium checks
- * outside interactions (scheduled tasks, background jobs) see current data.
- * Interaction-time checks never read this mirror — Discord attaches fresh
- * entitlements to every interaction. A failed write only degrades those
- * background checks until the next event or boot reconcile, so failures log
- * instead of throwing.
+ * Mirror lifecycle events so background checks see current data. A failed
+ * write degrades background decisions until the next snapshot, so it logs.
  */
 async function mirror(
   listener: Listener,
   entitlement: Entitlement,
-  overrides: Partial<ReturnType<typeof entitlementRow>> = {},
+  overrides: { deleted?: boolean } = {},
 ) {
   try {
-    await upsertEntitlement({ ...entitlementRow(entitlement), ...overrides })
+    await listener.container.app.work.run(() =>
+      listener.container.app.entitlements.write({
+        ...grantFromEntitlement(entitlement),
+        ...overrides,
+      }),
+    )
   } catch (error) {
+    if (error instanceof WorkRejected) return
     listener.container.logger.warn(
       `Could not mirror entitlement ${entitlement.id}`,
       error,
@@ -28,8 +31,7 @@ async function mirror(
   }
 }
 
-// Pieces default their name to the file name; multiple listeners in one file
-// need explicit names or each insert unloads the previous one.
+// Same-file listeners need explicit names or each insert unloads the last.
 @ApplyOptions<ListenerOptions>({
   name: 'entitlementCreateSync',
   event: Events.EntitlementCreate,
@@ -50,8 +52,7 @@ export class EntitlementUpdateListener extends Listener {
   }
 }
 
-// Discord emits delete for refunds and test-entitlement cleanup. Force the
-// deleted flag rather than trusting the payload to carry it.
+// Delete arrives for refunds and test cleanup; force the flag regardless of payload.
 @ApplyOptions<ListenerOptions>({
   name: 'entitlementDeleteSync',
   event: Events.EntitlementDelete,
