@@ -100,7 +100,11 @@ export function redisConnectionOptions(
       }
     }
 
-    const host = url.hostname || 'localhost'
+    const hostname = url.hostname
+    const host =
+      (hostname.startsWith('[') && hostname.endsWith(']')
+        ? hostname.slice(1, -1)
+        : hostname) || 'localhost'
     const port = url.port ? parsePort(url.port, 'REDIS_URL port') : 6379
     // Path "/3" selects DB 3; REDIS_DB is ignored while REDIS_URL is set.
     const pathDb =

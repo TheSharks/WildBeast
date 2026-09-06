@@ -80,6 +80,15 @@ export const envSchema = z
         'WILDBEAST_OWNER_IDS must be comma-separated user ids',
       )
       .optional(),
+    // Comma-separated guild ids where operator commands (/flags) are placed.
+    // Merged with the operators.commandGuilds runtime setting.
+    WILDBEAST_OPERATOR_GUILD_IDS: z
+      .string()
+      .regex(
+        /^\d+(,\s*\d+)*$/,
+        'WILDBEAST_OPERATOR_GUILD_IDS must be comma-separated guild ids',
+      )
+      .optional(),
     // Base URL of an OFREP-compatible feature flag service (flagd, GO
     // Feature Flag, ...). Optional: without it, command/task gates,
     // experiments and remote limit overrides use their in-code defaults.

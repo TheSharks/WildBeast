@@ -4,22 +4,25 @@ import type {
   ListenerOptions,
 } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
-import { persistCommandIds } from '../../utils/idHints.mjs'
 
-/**
- * After Sapphire finishes syncing application commands, store the ids
- * Discord assigned so the next boot can hand them back as idHints.
- */
+/** Store the ids Discord assigned so the next boot hands them back as hints. */
 @ApplyOptions<ListenerOptions>({
   event: Events.ApplicationCommandRegistriesRegistered,
 })
 export class PersistCommandIdsListener extends Listener {
   public async run(registries: Map<string, ApplicationCommandRegistry>) {
+    const app = this.container.app
     try {
-      await persistCommandIds(registries)
+      // Operator commands own their placements; Sapphire's empty registry
+      // for them must not erase those rows.
+      const owned = app.operatorCommands.names()
+      await app.work.run(() =>
+        app.commandIds.persist(
+          new Map([...registries].filter(([name]) => !owned.has(name))),
+        ),
+      )
     } catch (error) {
-      // Persistence is an optimization for the next boot; this one is
-      // already registered and functional.
+      // This boot is already registered; persistence only helps the next one.
       this.container.logger.warn('Could not persist command id hints', error)
     }
   }

@@ -15,7 +15,7 @@ const identifyWait = meter.createHistogram('discord_identify_wait_seconds', {
 })
 
 // 5s identify spacing per bucket plus margin for clock drift.
-const IDENTIFY_WINDOW_MILLIS = 5_500
+export const IDENTIFY_WINDOW_MILLIS = 5_500
 
 // Minimal Redis surface for testability.
 export interface IdentifyLockStore {
