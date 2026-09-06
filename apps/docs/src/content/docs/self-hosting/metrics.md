@@ -93,12 +93,14 @@ Node runtime metrics (`nodejs.eventloop.*`, `v8js.gc.*`,
 
 ## Scheduled tasks
 
-Recurring background work and the BullMQ queue backing it.
+Recurring background work and the BullMQ queue backing it. A `deferred`
+status means a worker handed a cluster-dependent job back to the queue
+because it doesn't own the required shard; it isn't a failure.
 
 | Metric | Type | Labels |
 | --- | --- | --- |
-| `discord_tasks_total` | counter | `task`, `status` (`success`, `error`) |
-| `discord_task_duration_seconds` | histogram | `task` |
+| `discord_tasks_total` | counter | `task`, `status` (`success`, `error`, `deferred`) |
+| `discord_task_duration_seconds` | histogram | `task`, `status` |
 | `bullmq_queue_size` / `_active` / `_waiting` / `_delayed` / `_failed` / `_completed` | gauge | `queue_name` |
 
 ## Cluster manager

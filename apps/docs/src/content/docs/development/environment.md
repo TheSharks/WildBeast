@@ -60,10 +60,11 @@ pnpm check:fix  # fix what Biome can fix automatically
 ```
 
 `pnpm dev` for the bot runs the TypeScript compiler in watch mode next to
-the running cluster. In development (`NODE_ENV` unset or `development`),
-Sapphire's HMR plugin watches the compiled output and hot-reloads pieces,
-so editing a command or listener takes effect without a restart. Changes
-outside pieces (structures, sharding, the cluster manager) still need one.
+the running cluster. Compiled output updates as you save, but the running
+process doesn't reload it: stop the cluster with Ctrl+C and run `pnpm dev`
+again to pick up a change. With `WILDBEAST_DEV_GUILD_ID` set, commands
+register in that guild and the new definitions show up in Discord as soon
+as the cluster is back.
 
 For telemetry during development, `SENTRY_SPOTLIGHT=true` streams events to
 a local [Spotlight](https://spotlightjs.com/) sidecar, and the

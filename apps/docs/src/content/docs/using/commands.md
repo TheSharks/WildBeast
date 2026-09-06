@@ -189,15 +189,22 @@ dashes and underscores only, and they can't shadow one of the bot's own
 commands. Tag names get lowercased on promotion; a name Discord won't
 accept is rejected with the reason.
 
-A server can promote 2 tags; a premium subscription for the server
-raises that to 25. If the server's subscription lapses, existing
-commands keep working, but the newest promotions over the cap are
-removed during nightly maintenance.
+A server can promote 2 tags; a premium subscription for the server raises
+that to 25. If the server's subscription lapses, existing commands keep
+working, but the newest promotions over the cap are removed during nightly
+maintenance once the bot has confirmed the change with Discord.
+
+If Discord refuses to register the command (for example because the server
+has reached Discord's own command limit), the reply tells you why. The bot
+remembers the request and retries it during nightly maintenance, so the
+command appears once the problem is resolved.
 
 ## Commands don't show up?
 
 - The bot must be invited with the `applications.commands` scope. Reinviting
   with the invite link from the [FAQ](/using/faq/) fixes a missing scope.
+- `/flags` is an operator command. It exists only in servers the bot's
+  operators configured for it, and only they can run it.
 - If you host WildBeast yourself and no commands appear, see
   [troubleshooting](/self-hosting/troubleshooting/#slash-commands-dont-appear).
 

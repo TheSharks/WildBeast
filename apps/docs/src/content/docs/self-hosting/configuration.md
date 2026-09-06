@@ -23,7 +23,7 @@ The essentials: the token, database, and runtime mode.
 | --- | --- | --- |
 | `DISCORD_TOKEN` | yes | Bot token. The v8 name `BOT_TOKEN` is accepted as a legacy alias. |
 | `DATABASE_URL` | yes | PostgreSQL connection URL. It is validated before the bot logs in. |
-| `NODE_ENV` | no | `development` enables debug logging and hot module reload. |
+| `NODE_ENV` | no | `development` enables debug logging and full trace sampling. |
 | `TRACE` | no | Any value raises the log level to trace. |
 
 ## Commands
@@ -34,7 +34,8 @@ Where slash commands register and what `/invite` hands out.
 | --- | --- | --- |
 | `WILDBEAST_DEV_GUILD_ID` | no | When set, slash commands register in this guild instead of globally. Guild commands update instantly, so development environments want this; production leaves it unset. Boot refuses the combination with `NODE_ENV=production`, because bulk-overwrite registration would remove every global command. |
 | `WILDBEAST_INVITE_OVERRIDE` | no | A URL for `/invite` to hand out instead of the generated OAuth link. |
-| `WILDBEAST_OWNER_IDS` | no | Comma-separated user ids allowed to run owner-only commands like [`/flags`](/development/features/#the-flags-owner-command). Unset means owner-only commands deny everyone. |
+| `WILDBEAST_OPERATOR_GUILD_IDS` | no | Comma-separated guild ids where operator commands like [`/flags`](/development/features/#the-flags-operator-command) are placed. Merged with the `operators.commandGuilds` runtime setting, which changes the list without a restart. Operator commands are never registered globally. |
+| `WILDBEAST_OWNER_IDS` | no | Comma-separated user ids allowed to run owner-only commands like [`/flags`](/development/features/#the-flags-operator-command). Unset means owner-only commands deny everyone. |
 
 ## Premium
 

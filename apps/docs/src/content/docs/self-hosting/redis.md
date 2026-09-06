@@ -26,7 +26,7 @@ for the full list.
 
 | Data | Keys | Lifetime |
 | --- | --- | --- |
-| Scheduled task queue | BullMQ's own `bull:*` keys | Recreated on boot |
+| Scheduled task queue | BullMQ's own `bull:*` keys | Recreated on boot; jobs a worker defers wait here for the owner of the required shard |
 | Identify rate limiting | `wildbeast:identify:<bucket>` | Seconds (pacing keys) |
 | Gateway sessions | `wildbeast:shard:<id>:session` | 15 minutes since last write |
 | Active epoch | `wildbeast:epoch` | Until the next [migration](/self-hosting/resharding/) |
@@ -67,8 +67,11 @@ it is connection churn, not data loss:
 - Membership and leases re-form within seconds; running clusters
   heartbeat and re-acquire on their normal cadence. Heartbeat and renewal
   are independent of slow shard starts and stops.
-- The task queue is recreated when clusters boot; recurring tasks
-  resume their schedules. A one-shot job enqueued but not yet run is lost.
+- The task queue is recreated when clusters boot; recurring tasks resume
+  their schedules. A one-shot job enqueued but not yet run is lost. The
+  bot enqueues two of those on every boot, a full entitlement snapshot and
+  operator command placement, and both are also covered by their recurring
+  runs.
 - The epoch pointer is re-initialized by the next cluster to resolve
   it. Don't flush Redis in the middle of a
   [shard total migration](/self-hosting/resharding/); the pending proposal

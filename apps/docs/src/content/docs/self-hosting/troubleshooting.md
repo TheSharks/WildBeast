@@ -16,15 +16,23 @@ debug logging, and setting `TRACE` to any value raises it to trace.
 started. The message names the exact variables; typical causes are a
 missing `DISCORD_TOKEN` or an out-of-range number.
 
-**`Failed to start cluster:` and exit code 1.** Startup itself failed. The
-attached error tells you which of the usual suspects it was:
+**`Failed to start cluster:` and exit code 1.** The manager itself failed
+to start. The attached error is usually a conflicting shard total proposal
+during a [migration](/self-hosting/resharding/): two different new totals
+were proposed at once, and the message names both.
 
-- An invalid token (Discord rejects the connection).
-- Redis unreachable (connection errors from ioredis). Check `REDIS_HOST`
-  and `REDIS_PORT`, and that Redis accepts connections from the host.
-- A conflicting shard total proposal during a
-  [migration](/self-hosting/resharding/): two different new totals were proposed
-  at once. The message names both totals.
+**`WildBeast startup failed:` in a shard worker.** The worker opened its
+resources in order and one of them failed; everything opened before it was
+closed again. The line names the cause:
+
+- `Database schema is out of date: run migrations` or `Entitlement mirror
+  state missing: run migrations`. Apply the
+  [migrations](/self-hosting/running-in-production/#database-migrations)
+  and restart.
+- Connection errors from `pg` or ioredis. Check `DATABASE_URL`, the
+  `REDIS_*` variables, and that both services accept connections from the
+  host.
+- `TokenInvalid`. Discord rejected the token in `DISCORD_TOKEN`.
 
 **`Fleet moved to epoch N (...); this cluster's configuration is stale,
 exiting.`** The fleet completed a shard total migration while this cluster
@@ -80,11 +88,31 @@ likely blocked on something during cleanup.
 - The bot needs the `applications.commands` OAuth scope. Reinvite it with
   the scope included; kicking it is not necessary.
 - During development, commands register to a specific development guild
-  (via `WILDBEAST_DEV_GUILD_ID`) rather than globally, so a
-  self-hosted instance won't see them in other servers until you adjust or
-  unset that variable.
+  (via `WILDBEAST_DEV_GUILD_ID`) rather than globally, so a self-hosted
+  instance won't see them in other servers until you adjust or unset that
+  variable.
 - Globally registered commands can take up to an hour to propagate;
   guild-scoped ones appear immediately.
+- `/flags` only exists in the guilds listed in `WILDBEAST_OPERATOR_GUILD_IDS`
+  or the `operators.commandGuilds` runtime setting, and only server admins
+  see it there. If it appears but answers `This command is reserved for the
+  bot owner`, add your user id to `WILDBEAST_OWNER_IDS`.
+
+## Background jobs don't run
+
+**`Task deferred: <name> requires shard 0, which this worker does not
+own`** at debug level. Not an error: the entitlement snapshot, promoted
+command repair, and operator command placement run only on the worker that
+owns shard 0, and BullMQ handed the job to another worker first. The queue
+retries the job until the owner picks it up; `discord_tasks_total` counts
+these as `status="deferred"`. If a job stays deferred, no running cluster
+owns shard 0.
+
+**`Deferring over-cap demotion`** in the promoted command repair. The
+entitlement mirror has no completed snapshot fresh enough to prove a guild
+lost its subscription, so the repair kept its commands. It resolves itself
+after the next successful snapshot (`discord_entitlement_reconcile_total`);
+if snapshots keep failing, the log line before it names the API error.
 
 ## Where to look
 

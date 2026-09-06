@@ -58,18 +58,18 @@ If your command doesn't have subcommands or your command is a context menu actio
 
 ### Inheritance
 
-All commands must extend a base class (usually `TracedCommand` from `apps/discord/src/structures`) and be exported as a class, so the framework can construct them.
+All commands must extend a base class (`AppCommand` or `AppSubcommand` from `apps/discord/src/structures`) and be exported as a class, so the framework can construct them.
 
 ```ts
 // ✗ bad
-export default new TracedCommand({
+export default new AppCommand({
   // ...
 });
 ```
 
 ```ts
 // ✓ good
-export class GreetCommand extends TracedCommand {
+export class GreetCommand extends AppCommand {
   // ...
 }
 ```
