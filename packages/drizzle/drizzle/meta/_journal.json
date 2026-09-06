@@ -57,6 +57,34 @@
       "when": 1788624563476,
       "tag": "0007_entitlement_owner_backfill",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788651732422,
+      "tag": "0008_entitlement-mirror-state",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788653330365,
+      "tag": "0009_tag-command-intents",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788653617567,
+      "tag": "0010_rebuild-data-and-triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788653618567,
+      "tag": "0011_drop-legacy-promotion-trigger",
+      "breakpoints": true
     }
   ]
 }

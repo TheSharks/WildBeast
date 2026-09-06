@@ -111,3 +111,39 @@ export type NewApplicationCommandId = typeof applicationCommandIds.$inferInsert
 
 export type Entitlement = typeof entitlements.$inferSelect
 export type NewEntitlement = typeof entitlements.$inferInsert
+
+/** A completed full snapshot, independent of row updates and empty mirrors. */
+export const entitlementMirrorState = pgTable(
+  'EntitlementMirrorState',
+  {
+    id: integer('id').primaryKey(),
+    revision: bigint('revision', { mode: 'bigint' }).notNull().default(sql`0`),
+    completedAt: timestamp('completedAt', { withTimezone: true }),
+  },
+  (table) => [check('EntitlementMirrorState_singleton', sql`${table.id} = 1`)],
+)
+
+/** Durable intent survives tag deletion and the Discord create-to-commit window. */
+export const tagCommandIntents = pgTable(
+  'TagCommandIntent',
+  {
+    id: serial('id').primaryKey(),
+    tagId: integer('tagId').references(() => tags.id, { onDelete: 'set null' }),
+    guildId: bigint('guildId', { mode: 'bigint' }).notNull(),
+    name: text('name').notNull(),
+    description: text('description').notNull(),
+    argsDescription: text('argsDescription').notNull(),
+    requestedBy: bigint('requestedBy', { mode: 'bigint' }).notNull(),
+    requestedAt: timestamp('requestedAt', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    wanted: boolean('wanted').notNull().default(true),
+    attempted: boolean('attempted').notNull().default(false),
+    commandId: bigint('commandId', { mode: 'bigint' }),
+  },
+  (table) => [
+    unique('TagCommandIntent_guild_name_key').on(table.guildId, table.name),
+    unique('TagCommandIntent_tag_key').on(table.tagId),
+    unique('TagCommandIntent_command_key').on(table.commandId),
+  ],
+)
