@@ -7,17 +7,17 @@ import {
   TextDisplayBuilder,
 } from 'discord.js'
 import {
-  GatedCommandInteractionHandler,
-  type GatedCommandInteractionHandlerOptions,
-} from '../structures/interactionHandler.mjs'
-import {
   BOORU_CUSTOM_ID_PREFIX,
   type BooruSiteName,
   booruSites,
   buildBooruPage,
   channelAllowsNsfw,
   isBooruSiteName,
-} from '../utils/booru.mjs'
+} from '../integrations/booru.mjs'
+import {
+  GatedCommandInteractionHandler,
+  type GatedCommandInteractionHandlerOptions,
+} from '../structures/interactionHandler.mjs'
 
 interface BooruPageAction {
   site: BooruSiteName

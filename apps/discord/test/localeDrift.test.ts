@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 const here = dirname(fileURLToPath(import.meta.url))
 const srcDir = join(here, '..', 'src')
 const enUsDir = join(srcDir, 'languages', 'en-US')
-const clientPath = join(srcDir, 'structures', 'client.mts')
+const clientPath = join(srcDir, 'runtime', 'client.mts')
 
 type LangMap = Map<string, unknown>
 

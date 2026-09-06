@@ -17,7 +17,7 @@ function report(
   piece: string,
   error: unknown,
 ): void {
-  // Never throw here to avoid listenerError recursion.
+  // Never throw here: that would recurse through listenerError.
   try {
     frameworkErrorCounter.add(1, { source, piece })
     listener.container.logger.error(`${source} error in ${piece}:`, error)
@@ -27,13 +27,12 @@ function report(
       Sentry.captureException(error)
     })
   } catch {
-    // swallow: reporting must not become its own failure loop
+    // Reporting must not become its own failure loop.
   }
 }
 
-// Explicit names prevent same-file listeners unloading each other.
 @ApplyOptions<ListenerOptions>({
-  name: 'listenerErrorReporting',
+  name: 'listenerError',
   event: Events.ListenerError,
 })
 export class ListenerErrorListener extends Listener {
@@ -43,7 +42,7 @@ export class ListenerErrorListener extends Listener {
 }
 
 @ApplyOptions<ListenerOptions>({
-  name: 'registryErrorReporting',
+  name: 'registryError',
   event: Events.CommandApplicationCommandRegistryError,
 })
 export class RegistryErrorListener extends Listener {
@@ -55,7 +54,7 @@ export class RegistryErrorListener extends Listener {
 }
 
 @ApplyOptions<ListenerOptions>({
-  name: 'interactionHandlerErrorReporting',
+  name: 'interactionHandlerError',
   event: Events.InteractionHandlerError,
 })
 export class InteractionHandlerErrorListener extends Listener {
@@ -67,7 +66,7 @@ export class InteractionHandlerErrorListener extends Listener {
 }
 
 @ApplyOptions<ListenerOptions>({
-  name: 'interactionHandlerParseErrorReporting',
+  name: 'interactionHandlerParseError',
   event: Events.InteractionHandlerParseError,
 })
 export class InteractionHandlerParseErrorListener extends Listener {

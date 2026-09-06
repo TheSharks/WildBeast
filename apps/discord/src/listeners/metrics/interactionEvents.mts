@@ -9,7 +9,7 @@ import {
 } from '@thesharks/analytics'
 import type { ClientEvents, Interaction } from 'discord.js'
 import { InteractionType } from 'discord.js'
-import { resolveInteractionScope } from '../../utils/tracing.mjs'
+import { resolveInteractionScope } from '../../telemetry/spans.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 // Labels frozen by METRIC_CONTRACT['discord_button_interaction_total'] in

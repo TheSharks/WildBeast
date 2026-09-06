@@ -1,6 +1,6 @@
 import type { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
 import { type Attributes, createGauge } from '@thesharks/analytics'
-import { TracedScheduledTask } from '../structures/task.mjs'
+import { AppScheduledTask } from '../structures/task.mjs'
 
 const queueSizeGauge = createGauge(
   '@thesharks/discord',
@@ -33,35 +33,19 @@ const queueCompletedGauge = createGauge(
   'Number of completed jobs in BullMQ queue',
 )
 
-export class BullMQMetricsTask extends TracedScheduledTask {
+export class BullMQMetricsTask extends AppScheduledTask {
   public constructor(
     context: ScheduledTask.LoaderContext,
     options: ScheduledTask.Options,
   ) {
-    super(context, {
-      ...options,
-      interval: 60_000,
-    })
+    super(context, { ...options, interval: 60_000 })
   }
 
   public async run() {
-    try {
-      await this.updateBullMQMetrics()
-    } catch (error) {
-      this.container.logger?.warn('BullMQ metrics collection failed', error)
-    }
-  }
-
-  private async updateBullMQMetrics() {
-    // All scheduled tasks share the plugin's single queue; reuse its
-    // connection instead of opening a second one.
+    // Every task shares the plugin's queue; reuse its connection.
     const { client: queue, queue: queueName } = this.container.tasks
-
     const counts = await queue.getJobCounts()
-    const labels: Attributes = {
-      queue_name: queueName,
-    }
-
+    const labels: Attributes = { queue_name: queueName }
     queueSizeGauge.set(
       (counts.waiting ?? 0) + (counts.active ?? 0) + (counts.delayed ?? 0),
       labels,

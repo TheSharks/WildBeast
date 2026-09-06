@@ -7,14 +7,14 @@ import {
   TextDisplayBuilder,
 } from 'discord.js'
 import {
-  GatedCommandInteractionHandler,
-  type GatedCommandInteractionHandlerOptions,
-} from '../structures/interactionHandler.mjs'
-import {
   buildUrbanPage,
   fetchDefinitions,
   URBAN_CUSTOM_ID_PREFIX,
-} from '../utils/urban.mjs'
+} from '../integrations/urban.mjs'
+import {
+  GatedCommandInteractionHandler,
+  type GatedCommandInteractionHandlerOptions,
+} from '../structures/interactionHandler.mjs'
 
 interface UrbanPageAction {
   query: string

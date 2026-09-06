@@ -7,13 +7,13 @@ import {
   TextDisplayBuilder,
 } from 'discord.js'
 import {
+  type RefreshableKind,
+  refreshableBuilders,
+} from '../integrations/fun-messages.mjs'
+import {
   GatedCommandInteractionHandler,
   type GatedCommandInteractionHandlerOptions,
 } from '../structures/interactionHandler.mjs'
-import {
-  type RefreshableKind,
-  refreshableBuilders,
-} from '../utils/funMessages.mjs'
 
 /** Stateless 🔄 rebuild for cat/dog/inspire messages. */
 @ApplyOptions<GatedCommandInteractionHandlerOptions>({
