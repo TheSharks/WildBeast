@@ -6,7 +6,7 @@ sidebar:
 ---
 
 Answers to the questions we get most often. If yours isn't here, the
-[Discord server](https://discord.gg/8wjT9Av) is the fastest place to ask.
+[Discord server](https://discord.gg/wildbot) is the fastest place to ask.
 
 ## Do I need to host WildBeast myself?
 
@@ -56,7 +56,7 @@ client locale over the server locale when picking a language.
 ## Where do I report bugs or request features?
 
 Open an issue on [GitHub](https://github.com/TheSharks/WildBeast/issues).
-For quick questions, the [Discord server](https://discord.gg/8wjT9Av) works
+For quick questions, the [Discord server](https://discord.gg/wildbot) works
 too. If you want to contribute code, read the
 [contributing guidelines](https://github.com/TheSharks/WildBeast/blob/master/.github/CONTRIBUTING.md)
 and the [Development](/development/architecture/) section.

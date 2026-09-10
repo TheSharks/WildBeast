@@ -124,5 +124,5 @@ if snapshots keep failing, the log line before it names the API error.
 | Errors with stack traces | Sentry (when `SENTRY_DSN` is set) |
 | Everything else | The [metrics reference](/self-hosting/metrics/) and [dashboards](/self-hosting/dashboards/) |
 
-If you're stuck, ask in the [Discord server](https://discord.gg/8wjT9Av)
+If you're stuck, ask in the [Discord server](https://discord.gg/wildbot)
 with the log lines around the failure.
