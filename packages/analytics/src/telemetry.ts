@@ -873,7 +873,7 @@ export function initOpenTelemetry(
     contextManager: new Sentry.SentryContextManager(),
   })
 
-  const readers: MetricReader[] = []
+  const readers: MetricReader[] = [...(config?.metricReaders ?? [])]
   for (const exporterConfig of metricsConfigs) {
     if (exportingEnabled) {
       const options = buildOtlpOptions('metrics', exporterConfig)

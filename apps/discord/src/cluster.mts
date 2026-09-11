@@ -6,13 +6,16 @@ import {
   AnalyticsLogger,
   createGauge,
   initOpenTelemetry,
+  LocalMetricReader,
 } from '@thesharks/analytics'
+import { canStartDashboard, startDashboard } from '@thesharks/tui'
 import { ShardingManager } from 'discord.js'
 import { loadEnv } from './env.mjs'
 import { discordShardingHost } from './fleet/discord.mjs'
 import { FleetManager } from './fleet/manager.mjs'
 import { logLevelFor } from './runtime/client.mjs'
 import { parseClusteringConfig } from './sharding/config.mjs'
+import { connectLocalMetrics } from './telemetry/tui.mjs'
 import { redisConnectionOptions } from './utils/redis.mjs'
 
 // Load and validate before telemetry so SENTRY_DSN and OTEL_* are picked up.
@@ -23,7 +26,12 @@ const env = loadEnv()
 const clusterId = env.WILDBEAST_CLUSTER_ID ?? `${hostname()}-${process.pid}`
 process.env.WILDBEAST_CLUSTER_ID = clusterId
 
+const tuiEnabled = canStartDashboard(env.WILDBEAST_TUI)
+// Internal flag inherited only by this manager's worker threads.
+process.env.WILDBEAST_TUI_METRICS = tuiEnabled ? '1' : '0'
+const localMetrics = tuiEnabled ? new LocalMetricReader() : undefined
 const telemetry = initOpenTelemetry({
+  metricReaders: localMetrics ? [localMetrics] : [],
   serviceName: '@thesharks/discord-manager',
   namespace: '@thesharks',
   resourceAttributes: { 'cluster.id': clusterId },
@@ -77,10 +85,34 @@ const fleet: FleetManager = new FleetManager({
   onStale: () => void shutdown(1),
 })
 
+const startedAt = Date.now()
+let disconnectMetrics: (() => void) | undefined
+const dashboard = localMetrics
+  ? startDashboard({
+      sample: () => localMetrics.snapshot(),
+      status: () => ({
+        title: clusterId,
+        phase: fleet.phase,
+        startedAt,
+        shards: [...manager.shards.values()].map((shard) => ({
+          id: shard.id,
+          status: shard.ready ? 'ready' : shard.worker ? 'starting' : 'down',
+        })),
+      }),
+      onShutdown: () => void shutdown(),
+      onDetach: () => {
+        process.env.WILDBEAST_TUI_METRICS = '0'
+        disconnectMetrics?.()
+      },
+    })
+  : undefined
+if (dashboard) disconnectMetrics = connectLocalMetrics(manager, dashboard.model)
+
 let exiting = false
 async function shutdown(code = 0): Promise<never> {
   if (!exiting) {
     exiting = true
+    dashboard?.stop()
     try {
       await fleet.stop()
     } catch (error) {

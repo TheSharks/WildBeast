@@ -1,11 +1,16 @@
 import { parentPort, workerData } from 'node:worker_threads'
 import * as Sentry from '@sentry/node'
-import { AnalyticsLogger, initOpenTelemetry } from '@thesharks/analytics'
+import {
+  AnalyticsLogger,
+  initOpenTelemetry,
+  LocalMetricReader,
+} from '@thesharks/analytics'
 import { validateEnv } from './env.mjs'
 import { logLevelFor } from './runtime/client.mjs'
 import { composeApplication } from './runtime/composition.mjs'
 import { configFromEnv } from './runtime/config.mjs'
 import { WORKER_TELEMETRY_SHUTDOWN_TIMEOUT_MILLIS } from './sharding/lifecycle.mjs'
+import { publishLocalMetrics } from './telemetry/tui.mjs'
 
 // Validate before anything opens a connection; a direct `node dist/next/main.mjs`
 // must fail here with a readable message.
@@ -24,7 +29,12 @@ const config = configFromEnv(env, {
 const baseTracesSampleRate = config.development ? 1.0 : 0.2
 
 // Must run as early as possible.
+const localMetrics =
+  parentPort && process.env.WILDBEAST_TUI_METRICS === '1'
+    ? new LocalMetricReader()
+    : undefined
 const telemetry = initOpenTelemetry({
+  metricReaders: localMetrics ? [localMetrics] : [],
   serviceName: '@thesharks/discord',
   namespace: '@thesharks',
   shardId,
@@ -49,10 +59,15 @@ const telemetry = initOpenTelemetry({
   },
 })
 
+const stopLocalMetrics = localMetrics
+  ? publishLocalMetrics(localMetrics)
+  : undefined
+
 const logger = new AnalyticsLogger({ level: logLevelFor(config) })
 const { runtime } = composeApplication(config, { logger, telemetry })
 
 async function stop(reason: 'shutdown' | 'handoff'): Promise<never> {
+  stopLocalMetrics?.()
   let code = 0
   try {
     await runtime.stop(reason)
@@ -92,6 +107,7 @@ try {
     logger.fatal('WildBeast startup failed:', cause)
   Sentry.captureException(error)
   await Sentry.flush(2_000).catch(() => undefined)
+  stopLocalMetrics?.()
   await telemetry.shutdown().catch(() => undefined)
   process.exit(1)
 }

@@ -176,6 +176,9 @@ importers:
       '@thesharks/tagscript':
         specifier: workspace:^
         version: link:../../packages/tagscript
+      '@thesharks/tui':
+        specifier: workspace:^
+        version: link:../../packages/tui
       bullmq:
         specifier: ^5.81.4
         version: 5.81.4(supports-color@10.2.2)
@@ -415,6 +418,31 @@ importers:
         version: 6.0.3
 
   packages/tsconfig: {}
+
+  packages/tui:
+    dependencies:
+      '@thesharks/analytics':
+        specifier: workspace:^
+        version: link:../analytics
+      string-width:
+        specifier: ^8.2.2
+        version: 8.2.2
+    devDependencies:
+      '@thesharks/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
+      '@types/node':
+        specifier: ^26.5.1
+        version: 26.5.1
+      rimraf:
+        specifier: ^6.1.3
+        version: 6.1.3
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.5.1)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.5.1)(yaml@2.9.0))
 
 packages:
 

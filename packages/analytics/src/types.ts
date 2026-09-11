@@ -1,4 +1,5 @@
 import type { Attributes } from '@opentelemetry/api'
+import type { MetricReader } from '@opentelemetry/sdk-metrics'
 import type { NodeOptions } from '@sentry/node'
 
 export interface TelemetryExporterConfig {
@@ -48,6 +49,8 @@ export interface TelemetrySentryConfig {
 }
 
 export interface TelemetryConfig {
+  /** Additional local readers, independent of OTLP export configuration. */
+  metricReaders?: MetricReader[]
   serviceName?: string
   serviceVersion?: string
   environment?: string

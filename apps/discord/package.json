@@ -46,7 +46,8 @@
     "bullmq": "^5.81.4",
     "discord.js": "^14.27.0",
     "ioredis": "^5.11.1",
-    "zod": "^4.6.1"
+    "zod": "^4.6.1",
+    "@thesharks/tui": "workspace:^"
   },
   "devDependencies": {
     "@sapphire/cli": "^1.9.3",

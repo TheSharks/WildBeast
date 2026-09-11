@@ -17,6 +17,27 @@ Common config knobs in `initOpenTelemetry`:
 - `instrumentations` to toggle `pg`, `undici`, `ioredis`, `fs` and `runtimeNode`
 - `sentry` to override `dsn`, `tracesSampleRate`, `tracesSampler`, `environment`, `release`
 
+### Local metric inspection
+
+Pass an additional reader when initializing telemetry to inspect metrics without
+an OTLP collector. `LocalMetricReader` collects cumulative snapshots that can be
+sent through worker IPC; collecting them does not drain other metric readers.
+
+```typescript
+import { initOpenTelemetry, LocalMetricReader } from '@thesharks/analytics'
+
+const reader = new LocalMetricReader()
+const telemetry = initOpenTelemetry({ metricReaders: [reader] })
+// After application instruments have emitted data:
+const snapshot = await reader.snapshot()
+// snapshot.points contains labels, units, counters, gauges, and histogram summaries.
+await telemetry.shutdown()
+```
+
+Register the reader before starting application work. Collection has a one-second
+observable callback timeout, a 200-series cardinality limit per instrument, and a
+2,000-point snapshot cap. Check `errors` and `truncated` for partial results.
+
 ### Exporter configuration
 
 Each signal (traces, metrics, logs) can be configured with:

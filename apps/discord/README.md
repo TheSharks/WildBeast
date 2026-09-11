@@ -18,6 +18,20 @@ All commands are run from this directory (or via turbo from the repo root):
 | `pnpm start:worker` | Run one shard worker directly (`node dist/main.mjs`) |
 | `pnpm test`  | Run unit tests                                |
 
+## Interactive terminal
+
+`pnpm start` opens a dashboard when stdin and stdout are interactive terminals.
+Use `1`/`2`/`3` for overview, metrics, and logs; `/` to filter; arrows to inspect
+metrics or scroll logs; `Space` to pause; and `?` for all controls. `q` returns to
+plain logs while the bot continues running. `Ctrl+C` shuts the bot down gracefully.
+
+Metrics come from the manager and its local shard workers through an independent
+OpenTelemetry reader, so no collector is required. Set `WILDBEAST_TUI=off` to
+keep plain logging. Non-interactive runs keep plain logging automatically.
+
+See [the TUI package](../../packages/tui/README.md) for controls, data semantics,
+and a standalone demo that works without bot credentials.
+
 ## Configuration
 
 The bot reads its configuration from environment variables, loads

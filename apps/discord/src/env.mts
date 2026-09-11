@@ -23,6 +23,7 @@ export const envSchema = z
       ),
     NODE_ENV: z.string().optional(),
     TRACE: z.string().optional(),
+    WILDBEAST_TUI: z.enum(['auto', 'on', 'off']).optional(),
     // Full Redis URL (redis://, rediss:// or unix://). When set it
     // overrides REDIS_HOST/PORT/PASSWORD/DB; otherwise those parts apply.
     REDIS_URL: z
