@@ -47,10 +47,13 @@ describe('variable tags comprehensive', () => {
       ['{get:y}', { x: 'hello' }, 'undefined'],
       ['{get:x}', { x: '' }, ''],
       ['{get: x }', {}, 'undefined'],
-    ])('%s with variables=%s returns %s', async (input, variables, expected) => {
-      const result = await render(input, { variables })
-      expect(result.output).toBe(expected)
-    })
+    ])(
+      '%s with variables=%s returns %s',
+      async (input, variables, expected) => {
+        const result = await render(input, { variables })
+        expect(result.output).toBe(expected)
+      },
+    )
 
     it('gets variable set in same render', async () => {
       const result = await render('{set:x|value}{get:x}')

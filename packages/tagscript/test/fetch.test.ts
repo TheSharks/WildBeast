@@ -88,16 +88,16 @@ describe('fetch tag', () => {
       ).rejects.toThrow('Invalid fetch URL')
     })
 
-    it.each([
-      'file:///etc/passwd',
-      'ftp://example.com/file',
-    ])('blocks the %s scheme', async (url) => {
-      const fn = mockFetch()
-      await expect(
-        render(`{fetch:${url}}`, { enableFetch: true }),
-      ).rejects.toThrow('Blocked fetch URL scheme')
-      expect(fn).not.toHaveBeenCalled()
-    })
+    it.each(['file:///etc/passwd', 'ftp://example.com/file'])(
+      'blocks the %s scheme',
+      async (url) => {
+        const fn = mockFetch()
+        await expect(
+          render(`{fetch:${url}}`, { enableFetch: true }),
+        ).rejects.toThrow('Blocked fetch URL scheme')
+        expect(fn).not.toHaveBeenCalled()
+      },
+    )
 
     it.each([
       'http://127.0.0.1/',
@@ -115,16 +115,16 @@ describe('fetch tag', () => {
       expect(fn).not.toHaveBeenCalled()
     })
 
-    it.each([
-      'http://localhost/',
-      'http://api.localhost/',
-    ])('blocks the localhost name %s', async (url) => {
-      const fn = mockFetch()
-      await expect(
-        render(`{fetch:${url}}`, { enableFetch: true }),
-      ).rejects.toThrow('Blocked fetch to private host')
-      expect(fn).not.toHaveBeenCalled()
-    })
+    it.each(['http://localhost/', 'http://api.localhost/'])(
+      'blocks the localhost name %s',
+      async (url) => {
+        const fn = mockFetch()
+        await expect(
+          render(`{fetch:${url}}`, { enableFetch: true }),
+        ).rejects.toThrow('Blocked fetch to private host')
+        expect(fn).not.toHaveBeenCalled()
+      },
+    )
 
     it('allows public addresses', async () => {
       const fn = mockFetch(() => new Response('ok', { status: 200 }))

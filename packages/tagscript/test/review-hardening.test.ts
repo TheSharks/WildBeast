@@ -148,15 +148,13 @@ describe('review hardening', () => {
   })
 
   describe('registry prototype isolation', () => {
-    it.each([
-      'toString',
-      '__proto__',
-      'hasOwnProperty',
-      'constructor',
-    ])('treats {%s} as an unknown tag', async (name) => {
-      const result = await render(`{${name}}`)
-      expect(result.output).toBe(`{${name}}`)
-    })
+    it.each(['toString', '__proto__', 'hasOwnProperty', 'constructor'])(
+      'treats {%s} as an unknown tag',
+      async (name) => {
+        const result = await render(`{${name}}`)
+        expect(result.output).toBe(`{${name}}`)
+      },
+    )
 
     it('throws Unknown tag in strict mode for prototype names', async () => {
       await expect(render('{toString}', { mode: 'strict' })).rejects.toThrow(

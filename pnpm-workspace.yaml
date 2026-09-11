@@ -2,10 +2,13 @@ packages:
   - apps/*
   - packages/*
 
-onlyBuiltDependencies:
-  - '@sentry/node-cpu-profiler'
-  - '@sentry/node-native-stacktrace'
-  - core-js
-  - core-js-pure
-  - msgpackr-extract
-  - protobufjs
+engineStrict: true
+
+allowBuilds:
+  '@sentry/node-cpu-profiler': true
+  '@sentry/node-native-stacktrace': true
+  core-js: true
+  core-js-pure: true
+  esbuild: true
+  msgpackr-extract: true
+  protobufjs: true

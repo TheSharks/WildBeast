@@ -15,15 +15,13 @@ describe('math tags comprehensive', () => {
       expect(result.output).toBe(expected)
     })
 
-    it.each([
-      'abs',
-      'sin',
-      'tan',
-      'sqrt',
-    ])('%s handles empty arg', async (tag) => {
-      const result = await render(`{${tag}:}`)
-      expect(result.output).toBe('NaN')
-    })
+    it.each(['abs', 'sin', 'tan', 'sqrt'])(
+      '%s handles empty arg',
+      async (tag) => {
+        const result = await render(`{${tag}:}`)
+        expect(result.output).toBe('NaN')
+      },
+    )
 
     it('cos handles empty arg', async () => {
       const result = await render('{cos:}')

@@ -72,17 +72,20 @@ describe('replacement premium policy', () => {
     [new Date(now - 86400001), 'stale'],
     [new Date(now + 1), 'invalid-clock'],
     [new Date(Number.NaN), 'invalid-clock'],
-  ] as const)('defers revocations when completedAt is %s', async (date, freshness) => {
-    const repo = repository(date)
-    repo.view.grants = [{ ...grant, deleted: true }]
-    const service = new PremiumService(repo, skus, () => now)
-    await expect(service.forBackground('guild', 20n)).resolves.toEqual({
-      tier: 'free',
-      freshness,
-      mayRevoke: false,
-      validUntil: null,
-    })
-  })
+  ] as const)(
+    'defers revocations when completedAt is %s',
+    async (date, freshness) => {
+      const repo = repository(date)
+      repo.view.grants = [{ ...grant, deleted: true }]
+      const service = new PremiumService(repo, skus, () => now)
+      await expect(service.forBackground('guild', 20n)).resolves.toEqual({
+        tier: 'free',
+        freshness,
+        mayRevoke: false,
+        validUntil: null,
+      })
+    },
+  )
 
   it('treats a completed empty snapshot as fresh', async () => {
     const service = new PremiumService(repository(), skus, () => now)
