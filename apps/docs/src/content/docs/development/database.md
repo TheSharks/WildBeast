@@ -28,8 +28,8 @@ public async find(guildId: bigint, name: string) {
 }
 ```
 
-Scripts and tests that need a client without the runtime use the lazy `db`
-export or `getDb()`, which read `DATABASE_URL` on first use. The connection
+Scripts and tests use `createDatabase(connectionString)` too and call `close()`
+in a `finally` block. There is no process-global client. The connection
 string is a standard `postgres://user:password@host:port/database` URL. The
 [devcontainer](/development/environment/) sets it for you, pointing at its
 TimescaleDB service.
@@ -41,6 +41,14 @@ tags were global) and the
 [premium entitlement mirror](/development/premium/#the-entitlement-mirror);
 the package exists so new features land on a shared client from day one.
 :::
+
+## Operator command ownership
+
+Apply migration `0012_operator-command-ownership` before starting the new
+version. It marks existing guild-scoped `flags` commands as
+operator-owned so reconciliation can remove them if their definition is
+deleted. If your fork added operator commands, mark their guild placements
+as operator-owned too; ordinary guild commands must stay unmarked.
 
 ## Extensions
 
@@ -70,7 +78,7 @@ The tables, defined in `packages/drizzle/src/schema.ts`:
 | `Tag` | `id`, `guildId`, `name` (citext, unique per guild), `content`, `authorId`, `commandId`, `commandDescription`, `promotedBy`, `promotedAt` | Stored [TagScript](/tagscript/overview/) templates, namespaced per guild. The nullable promotion columns track tags promoted to [guild slash commands](/development/premium/#promoted-tag-commands-and-entitlement-lapse). |
 | `Guild` | `id` | Guilds known to the bot. |
 | `TagCommandIntent` | `id`, `tagId`, `guildId`, `name`, `description`, `argsDescription`, `requestedBy`, `requestedAt`, `wanted`, `attempted`, `commandId` | Durable desired state for promoted commands. A promote request creates one, a demote or delete flips `wanted` off, and the reconciler makes Discord match. `attempted` records that a create was sent, so a lost response can be recovered instead of duplicated. |
-| `ApplicationCommandId` | `commandId`, `name`, `guildId` | Discord-assigned command ids. Fed back to Sapphire as `idHints` on the next boot, and the record of where each [operator command](/development/pieces/#operator-commands) is placed. |
+| `ApplicationCommandId` | `commandId`, `name`, `guildId`, `operator` | Discord-assigned command ids. Ordinary commands feed Sapphire's `idHints`; operator-owned rows track [operator command](/development/pieces/#operator-commands) placements, including removed definitions. |
 | `Entitlement` | `id`, `skuId`, `userId`, `guildId`, `type`, `deleted`, `startsAt`, `endsAt`, `updatedAt` | Local mirror of Discord's [premium entitlements](/development/premium/#the-entitlement-mirror), for premium checks outside interactions. Exactly one of `userId` and `guildId` is set. |
 | `EntitlementMirrorState` | `id` (always 1), `revision`, `completedAt` | How trustworthy the mirror is. A trigger advances `revision` on every change to `Entitlement`; `completedAt` is the last full snapshot that committed against an unchanged revision. |
 

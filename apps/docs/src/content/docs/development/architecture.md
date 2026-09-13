@@ -97,14 +97,16 @@ to enforce its lifecycle guarantees.
   non-zero code, so a supervisor never mistakes a hung worker for a clean
   exit.
 
-Recurring work stays on Sapphire's scheduled-tasks plugin, so a repeat job
-runs on exactly one worker fleet-wide. `AppScheduledTask` admits every run
+Recurring work uses Sapphire's scheduled-tasks plugin with a separate BullMQ
+queue for each shard worker. `AppScheduledTask` admits every run
 through the work scope, gates it by its runtime flag, traces it, and checks
-it in as a Sentry monitor. Cluster-dependent jobs declare `requiresShard`; a
-worker that doesn't own that shard defers the job and BullMQ retries it
-until the owner picks it up. The entitlement snapshot, the promoted-command
+it in as a Sentry monitor. Cluster-dependent jobs declare `requiresShard`;
+only that shard's worker registers their schedule. The entitlement snapshot,
+the promoted-command
 repair, and operator command placement require shard 0. Metrics collection
-runs wherever the queue delivers it.
+runs on every worker. Queue names include a hash of the bot identity, shard
+assignment, and epoch or static shard total, so restarts reuse the same queue
+without sharing jobs with unrelated workers. Retries stay on that queue.
 
 ## How telemetry threads through
 

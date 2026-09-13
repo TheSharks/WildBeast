@@ -3,6 +3,7 @@ import type { ListenerOptions } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
 import type { Client } from 'discord.js'
 import { Events } from 'discord.js'
+import { TASK_JOB_OPTIONS } from '../../structures/task.mjs'
 
 /**
  * Grants can change while the bot is offline. Every ClientReady on the shard 0
@@ -18,7 +19,10 @@ export class EntitlementBootListener extends Listener {
       await this.container.tasks.create('entitlementRefresh', {
         repeated: false,
         delay: 0,
-        customJobOptions: { jobId: `entitlementRefresh:boot:${Date.now()}` },
+        customJobOptions: {
+          ...TASK_JOB_OPTIONS,
+          jobId: `entitlementRefresh:boot:${Date.now()}`,
+        },
       })
     } catch (error) {
       this.container.logger.warn(

@@ -93,7 +93,7 @@ export class ChatInputSubcommandSuccessListener extends Listener {
       payload,
     ]: ClientEvents['chatInputSubcommandSuccess']
   ) {
-    this.container.app.experiments.complete('success')
+    this.container.app.experiments.completeFromEvent('success')
     record(this, interaction, payload.command.name, subcommand.name)
   }
 }

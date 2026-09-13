@@ -1,6 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
+import { TASK_JOB_OPTIONS } from '../../structures/task.mjs'
 
 /**
  * Sapphire's bulk overwrite of the dev guild just ran; place operator
@@ -19,6 +20,7 @@ export class OperatorCommandsPlacementListener extends Listener {
         repeated: false,
         delay: 0,
         customJobOptions: {
+          ...TASK_JOB_OPTIONS,
           jobId: `operatorCommandReconcile:boot:${Date.now()}`,
         },
       })

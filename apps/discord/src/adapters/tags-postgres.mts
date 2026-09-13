@@ -3,8 +3,8 @@ import {
   asc,
   count,
   type createDatabase,
+  type Database,
   eq,
-  type getDb,
   ilike,
   isNotNull,
   or,
@@ -14,7 +14,6 @@ import {
 } from '@thesharks/drizzle'
 import type { CommandIntent, GuildTags, TagRepository } from '../tags/model.mjs'
 
-type Database = ReturnType<typeof getDb>
 type Connection = Pick<ReturnType<typeof createDatabase>, 'db' | 'withSession'>
 
 export class PostgresTags implements TagRepository {

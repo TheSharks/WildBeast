@@ -28,6 +28,7 @@ import {
   type RedisSessionStore,
 } from '../sharding/sessionStore.mjs'
 import type { AppConfig } from './config.mjs'
+import { taskQueueName } from './task-queue.mjs'
 
 // Bulk overwrite keeps deploys atomic and removes deleted commands.
 ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(
@@ -69,8 +70,7 @@ export function createSapphireClient(
 ): Client {
   const options: ClientOptions = {
     intents: [GatewayIntentBits.Guilds],
-    // Scheduled tasks share the fleet-wide BullMQ queue on Redis.
-    tasks: { bull: { connection: config.redis } },
+    tasks: { queue: taskQueueName(config), bull: { connection: config.redis } },
     baseUserDirectory: PIECES_DIRECTORY,
     logger: { level: logLevelFor(config) },
     ws: {

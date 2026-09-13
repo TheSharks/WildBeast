@@ -1,3 +1,4 @@
+import { BlockList, isIP } from 'node:net'
 import {
   type Attributes,
   type Context,
@@ -219,7 +220,21 @@ function getCarrierRequestUrl(carrier: unknown): string | undefined {
   return undefined
 }
 
-/** True for loopback/RFC1918/link-local/single-label/intranet hosts; fail-open when the target is unknown. */
+const internalAddresses = new BlockList()
+for (const [address, prefix] of [
+  ['127.0.0.0', 8],
+  ['10.0.0.0', 8],
+  ['172.16.0.0', 12],
+  ['192.168.0.0', 16],
+  ['169.254.0.0', 16],
+] as const) {
+  internalAddresses.addSubnet(address, prefix, 'ipv4')
+}
+internalAddresses.addAddress('::1', 'ipv6')
+internalAddresses.addSubnet('fc00::', 7, 'ipv6')
+internalAddresses.addSubnet('fe80::', 10, 'ipv6')
+
+/** True for loopback/private/link-local/intranet hosts; fail-open when the target is unknown. */
 export function isInternalTraceTarget(raw: string | undefined): boolean {
   if (!raw) return true
   let hostname: string
@@ -229,13 +244,23 @@ export function isInternalTraceTarget(raw: string | undefined): boolean {
     return true
   }
   if (!hostname) return true
+  const address = hostname.replace(/^\[|\]$/g, '')
+  const family = isIP(address)
+  const extra = (process.env.OTEL_TRACE_INTERNAL_TARGETS ?? '')
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+  if (
+    extra.some((entry) =>
+      family
+        ? address === entry.replace(/^\[|\]$/g, '')
+        : hostname === entry || hostname.endsWith(entry),
+    )
+  )
+    return true
+  if (family)
+    return internalAddresses.check(address, family === 6 ? 'ipv6' : 'ipv4')
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) return true
-  if (hostname === '127.0.0.1' || hostname.startsWith('127.')) return true
-  if (hostname === '::1' || hostname === '[::1]') return true
-  if (/^10\.\d+\.\d+\.\d+$/.test(hostname)) return true
-  if (/^192\.168\.\d+\.\d+$/.test(hostname)) return true
-  if (/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(hostname)) return true
-  if (/^169\.254\.\d+\.\d+$/.test(hostname)) return true
   if (!hostname.includes('.')) return true // Single-label intranet names (e.g. docker-compose services).
   if (
     [
@@ -249,13 +274,6 @@ export function isInternalTraceTarget(raw: string | undefined): boolean {
       (suffix) => hostname === suffix.slice(1) || hostname.endsWith(suffix),
     )
   ) {
-    return true
-  }
-  const extra = (process.env.OTEL_TRACE_INTERNAL_TARGETS ?? '')
-    .split(',')
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean)
-  if (extra.some((entry) => hostname === entry || hostname.endsWith(entry))) {
     return true
   }
   return false

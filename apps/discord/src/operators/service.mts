@@ -26,9 +26,10 @@ export interface OperatorCommandGateway {
 }
 
 export interface OperatorPlacementRepository {
-  placements(
-    name: string,
-  ): Promise<Array<{ guildId: bigint; commandId: bigint }>>
+  /** All placements owned by operator commands, including removed definitions. */
+  placements(): Promise<
+    Array<{ name: string; guildId: bigint; commandId: bigint }>
+  >
   record(name: string, guildId: bigint, commandId: bigint): Promise<void>
   forget(name: string, guildId: bigint): Promise<void>
 }
@@ -64,6 +65,9 @@ export class OperatorCommands {
     signal: AbortSignal,
   ): Promise<OperatorReconcileResult> {
     const desired = await this.guilds()
+    const definitions = this.definitions()
+    const names = new Set(definitions.map(({ name }) => name))
+    const placements = await this.placements.placements()
     const result: OperatorReconcileResult = {
       guilds: desired.size,
       created: 0,
@@ -71,13 +75,12 @@ export class OperatorCommands {
       removed: 0,
       failures: [],
     }
-    for (const definition of this.definitions()) {
+    for (const definition of definitions) {
       signal.throwIfAborted()
       const existing = new Map(
-        (await this.placements.placements(definition.name)).map((placement) => [
-          placement.guildId,
-          placement.commandId,
-        ]),
+        placements
+          .filter(({ name }) => name === definition.name)
+          .map((placement) => [placement.guildId, placement.commandId]),
       )
       for (const guildId of desired) {
         signal.throwIfAborted()
@@ -98,17 +101,17 @@ export class OperatorCommands {
           result.failures.push({ name: definition.name, guildId, error })
         }
       }
-      for (const [guildId, commandId] of existing) {
-        if (desired.has(guildId)) continue
+    }
+    for (const { name, guildId, commandId } of placements) {
+      if (names.has(name) && desired.has(guildId)) continue
+      signal.throwIfAborted()
+      try {
+        await this.gateway.delete(guildId, commandId)
+        await this.placements.forget(name, guildId)
+        result.removed++
+      } catch (error) {
         signal.throwIfAborted()
-        try {
-          await this.gateway.delete(guildId, commandId)
-          await this.placements.forget(definition.name, guildId)
-          result.removed++
-        } catch (error) {
-          signal.throwIfAborted()
-          result.failures.push({ name: definition.name, guildId, error })
-        }
+        result.failures.push({ name, guildId, error })
       }
     }
     return result

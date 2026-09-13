@@ -84,7 +84,7 @@ export class ContextMenuCommandErrorListener extends Listener {
 })
 export class ChatInputSubcommandErrorListener extends Listener {
   public run(...[error, payload]: ClientEvents['chatInputSubcommandError']) {
-    this.container.app.experiments.complete('error')
+    this.container.app.experiments.completeFromEvent('error')
     return report(
       this,
       payload.interaction,

@@ -359,7 +359,11 @@ describe('composite propagator', () => {
     span.end()
   })
 
-  it('withholds traceparent/baggage from arbitrary external hosts', async () => {
+  it.each([
+    'https://tagscript.example.com/v1/run',
+    'https://[2001:4860:4860::8888]/',
+    'https://[::ffff:8.8.8.8]/',
+  ])('withholds traceparent/baggage from %s', async (url) => {
     const composite = new CompositePropagator({
       propagators: [
         new W3CTraceContextPropagator(),
@@ -369,7 +373,7 @@ describe('composite propagator', () => {
     const { context, propagation, trace } = await import('@opentelemetry/api')
     // Fake client span carrying the request URL, as undici sets url.full before inject.
     const fakeSpan = {
-      attributes: { 'url.full': 'https://tagscript.example.com/v1/run' },
+      attributes: { 'url.full': url },
       spanContext: () => ({
         traceId: 'd'.repeat(32),
         spanId: 'e'.repeat(16),
@@ -419,5 +423,16 @@ describe('composite propagator', () => {
       false,
     )
     expect(isInternalTraceTarget('https://discord.com/api')).toBe(false)
+  })
+
+  it.each([
+    ['::1', true],
+    ['fd12::1', true],
+    ['fe80::1', true],
+    ['2001:4860:4860::8888', false],
+    ['::ffff:8.8.8.8', false],
+    ['::ffff:192.168.1.2', true],
+  ])('classifies IPv6 %s as internal=%s', (address, internal) => {
+    expect(isInternalTraceTarget(`http://[${address}]/`)).toBe(internal)
   })
 })

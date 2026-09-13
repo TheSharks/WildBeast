@@ -137,14 +137,13 @@ Some jobs run only on the worker that owns shard 0, so a job that appears
 stuck is usually waiting for the right worker or for fresh data. Both cases
 log why.
 
-### `Task deferred: <name> requires shard 0, which this worker does not own`
+### `<name> requires shard 0, which this worker does not own`
 
-This debug-level line isn't an error. The entitlement snapshot, promoted
-command repair, and operator command placement run only on the worker that
-owns shard 0, and BullMQ handed the job to another worker first. The queue
-retries the job until the owner picks it up; `discord_tasks_total` counts
-these as `status="deferred"`. If a job stays deferred, no running cluster
-owns shard 0.
+The entitlement snapshot, promoted command repair, and operator command
+placement run only on the worker that owns shard 0. This error means a job
+ran before that shard was ready, or after the worker lost it. Check shard 0's
+gateway connection and the worker's shard assignment. Retries stay on that
+worker's queue; they don't transfer work to another shard.
 
 ### `Deferring over-cap demotion` in the promoted command repair
 

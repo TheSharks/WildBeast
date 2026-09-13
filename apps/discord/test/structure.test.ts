@@ -37,6 +37,7 @@ const fakeClient = Object.assign(new EventEmitter(), {
 fakeClient.setMaxListeners(256)
 container.client = fakeClient as never
 container.logger = silentLogger
+container.app = { config: { shardIds: [0] } } as never
 
 const listenerStore = new ListenerStore()
 const commandStore = new CommandStore()

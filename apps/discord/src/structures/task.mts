@@ -2,11 +2,12 @@ import { container } from '@sapphire/framework'
 import { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
 import * as Sentry from '@sentry/node'
 import { taskGateKey } from '../features/registry.mjs'
+import { ownsTask } from '../runtime/task-queue.mjs'
 import { WorkRejected } from '../runtime/work.mjs'
 import { spanName, withSpan } from '../telemetry/spans.mjs'
 import { monitorConfigFromSchedule, monitorSlug } from '../utils/crons.mjs'
 
-/** Thrown when this worker must not run the job now; BullMQ retries it elsewhere. */
+/** BullMQ can retry after this worker has restarted. */
 export class TaskDeferred extends Error {
   public constructor(reason: string) {
     super(`Task deferred: ${reason}`)
@@ -17,13 +18,13 @@ export class TaskDeferred extends Error {
 export interface AppScheduledTaskOptions extends ScheduledTask.Options {
   /**
    * Cluster-dependent work: only the worker holding this shard may run the
-   * job. Other workers defer it so a retry lands on the owner.
+   * job. Other workers do not register its schedule.
    */
   requiresShard?: number
 }
 
-/** Retry cadence for deferred jobs; whichever worker owns the shard picks one up. */
-export const DEFERRED_JOB_OPTIONS = {
+/** Shared by repeat schedules and one-off boot jobs. */
+export const TASK_JOB_OPTIONS = {
   attempts: 30,
   backoff: { type: 'fixed', delay: 30_000 },
   removeOnComplete: true,
@@ -33,8 +34,8 @@ export const DEFERRED_JOB_OPTIONS = {
 /**
  * Every scheduled task run is admitted through the runtime (so draining waits
  * for it), gated by its runtime flag, traced, and checked in as a Sentry
- * monitor. BullMQ runs each repeat job on one worker fleet-wide; ownership
- * requirements route cluster-dependent jobs to the right worker.
+ * monitor. Each worker has its own queue; shard-bound schedules only exist
+ * on their owner.
  */
 export abstract class AppScheduledTask extends ScheduledTask {
   public readonly requiresShard: number | undefined
@@ -45,8 +46,11 @@ export abstract class AppScheduledTask extends ScheduledTask {
   ) {
     super(context, {
       ...options,
+      ...(!ownsTask(container.app.config.shardIds, options.requiresShard)
+        ? { interval: undefined, pattern: undefined }
+        : {}),
       customJobOptions: {
-        ...DEFERRED_JOB_OPTIONS,
+        ...TASK_JOB_OPTIONS,
         ...options.customJobOptions,
       },
     })
@@ -63,7 +67,7 @@ export abstract class AppScheduledTask extends ScheduledTask {
           this.requiresShard !== undefined &&
           !this.container.client.ws.shards.has(this.requiresShard)
         ) {
-          throw new TaskDeferred(
+          throw new Error(
             `${this.name} requires shard ${this.requiresShard}, which this worker does not own`,
           )
         }

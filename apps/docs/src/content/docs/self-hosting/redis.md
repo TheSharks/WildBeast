@@ -26,7 +26,7 @@ for the full list.
 
 | Data | Keys | Lifetime |
 | --- | --- | --- |
-| Scheduled task queue | BullMQ's own `bull:*` keys | Recreated on boot; jobs a worker defers wait here for the owner of the required shard |
+| Scheduled task queues | BullMQ's own `bull:scheduled-tasks-*` keys | One queue per shard assignment and epoch; retries stay with that assignment |
 | Identify rate limiting | `wildbeast:identify:<bucket>` | Seconds (pacing keys) |
 | Gateway sessions | `wildbeast:shard:<id>:session` | 15 minutes since last write |
 | Active epoch | `wildbeast:epoch` | Until the next [migration](/self-hosting/resharding/) |

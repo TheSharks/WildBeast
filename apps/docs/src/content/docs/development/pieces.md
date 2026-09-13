@@ -206,13 +206,14 @@ export class MetricsCollectionTask extends AppScheduledTask {
 }
 ```
 
-Tasks are backed by a BullMQ queue on Redis, so a recurring job runs on
-exactly one worker across the whole fleet. Work that must run on a specific
-cluster passes `requiresShard` (for example `requiresShard: 0` for
-app-global maintenance). A worker that doesn't own that shard throws a
-deferral; the queue retries the job until the owner runs it, and the
-deferral counts as `status="deferred"` rather than an error. A worker that
-is shutting down defers in the same way. Every task also needs a
+Each shard worker has a BullMQ queue on Redis. Recurring jobs run on every
+worker unless they declare `requiresShard` (for example `requiresShard: 0`
+for app-global maintenance). Only the owner registers those schedules.
+A worker that is shutting down defers work for a retry on its own queue;
+this counts as `status="deferred"` rather than an error. When creating a
+one-off job, pass `TASK_JOB_OPTIONS` as `customJobOptions` to include retries;
+the plugin doesn't copy the task's defaults for one-off jobs.
+Every task also needs a
 `features.tasks.<name>` gate in `features/registry.mts`, which the structure
 test enforces. Give the task's module augmentation entry a `never` payload
 type if it takes no payload, matching the existing tasks.

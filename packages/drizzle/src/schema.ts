@@ -62,6 +62,7 @@ export const applicationCommandIds = pgTable(
     commandId: bigint('commandId', { mode: 'bigint' }).primaryKey(),
     // Sapphire piece name, not localized command name.
     name: text('name').notNull(),
+    operator: boolean('operator').notNull().default(false),
     // Null for global commands.
     guildId: bigint('guildId', { mode: 'bigint' }),
   },

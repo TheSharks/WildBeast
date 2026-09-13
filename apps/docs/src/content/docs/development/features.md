@@ -213,10 +213,25 @@ an `invalid` exposure source.
 The command and task base classes open an experiment outcome scope around
 each run. The first read of an experiment records one exposure; repeated
 reads in the same run reuse that assignment without another OFREP call.
+Concurrent reads share the pending evaluation as well. Nested runs use the
+outer operation's assignment and outcome scope; separate operations stay
+isolated even when they run concurrently.
 When the operation finishes, every exposed experiment receives a technical
 `success` or `error` outcome. These outcomes measure runtime health by
 variant; record product-specific conversions as separate events at their
 actual conversion point.
+
+`experiments.run(operation, work)` completes from the returned promise:
+fulfillment records success, and rejection records error and rethrows.
+Sapphire's subcommand dispatcher catches mapped-method errors and emits
+events instead of rejecting. Its wrapper passes `'event'` as the third
+argument, and the subcommand success/error listeners call
+`completeFromEvent(outcome)`. Returning from an event-driven dispatcher does
+not imply success. An uncaught dispatcher error still records an error.
+
+Only the first completion counts. Event completion is ignored in scopes
+owned by a returned promise. If an assignment is still pending when an
+operation completes, its outcome is recorded once the assignment resolves.
 
 ## Observability and tests
 
@@ -231,8 +246,9 @@ Use OpenFeature's `InMemoryProvider` in unit tests to exercise targeting
 without running an OFREP service: construct a `FeatureFlags` with it, call
 `open()`, and pass the instance to the service under test. Cover the in-code
 default, each behavior branch, invalid remote values, and success or error
-outcome attribution. The flag tests use `captureMetrics()` to verify the
-exported series as well as the returned assignments.
+outcome attribution. `experiments.test.ts` uses `captureMetrics()` to verify
+exported exposures and outcomes, and `tagCommand.test.ts` exercises completion
+through Sapphire's subcommand dispatcher and the application listeners.
 
 ## Next steps
 

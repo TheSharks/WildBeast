@@ -94,8 +94,8 @@ Node runtime metrics (`nodejs.eventloop.*`, `v8js.gc.*`,
 ## Scheduled tasks
 
 Recurring background work and the BullMQ queue backing it. A `deferred`
-status means a worker handed a cluster-dependent job back to the queue
-because it doesn't own the required shard; it isn't a failure.
+status means a worker is stopping and left the job for a retry on its queue;
+it isn't a failure. Each worker reports its own queue's counts.
 
 | Metric | Type | Labels |
 | --- | --- | --- |

@@ -10,6 +10,7 @@ import { silentLogger } from '@thesharks/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Experiments } from '../src/features/experiments.mjs'
 import { FeatureFlags } from '../src/features/flags.mjs'
+import { taskQueueName } from '../src/runtime/task-queue.mjs'
 import { WorkScope } from '../src/runtime/work.mjs'
 import { AppScheduledTask, TaskDeferred } from '../src/structures/task.mjs'
 
@@ -49,12 +50,45 @@ beforeEach(() => {
   work = new WorkScope()
   work.open()
   flags = new FeatureFlags()
-  container.app = { work, flags, experiments: new Experiments(flags) } as never
+  container.app = {
+    config: { shardIds: [0] },
+    work,
+    flags,
+    experiments: new Experiments(flags),
+  } as never
   shards.clear()
   shards.set(0, {})
 })
 
 describe('replacement scheduled tasks', () => {
+  it('only registers shard-bound schedules on the owner', () => {
+    container.app.config.shardIds = [3]
+    const task = new FixtureTask(0)
+    const store = new ScheduledTaskStore()
+    store.set(task.name, task)
+    expect(store.repeatedTasks).toHaveLength(0)
+    expect(new FixtureTask().interval).toBe(60_000)
+    container.app.config.shardIds = []
+    expect(new FixtureTask(0).interval).toBe(60_000)
+  })
+
+  it('keeps queues stable across handoffs and separates shard owners, epochs and bots', () => {
+    const config = {
+      shardIds: [0, 1],
+      identifyKeyPrefix: 'bot-a',
+      sessionKeyPrefix: 'epoch-1',
+    }
+    const queue = taskQueueName(config)
+    expect(taskQueueName({ ...config, shardIds: [1, 0] })).toBe(queue)
+    for (const change of [
+      { shardIds: [2] },
+      { identifyKeyPrefix: 'bot-b' },
+      { sessionKeyPrefix: 'epoch-2' },
+    ]) {
+      expect(taskQueueName({ ...config, ...change })).not.toBe(queue)
+    }
+    expect(queue).not.toContain(':')
+  })
   it('runs the body through the work scope with retrying job options', async () => {
     const task = new FixtureTask()
     await expect(task.run(undefined as never)).resolves.toBe('ran')
@@ -70,7 +104,7 @@ describe('replacement scheduled tasks', () => {
     expect(task.runs).toBe(0)
   })
 
-  it('defers cluster-dependent work on a worker that does not own the shard', async () => {
+  it('rejects cluster-dependent work if the worker loses its shard', async () => {
     const task = new FixtureTask(0)
     await expect(task.run(undefined as never)).resolves.toBe('ran')
     shards.clear()

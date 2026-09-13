@@ -67,8 +67,8 @@ platform:
 - Scheduled tasks report [cron check-ins](https://docs.sentry.io/product/crons/)
   under a monitor named after the task, so a run that never happens alerts
   just like a run that throws. Monitors are created automatically from the
-  task's interval or cron pattern; BullMQ runs each repeated job on one
-  worker, so a run checks in once fleet-wide.
+  task's interval or cron pattern. Shard-bound jobs check in from their
+  owner; per-worker jobs, such as metrics collection, check in on each worker.
 - Error events include the local variables of every stack frame and any
   non-standard properties on the error object. discord.js API errors carry
   their status code, method and route this way, and `ZodError` issues are

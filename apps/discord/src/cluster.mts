@@ -108,21 +108,23 @@ const dashboard = localMetrics
   : undefined
 if (dashboard) disconnectMetrics = connectLocalMetrics(manager, dashboard.model)
 
-let exiting = false
-async function shutdown(code = 0): Promise<never> {
-  if (!exiting) {
-    exiting = true
+let shutdownPromise: Promise<never> | undefined
+let exitCode = 0
+function shutdown(code = 0): Promise<never> {
+  exitCode = Math.max(exitCode, code)
+  shutdownPromise ??= (async () => {
     dashboard?.stop()
     try {
       await fleet.stop()
     } catch (error) {
       logger.error('Fleet stop failed:', error)
       Sentry.captureException(error)
-      code = 1
+      exitCode = 1
     }
     await telemetry.shutdown()
-  }
-  process.exit(code)
+    process.exit(exitCode)
+  })()
+  return shutdownPromise
 }
 
 process.once('SIGINT', () => void shutdown())

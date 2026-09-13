@@ -82,6 +82,18 @@ settings and other differences.
 
 ## Startup
 
+:::caution[Upgrading from the shared task queue]
+Stop all old workers before starting a version that uses shard-owned task
+queues, and apply the database migrations first. Migration
+`0012_operator-command-ownership` identifies
+[operator command placements](/development/database/#operator-command-ownership).
+
+New workers don't consume the old `scheduled-tasks` Redis queue. Pending
+one-off jobs aren't transferred; boot reconciliation and new schedules cover
+maintenance work. Keep the old queue until you've verified the upgrade.
+Queues from previous shard totals or epochs are also left untouched.
+:::
+
 A worker opens its resources in a fixed order and treats any failure as
 fatal for the whole boot. It validates the environment first, then opens
 the database and checks the schema, connects to Redis, initializes the
@@ -100,7 +112,7 @@ threads), and each worker runs the same ordered stop:
 
 1. Stop accepting work. A command that arrives now gets an immediate
    "temporarily unavailable" reply instead of timing out, and a queued job
-   is deferred to another worker.
+   waits for a retry on the same shard assignment's queue.
 2. Drain the commands, events, and jobs already admitted, for up to 10
    seconds.
 3. Close the task queue worker, then the gateway connection, then flush

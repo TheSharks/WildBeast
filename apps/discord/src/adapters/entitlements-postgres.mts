@@ -1,16 +1,14 @@
 import {
   and,
+  type Database,
   entitlementMirrorState,
   entitlements,
   eq,
-  type getDb,
   isNull,
   notInArray,
   sql,
 } from '@thesharks/drizzle'
 import type { EntitlementRepository, Grant, Scope } from '../premium/model.mjs'
-
-type Database = ReturnType<typeof getDb>
 
 function row(grant: Grant) {
   return {

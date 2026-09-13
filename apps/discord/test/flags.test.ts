@@ -125,8 +125,8 @@ describe('replacement feature flags', () => {
   })
 })
 
-describe('replacement experiments', () => {
-  it('assigns once per operation, rejects unknown variants and attributes outcomes', async () => {
+describe('experiment provider', () => {
+  it('uses the registry default for an invalid provider assignment', async () => {
     const evaluator = vi.fn(() => 'bogus')
     const flags = await open(evaluator, { cacheTtlMs: 0 })
     const experiments = new Experiments(flags)

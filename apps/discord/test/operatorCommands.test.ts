@@ -71,13 +71,12 @@ function placements() {
   const rows = new Map<string, bigint>()
   return {
     rows,
-    placements: vi.fn(async (name: string) =>
-      [...rows]
-        .filter(([key]) => key.startsWith(`${name}:`))
-        .map(([key, commandId]) => ({
-          guildId: BigInt(key.split(':')[1]!),
-          commandId,
-        })),
+    placements: vi.fn(async () =>
+      [...rows].map(([key, commandId]) => ({
+        name: key.split(':')[0]!,
+        guildId: BigInt(key.split(':')[1]!),
+        commandId,
+      })),
     ),
     record: vi.fn(async (name: string, guildId: bigint, commandId: bigint) => {
       rows.set(`${name}:${guildId}`, commandId)
@@ -95,6 +94,29 @@ const definition = {
 const signal = () => new AbortController().signal
 
 describe('operator command placement', () => {
+  it('removes persisted commands when their definitions disappear, retrying failed deletes', async () => {
+    const remote = gateway()
+    const store = placements()
+    let definitions = [definition]
+    const service = new OperatorCommands(
+      () => definitions,
+      async () => new Set([1n]),
+      remote,
+      store,
+    )
+    await service.reconcile(signal())
+    definitions = []
+    vi.mocked(remote.delete).mockRejectedValueOnce(new Error('unavailable'))
+    expect((await service.reconcile(signal())).failures).toHaveLength(1)
+    expect(store.rows.size).toBe(1)
+    expect(await service.reconcile(signal())).toMatchObject({
+      removed: 1,
+      failures: [],
+    })
+    expect(store.rows.size).toBe(0)
+    expect(remote.commands.size).toBe(0)
+  })
+
   it('creates in listed guilds, updates known placements and removes from unlisted guilds', async () => {
     const remote = gateway()
     const store = placements()

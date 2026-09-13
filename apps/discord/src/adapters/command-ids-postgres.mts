@@ -2,25 +2,19 @@ import type { ApplicationCommandRegistry } from '@sapphire/framework'
 import {
   and,
   applicationCommandIds,
+  type Database,
   eq,
-  type getDb,
   type NewApplicationCommandId,
 } from '@thesharks/drizzle'
+import type { OperatorPlacementRepository } from '../operators/service.mjs'
 
-export interface CommandIdRepository {
+export interface CommandIdRepository extends OperatorPlacementRepository {
   hintsFor(pieceName: string): Promise<string[]>
   /** Replace the rows of every registry given; other names are untouched. */
   persist(registries: Map<string, ApplicationCommandRegistry>): Promise<void>
-  placements(
-    name: string,
-  ): Promise<Array<{ guildId: bigint; commandId: bigint }>>
-  record(name: string, guildId: bigint, commandId: bigint): Promise<void>
-  forget(name: string, guildId: bigint): Promise<void>
 }
 
 /** Command ids by piece name, so boots match instead of recreating. */
-type Database = ReturnType<typeof getDb>
-
 export class PostgresCommandIds implements CommandIdRepository {
   private readonly database: () => Database
 
@@ -32,22 +26,28 @@ export class PostgresCommandIds implements CommandIdRepository {
     const rows = await this.database()
       .select({ commandId: applicationCommandIds.commandId })
       .from(applicationCommandIds)
-      .where(eq(applicationCommandIds.name, pieceName))
+      .where(
+        and(
+          eq(applicationCommandIds.name, pieceName),
+          eq(applicationCommandIds.operator, false),
+        ),
+      )
     return rows.map((row) => row.commandId.toString())
   }
 
-  public async placements(name: string) {
+  public async placements() {
     const rows = await this.database()
       .select({
+        name: applicationCommandIds.name,
         guildId: applicationCommandIds.guildId,
         commandId: applicationCommandIds.commandId,
       })
       .from(applicationCommandIds)
-      .where(eq(applicationCommandIds.name, name))
+      .where(eq(applicationCommandIds.operator, true))
     return rows.flatMap((row) =>
       row.guildId === null
         ? []
-        : [{ guildId: row.guildId, commandId: row.commandId }],
+        : [{ name: row.name, guildId: row.guildId, commandId: row.commandId }],
     )
   }
 
@@ -58,12 +58,13 @@ export class PostgresCommandIds implements CommandIdRepository {
         .where(
           and(
             eq(applicationCommandIds.name, name),
+            eq(applicationCommandIds.operator, true),
             eq(applicationCommandIds.guildId, guildId),
           ),
         )
       await tx
         .insert(applicationCommandIds)
-        .values({ name, guildId, commandId })
+        .values({ name, guildId, commandId, operator: true })
         .onConflictDoNothing()
     })
   }
@@ -74,6 +75,7 @@ export class PostgresCommandIds implements CommandIdRepository {
       .where(
         and(
           eq(applicationCommandIds.name, name),
+          eq(applicationCommandIds.operator, true),
           eq(applicationCommandIds.guildId, guildId),
         ),
       )
@@ -97,7 +99,12 @@ export class PostgresCommandIds implements CommandIdRepository {
       await this.database().transaction(async (tx) => {
         await tx
           .delete(applicationCommandIds)
-          .where(eq(applicationCommandIds.name, name))
+          .where(
+            and(
+              eq(applicationCommandIds.name, name),
+              eq(applicationCommandIds.operator, false),
+            ),
+          )
         if (rows.length > 0) {
           // Concurrent clusters insert identical rows; conflicts are not errors.
           await tx

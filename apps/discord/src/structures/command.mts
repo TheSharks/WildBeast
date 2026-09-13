@@ -13,6 +13,7 @@ import {
   MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js'
+import type { ExperimentCompletion } from '../features/experiments.mjs'
 import type { PremiumRequirement } from '../features/gates.mjs'
 import { commandGateKey } from '../features/registry.mjs'
 import type { OperatorCommandData } from '../operators/service.mjs'
@@ -154,7 +155,7 @@ export async function runAdmitted<T>(
   type: 'chat_input' | 'context_menu',
   operation: string,
   run: () => Promise<T>,
-  options: { automatic?: boolean } = {},
+  completion: ExperimentCompletion = 'return',
 ): Promise<T | undefined> {
   try {
     return await container.app.work.run(() =>
@@ -177,7 +178,7 @@ export async function runAdmitted<T>(
           container.app.experiments.run(
             { kind: 'command', name: operation },
             run,
-            options,
+            completion,
           ),
       ),
     )
@@ -262,7 +263,7 @@ export abstract class AppSubcommand
           () => Promise.resolve(chatInputRun(interaction, runContext)),
           // The subcommands plugin converts mapped-method throws into events;
           // the success/error listeners complete the experiment scope.
-          { automatic: false },
+          'event',
         )
     }
   }

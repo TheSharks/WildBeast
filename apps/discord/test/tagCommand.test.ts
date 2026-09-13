@@ -1,10 +1,11 @@
 import { EventEmitter } from 'node:events'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { CommandStore, container } from '@sapphire/framework'
-import { silentLogger } from '@thesharks/test-utils'
+import { CommandStore, container, ListenerStore } from '@sapphire/framework'
+import { SubcommandPluginEvents } from '@sapphire/plugin-subcommands'
+import { captureMetrics, silentLogger } from '@thesharks/test-utils'
 import { Collection, MessageFlags } from 'discord.js'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@sapphire/plugin-i18next', async () => {
   const actual = await vi.importActual('@sapphire/plugin-i18next')
@@ -18,7 +19,15 @@ vi.mock('@sapphire/plugin-i18next', async () => {
   }
 })
 
+const experimentMetrics = captureMetrics('delta')
+afterAll(() => experimentMetrics.shutdown())
 const { TagCommand } = await import('../src/commands/tag.mjs')
+const { ChatInputSubcommandSuccessListener } = await import(
+  '../src/listeners/metrics/commandExecuted.mjs'
+)
+const { ChatInputSubcommandErrorListener } = await import(
+  '../src/listeners/reporting/commandErrors.mjs'
+)
 const { FeatureFlags } = await import('../src/features/flags.mjs')
 const { CommandGates } = await import('../src/features/gates.mjs')
 const { Experiments } = await import('../src/features/experiments.mjs')
@@ -111,11 +120,13 @@ function interaction(options: {
       getString: (name: string) => options.strings?.[name] ?? null,
       getUser: () => null,
       getSubcommand: () => options.subcommand ?? null,
+      getSubcommandGroup: () => null,
       getFocused: () => 'hel',
     },
     replied: false,
     deferred: false,
     isChatInputCommand: () => true,
+    isContextMenuCommand: () => false,
     isAutocomplete: () => false,
     inGuild: () => true,
     reply: vi.fn(async () => undefined),
@@ -147,6 +158,82 @@ const ephemeral = (content: string) => ({
 })
 
 describe('replacement /tag command', () => {
+  it.each(['success', 'error'] as const)(
+    'records experiment %s through the real subcommand dispatcher and listeners',
+    async (outcome) => {
+      await experimentMetrics.collect()
+      experimentMetrics.reset()
+      const listenerContext = {
+        name: 'experimentCompletion',
+        path: fileURLToPath(import.meta.url),
+        root: dirname(fileURLToPath(import.meta.url)),
+        store: new ListenerStore(),
+      } as never
+      const success = new ChatInputSubcommandSuccessListener(
+        listenerContext,
+        {},
+      )
+      const error = new ChatInputSubcommandErrorListener(listenerContext, {})
+      const reports: Promise<unknown>[] = []
+      const onSuccess = success.run.bind(success)
+      const onError = (...args: Parameters<typeof error.run>) => {
+        reports.push(error.run(...args))
+      }
+      fakeClient.on(
+        SubcommandPluginEvents.ChatInputSubcommandSuccess,
+        onSuccess,
+      )
+      fakeClient.on(SubcommandPluginEvents.ChatInputSubcommandError, onError)
+      const show = vi
+        .spyOn(command, 'chatInputShow')
+        .mockImplementation(async () => {
+          await services.experiments.variant('experiments.tags.notFoundReply', {
+            targetingKey: 'guild:90001',
+          })
+          if (outcome === 'error') throw new Error('mapped method failed')
+        })
+      try {
+        // Sapphire catches mapped-method failures, so both dispatches resolve.
+        await command.chatInputRun(
+          interaction({ subcommand: 'show' }) as never,
+          {} as never,
+        )
+        await Promise.all(reports)
+        expect(show).toHaveBeenCalledTimes(1)
+        const emitted = (await experimentMetrics.collect()).flatMap((batch) =>
+          batch.scopeMetrics.flatMap((scope) =>
+            scope.metrics
+              .filter(
+                (metric) =>
+                  metric.descriptor.name ===
+                  'discord_experiment_outcomes_total',
+              )
+              .flatMap((metric) => metric.dataPoints),
+          ),
+        )
+        expect(emitted).toEqual([
+          expect.objectContaining({
+            value: 1,
+            attributes: {
+              experiment: 'experiments.tags.notFoundReply',
+              variant: 'suggestion',
+              outcome,
+              operation_kind: 'command',
+              operation: 'tag.show',
+            },
+          }),
+        ])
+      } finally {
+        fakeClient.off(
+          SubcommandPluginEvents.ChatInputSubcommandSuccess,
+          onSuccess,
+        )
+        fakeClient.off(SubcommandPluginEvents.ChatInputSubcommandError, onError)
+        show.mockRestore()
+      }
+    },
+  )
+
   it('maps create outcomes to replies and attaches an upsell at the cap', async () => {
     services.tags.create.mockResolvedValueOnce({ kind: 'limit', limit: 50 })
     const capped = interaction({ strings: { name: 'x', content: 'y' } })
