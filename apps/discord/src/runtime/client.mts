@@ -44,9 +44,23 @@ export function logLevelFor(config: Pick<AppConfig, 'trace' | 'development'>) {
       : LogLevel.Info
 }
 
-/** Pieces load from this directory: the replacement application only. */
+/** Sapphire loads application pieces from this directory. */
 export const PIECES_DIRECTORY = join(here, '..')
 export const LANGUAGES_DIRECTORY = join(here, '..', 'languages')
+
+export function languageFor(
+  context: Pick<
+    InternationalizationContext,
+    'interactionLocale' | 'interactionGuildLocale' | 'guild'
+  >,
+  languages: { has(locale: string): boolean },
+): string {
+  const locale =
+    context.interactionLocale ??
+    context.interactionGuildLocale ??
+    context.guild?.preferredLocale
+  return locale && languages.has(locale) ? locale : 'en-US'
+}
 
 export function createSapphireClient(
   config: AppConfig,
@@ -80,13 +94,8 @@ export function createSapphireClient(
     },
     i18n: {
       defaultLanguageDirectory: LANGUAGES_DIRECTORY,
-      fetchLanguage: (context: InternationalizationContext) => {
-        const locale =
-          context.interactionLocale ??
-          context.interactionGuildLocale ??
-          context.guild?.preferredLocale
-        return locale && container.i18n.languages.has(locale) ? locale : 'en-US'
-      },
+      fetchLanguage: (context: InternationalizationContext) =>
+        languageFor(context, container.i18n.languages),
     },
   }
   const client = new SapphireClient(options)

@@ -21,7 +21,6 @@ import type { AppServices } from '../../runtime/services.mjs'
 import { commandMetricLabels } from '../../telemetry/spans.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
-// Labels frozen by METRIC_CONTRACT['discord_command_denied_total'].
 const deniedCounter = meter.createCounter('discord_command_denied_total', {
   description:
     'Commands blocked by preconditions (permissions, cooldowns, ...)',

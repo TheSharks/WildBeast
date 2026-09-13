@@ -49,7 +49,6 @@ export interface CompositionLogger {
 
 export type DatabaseConnection = ReturnType<typeof createDatabase>
 
-// Labels frozen by METRIC_CONTRACT['discord_premium_limit_override_fallbacks_total'].
 const limitOverrideFallbackCounter = metrics
   .getMeter('@thesharks/discord')
   .createCounter('discord_premium_limit_override_fallbacks_total', {

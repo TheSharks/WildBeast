@@ -7,11 +7,9 @@ import type { ClientEvents } from 'discord.js'
 import { TaskDeferred } from '../../structures/task.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
-// Labels frozen by METRIC_CONTRACT['discord_tasks_total'].
 const taskCounter = meter.createCounter('discord_tasks_total', {
   description: 'Total number of scheduled task runs by status',
 })
-// Labels frozen by METRIC_CONTRACT['discord_task_duration_seconds'].
 const taskDuration = meter.createHistogram('discord_task_duration_seconds', {
   description: 'Scheduled task run duration',
   unit: 's',

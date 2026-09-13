@@ -33,7 +33,7 @@ which the runtime installs before the client logs in.
 | Entitlements | Interaction grants are authoritative for that interaction; guild grants never raise user limits. Background revocation requires a fresh completed full snapshot; empty snapshots count; failed, incomplete or superseded snapshots do not. Gateway events and snapshots share one repository revision. A snapshot runs at boot and every 6 hours on the shard 0 worker. | `premium.test.ts`, `premium.integration.test.ts`, `entitlementSource.test.ts`, `gates.test.ts`. |
 | Tags | Every read and write is guild scoped; authors or managers edit and delete; managers promote and demote; creates and promotions enforce caps under concurrent requests. | `tags.integration.test.ts`, `tagCommand.test.ts`. |
 | Promoted commands | Durable intents survive REST and database failure windows; reconciliation serializes with user writes through the guild lock and touches only commands owned by intents; over-cap revocation waits for a fresh snapshot. | `tags.integration.test.ts`. |
-| Features | Command gates, limits, experiments, component authorization, error replies and telemetry are shared services used by every entry surface. | `flags.test.ts`, `gates.test.ts`, `flagsInspect.test.ts`, `metricsListeners.test.ts`, `structure.test.ts`, `scripts/check-metrics.mjs`. |
+| Features | Command gates, limits, experiments, component authorization, error replies and telemetry are shared services used by every entry surface. | `flags.test.ts`, `gates.test.ts`, `flagsInspect.test.ts`, `metricsListeners.test.ts`, `structure.test.ts`. |
 
 ## Behavior changes from the previous implementation
 

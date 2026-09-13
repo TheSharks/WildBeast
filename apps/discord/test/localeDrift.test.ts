@@ -2,11 +2,11 @@ import { readdir, readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { languageFor } from '../src/runtime/client.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const srcDir = join(here, '..', 'src')
 const enUsDir = join(srcDir, 'languages', 'en-US')
-const clientPath = join(srcDir, 'runtime', 'client.mts')
 
 type LangMap = Map<string, unknown>
 
@@ -139,24 +139,30 @@ describe('locale drift (en-US source of truth)', () => {
     expect(String(value)).not.toContain('{{error}}')
     expect(String(value)).not.toContain('{{')
   })
+})
 
-  it('prefers the user locale with en-US fallback', async () => {
-    // fallbackLng en-US behavior: unknown/missing locales return en-US, and
-    // missing keys in a loaded locale fall back to en-US. The default stays
-    // en-US. Read the source so the test never boots the client (which
-    // needs env, Redis, and Discord).
-    const source = await readFile(clientPath, 'utf8')
-    const fetchStart = source.indexOf('fetchLanguage')
-    expect(fetchStart).toBeGreaterThan(-1)
-    const block = source.slice(fetchStart, fetchStart + 1200)
-    const userFirst = block.indexOf('interactionLocale')
-    const guildFirst = block.indexOf('interactionGuildLocale')
-    expect(userFirst).toBeGreaterThan(-1)
-    expect(guildFirst).toBeGreaterThan(-1)
-    expect(
-      userFirst < guildFirst,
-      'fetchLanguage should prefer interaction user locale over guild locale',
-    ).toBe(true)
-    expect(block).toContain("'en-US'")
+describe('language selection', () => {
+  const languages = new Set(['en-US', 'nl', 'de', 'fr'])
+  const guild = { preferredLocale: 'fr' } as NonNullable<
+    Parameters<typeof languageFor>[0]['guild']
+  >
+
+  it.each([
+    [
+      'user locale',
+      { interactionLocale: 'nl', interactionGuildLocale: 'de', guild },
+      'nl',
+    ],
+    ['interaction guild locale', { interactionGuildLocale: 'de', guild }, 'de'],
+    ['guild preference', { guild }, 'fr'],
+    ['no locale', {}, 'en-US'],
+    [
+      'unsupported user locale',
+      { interactionLocale: 'es-ES', interactionGuildLocale: 'de', guild },
+      'en-US',
+    ],
+    ['unsupported guild locale', { interactionGuildLocale: 'es-ES' }, 'en-US'],
+  ] as const)('selects %s', (_name, context, expected) => {
+    expect(languageFor(context, languages)).toBe(expected)
   })
 })

@@ -5,8 +5,6 @@ import * as Sentry from '@sentry/node'
 import { Events, type Guild } from 'discord.js'
 
 // Sentry per-item metrics fit rare join/leave events; OTel already gauges totals.
-// Labels frozen by SENTRY_METRIC_CONTRACT in
-// packages/analytics/src/utils/metrics.ts.
 
 function guildAttributes(guild: Guild) {
   return {

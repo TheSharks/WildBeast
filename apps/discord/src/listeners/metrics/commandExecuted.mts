@@ -10,8 +10,6 @@ import {
 } from '../../telemetry/spans.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
-// Labels frozen by METRIC_CONTRACT['discord_context_commands_total'] and
-// METRIC_CONTRACT['discord_context_command_duration_seconds'].
 const contextCommandCounter = meter.createCounter(
   'discord_context_commands_total',
   { description: 'Total number of Discord context menu commands executed' },
@@ -25,11 +23,9 @@ const contextExecutionTime = meter.createHistogram(
     advice: { explicitBucketBoundaries: DURATION_SECONDS_BOUNDARIES },
   },
 )
-// Labels frozen by METRIC_CONTRACT['discord_commands_total'].
 const commandCounter = meter.createCounter('discord_commands_total', {
   description: 'Total number of Discord commands executed',
 })
-// Labels frozen by METRIC_CONTRACT['discord_command_duration_seconds'].
 const executionTime = meter.createHistogram(
   'discord_command_duration_seconds',
   {

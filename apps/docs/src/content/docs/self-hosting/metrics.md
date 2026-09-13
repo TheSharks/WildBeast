@@ -1,6 +1,6 @@
 ---
 title: Metrics reference
-description: Every metric WildBeast exports, with labels.
+description: WildBeast metrics for commands, runtime health, and shard coordination.
 sidebar:
   order: 9
 ---

@@ -1,12 +1,10 @@
 import { metrics } from '@thesharks/analytics'
 
 const meter = metrics.getMeter('@thesharks/discord')
-// Labels frozen by METRIC_CONTRACT['discord_guild_tag_command_promotions_total'].
 export const promotionsCounter = meter.createCounter(
   'discord_guild_tag_command_promotions_total',
   { description: 'Guild tag command promotions and demotions' },
 )
-// Labels frozen by METRIC_CONTRACT['discord_guild_tag_reconcile_deferred_total'].
 export const reconcileDeferCounter = meter.createCounter(
   'discord_guild_tag_reconcile_deferred_total',
   {

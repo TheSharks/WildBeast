@@ -60,8 +60,8 @@ The suite concentrates on the guarantees a silent failure would break:
 - Telemetry: the analytics pipeline is verified end to end against a real
   OpenTelemetry collector over both OTLP/HTTP and OTLP/gRPC. Unit tests
   cover the logger bridge, the metrics listeners, and the metric helpers
-  with in-memory exporters. `scripts/check-metrics.mjs` keeps the emitted
-  metrics, the contract, the dashboards, and the docs in agreement.
+  with in-memory exporters. When changing a metric, update any dashboards,
+  alerts, and documentation that use it.
 - Environment validation: the zod schema, including the legacy `BOT_TOKEN`
   alias and coercion rules, and the locale files against every key the
   source resolves.

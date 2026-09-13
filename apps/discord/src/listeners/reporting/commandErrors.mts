@@ -13,11 +13,9 @@ import {
 } from '../../telemetry/spans.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
-// Labels frozen by METRIC_CONTRACT['discord_command_errors_total'].
 const errorCounter = meter.createCounter('discord_command_errors_total', {
   description: 'Total number of Discord command errors',
 })
-// Labels frozen by METRIC_CONTRACT['discord_context_command_errors_total'].
 const contextErrorCounter = meter.createCounter(
   'discord_context_command_errors_total',
   { description: 'Total number of Discord context menu command errors' },

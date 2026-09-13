@@ -3,12 +3,10 @@ import { metrics } from '@thesharks/analytics'
 import { AppScheduledTask } from '../structures/task.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
-// Labels frozen by METRIC_CONTRACT['discord_entitlement_reconcile_total'].
 const reconcileCounter = meter.createCounter(
   'discord_entitlement_reconcile_total',
   { description: 'Entitlement mirror reconciliations by result' },
 )
-// Labels frozen by METRIC_CONTRACT['discord_entitlement_backfill_errors_total'].
 const failureCounter = meter.createCounter(
   'discord_entitlement_backfill_errors_total',
   { description: 'Entitlement snapshot failures by outcome' },
