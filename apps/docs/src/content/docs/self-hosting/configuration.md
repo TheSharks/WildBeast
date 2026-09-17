@@ -80,7 +80,7 @@ See [Clustering](/self-hosting/clustering/) for what these mean in practice.
 | --- | --- | --- |
 | `WILDBEAST_CLUSTERING_MODE` | `static` | `static` or `autonomous`. |
 | `WILDBEAST_CLUSTER_ID` | hostname | Stable identity of this cluster in the fleet. |
-| `WILDBEAST_SHARDING_TOTAL` | auto | Total shard count, fleet-wide. Required in autonomous mode. |
+| `WILDBEAST_SHARDING_TOTAL` | auto | Total shard count, fleet-wide. In autonomous mode, joins the stored fleet total or bootstraps from Discord's recommendation. Set explicitly to override or migrate the total. |
 | `WILDBEAST_SHARDING_START` | `0` | First shard of this cluster's range (static mode only). |
 | `WILDBEAST_SHARDING_END` | total − 1 | Last shard of this cluster's range, inclusive (static mode only). |
 

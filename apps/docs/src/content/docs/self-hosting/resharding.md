@@ -11,6 +11,11 @@ never serve at the same time. WildBeast handles this with **epochs**: one
 generation of the fleet with a fixed total, with all coordination state
 (membership, leases, sessions) scoped to it.
 
+When `WILDBEAST_SHARDING_TOTAL` is unset, Discord's recommendation initializes
+the total only for a new fleet. Existing fleets keep their stored total even
+if the recommendation changes. Removing an explicit override adopts the
+stored fleet state; it doesn't reset the total to Discord's recommendation.
+
 ## How a migration runs
 
 Changing the total is just a rolling deploy with a new
@@ -27,6 +32,11 @@ Changing the total is just a rolling deploy with a new
 
 The migration completes exactly when the deploy does. Mixed totals never
 serve simultaneously, by construction.
+
+Automatically sized clusters already serving the old epoch must also be
+restarted or stopped to drain it. Those starting while a migration is pending
+join the pending epoch, without fetching a recommendation or proposing another
+total. Roll out the explicit override first to establish that proposal.
 
 ## Failure handling
 

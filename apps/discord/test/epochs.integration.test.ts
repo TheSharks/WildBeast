@@ -1,6 +1,6 @@
 import { silentLogger, waitUntil } from '@thesharks/test-utils'
 import { Redis } from 'ioredis'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ClusterCoordinator } from '../src/sharding/coordination.mjs'
 import {
   awaitEpochActivation,
@@ -49,6 +49,133 @@ describe.skipIf(!redisUrl)('EpochCoordinator (integration)', () => {
     // A second cluster with the same total joins the same epoch.
     const peer = new EpochCoordinator(connect(), { totalShards: 8 })
     expect(await peer.resolve()).toMatchObject({ role: 'active' })
+  })
+
+  it('converges five simultaneous auto bootstraps with different recommendations', async () => {
+    let arrived = 0
+    let release!: () => void
+    const barrier = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const results = await Promise.all(
+      [8, 10, 12, 14, 16].map((total) =>
+        new EpochCoordinator(connect(), {
+          totalShards: 'auto',
+          recommendedShards: async () => {
+            if (++arrived === 5) release()
+            await barrier
+            return total
+          },
+        }).resolve(),
+      ),
+    )
+    expect(arrived).toBe(5)
+    for (const result of results) {
+      expect(result).toEqual(results[0])
+      expect(result).toMatchObject({ role: 'active', state: { epoch: 1 } })
+    }
+    expect(await redis.get('wildbeast:epoch:pending')).toBeNull()
+  })
+
+  it('joins the stored total without fetching a newer recommendation', async () => {
+    await new EpochCoordinator(redis, { totalShards: 8 }).resolve()
+    const recommendedShards = vi.fn(async () => 10)
+    await expect(
+      new EpochCoordinator(connect(), {
+        totalShards: 'auto',
+        recommendedShards,
+      }).resolve(),
+    ).resolves.toEqual({
+      role: 'active',
+      state: { epoch: 1, totalShards: 8 },
+    })
+    expect(recommendedShards).not.toHaveBeenCalled()
+    expect(await redis.get('wildbeast:epoch:pending')).toBeNull()
+  })
+
+  it('follows a pending migration and promotes it once the old fleet drains', async () => {
+    await new EpochCoordinator(redis, { totalShards: 8 }).resolve()
+    const oldMember = new ClusterCoordinator(connect(), {
+      clusterId: 'old-cluster',
+      totalShards: 8,
+      keyPrefix: epochKeyPrefix(1),
+    })
+    await oldMember.heartbeat()
+    const migration = await new EpochCoordinator(redis, {
+      totalShards: 16,
+    }).resolve()
+    const recommendedShards = vi.fn(async () => 32)
+    const peer = new EpochCoordinator(connect(), {
+      totalShards: 'auto',
+      recommendedShards,
+    })
+    expect(await peer.resolve()).toEqual(migration)
+    expect(recommendedShards).not.toHaveBeenCalled()
+    expect(await peer.tryPromote(migration.state)).toBe(false)
+    await oldMember.withdraw()
+    expect(await peer.tryPromote(migration.state)).toBe(true)
+    expect(await peer.resolve()).toEqual({
+      role: 'active',
+      state: migration.state,
+    })
+  })
+
+  it('keeps an auto joiner parked on a proposal when the active key is missing', async () => {
+    await new EpochCoordinator(redis, { totalShards: 8 }).resolve()
+    const migration = await new EpochCoordinator(redis, {
+      totalShards: 16,
+    }).resolve()
+    await redis.del('wildbeast:epoch')
+    const recommendedShards = vi.fn(async () => 32)
+    expect(
+      await new EpochCoordinator(connect(), {
+        totalShards: 'auto',
+        recommendedShards,
+      }).resolve(),
+    ).toEqual(migration)
+    expect(recommendedShards).not.toHaveBeenCalled()
+    expect(await redis.get('wildbeast:epoch')).toBeNull()
+  })
+
+  it('adopts a migration created while Discord was being queried', async () => {
+    const peer = new EpochCoordinator(connect(), {
+      totalShards: 'auto',
+      recommendedShards: async () => {
+        await new EpochCoordinator(redis, { totalShards: 8 }).resolve()
+        await new EpochCoordinator(redis, { totalShards: 16 }).resolve()
+        return 32
+      },
+    })
+    await expect(peer.resolve()).resolves.toEqual({
+      role: 'pending',
+      state: { epoch: 2, totalShards: 16 },
+    })
+  })
+
+  it.each([0, -1, 1.5, Number.NaN])(
+    'does not persist invalid recommendation %s',
+    async (total) => {
+      await expect(
+        new EpochCoordinator(redis, {
+          totalShards: 'auto',
+          recommendedShards: async () => total,
+        }).resolve(),
+      ).rejects.toThrow(/positive integer/)
+      expect(await redis.get('wildbeast:epoch')).toBeNull()
+    },
+  )
+
+  it('leaves Redis untouched when the recommendation request fails', async () => {
+    await expect(
+      new EpochCoordinator(redis, {
+        totalShards: 'auto',
+        recommendedShards: async () => {
+          throw new Error('Discord unavailable')
+        },
+      }).resolve(),
+    ).rejects.toThrow('Discord unavailable')
+    expect(await redis.get('wildbeast:epoch')).toBeNull()
+    expect(await redis.get('wildbeast:epoch:pending')).toBeNull()
   })
 
   it('parks a different total as a pending next epoch', async () => {

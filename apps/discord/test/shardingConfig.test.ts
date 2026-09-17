@@ -86,11 +86,23 @@ describe('parseClusteringConfig', () => {
     ).toEqual({ mode: 'autonomous', totalShards: 8 })
   })
 
-  it('requires a fixed total in autonomous mode', () => {
-    expect(() =>
+  it('defaults to auto in autonomous mode', () => {
+    expect(
       parseClusteringConfig({ WILDBEAST_CLUSTERING_MODE: 'autonomous' }),
-    ).toThrow(/WILDBEAST_SHARDING_TOTAL/)
+    ).toEqual({ mode: 'autonomous', totalShards: 'auto' })
   })
+
+  it.each(['', '0', '-1', '1.5', '8shards', 'many'])(
+    'rejects invalid autonomous total %j',
+    (total) => {
+      expect(() =>
+        parseClusteringConfig({
+          WILDBEAST_CLUSTERING_MODE: 'autonomous',
+          WILDBEAST_SHARDING_TOTAL: total,
+        }),
+      ).toThrow(/WILDBEAST_SHARDING_TOTAL/)
+    },
+  )
 
   it('rejects static range variables in autonomous mode', () => {
     expect(() =>

@@ -57,6 +57,7 @@ export interface FleetOptions {
   host: ShardingHost
   logger: FleetLogger
   redis?: RedisConnectionOptions
+  recommendedShards?: () => Promise<number>
   stopGraceMillis?: number
   epochWatchMillis?: number
   /** Called before shards spawn so workers inherit the resolved epoch. */
@@ -142,7 +143,7 @@ export class FleetManager {
     let epoch = resolution.state
     if (resolution.role === 'pending') {
       logger.warn(
-        `Shard total ${clustering.totalShards} differs from the active epoch; parked as epoch ${epoch.epoch} member until the old fleet drains`,
+        `Joining epoch ${epoch.epoch} (${epoch.totalShards} shards); parked until the old fleet drains`,
       )
       this.currentPhase = 'parked'
       const parked = coordination.membership(epoch)
@@ -221,7 +222,10 @@ export class FleetManager {
     this.redis = redis
     const { totalShards } = this.options.clustering
     return {
-      epochs: new EpochCoordinator(redis, { totalShards }),
+      epochs: new EpochCoordinator(redis, {
+        totalShards,
+        recommendedShards: this.options.recommendedShards,
+      }),
       membership: (state) =>
         new ClusterCoordinator(redis, {
           clusterId: this.options.clusterId,

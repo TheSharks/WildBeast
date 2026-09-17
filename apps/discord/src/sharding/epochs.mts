@@ -24,6 +24,24 @@ export class EpochConflictError extends Error {
 
 export const DEFAULT_PENDING_EPOCH_TTL_MILLIS = 45_000
 
+// Auto-sized joiners follow a migration already in flight. Check both keys
+// and optionally bootstrap in one operation, including after the API fetch.
+const RESOLVE_AUTO = `
+local pending = redis.call('GET', KEYS[2])
+if pending then
+  return {'pending', pending}
+end
+local active = redis.call('GET', KEYS[1])
+if active then
+  return {'active', active}
+end
+if ARGV[1] ~= '' then
+  redis.call('SET', KEYS[1], ARGV[1])
+  return {'active', ARGV[1]}
+end
+return nil
+`
+
 // Refresh only our own proposal; separate GET + PEXPIRE could extend a replacement.
 const REFRESH_PENDING = `
 if redis.call('GET', KEYS[1]) == ARGV[1] then
@@ -62,7 +80,9 @@ return 1
 `
 
 export interface EpochCoordinatorOptions {
-  totalShards: number
+  totalShards: number | 'auto'
+  /** Only used to bootstrap an auto-sized fleet with no stored epoch. */
+  recommendedShards?: () => Promise<number>
   keyPrefix?: string
   /** Must match the ClusterCoordinator's membership TTL. */
   membershipTtlMillis?: number
@@ -71,7 +91,8 @@ export interface EpochCoordinatorOptions {
 }
 
 export class EpochCoordinator {
-  private readonly totalShards: number
+  private readonly totalShards: number | 'auto'
+  private readonly recommendedShards?: () => Promise<number>
   private readonly prefix: string
   private readonly membershipTtlMillis: number
   private readonly pendingTtlMillis: number
@@ -81,6 +102,7 @@ export class EpochCoordinator {
     options: EpochCoordinatorOptions,
   ) {
     this.totalShards = options.totalShards
+    this.recommendedShards = options.recommendedShards
     this.prefix = options.keyPrefix ?? 'wildbeast'
     this.membershipTtlMillis =
       options.membershipTtlMillis ?? DEFAULT_MEMBERSHIP_TTL_MILLIS
@@ -110,6 +132,7 @@ export class EpochCoordinator {
     state: EpochState
     role: 'active' | 'pending'
   }> {
+    if (this.totalShards === 'auto') return this.resolveAuto()
     const stored = await this.activeEpoch()
     if (!stored) {
       // Active key absent: first boot or a lost key. Park on a pending
@@ -156,6 +179,37 @@ export class EpochCoordinator {
       )
     }
     return { state: pending, role: 'pending' }
+  }
+
+  private async resolveAuto(): Promise<{
+    state: EpochState
+    role: 'active' | 'pending'
+  }> {
+    const readOrInitialize = async (candidate = '') => {
+      const result = (await this.redis.eval(
+        RESOLVE_AUTO,
+        2,
+        this.epochKey,
+        this.pendingKey,
+        candidate,
+      )) as ['active' | 'pending', string] | null
+      return result
+        ? { role: result[0], state: JSON.parse(result[1]) as EpochState }
+        : null
+    }
+    const existing = await readOrInitialize()
+    if (existing) return existing
+    if (!this.recommendedShards) {
+      throw new Error(
+        'Automatic fleet bootstrap requires a shard recommendation',
+      )
+    }
+    const totalShards = await this.recommendedShards()
+    if (!Number.isInteger(totalShards) || totalShards < 1) {
+      throw new Error('Discord shard recommendation must be a positive integer')
+    }
+    // A concurrent bootstrap or migration wins over our recommendation.
+    return (await readOrInitialize(JSON.stringify({ epoch: 1, totalShards })))!
   }
 
   // Pending proposal to park on when the active key is absent; null on first

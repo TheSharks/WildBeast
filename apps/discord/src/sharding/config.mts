@@ -5,7 +5,7 @@ export interface ShardingConfig {
 
 export type ClusteringConfig =
   | ({ mode: 'static' } & ShardingConfig)
-  | { mode: 'autonomous'; totalShards: number }
+  | { mode: 'autonomous'; totalShards: number | 'auto' }
 
 // `static`: fixed range from env. `autonomous`: Redis-discovered split with auto-rebalance.
 export function parseClusteringConfig(
@@ -23,10 +23,13 @@ export function parseClusteringConfig(
     )
   }
 
-  const total = Number.parseInt(env.WILDBEAST_SHARDING_TOTAL ?? '', 10)
-  if (!Number.isInteger(total) || total < 1) {
+  const total =
+    env.WILDBEAST_SHARDING_TOTAL === undefined
+      ? 'auto'
+      : Number(env.WILDBEAST_SHARDING_TOTAL)
+  if (total !== 'auto' && (!Number.isInteger(total) || total < 1)) {
     throw new Error(
-      'Autonomous clustering requires WILDBEAST_SHARDING_TOTAL: every cluster in the fleet must agree on a fixed shard total',
+      'WILDBEAST_SHARDING_TOTAL must be a positive integer when set',
     )
   }
   if (env.WILDBEAST_SHARDING_START || env.WILDBEAST_SHARDING_END) {

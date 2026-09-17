@@ -38,7 +38,6 @@ recommends. Scaling means editing ranges and redeploying.
 
 ```bash
 WILDBEAST_CLUSTERING_MODE=autonomous
-WILDBEAST_SHARDING_TOTAL=8
 WILDBEAST_CLUSTER_ID=cluster-1   # stable per replica
 ```
 
@@ -49,6 +48,17 @@ toward it, acquiring a lease per shard before serving it and releasing
 leases for shards it hands off. The assignment is a pure function of the
 live member list, so every cluster computes the same answer without any
 negotiation.
+
+You can leave `WILDBEAST_SHARDING_TOTAL` unset. A new fleet uses Discord's
+recommended shard count and stores it in Redis. Simultaneous starters adopt
+whichever total is stored first. Later clusters use the stored total without
+fetching another recommendation, so changes to Discord's recommendation don't
+trigger a migration. If a migration is pending, new automatically sized clusters
+join it and wait for the old fleet to drain.
+
+Set `WILDBEAST_SHARDING_TOTAL` explicitly to choose a total or start a
+[shard total migration](/self-hosting/resharding/). Adding or removing clusters
+doesn't change the total or create a new epoch.
 
 Heartbeat and lease renewal run independently from shard lifecycle work. A
 worker can spend its full drain grace stopping, or wait in the global identify
@@ -109,8 +119,8 @@ before reconciliation may try to acquire it again. Multi-shard drains happen
 concurrently, but each lease stays held until its corresponding worker is dead.
 
 Finally, a fleet-wide guard protects the shard total. Guild-to-shard
-routing is `(guild_id >> 22) % total`, so all clusters must agree on
-`WILDBEAST_SHARDING_TOTAL`. A mismatched cluster refuses to serve; see
+routing is `(guild_id >> 22) % total`, so all serving clusters use the same
+stored epoch total. A cluster with a different explicit override parks; see
 [Changing the shard total](/self-hosting/resharding/) for how totals are
 migrated safely.
 

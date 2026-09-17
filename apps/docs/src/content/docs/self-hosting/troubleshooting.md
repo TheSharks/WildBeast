@@ -48,8 +48,9 @@ it opened before the failure is closed again. The line names the cause:
 ### `Fleet moved to epoch N (...); this cluster's configuration is stale, exiting.`
 
 The fleet completed a shard total migration while this cluster was fenced
-off or down. Update its `WILDBEAST_SHARDING_TOTAL` to the new total and
-redeploy. The supervisor restart loop is expected in the meantime.
+off or down. If it has an explicit `WILDBEAST_SHARDING_TOTAL`, update it to
+the new total or remove the override and redeploy. Automatically sized clusters
+adopt the stored epoch on restart.
 
 ## The cluster starts but serves nothing
 
@@ -57,9 +58,9 @@ When the process stays up but no shards come online, the cluster is either
 waiting on the rest of the fleet or has stepped back on purpose. The log
 tells you which.
 
-### `... parked as epoch N member until the old fleet drains.`
+### `Joining epoch N (... shards); parked until the old fleet drains`
 
-This isn't an error. The cluster is configured with a new shard total and is
+This isn't an error. The cluster has joined a pending shard total migration and is
 waiting for the [rolling migration](/self-hosting/resharding/) to complete.
 It starts serving the moment the last old-total cluster exits. If it stays
 parked forever, some cluster is still running the old total. Find it via

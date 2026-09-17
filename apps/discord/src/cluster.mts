@@ -9,7 +9,7 @@ import {
   LocalMetricReader,
 } from '@thesharks/analytics'
 import { canStartDashboard, startDashboard } from '@thesharks/tui'
-import { ShardingManager } from 'discord.js'
+import { fetchRecommendedShardCount, ShardingManager } from 'discord.js'
 import { loadEnv } from './env.mjs'
 import { discordShardingHost } from './fleet/discord.mjs'
 import { FleetManager } from './fleet/manager.mjs'
@@ -75,7 +75,9 @@ const fleet: FleetManager = new FleetManager({
   ),
   logger,
   redis: redisConnectionOptions(env),
+  recommendedShards: () => fetchRecommendedShardCount(env.DISCORD_TOKEN),
   onEpoch: (state) => {
+    manager.totalShards = state.totalShards
     // Workers scope persisted sessions by epoch: a session from another
     // shard total must never be resumed.
     process.env.WILDBEAST_EPOCH = String(state.epoch)
