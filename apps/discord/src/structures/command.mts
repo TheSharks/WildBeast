@@ -3,14 +3,12 @@ import {
   Command,
   container,
 } from '@sapphire/framework'
-import { resolveKey } from '@sapphire/plugin-i18next'
 import { Subcommand } from '@sapphire/plugin-subcommands'
 import {
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
   ContextMenuCommandBuilder,
   type ContextMenuCommandInteraction,
-  MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js'
 import type { ExperimentCompletion } from '../features/experiments.mjs'
@@ -24,6 +22,7 @@ import {
   spanName,
   withInteractionSpan,
 } from '../telemetry/spans.mjs'
+import { replyFeatureUnavailable } from '../utils/replies.mjs'
 
 type CommandInteraction =
   | ChatInputCommandInteraction
@@ -185,15 +184,7 @@ export async function runAdmitted<T>(
   } catch (error) {
     if (!(error instanceof WorkRejected)) throw error
     // The worker is stopping; answer instead of letting the interaction expire.
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: (await resolveKey(
-          interaction,
-          'system/errors:feature_unavailable',
-        )) as string,
-        flags: MessageFlags.Ephemeral,
-      })
-    }
+    await replyFeatureUnavailable(interaction)
     return undefined
   }
 }

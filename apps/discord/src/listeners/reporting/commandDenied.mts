@@ -1,7 +1,6 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions, UserError } from '@sapphire/framework'
 import { Events, Identifiers, Listener } from '@sapphire/framework'
-import { resolveKey } from '@sapphire/plugin-i18next'
 import { metrics } from '@thesharks/analytics'
 import {
   type ActionRowBuilder,
@@ -19,6 +18,7 @@ import type { Scope, Tier } from '../../premium/model.mjs'
 import { premiumUpsellComponents } from '../../premium/upsell.mjs'
 import type { AppServices } from '../../runtime/services.mjs'
 import { commandMetricLabels } from '../../telemetry/spans.mjs'
+import { text } from '../../utils/replies.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 const deniedCounter = meter.createCounter('discord_command_denied_total', {
@@ -61,9 +61,9 @@ export async function describeDenial(
   if (error.identifier === Identifiers.PreconditionCooldown) {
     const remaining = Number(Reflect.get(context, 'remaining') ?? 0)
     return {
-      content: (await resolveKey(interaction, 'system/errors:cooldown', {
+      content: await text(interaction, 'system/errors:cooldown', {
         resumeAt: `<t:${Math.ceil((Date.now() + remaining) / 1000)}:R>`,
-      })) as string,
+      }),
     }
   }
   const reason = denialReason({
@@ -72,18 +72,12 @@ export async function describeDenial(
   })
   if (reason === 'feature') {
     return {
-      content: (await resolveKey(
-        interaction,
-        'system/errors:feature_unavailable',
-      )) as string,
+      content: await text(interaction, 'system/errors:feature_unavailable'),
     }
   }
   if (error.identifier === OwnerOnlyPreconditionIdentifier) {
     return {
-      content: (await resolveKey(
-        interaction,
-        'system/errors:owner_only',
-      )) as string,
+      content: await text(interaction, 'system/errors:owner_only'),
     }
   }
   if (reason === 'premium') {
@@ -91,11 +85,10 @@ export async function describeDenial(
       Reflect.get(context, 'requiredTier') === 'free' ? 'free' : 'premium'
     const rawScope = Reflect.get(context, 'requiredScope')
     const scope = rawScope === 'user' || rawScope === 'guild' ? rawScope : 'any'
-    const base = (await resolveKey(
-      interaction,
-      'system/errors:premium_required',
-      { tier, scope },
-    )) as string
+    const base = await text(interaction, 'system/errors:premium_required', {
+      tier,
+      scope,
+    })
     return {
       content: `${base} ${premiumDenialDetail(interaction, tier, scope)}`,
       components: premiumUpsellComponents(

@@ -18,6 +18,7 @@ import {
   GatedCommandInteractionHandler,
   type GatedCommandInteractionHandlerOptions,
 } from '../structures/interactionHandler.mjs'
+import { editReplyTryAgain } from '../utils/replies.mjs'
 
 interface BooruPageAction {
   site: BooruSiteName
@@ -102,20 +103,7 @@ export class BooruPagesHandler extends GatedCommandInteractionHandler {
         ),
       )
     } catch {
-      let content: string
-      try {
-        content = (await resolveKey(
-          interaction,
-          'system/errors:try_again',
-        )) as string
-      } catch {
-        content = 'Something went wrong. Try again later.'
-      }
-      return interaction.editReply({
-        components: [new TextDisplayBuilder().setContent(content)],
-        flags: MessageFlags.IsComponentsV2,
-        allowedMentions: { parse: [] },
-      })
+      return editReplyTryAgain(interaction)
     }
   }
 }

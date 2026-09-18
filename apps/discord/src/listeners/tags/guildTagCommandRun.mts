@@ -4,7 +4,6 @@ import type {
   UnknownChatInputCommandPayload,
 } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
-import { resolveKey } from '@sapphire/plugin-i18next'
 import { metrics } from '@thesharks/analytics'
 import { MessageFlags } from 'discord.js'
 import { subjectFromInteraction } from '../../premium/interaction.mjs'
@@ -15,6 +14,7 @@ import {
   spanName,
   withInteractionSpan,
 } from '../../telemetry/spans.mjs'
+import { replyFeatureUnavailable, text } from '../../utils/replies.mjs'
 
 const meter = metrics.getMeter('@thesharks/discord')
 export const executionsCounter = meter.createCounter(
@@ -58,23 +58,12 @@ export class GuildTagCommandRunListener extends Listener {
         command: interaction.commandName,
       }),
     )
-    if (!enabled) {
-      return interaction.reply({
-        content: (await resolveKey(
-          interaction,
-          'system/errors:feature_unavailable',
-        )) as string,
-        flags: MessageFlags.Ephemeral,
-      })
-    }
+    if (!enabled) return replyFeatureUnavailable(interaction)
     const tag = await app.tags.resolve(guildId, BigInt(interaction.commandId))
     if (!tag) {
       executionsCounter.add(1, { outcome: 'orphaned' })
       await interaction.reply({
-        content: (await resolveKey(
-          interaction,
-          'commands/tag:promotedCommandGone',
-        )) as string,
+        content: await text(interaction, 'commands/tag:promotedCommandGone'),
         flags: MessageFlags.Ephemeral,
       })
       // Repair only removes commands the durable intents own.

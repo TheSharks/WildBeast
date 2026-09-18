@@ -1,11 +1,6 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import { InteractionHandlerTypes } from '@sapphire/framework'
-import { resolveKey } from '@sapphire/plugin-i18next'
-import {
-  type ButtonInteraction,
-  MessageFlags,
-  TextDisplayBuilder,
-} from 'discord.js'
+import type { ButtonInteraction } from 'discord.js'
 import {
   type RefreshableKind,
   refreshableBuilders,
@@ -14,6 +9,7 @@ import {
   GatedCommandInteractionHandler,
   type GatedCommandInteractionHandlerOptions,
 } from '../structures/interactionHandler.mjs'
+import { editReplyTryAgain } from '../utils/replies.mjs'
 
 /** Stateless 🔄 rebuild for cat/dog/inspire messages. */
 @ApplyOptions<GatedCommandInteractionHandlerOptions>({
@@ -35,20 +31,7 @@ export class RefreshButtonHandler extends GatedCommandInteractionHandler {
     try {
       await interaction.editReply(await refreshableBuilders[kind](interaction))
     } catch {
-      let content: string
-      try {
-        content = (await resolveKey(
-          interaction,
-          'system/errors:try_again',
-        )) as string
-      } catch {
-        content = 'Something went wrong. Try again later.'
-      }
-      await interaction.editReply({
-        components: [new TextDisplayBuilder().setContent(content)],
-        flags: MessageFlags.IsComponentsV2,
-        allowedMentions: { parse: [] },
-      })
+      await editReplyTryAgain(interaction)
     }
   }
 }

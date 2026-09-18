@@ -1,7 +1,7 @@
 import { container, InteractionHandler } from '@sapphire/framework'
-import { resolveKey } from '@sapphire/plugin-i18next'
-import { type Interaction, MessageFlags } from 'discord.js'
+import type { Interaction } from 'discord.js'
 import { WorkRejected } from '../runtime/work.mjs'
+import { replyFeatureUnavailable } from '../utils/replies.mjs'
 
 export interface GatedCommandInteractionHandlerOptions
   extends InteractionHandler.Options {
@@ -47,20 +47,8 @@ export abstract class GatedCommandInteractionHandler<
   }
 
   private async deny(interaction: Interaction) {
-    if (
-      interaction.isMessageComponent() &&
-      !interaction.replied &&
-      !interaction.deferred
-    ) {
-      return interaction.reply({
-        content: (await resolveKey(
-          interaction,
-          'system/errors:feature_unavailable',
-        )) as string,
-        flags: MessageFlags.Ephemeral,
-      })
-    }
-    return undefined
+    if (interaction.isMessageComponent())
+      await replyFeatureUnavailable(interaction)
   }
 
   public abstract override run(
