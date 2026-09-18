@@ -1,17 +1,14 @@
 import { EventEmitter } from 'node:events'
-import { dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { CommandStore, container } from '@sapphire/framework'
 import { silentLogger } from '@thesharks/test-utils'
 import { Collection } from 'discord.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { FeatureFlags } from '../src/features/flags.mjs'
 import {
   type OperatorCommandGateway,
   OperatorCommands,
   parseGuildList,
 } from '../src/operators/service.mjs'
-import { WorkScope } from '../src/runtime/work.mjs'
+import { installFakeApp, loaderContext } from './helpers.mjs'
 
 vi.mock('@sapphire/plugin-i18next', async () => {
   const actual = await vi.importActual('@sapphire/plugin-i18next')
@@ -175,31 +172,9 @@ describe('operator command placement', () => {
 
 describe('operator-scoped commands', () => {
   let command: InstanceType<typeof FlagsCommand>
-  beforeEach(() => {
-    const flags = new FeatureFlags()
-    const work = new WorkScope()
-    work.open()
-    container.app = {
-      work,
-      flags,
-      config: { ownerIds: new Set([900n]) },
-      gates: {
-        evaluateInteraction: async () => ({
-          flagEnabled: true,
-          premiumAllowed: true,
-        }),
-      },
-      commandIds: { hintsFor: async () => [] },
-    } as never
-    command = new FlagsCommand(
-      {
-        name: 'flags',
-        path: fileURLToPath(import.meta.url),
-        root: dirname(fileURLToPath(import.meta.url)),
-        store: new CommandStore(),
-      } as never,
-      {},
-    )
+  beforeEach(async () => {
+    await installFakeApp({ config: { ownerIds: new Set([900n]) } })
+    command = new FlagsCommand(loaderContext('flags', new CommandStore()), {})
   })
 
   it('captures the definition with admin-only permissions instead of registering it', async () => {

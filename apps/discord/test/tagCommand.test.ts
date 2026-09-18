@@ -1,11 +1,11 @@
 import { EventEmitter } from 'node:events'
-import { dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { CommandStore, container, ListenerStore } from '@sapphire/framework'
 import { SubcommandPluginEvents } from '@sapphire/plugin-subcommands'
 import { captureMetrics, silentLogger } from '@thesharks/test-utils'
 import { Collection, MessageFlags } from 'discord.js'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AppServices } from '../src/runtime/services.mjs'
+import { installFakeApp, loaderContext } from './helpers.mjs'
 
 vi.mock('@sapphire/plugin-i18next', async () => {
   const actual = await vi.importActual('@sapphire/plugin-i18next')
@@ -28,11 +28,6 @@ const { ChatInputSubcommandSuccessListener } = await import(
 const { ChatInputSubcommandErrorListener } = await import(
   '../src/listeners/reporting/commandErrors.mjs'
 )
-const { FeatureFlags } = await import('../src/features/flags.mjs')
-const { CommandGates } = await import('../src/features/gates.mjs')
-const { Experiments } = await import('../src/features/experiments.mjs')
-const { PremiumService } = await import('../src/premium/service.mjs')
-const { WorkScope } = await import('../src/runtime/work.mjs')
 
 const fakeClient = Object.assign(new EventEmitter(), {
   options: {},
@@ -53,24 +48,8 @@ const tag = {
   promotedAt: null,
 }
 
-function fakeServices() {
-  const flags = new FeatureFlags()
-  const premium = new PremiumService(
-    { state: vi.fn(), forOwner: vi.fn(), write: vi.fn(), replace: vi.fn() },
-    new Map([[123n, 'premium']]),
-  )
-  const work = new WorkScope()
-  work.open()
+function fakeTagServices() {
   return {
-    config: {
-      devGuildId: null,
-      premiumCatalog: new Map([['123', { tier: 'premium', scope: 'guild' }]]),
-    },
-    work,
-    flags,
-    gates: new CommandGates(flags, premium),
-    experiments: new Experiments(flags),
-    premium,
     tags: {
       find: vi.fn(async () => tag),
       list: vi.fn(async () => [tag, { ...tag, name: 'promo', commandId: 5n }]),
@@ -86,7 +65,6 @@ function fakeServices() {
     tagReconciler: {
       reconcileGuild: vi.fn(async () => ({ failures: [] })),
     },
-    commandIds: { hintsFor: vi.fn(async () => []) },
   }
 }
 
@@ -134,21 +112,20 @@ function interaction(options: {
   }
 }
 
-let services: ReturnType<typeof fakeServices>
+let services: ReturnType<typeof fakeTagServices>
+let app: AppServices
 let command: InstanceType<typeof TagCommand>
 
-beforeEach(() => {
-  services = fakeServices()
-  container.app = services as never
-  command = new TagCommand(
-    {
-      name: 'tag',
-      path: fileURLToPath(import.meta.url),
-      root: dirname(fileURLToPath(import.meta.url)),
-      store: new CommandStore(),
-    } as never,
-    {},
-  )
+beforeEach(async () => {
+  services = fakeTagServices()
+  app = await installFakeApp({
+    ...services,
+    config: {
+      premiumSkus: new Map([[123n, 'premium']]),
+      premiumCatalog: new Map([['123', { tier: 'premium', scope: 'guild' }]]),
+    },
+  })
+  command = new TagCommand(loaderContext('tag', new CommandStore()), {})
 })
 
 const ephemeral = (content: string) => ({
@@ -163,12 +140,10 @@ describe('replacement /tag command', () => {
     async (outcome) => {
       await experimentMetrics.collect()
       experimentMetrics.reset()
-      const listenerContext = {
-        name: 'experimentCompletion',
-        path: fileURLToPath(import.meta.url),
-        root: dirname(fileURLToPath(import.meta.url)),
-        store: new ListenerStore(),
-      } as never
+      const listenerContext = loaderContext<never>(
+        'experimentCompletion',
+        new ListenerStore(),
+      )
       const success = new ChatInputSubcommandSuccessListener(
         listenerContext,
         {},
@@ -187,7 +162,7 @@ describe('replacement /tag command', () => {
       const show = vi
         .spyOn(command, 'chatInputShow')
         .mockImplementation(async () => {
-          await services.experiments.variant('experiments.tags.notFoundReply', {
+          await app.experiments.variant('experiments.tags.notFoundReply', {
             targetingKey: 'guild:90001',
           })
           if (outcome === 'error') throw new Error('mapped method failed')
@@ -385,7 +360,7 @@ describe('replacement /tag command', () => {
       { name: 'Hello', value: 'Hello' },
     ])
 
-    vi.spyOn(services.flags, 'enabled').mockResolvedValueOnce(false)
+    vi.spyOn(app.flags, 'enabled').mockResolvedValueOnce(false)
     const gated = interaction({})
     await command.autocompleteRun(gated as never)
     expect(gated.respond).toHaveBeenCalledWith([])
@@ -393,7 +368,7 @@ describe('replacement /tag command', () => {
   })
 
   it('answers instead of timing out while the runtime is draining', async () => {
-    services.work.close()
+    app.work.close()
     const stopping = interaction({
       strings: { name: 'Hello' },
       subcommand: 'show',

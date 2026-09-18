@@ -1,6 +1,4 @@
 import { EventEmitter } from 'node:events'
-import { dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { container } from '@sapphire/framework'
 import {
   type ScheduledTask,
@@ -8,27 +6,18 @@ import {
 } from '@sapphire/plugin-scheduled-tasks'
 import { silentLogger } from '@thesharks/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Experiments } from '../src/features/experiments.mjs'
-import { FeatureFlags } from '../src/features/flags.mjs'
+import type { AppServices } from '../src/runtime/services.mjs'
 import { taskQueueName } from '../src/runtime/task-queue.mjs'
-import { WorkScope } from '../src/runtime/work.mjs'
 import { AppScheduledTask, TaskDeferred } from '../src/structures/task.mjs'
+import { installFakeApp, loaderContext } from './helpers.mjs'
 
 class FixtureTask extends AppScheduledTask {
   public runs = 0
   public constructor(requiresShard?: number) {
-    super(
-      {
-        name: 'metricsCollection',
-        path: fileURLToPath(import.meta.url),
-        root: dirname(fileURLToPath(import.meta.url)),
-        store: new ScheduledTaskStore(),
-      } as never,
-      {
-        interval: 60_000,
-        ...(requiresShard !== undefined ? { requiresShard } : {}),
-      } as ScheduledTask.Options,
-    )
+    super(loaderContext('metricsCollection', new ScheduledTaskStore()), {
+      interval: 60_000,
+      ...(requiresShard !== undefined ? { requiresShard } : {}),
+    } as ScheduledTask.Options)
   }
   protected override execute() {
     this.runs += 1
@@ -43,19 +32,10 @@ container.client = Object.assign(new EventEmitter(), {
 }) as never
 container.logger = silentLogger
 
-let work: WorkScope
-let flags: FeatureFlags
+let app: AppServices
 
-beforeEach(() => {
-  work = new WorkScope()
-  work.open()
-  flags = new FeatureFlags()
-  container.app = {
-    config: { shardIds: [0] },
-    work,
-    flags,
-    experiments: new Experiments(flags),
-  } as never
+beforeEach(async () => {
+  app = await installFakeApp({ config: { shardIds: [0] } })
   shards.clear()
   shards.set(0, {})
 })
@@ -97,7 +77,7 @@ describe('replacement scheduled tasks', () => {
 
   it('defers instead of running once the runtime stops accepting work', async () => {
     const task = new FixtureTask()
-    work.close()
+    app.work.close()
     await expect(task.run(undefined as never)).rejects.toBeInstanceOf(
       TaskDeferred,
     )
@@ -116,7 +96,7 @@ describe('replacement scheduled tasks', () => {
   })
 
   it('skips the body when the task gate is off', async () => {
-    vi.spyOn(flags, 'enabled').mockResolvedValueOnce(false)
+    vi.spyOn(app.flags, 'enabled').mockResolvedValueOnce(false)
     const task = new FixtureTask()
     await expect(task.run(undefined as never)).resolves.toBeUndefined()
     expect(task.runs).toBe(0)
