@@ -1,8 +1,7 @@
 import type { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
-import { metrics } from '@thesharks/analytics'
 import { AppScheduledTask } from '../structures/task.mjs'
+import { meter } from '../telemetry/meter.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const reconcileCounter = meter.createCounter(
   'discord_entitlement_reconcile_total',
   { description: 'Entitlement mirror reconciliations by result' },

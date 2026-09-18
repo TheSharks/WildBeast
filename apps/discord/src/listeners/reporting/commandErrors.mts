@@ -2,9 +2,9 @@ import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
 import { SubcommandPluginEvents } from '@sapphire/plugin-subcommands'
-import { metrics } from '@thesharks/analytics'
 import type { ClientEvents, CommandInteraction } from 'discord.js'
 import { sendErrorReport } from '../../telemetry/error-reply.mjs'
+import { meter } from '../../telemetry/meter.mjs'
 import {
   attributesFromInteraction,
   captureInteractionError,
@@ -12,7 +12,6 @@ import {
   withErrorSpan,
 } from '../../telemetry/spans.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const errorCounter = meter.createCounter('discord_command_errors_total', {
   description: 'Total number of Discord command errors',
 })

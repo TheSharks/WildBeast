@@ -2,10 +2,9 @@ import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
-import { metrics } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
+import { meter } from '../../telemetry/meter.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const frameworkErrorCounter = meter.createCounter('framework_errors_total', {
   description:
     'Errors surfaced by the Sapphire framework outside command execution',

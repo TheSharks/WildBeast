@@ -4,8 +4,8 @@ import { Listener } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
 import { metrics } from '@thesharks/analytics'
 import { type RateLimitData, RESTEvents } from 'discord.js'
+import { meter } from '../../telemetry/meter.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const rateLimitCounter = meter.createCounter(
   'discord_rest_rate_limited_total',
   {

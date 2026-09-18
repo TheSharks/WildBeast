@@ -1,9 +1,8 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
-import { metrics } from '@thesharks/analytics'
+import { meter } from '../../telemetry/meter.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const uncaughtExceptionCounter = meter.createCounter(
   'process_uncaught_exception_total',
   {

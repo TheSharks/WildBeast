@@ -1,5 +1,4 @@
 import { container } from '@sapphire/framework'
-import { metrics } from '@thesharks/analytics'
 import { createDatabase, sql } from '@thesharks/drizzle'
 import type { Client } from 'discord.js'
 import { Redis } from 'ioredis'
@@ -30,6 +29,7 @@ import type { ScopedCommand } from '../structures/command.mjs'
 import type { TagCommandGateway } from '../tags/model.mjs'
 import { TagReconciler } from '../tags/reconciler.mjs'
 import { TagService } from '../tags/service.mjs'
+import { meter } from '../telemetry/meter.mjs'
 import {
   ApplicationRuntime,
   type ResourceFactory,
@@ -49,11 +49,12 @@ export interface CompositionLogger {
 
 export type DatabaseConnection = ReturnType<typeof createDatabase>
 
-const limitOverrideFallbackCounter = metrics
-  .getMeter('@thesharks/discord')
-  .createCounter('discord_premium_limit_override_fallbacks_total', {
+const limitOverrideFallbackCounter = meter.createCounter(
+  'discord_premium_limit_override_fallbacks_total',
+  {
     description: 'Remote limit overrides rejected as invalid',
-  })
+  },
+)
 
 export interface RedisConnection {
   connect(): Promise<void>

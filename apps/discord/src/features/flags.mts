@@ -11,8 +11,9 @@ import {
   StandardResolutionReasons,
 } from '@openfeature/server-sdk'
 import * as Sentry from '@sentry/node'
-import { DURATION_SECONDS_BOUNDARIES, metrics } from '@thesharks/analytics'
+import { DURATION_SECONDS_BOUNDARIES } from '@thesharks/analytics'
 import type { LimitFlagKey } from '../premium/limits.mjs'
+import { meter } from '../telemetry/meter.mjs'
 import {
   type ExperimentFlagKey,
   type ExperimentVariant,
@@ -41,7 +42,6 @@ export interface FeatureFlagOptions {
 
 export type EvaluationSource = 'default' | 'provider' | 'error' | 'cache'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const evaluationCounter = meter.createCounter(
   'discord_feature_flag_evaluations_total',
   { description: 'Runtime flag evaluations by source and flag kind' },

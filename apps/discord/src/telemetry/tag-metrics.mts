@@ -1,6 +1,5 @@
-import { metrics } from '@thesharks/analytics'
+import { meter } from './meter.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 export const promotionsCounter = meter.createCounter(
   'discord_guild_tag_command_promotions_total',
   { description: 'Guild tag command promotions and demotions' },

@@ -4,11 +4,11 @@ import type {
   UnknownChatInputCommandPayload,
 } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
-import { metrics } from '@thesharks/analytics'
 import { MessageFlags } from 'discord.js'
 import { subjectFromInteraction } from '../../premium/interaction.mjs'
 import { WorkRejected } from '../../runtime/work.mjs'
 import { replyWithRenderedTag } from '../../tags/render.mjs'
+import { meter } from '../../telemetry/meter.mjs'
 import {
   attributesFromInteraction,
   spanName,
@@ -16,7 +16,6 @@ import {
 } from '../../telemetry/spans.mjs'
 import { replyFeatureUnavailable, text } from '../../utils/replies.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 export const executionsCounter = meter.createCounter(
   'discord_guild_tag_command_executions_total',
   { description: 'Promoted guild tag command invocations' },

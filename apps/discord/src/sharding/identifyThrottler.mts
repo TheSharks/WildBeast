@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { DURATION_SECONDS_BOUNDARIES, metrics } from '@thesharks/analytics'
+import { DURATION_SECONDS_BOUNDARIES } from '@thesharks/analytics'
 import type { IIdentifyThrottler, WebSocketOptions } from 'discord.js'
+import { meter } from '../telemetry/meter.mjs'
 import { getSharedWorkerRedis } from '../utils/redis.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const identifyCounter = meter.createCounter('discord_identifies_total', {
   description: 'Gateway identifies performed, by rate limit bucket',
 })

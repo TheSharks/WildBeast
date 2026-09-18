@@ -1,34 +1,29 @@
 import type { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
-import { type Attributes, createGauge } from '@thesharks/analytics'
+import type { Attributes } from '@thesharks/analytics'
 import { AppScheduledTask } from '../structures/task.mjs'
+import { gauge } from '../telemetry/meter.mjs'
 
-const queueSizeGauge = createGauge(
-  '@thesharks/discord',
+const queueSizeGauge = gauge(
   'bullmq_queue_size',
   'Number of jobs in BullMQ queue',
 )
-const queueActiveGauge = createGauge(
-  '@thesharks/discord',
+const queueActiveGauge = gauge(
   'bullmq_queue_active',
   'Number of jobs currently being processed in BullMQ queue',
 )
-const queueWaitingGauge = createGauge(
-  '@thesharks/discord',
+const queueWaitingGauge = gauge(
   'bullmq_queue_waiting',
   'Number of jobs waiting in BullMQ queue',
 )
-const queueDelayedGauge = createGauge(
-  '@thesharks/discord',
+const queueDelayedGauge = gauge(
   'bullmq_queue_delayed',
   'Number of delayed jobs in BullMQ queue',
 )
-const queueFailedGauge = createGauge(
-  '@thesharks/discord',
+const queueFailedGauge = gauge(
   'bullmq_queue_failed',
   'Number of failed jobs in BullMQ queue',
 )
-const queueCompletedGauge = createGauge(
-  '@thesharks/discord',
+const queueCompletedGauge = gauge(
   'bullmq_queue_completed',
   'Number of completed jobs in BullMQ queue',
 )

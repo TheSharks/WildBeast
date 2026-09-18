@@ -1,8 +1,7 @@
-import { type Attributes, createGauge, metrics } from '@thesharks/analytics'
+import type { Attributes } from '@thesharks/analytics'
 import type { Client } from 'discord.js'
 import { expiredFlagKeys } from '../features/registry.mjs'
-
-const meter = metrics.getMeter('@thesharks/discord')
+import { gauge, meter } from './meter.mjs'
 
 // Cumulative so the backend computes rates over any window.
 const cpuCounter = meter.createObservableCounter('discord_bot_cpu_seconds', {
@@ -18,41 +17,34 @@ cpuCounter.addCallback((result) => {
   })
 })
 
-const botUptimeGauge = createGauge(
-  '@thesharks/discord',
+const botUptimeGauge = gauge(
   'discord_bot_uptime_seconds',
   'Bot uptime in seconds',
   's',
 )
-const botMemoryGauge = createGauge(
-  '@thesharks/discord',
+const botMemoryGauge = gauge(
   'discord_bot_memory_usage_bytes',
   'Bot memory usage in bytes',
   'By',
 )
-const guildGauge = createGauge(
-  '@thesharks/discord',
+const guildGauge = gauge(
   'discord_guilds_total',
   'Total number of Discord guilds the bot is in',
 )
-const userGauge = createGauge(
-  '@thesharks/discord',
+const userGauge = gauge(
   'discord_guild_member_total',
   'Total number of guild member entries the bot can see',
 )
-const channelGauge = createGauge(
-  '@thesharks/discord',
+const channelGauge = gauge(
   'discord_channels_total',
   'Total number of Discord channels the bot can see',
 )
-const wsLatencyGauge = createGauge(
-  '@thesharks/discord',
+const wsLatencyGauge = gauge(
   'discord_websocket_latency_seconds',
   'Discord WebSocket latency in seconds',
   's',
 )
-const expiredFlagsGauge = createGauge(
-  '@thesharks/discord',
+const expiredFlagsGauge = gauge(
   'discord_feature_flags_expired',
   'Registered runtime flags past their expiry date',
 )

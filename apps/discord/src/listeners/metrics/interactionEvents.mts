@@ -4,14 +4,13 @@ import { Events, Listener } from '@sapphire/framework'
 import {
   type Attributes,
   DURATION_SECONDS_BOUNDARIES,
-  metrics,
   resolveShardId,
 } from '@thesharks/analytics'
 import type { ClientEvents, Interaction } from 'discord.js'
 import { InteractionType } from 'discord.js'
+import { meter } from '../../telemetry/meter.mjs'
 import { resolveInteractionScope } from '../../telemetry/spans.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const buttonCounter = meter.createCounter('discord_button_interaction_total', {
   description: 'Total number of button interactions',
 })

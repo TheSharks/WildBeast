@@ -2,11 +2,11 @@ import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
 import { ScheduledTaskEvents } from '@sapphire/plugin-scheduled-tasks'
-import { DURATION_SECONDS_BOUNDARIES, metrics } from '@thesharks/analytics'
+import { DURATION_SECONDS_BOUNDARIES } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
 import { TaskDeferred } from '../../structures/task.mjs'
+import { meter } from '../../telemetry/meter.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const taskCounter = meter.createCounter('discord_tasks_total', {
   description: 'Total number of scheduled task runs by status',
 })

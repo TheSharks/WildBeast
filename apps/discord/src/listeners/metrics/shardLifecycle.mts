@@ -1,10 +1,9 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
-import { metrics } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
+import { meter } from '../../telemetry/meter.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const shardReadyCounter = meter.createCounter('discord_shard_ready_total', {
   description: 'Total number of times a shard became ready',
 })

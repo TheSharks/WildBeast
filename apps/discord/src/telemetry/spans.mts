@@ -11,11 +11,12 @@ import {
   trace,
 } from '@thesharks/analytics'
 import type { CommandInteraction, Guild, Interaction } from 'discord.js'
+import { INSTRUMENTATION_SCOPE } from './meter.mjs'
 
 export type DiscordScope = 'guild' | 'dm'
 
 export function getTracer() {
-  return trace.getTracer('@thesharks/discord')
+  return trace.getTracer(INSTRUMENTATION_SCOPE)
 }
 
 export function spanName(name: string): string {

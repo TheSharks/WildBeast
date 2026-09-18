@@ -2,14 +2,14 @@ import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
 import { SubcommandPluginEvents } from '@sapphire/plugin-subcommands'
-import { DURATION_SECONDS_BOUNDARIES, metrics } from '@thesharks/analytics'
+import { DURATION_SECONDS_BOUNDARIES } from '@thesharks/analytics'
 import type { ClientEvents, CommandInteraction } from 'discord.js'
+import { meter } from '../../telemetry/meter.mjs'
 import {
   commandMetricLabels,
   interactionDurationSeconds,
 } from '../../telemetry/spans.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const contextCommandCounter = meter.createCounter(
   'discord_context_commands_total',
   { description: 'Total number of Discord context menu commands executed' },

@@ -1,7 +1,6 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions, UserError } from '@sapphire/framework'
 import { Events, Identifiers, Listener } from '@sapphire/framework'
-import { metrics } from '@thesharks/analytics'
 import {
   type ActionRowBuilder,
   type ButtonBuilder,
@@ -17,10 +16,10 @@ import { PremiumPreconditionIdentifier } from '../../preconditions/Premium.mjs'
 import type { Scope, Tier } from '../../premium/model.mjs'
 import { premiumUpsellComponents } from '../../premium/upsell.mjs'
 import type { AppServices } from '../../runtime/services.mjs'
+import { meter } from '../../telemetry/meter.mjs'
 import { commandMetricLabels } from '../../telemetry/spans.mjs'
 import { text } from '../../utils/replies.mjs'
 
-const meter = metrics.getMeter('@thesharks/discord')
 const deniedCounter = meter.createCounter('discord_command_denied_total', {
   description:
     'Commands blocked by preconditions (permissions, cooldowns, ...)',

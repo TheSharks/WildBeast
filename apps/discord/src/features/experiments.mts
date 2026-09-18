@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import type { EvaluationContext } from '@openfeature/server-sdk'
-import { metrics } from '@thesharks/analytics'
+import { meter } from '../telemetry/meter.mjs'
 import { evaluationSource, type FeatureFlags } from './flags.mjs'
 import {
   type ExperimentFlagKey,
@@ -28,7 +28,6 @@ interface ExperimentScope {
   outcome?: Outcome
 }
 
-const meter = metrics.getMeter('@thesharks/discord')
 const exposureCounter = meter.createCounter(
   'discord_experiment_exposures_total',
   { description: 'Experiment variant exposures' },
