@@ -10,7 +10,7 @@ export class MetricsCollectionTask extends AppScheduledTask {
     super(context, { ...options, interval: 60_000 })
   }
 
-  public run() {
+  protected override execute() {
     collectRuntimeMetrics(this.container.client)
   }
 }

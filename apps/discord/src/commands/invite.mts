@@ -14,7 +14,9 @@ export class InviteCommand extends AppCommand {
     })
   }
 
-  public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  protected override async chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+  ) {
     const { client } = this.container
     const override = this.container.app.config.inviteOverride
     if (override) return this.reply(interaction, 'done', { invite: override })

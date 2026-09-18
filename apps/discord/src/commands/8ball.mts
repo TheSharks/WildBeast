@@ -13,7 +13,9 @@ export class EightBallCommand extends AppCommand {
     })
   }
 
-  public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  protected override async chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+  ) {
     const choices = (await resolveKey(interaction, 'commands/8ball:choices', {
       returnObjects: true,
     })) as unknown as string[]

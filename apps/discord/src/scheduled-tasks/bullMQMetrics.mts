@@ -41,7 +41,7 @@ export class BullMQMetricsTask extends AppScheduledTask {
     super(context, { ...options, interval: 60_000 })
   }
 
-  public async run() {
+  protected override async execute() {
     // Every task shares the plugin's queue; reuse its connection.
     const { client: queue, queue: queueName } = this.container.tasks
     const counts = await queue.getJobCounts()

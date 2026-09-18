@@ -11,7 +11,7 @@ export class GuildTagCommandReconcileTask extends AppScheduledTask {
     super(context, { ...options, pattern: '0 4 * * *', requiresShard: 0 })
   }
 
-  public async run() {
+  protected override async execute() {
     const app = this.container.app
     const results = await app.tagReconciler.reconcileAll(
       app.work.signal,

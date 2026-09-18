@@ -29,7 +29,7 @@ export class EntitlementRefreshTask extends AppScheduledTask {
     })
   }
 
-  public async run() {
+  protected override async execute() {
     const app = this.container.app
     if (app.config.premiumSkus.size === 0) {
       this.container.logger.debug(

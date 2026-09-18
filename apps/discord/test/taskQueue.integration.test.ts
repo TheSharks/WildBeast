@@ -29,7 +29,7 @@ class RetryTask extends AppScheduledTask {
       { interval: 60_000, requiresShard: 0 },
     )
   }
-  async run() {
+  protected override async execute() {
     if (++this.attempts === 1) throw new Error('temporary failure')
   }
 }

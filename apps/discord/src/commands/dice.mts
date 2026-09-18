@@ -31,7 +31,9 @@ export class DiceCommand extends AppCommand {
     })
   }
 
-  public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  protected override async chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+  ) {
     const dice = interaction.options.getInteger('dice') ?? 1
     const sides = interaction.options.getInteger('sides') ?? 6
     let total = 0

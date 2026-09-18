@@ -16,7 +16,9 @@ export class AdviceCommand extends AppCommand {
     })
   }
 
-  public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  protected override async chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+  ) {
     // adviceslip caches a slip for about 2s; the query string busts that.
     const { slip } = await fetchJson<{ slip: { advice: string } }>(
       `https://api.adviceslip.com/advice?t=${interaction.id}`,

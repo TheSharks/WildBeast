@@ -66,6 +66,22 @@ async function exportedPieceCount(
   return count
 }
 
+/**
+ * The class that defines a method for this piece. The app base classes own
+ * Sapphire's entry points; a piece that defines one itself skips admission,
+ * tracing and gating.
+ */
+function ownerOf(piece: object, method: string): string | undefined {
+  for (
+    let owner: object | null = piece;
+    owner;
+    owner = Object.getPrototypeOf(owner)
+  ) {
+    if (Object.hasOwn(owner, method)) return owner.constructor.name
+  }
+  return undefined
+}
+
 beforeAll(async () => {
   if (!existsSync(dist)) throw new Error('dist is missing: run pnpm build')
   await listenerStore.registerPath(join(dist, 'listeners')).loadAll()
@@ -92,7 +108,12 @@ describe('replacement piece loading', () => {
     expect(commandStore.size).toBe(exported)
     for (const command of commandStore.values()) {
       expect(commandGateKey(command.name), command.name).toBeDefined()
-      expect(Object.hasOwn(command, 'chatInputRun'), command.name).toBe(true)
+      for (const entryPoint of ['chatInputRun', 'autocompleteRun']) {
+        expect(
+          ownerOf(command, entryPoint),
+          `${command.name} must implement chatInput/autocomplete; ${entryPoint} belongs to the base class`,
+        ).toMatch(/^App(Command|Subcommand)$/)
+      }
       const scoped = command as unknown as { scope: string }
       if (scoped.scope === 'operator') {
         // Never bulk-registered: operator commands are placed per guild.
@@ -138,7 +159,10 @@ describe('replacement piece loading', () => {
     for (const task of taskStore.values()) {
       expect(task.interval ?? task.pattern, task.name).toBeTruthy()
       expect(taskGateKey(task.name), task.name).toBeDefined()
-      expect(Object.hasOwn(task, 'run'), task.name).toBe(true)
+      expect(
+        ownerOf(task, 'run'),
+        `${task.name} must implement execute; run belongs to the base class`,
+      ).toBe('AppScheduledTask')
       expect(task.customJobOptions?.attempts, task.name).toBeGreaterThan(1)
     }
   })

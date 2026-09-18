@@ -1,6 +1,9 @@
 import {
   type ApplicationCommandRegistry,
+  type Awaitable,
+  type ChatInputCommand,
   Command,
+  type ContextMenuCommand,
   container,
 } from '@sapphire/framework'
 import { Subcommand } from '@sapphire/plugin-subcommands'
@@ -81,10 +84,10 @@ function build(
 }
 
 /**
- * Every command invocation is admitted through the runtime, traced, scoped
- * for experiments and gated. Shared by plain commands and subcommand groups.
+ * Registration, preconditions and gates. Shared by plain commands and
+ * subcommand groups, which extend different Sapphire classes.
  */
-export function installCommandBehavior(
+function installCommandBehavior(
   command: ScopedCommand,
   premium?: PremiumRequirement,
 ): void {
@@ -111,44 +114,46 @@ export function installCommandBehavior(
     })
   const key = commandGateKey(command.name)
   if (key) command.preconditions.append({ name: 'Feature', context: { key } })
-  if (premium) {
+  if (premium)
     command.preconditions.append({ name: 'Premium', context: { ...premium } })
-    // The gate registry is per runtime; pieces register on first construction.
-    const registerPremium = () =>
-      container.app.gates.requirePremium(command.name, premium)
-    command.onLoad = ((onLoad) => () => {
-      registerPremium()
-      return onLoad()
-    })(command.onLoad.bind(command))
-  }
+}
 
-  const autocompleteRun = command.autocompleteRun?.bind(command)
-  if (autocompleteRun) {
-    command.autocompleteRun = async (interaction: AutocompleteInteraction) => {
-      try {
-        return await container.app.work.run(async () => {
-          if (
-            command.scope === 'operator' &&
-            !container.app.config.ownerIds.has(BigInt(interaction.user.id))
-          )
-            return interaction.respond([])
-          const evaluation = await container.app.gates.evaluateInteraction(
-            interaction,
-            command.name,
-          )
-          return evaluation.flagEnabled && evaluation.premiumAllowed
-            ? autocompleteRun(interaction)
-            : interaction.respond([])
-        })
-      } catch (error) {
-        if (error instanceof WorkRejected) return interaction.respond([])
-        throw error
-      }
-    }
+/**
+ * Autocomplete has no preconditions, so admission, the owner check and the
+ * gates run here before the command's `autocomplete` body.
+ */
+async function runAutocomplete(
+  command: ScopedCommand,
+  interaction: AutocompleteInteraction,
+  autocomplete: ((interaction: AutocompleteInteraction) => unknown) | undefined,
+): Promise<unknown> {
+  // Sapphire only offers autocomplete to interaction handlers when the command
+  // has no autocompleteRun; the base classes always have one, so pass it on.
+  if (!autocomplete)
+    return container.stores.get('interaction-handlers').run(interaction)
+  try {
+    return await container.app.work.run(async () => {
+      if (
+        command.scope === 'operator' &&
+        !container.app.config.ownerIds.has(BigInt(interaction.user.id))
+      )
+        return interaction.respond([])
+      const evaluation = await container.app.gates.evaluateInteraction(
+        interaction,
+        command.name,
+      )
+      return evaluation.flagEnabled && evaluation.premiumAllowed
+        ? autocomplete(interaction)
+        : interaction.respond([])
+    })
+  } catch (error) {
+    if (error instanceof WorkRejected) return interaction.respond([])
+    throw error
   }
 }
 
-export async function runAdmitted<T>(
+/** Admits, traces and experiment-scopes one command run. */
+async function runAdmitted<T>(
   command: Command,
   interaction: CommandInteraction,
   type: 'chat_input' | 'context_menu',
@@ -194,9 +199,17 @@ export interface AppCommandOptions extends Command.Options {
   scope?: CommandScope
 }
 
+/**
+ * Base class for slash commands. Implement `chatInput` (and `contextMenu` or
+ * `autocomplete` when the command has one) instead of Sapphire's
+ * `chatInputRun`, `contextMenuRun` and `autocompleteRun`: this class owns
+ * those entry points and admits, traces, experiment-scopes and gates every
+ * run before calling yours.
+ */
 export abstract class AppCommand extends Command implements ScopedCommand {
   public readonly scope: CommandScope
   public operatorCommand?: OperatorCommandData
+  private readonly premium: PremiumRequirement | undefined
 
   public constructor(
     context: Command.LoaderContext,
@@ -204,21 +217,62 @@ export abstract class AppCommand extends Command implements ScopedCommand {
   ) {
     super(context, options)
     this.scope = options.scope ?? 'global'
+    this.premium = options.premium
     installCommandBehavior(this, options.premium)
-    const chatInputRun = this.chatInputRun?.bind(this)
-    if (chatInputRun) {
-      this.chatInputRun = (interaction, runContext) =>
-        runAdmitted(this, interaction, 'chat_input', this.name, () =>
-          Promise.resolve(chatInputRun(interaction, runContext)),
-        )
-    }
-    const contextMenuRun = this.contextMenuRun?.bind(this)
-    if (contextMenuRun) {
-      this.contextMenuRun = (interaction, runContext) =>
-        runAdmitted(this, interaction, 'context_menu', this.name, () =>
-          Promise.resolve(contextMenuRun(interaction, runContext)),
-        )
-    }
+  }
+
+  /** The slash command body. */
+  protected abstract chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+    context: ChatInputCommand.RunContext,
+  ): Awaitable<unknown>
+
+  /** The context menu body, for commands that register one. */
+  protected contextMenu?(
+    interaction: Command.ContextMenuCommandInteraction,
+    context: ContextMenuCommand.RunContext,
+  ): Awaitable<unknown>
+
+  /** The autocomplete body, for commands with autocompleted options. */
+  protected autocomplete?(
+    interaction: AutocompleteInteraction,
+  ): Awaitable<unknown>
+
+  public override onLoad() {
+    // The gate registry is per runtime, so pieces register as they load.
+    if (this.premium)
+      container.app.gates.requirePremium(this.name, this.premium)
+    return super.onLoad()
+  }
+
+  public override chatInputRun(
+    interaction: Command.ChatInputCommandInteraction,
+    context: ChatInputCommand.RunContext,
+  ) {
+    return runAdmitted(this, interaction, 'chat_input', this.name, async () =>
+      this.chatInput(interaction, context),
+    )
+  }
+
+  public override contextMenuRun(
+    interaction: Command.ContextMenuCommandInteraction,
+    context: ContextMenuCommand.RunContext,
+  ) {
+    return runAdmitted(
+      this,
+      interaction,
+      'context_menu',
+      this.name,
+      async () => {
+        if (!this.contextMenu)
+          throw new Error(`${this.name} does not implement contextMenu`)
+        return this.contextMenu(interaction, context)
+      },
+    )
+  }
+
+  public override autocompleteRun(interaction: AutocompleteInteraction) {
+    return runAutocomplete(this, interaction, this.autocomplete?.bind(this))
   }
 }
 
@@ -227,12 +281,19 @@ export interface AppSubcommandOptions extends Subcommand.Options {
   scope?: CommandScope
 }
 
+/**
+ * Base class for subcommand groups. The subcommands plugin already owns
+ * `chatInputRun` and dispatches to the mapped methods; this class wraps that
+ * dispatch the same way `AppCommand` wraps `chatInput`. Implement
+ * `autocomplete` instead of Sapphire's `autocompleteRun`.
+ */
 export abstract class AppSubcommand
   extends Subcommand
   implements ScopedCommand
 {
   public readonly scope: CommandScope
   public operatorCommand?: OperatorCommandData
+  private readonly premium: PremiumRequirement | undefined
 
   public constructor(
     context: Subcommand.LoaderContext,
@@ -240,22 +301,41 @@ export abstract class AppSubcommand
   ) {
     super(context, options)
     this.scope = options.scope ?? 'global'
+    this.premium = options.premium
     installCommandBehavior(this, options.premium)
-    const chatInputRun = this.chatInputRun?.bind(this)
-    if (chatInputRun) {
-      this.chatInputRun = (interaction, runContext) =>
-        runAdmitted(
-          this,
-          interaction,
-          'chat_input',
-          [this.name, interaction.options.getSubcommand(false)]
-            .filter(Boolean)
-            .join('.'),
-          () => Promise.resolve(chatInputRun(interaction, runContext)),
-          // The subcommands plugin converts mapped-method throws into events;
-          // the success/error listeners complete the experiment scope.
-          'event',
-        )
-    }
+  }
+
+  /** The autocomplete body, for commands with autocompleted options. */
+  protected autocomplete?(
+    interaction: AutocompleteInteraction,
+  ): Awaitable<unknown>
+
+  public override onLoad() {
+    // The gate registry is per runtime, so pieces register as they load.
+    if (this.premium)
+      container.app.gates.requirePremium(this.name, this.premium)
+    return super.onLoad()
+  }
+
+  public override chatInputRun(
+    interaction: Subcommand.ChatInputCommandInteraction,
+    context: ChatInputCommand.RunContext,
+  ) {
+    return runAdmitted(
+      this,
+      interaction,
+      'chat_input',
+      [this.name, interaction.options.getSubcommand(false)]
+        .filter(Boolean)
+        .join('.'),
+      () => super.chatInputRun(interaction, context),
+      // The subcommands plugin converts mapped-method throws into events;
+      // the success/error listeners complete the experiment scope.
+      'event',
+    )
+  }
+
+  public override autocompleteRun(interaction: AutocompleteInteraction) {
+    return runAutocomplete(this, interaction, this.autocomplete?.bind(this))
   }
 }

@@ -30,7 +30,7 @@ export class UrbanDictionaryCommand extends AppCommand {
     })
   }
 
-  public override async autocompleteRun(
+  protected override async autocomplete(
     interaction: Command.AutocompleteInteraction,
   ) {
     const focused = interaction.options.getFocused()
@@ -44,7 +44,9 @@ export class UrbanDictionaryCommand extends AppCommand {
     )
   }
 
-  public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  protected override async chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+  ) {
     const query = interaction.options.getString('query', true)
     await interaction.deferReply()
     const definitions = await fetchDefinitions(query)

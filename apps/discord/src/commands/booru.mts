@@ -62,7 +62,7 @@ export class BooruCommand extends AppSubcommand {
     })
   }
 
-  public override async autocompleteRun(
+  protected override async autocomplete(
     interaction: Command.AutocompleteInteraction,
   ) {
     const site = interaction.options.getSubcommand(false)

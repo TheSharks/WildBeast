@@ -49,7 +49,10 @@ export class BooruPagesHandler extends GatedCommandInteractionHandler {
     })
   }
 
-  public async run(interaction: ButtonInteraction, action: BooruPageAction) {
+  protected override async execute(
+    interaction: ButtonInteraction,
+    action: BooruPageAction,
+  ) {
     await interaction.deferUpdate()
 
     try {

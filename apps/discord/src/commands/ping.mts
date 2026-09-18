@@ -15,7 +15,9 @@ export class PingCommand extends AppCommand {
     })
   }
 
-  public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  protected override async chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+  ) {
     const message = await interaction.reply({
       content: (await resolveKey(
         interaction,

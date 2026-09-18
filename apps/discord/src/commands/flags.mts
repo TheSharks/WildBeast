@@ -68,7 +68,7 @@ export class FlagsCommand extends AppSubcommand {
     })
   }
 
-  public override async autocompleteRun(
+  protected override async autocomplete(
     interaction: Command.AutocompleteInteraction,
   ) {
     const focused = interaction.options.getFocused().toLowerCase()

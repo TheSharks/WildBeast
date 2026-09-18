@@ -44,7 +44,10 @@ export class UrbanPagesHandler extends GatedCommandInteractionHandler {
     })
   }
 
-  public async run(interaction: ButtonInteraction, action: UrbanPageAction) {
+  protected override async execute(
+    interaction: ButtonInteraction,
+    action: UrbanPageAction,
+  ) {
     await interaction.deferUpdate()
 
     try {

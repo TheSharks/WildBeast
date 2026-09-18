@@ -25,7 +25,10 @@ export class RefreshButtonHandler extends GatedCommandInteractionHandler {
     return this.some(kind as RefreshableKind)
   }
 
-  public async run(interaction: ButtonInteraction, kind: RefreshableKind) {
+  protected override async execute(
+    interaction: ButtonInteraction,
+    kind: RefreshableKind,
+  ) {
     await interaction.deferUpdate()
 
     try {

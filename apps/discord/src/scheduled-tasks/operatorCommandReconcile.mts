@@ -10,7 +10,7 @@ export class OperatorCommandReconcileTask extends AppScheduledTask {
     super(context, { ...options, interval: 60 * 60 * 1000, requiresShard: 0 })
   }
 
-  public async run() {
+  protected override async execute() {
     const app = this.container.app
     const result = await app.operatorCommands.reconcile(app.work.signal)
     const level = result.failures.length > 0 ? 'warn' : 'info'

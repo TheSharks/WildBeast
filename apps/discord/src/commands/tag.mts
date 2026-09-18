@@ -131,7 +131,7 @@ export class TagCommand extends AppSubcommand {
     })
   }
 
-  public override async autocompleteRun(
+  protected override async autocomplete(
     interaction: Command.AutocompleteInteraction,
   ) {
     if (!interaction.guildId) return interaction.respond([])

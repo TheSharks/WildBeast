@@ -16,7 +16,9 @@ export class DogCommand extends AppCommand {
     })
   }
 
-  public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  protected override async chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+  ) {
     await interaction.deferReply()
     return interaction.editReply(await buildDogMessage(interaction))
   }

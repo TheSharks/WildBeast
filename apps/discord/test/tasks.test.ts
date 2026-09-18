@@ -30,7 +30,7 @@ class FixtureTask extends AppScheduledTask {
       } as ScheduledTask.Options,
     )
   }
-  public run() {
+  protected override execute() {
     this.runs += 1
     return 'ran'
   }

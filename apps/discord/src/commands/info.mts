@@ -25,7 +25,9 @@ export class InfoCommand extends AppCommand {
     })
   }
 
-  public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  protected override async chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+  ) {
     const { client } = this.container
     const label = (key: string) =>
       resolveKey(interaction, `commands/info:${key}`)
