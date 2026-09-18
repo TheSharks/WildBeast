@@ -1,3 +1,4 @@
+import '@sapphire/plugin-hmr/register'
 import '@sapphire/plugin-i18next/register'
 import '@sapphire/plugin-scheduled-tasks/register'
 import '@thesharks/analytics/register'
@@ -73,6 +74,10 @@ export function createSapphireClient(
     tasks: { queue: taskQueueName(config), bull: { connection: config.redis } },
     baseUserDirectory: PIECES_DIRECTORY,
     logger: { level: logLevelFor(config) },
+    // Development only: reload a piece when `tsc --watch` rewrites its file in
+    // dist. Only the piece's own module reloads; restart after changing code
+    // it imports (integrations, services, base classes).
+    hmr: { enabled: config.development },
     ws: {
       // The identify budget is per token, fleet wide; coordinate through Redis.
       buildIdentifyThrottler: async (

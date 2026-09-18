@@ -60,11 +60,20 @@ pnpm check:fix  # fix what Biome can fix automatically
 ```
 
 `pnpm dev` for the bot runs the TypeScript compiler in watch mode next to
-the running cluster. Compiled output updates as you save, but the running
-process doesn't reload it: stop the cluster with Ctrl+C and run `pnpm dev`
-again to pick up a change. With `WILDBEAST_DEV_GUILD_ID` set, commands
-register in that guild and the new definitions show up in Discord as soon
-as the cluster is back.
+the running cluster. In development (`NODE_ENV` unset or `development`),
+[`@sapphire/plugin-hmr`](https://github.com/sapphiredev/plugins/tree/main/packages/hmr)
+watches the compiled pieces: saving a command, listener, interaction
+handler, precondition, or scheduled task reloads that piece in the running
+workers. A reloaded command is registered again, so with
+`WILDBEAST_DEV_GUILD_ID` set its new definition shows up in Discord right
+away.
+
+Only the piece's own file reloads. After changing code a piece imports,
+such as `integrations/`, a service, or a base class, stop the cluster with
+Ctrl+C and run `pnpm dev` again. The same goes for language files, which are
+copied to `dist` by the build, and for operator commands like `/flags`,
+whose placement is refreshed by the hourly reconcile task rather than on
+reload.
 
 For telemetry during development, `SENTRY_SPOTLIGHT=true` streams events to
 a local [Spotlight](https://spotlightjs.com/) sidecar, and the
