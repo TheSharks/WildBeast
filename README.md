@@ -1,14 +1,14 @@
 <div>
   <div style="margin-left:auto;margin-right:auto;">
-    <img src="assets/wildbeast.png"><br><br>
+    <img src="assets/wildbeast.png" alt="WildBeast"><br><br>
     <p align="center" style="margin:0;">
-      <a href="https://github.com/TheSharks/Wildbeast/releases"><img src="https://img.shields.io/github/package-json/v/thesharks/wildbeast.svg?label=version&style=for-the-badge&maxAge=300" alt="Version"></a>
+      <a href="https://github.com/TheSharks/Wildbeast/releases"><img src="https://img.shields.io/github/package-json/v/thesharks/wildbeast.svg?filename=apps%2Fdiscord%2Fpackage.json&label=version&style=for-the-badge&maxAge=300" alt="Version"></a>
       <a href="https://discord.gg/wildbot"><img src="https://img.shields.io/discord/110462143152803840.svg?logo=discord&style=for-the-badge&maxAge=300" alt="Discord server"></a>
       <a href="https://github.com/sponsors/Dougley"><img src="https://img.shields.io/github/sponsors/Dougley.svg?logo=githubsponsors&style=for-the-badge&maxAge=300" alt="Github Sponsors"></a>
     </p>
     <p align="center" style="margin:0;">
-      <a title="Crowdin" target="_blank" href="https://crowdin.com/project/wildbeast"><img src="https://img.shields.io/badge/Localization-Crowdin-blue?logo=crowdin&style=for-the-badge&maxAge=300"></a>
-      <a href="https://hub.docker.com/r/dougley/wildbeast"><img src="https://img.shields.io/docker/pulls/dougley/wildbeast.svg?style=for-the-badge&maxAge=300"></a>
+      <a title="Crowdin" target="_blank" href="https://crowdin.com/project/wildbeast"><img src="https://img.shields.io/badge/Localization-Crowdin-blue?logo=crowdin&style=for-the-badge&maxAge=300" alt="Localization on Crowdin"></a>
+      <a href="https://github.com/TheSharks/WildBeast/pkgs/container/wildbeast"><img src="https://img.shields.io/badge/Image-ghcr.io-blue?logo=docker&style=for-the-badge" alt="Container image on GHCR"></a>
     </p>
   </div>
 </div>
@@ -47,6 +47,7 @@ This is a pnpm workspace managed with [Turborepo](https://turborepo.dev/):
 | `packages/tagscript`  | TagScript interpreter                                |
 | `packages/test-utils` | Shared test helpers                                  |
 | `packages/tsconfig`   | Shared TypeScript configuration                      |
+| `packages/tui`        | Terminal dashboard for metrics and logs              |
 
 ## Development
 

@@ -1,3 +1,5 @@
-*            @TheSharks/development
-/src/        @TheSharks/wildbeast
-/docs/       @TheSharks/documentation
+# The last matching pattern wins. A team must have write access to this
+# repository to count as an owner; GitHub skips one that doesn't without
+# reporting it.
+*                @TheSharks/wildbeast
+/apps/docs/      @TheSharks/documentation

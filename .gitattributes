@@ -1,2 +1,5 @@
-* text=auto
-*.ts text eol=lf
+* text=auto eol=lf
+
+# Generated files: collapsed in pull request diffs and left out of language stats.
+packages/drizzle/drizzle/meta/** linguist-generated
+pnpm-lock.yaml linguist-generated

@@ -1,6 +1,10 @@
 Thank you for taking the time to contribute to the development of WildBeast!
 
-Follow these rules when making contributions to this repository.
+Follow these rules when making contributions to this repository. The
+[development guide](https://wildbeast.guide/development/environment/) covers
+setting up an environment, and the
+[command cookbook](https://wildbeast.guide/development/command-cookbook/) walks
+through adding a command step by step.
 
 # Source code
 
@@ -25,36 +29,47 @@ To verify your code adheres to our styleguide, run `pnpm lint` in the project ro
 
 ### Tests
 
-Run `pnpm test` in the project root to run the unit tests. Integration tests (`pnpm test:integration`) require Docker and are also run in CI.
+Run `pnpm test` in the project root to build the workspace and run the unit tests. Integration tests (`pnpm test:integration`) require Docker and are also run in CI.
+See [Testing](https://wildbeast.guide/development/testing/) for the test helpers and what each suite covers.
+
+### Changesets
+
+Versions and changelogs come from [changesets](https://github.com/changesets/changesets). When your change affects the bot or a published package (`@thesharks/analytics`, `@thesharks/tagscript`), run `pnpm changeset` in the project root, pick the affected packages and the bump type, and commit the generated file with your pull request.
+Changes to documentation, tests, or tooling don't need one.
 
 ## Code practices
 
 ### Translations
 
 All user-facing text, meaning text that gets sent to Discord and is displayed to end users, needs to be included in the i18n framework.  
-We use [@sapphire/plugin-i18next](https://github.com/sapphiredev/plugins/tree/main/packages/i18next) for translations; language files live in `apps/discord/src/languages`.
+We use [@sapphire/plugin-i18next](https://github.com/sapphiredev/plugins/tree/main/packages/i18next) for translations; language files live in `apps/discord/src/languages`. Only add or edit the `en-US` strings: other locales are managed through [Crowdin](https://crowdin.com/project/wildbeast).
 
 ```ts
 // ✗ bad
-interaction.reply(`Hi there ${user.name}!`);
+interaction.reply(`Hi there ${user.name}!`)
 ```
 
 ```ts
 // ✓ good
-interaction.reply(await resolveKey(interaction, "user/greeting:hello", { name: user.name }));
+interaction.reply(
+  (await resolveKey(interaction, 'commands/greet:hello', {
+    name: user.name,
+  })) as string,
+)
 ```
 
 ### Database operations
 
 We use [Drizzle ORM](https://orm.drizzle.team/) for database access, wrapped in the `@thesharks/drizzle` workspace package.  
-When something requires database access, do not create your own database connection; use the client and schema exported from `@thesharks/drizzle`. Schema changes belong in that package, alongside a migration.
+Do not create your own database connection. The runtime opens the only one, and commands, listeners, and tasks reach the database through the services on `this.container.app`. Queries live in the repositories under `apps/discord/src/adapters`, behind the interfaces those services use.
+Schema changes belong in `@thesharks/drizzle`, alongside a generated migration, in the same pull request as the feature that needs them. See [Changing the schema](https://wildbeast.guide/development/database/#changing-the-schema).
 
 ## Commands
 
-### Sorting
+### File layout
 
-Commands are sorted first by type, then by base command if the command has subcommands, and then by subcommand.
-If your command doesn't have subcommands or your command is a context menu action, placing the entire command in 1 file is fine.
+Every command is one file in `apps/discord/src/commands`, named after the command. A command with subcommands is still one file: each subcommand is a method on the class.
+Code that a command shares with its buttons or other component handlers goes in `apps/discord/src/integrations/<command>.mts`. Don't create a folder per command.
 
 ### Inheritance
 
@@ -64,7 +79,7 @@ All commands must extend a base class (`AppCommand` or `AppSubcommand` from `app
 // ✗ bad
 export default new AppCommand({
   // ...
-});
+})
 ```
 
 ```ts
@@ -73,3 +88,15 @@ export class GreetCommand extends AppCommand {
   // ...
 }
 ```
+
+The base class owns Sapphire's entry points. It admits, traces, and gates every run, and then calls the method you implement:
+
+| Piece | Extend | Implement | Don't define |
+| --- | --- | --- | --- |
+| Command | `AppCommand` | `chatInput`, and `autocomplete` if needed | `chatInputRun`, `autocompleteRun` |
+| Command with subcommands | `AppSubcommand` | one method per subcommand, and `autocomplete` if needed | `chatInputRun`, `autocompleteRun` |
+| Scheduled task | `AppScheduledTask` | `execute` | `run` |
+| Button or select menu handler | `GatedCommandInteractionHandler` | `parse` and `execute` | `run` |
+
+Every command and scheduled task also needs a runtime gate, `features.commands.<name>` or `features.tasks.<name>`, in `apps/discord/src/features/registry.mts`. The structure test fails when a gate is missing or when a command or task defines one of Sapphire's entry points itself.
+[Writing pieces](https://wildbeast.guide/development/pieces/) has the details.
