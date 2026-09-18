@@ -1,0 +1,63 @@
+# Version updates. Security updates are enabled separately in the repository
+# settings and ignore the schedule, groups and cooldown below.
+version: 2
+updates:
+  # One entry covers the whole pnpm workspace through the root lockfile.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # Wait a week before proposing a release, so a compromised or broken
+    # version is usually pulled before it reaches us.
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # These ship in lockstep; mixed versions break at runtime.
+      opentelemetry:
+        patterns: ['@opentelemetry/*']
+      sapphire:
+        patterns: ['@sapphire/*']
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directories:
+      - /apps/discord
+      - /.devcontainer
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+
+  - package-ecosystem: docker-compose
+    directories:
+      - /.devcontainer
+      - /contrib/grafana
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: chore
+      include: scope
+
+  - package-ecosystem: devcontainers
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: chore
+      include: scope
