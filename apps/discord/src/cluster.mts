@@ -44,7 +44,9 @@ const { logLevelFor } = await import('./runtime/client.mjs')
 const logger = new AnalyticsLogger({
   level: logLevelFor({
     trace: Boolean(env.TRACE),
-    development: env.NODE_ENV === 'development',
+    // Unset means development, as in runtime/config.mts, so the manager and
+    // its workers log at the same level.
+    development: (env.NODE_ENV ?? 'development') === 'development',
   }),
 })
 const epochGauge = createGauge(
