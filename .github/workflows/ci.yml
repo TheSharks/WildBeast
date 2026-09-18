@@ -16,6 +16,18 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: moderate
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20

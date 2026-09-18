@@ -120,6 +120,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -178,6 +184,23 @@ jobs:
 
       - name: Inspect
         run: docker buildx imagetools inspect "$IMAGE:${{ steps.meta.outputs.version }}"
+
+      - name: Resolve manifest digest
+        id: manifest
+        run: |
+          digest=$(docker buildx imagetools inspect "$IMAGE:${{ steps.meta.outputs.version }}" --format '{{json .Manifest}}' | jq -r .digest)
+          if [[ "$digest" != sha256:* ]]; then
+            echo '::error::Expected a sha256 manifest digest'
+            exit 1
+          fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Attest image provenance
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.manifest.outputs.digest }}
+          push-to-registry: true
 
   # Tell Sentry about the release: associate commits and upload the
   # compiled sourcemaps so production stack traces symbolicate. Gated on
