@@ -26,9 +26,10 @@ setup.
 
 ## Environment variables
 
-`BOT_TOKEN` still works: v9 accepts it as a legacy alias for
-`DISCORD_TOKEN`, so a copied v8 `.env` logs in unchanged. We recommend
-renaming it, since the rest of the documentation refers to `DISCORD_TOKEN`.
+`BOT_TOKEN` still works: v9 accepts it as a legacy alias for `DISCORD_TOKEN`,
+so you can reuse your token setting. You must still configure the other v9
+requirements. We recommend renaming it, since the rest of the documentation
+refers to `DISCORD_TOKEN`.
 
 WildBeast v9 no longer posts guild counts to third-party bot-listing
 sites. The v8 `TOP_GG_TOKEN`, `BOTS_GG_TOKEN`, `DBL_COM_TOKEN`,
@@ -58,11 +59,12 @@ overwrite or reject each other. Deduplicate and rename before importing.
 
 ## Commands
 
-v9 speaks Discord slash commands only; the v8 prefix commands are gone.
+v9 uses Discord slash commands only; the v8 prefix commands are gone.
 The ported set is smaller than v8's and grows with each release. The
 [command reference](/using/commands/) lists what's available today.
 
 Not yet ported from v8: the full v8 prefix-command set (including music,
 moderation, and other utility commands outside the slash reference).
 If a command you rely on isn't in the reference, it doesn't exist in v9
-yet — track its request on GitHub rather than expecting a hidden alias.
+yet. Check the [GitHub issues](https://github.com/TheSharks/WildBeast/issues)
+for an existing request before opening one.

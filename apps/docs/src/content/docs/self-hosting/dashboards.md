@@ -5,27 +5,31 @@ sidebar:
   order: 10
 ---
 
-WildBeast ships three premade Grafana dashboards and 14 Prometheus alert
-rules in
-[`contrib/grafana`](https://github.com/TheSharks/WildBeast/tree/master/contrib/grafana),
-covering the fleet, the commands and the runtime. Every query was validated
-against a live collector, so the panels light up as soon as metrics flow.
+WildBeast ships three premade Grafana dashboards and 14 Prometheus alert rules
+in
+[`contrib/grafana`](https://github.com/TheSharks/WildBeast/tree/master/contrib/grafana), covering the fleet, commands, and runtime. Configure the bot to export
+telemetry to populate the panels.
 
 ## Try them locally
 
 The directory doubles as a runnable observability stack: an OpenTelemetry
 collector, Prometheus with the alert rules loaded, Tempo for traces, Loki
-for logs and a provisioned Grafana. Traces and logs are cross-linked, so a
-slow span jumps to its log lines and a log line jumps to its trace.
+for logs, and a provisioned Grafana. Links between traces and logs let you
+inspect the log records associated with a slow span.
+
+Before starting the bot, complete its
+[configuration and build](/self-hosting/getting-started/). From the repository
+root, run:
 
 ```bash
 cd contrib/grafana
 docker compose up -d
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 pnpm start
+cd ../..
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 pnpm --filter @thesharks/discord start
 ```
 
-Open http://localhost:3000 and the WildBeast folder holds all three
-dashboards, no login needed.
+Open [Grafana](http://localhost:3000) and select the **WildBeast** folder to
+find the dashboards. The local stack does not require a login.
 
 ## What each dashboard shows
 
@@ -37,11 +41,11 @@ of paying for a fresh identify.
 
 **Commands & interactions** tracks throughput, latency percentiles, error
 and denial rates for application commands, plus component interactions,
-gateway event pressure and REST rate limits.
+gateway event volume, and REST rate limits.
 
 **Runtime health** watches each worker's Node.js runtime: event loop delay
 and utilization, heap growth against the V8 limit, GC pauses, CPU,
-websocket latency and the BullMQ task queue.
+WebSocket latency, and the BullMQ task queue.
 
 ## Alerting
 
@@ -50,16 +54,16 @@ The alert rules encode the failure semantics of
 cluster, shards assigned but not connected, leases lost without a graceful
 release, crash-looping workers, command error rates above 5%, event loops
 blocked long enough to threaten heartbeats, and heap growth approaching the
-V8 limit. The bundled Prometheus evaluates them out of the box; notification
-routing needs an Alertmanager, which stays environment-specific on purpose.
+V8 limit. The bundled Prometheus evaluates them out of the box; you must
+configure Alertmanager separately to route notifications.
 
 ## Using your own Grafana
 
 Import the JSON files from `contrib/grafana/dashboards/` and select your
-Prometheus data source; the dashboards bind to a `datasource` variable
-rather than a fixed backend. One collector setting is required: the
-dashboards expect resource attributes (`cluster_id`, `service_instance_id`)
-as metric labels, which the Prometheus exporters emit with
+Prometheus data source; the dashboards bind to a `datasource` variable rather
+than a fixed backend. One collector setting is required: the dashboards expect
+resource attributes (`cluster_id`, `service_instance_id`) as metric labels,
+which the Prometheus exporters emit with
 `resource_to_telemetry_conversion: enabled: true`. The
 [contrib README](https://github.com/TheSharks/WildBeast/tree/master/contrib/grafana)
 has the exact snippet.

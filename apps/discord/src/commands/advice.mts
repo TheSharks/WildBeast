@@ -1,8 +1,8 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { Command } from '@sapphire/framework'
 import { applyLocalizedBuilder } from '@sapphire/plugin-i18next'
-import { fetchJson } from '../integrations/http.mjs'
 import { AppCommand } from '../structures/command.mjs'
+import { fetchJson } from '../utils/http.mjs'
 
 @ApplyOptions<Command.Options>({ cooldownDelay: 3_000 })
 export class AdviceCommand extends AppCommand {

@@ -5,16 +5,16 @@ sidebar:
   order: 4
 ---
 
-TagScript is published as [`@thesharks/tagscript`](https://www.npmjs.com/package/@thesharks/tagscript)
-and runs anywhere Node does. This page is the tour; the
+TagScript is published as
+[`@thesharks/tagscript`](https://www.npmjs.com/package/@thesharks/tagscript) and
+requires Node.js 22 or later with ECMAScript modules (ESM). This guide covers
+rendering, custom handlers, and execution limits. The
 [package README](https://github.com/TheSharks/WildBeast/tree/master/packages/tagscript)
 has the full option-by-option reference.
 
 ```bash
 npm install @thesharks/tagscript
 ```
-
-The package is ESM-only and needs Node 22 or newer.
 
 ## Rendering
 
@@ -34,8 +34,8 @@ it untouched.
 
 ## Custom tags
 
-Tags are registered in a **registry**. Build your own with `createRegistry` and
-pass it to `render`:
+A registry maps tag names to handler functions. Build one with `createRegistry`
+and pass it to `render`:
 
 ```ts
 import { render, createRegistry } from '@thesharks/tagscript'
@@ -48,9 +48,9 @@ const result = await render('{greet:world}', { registry })
 console.log(result.output) // Hello, world!
 ```
 
-A **normal tag** (above) receives its arguments already rendered as strings,
-right for simple transforms. A **lazy tag** receives the unrendered argument
-nodes and decides when, or whether, to render each one; that's how control-flow
+A normal handler receives its arguments as rendered strings, as in the
+example above. A lazy handler receives unrendered argument nodes and chooses
+which ones to render. This is how control-flow
 tags like `{if}` avoid evaluating the branch they don't take. Pass lazy
 handlers as the second argument to `createRegistry`.
 
@@ -75,10 +75,11 @@ await render('{fetch:https://api.example.com/data}', {
 })
 ```
 
-`{js}` needs `enableJs: true` **and** a `sandbox` you provide, since TagScript
-does not execute code itself. Use [`isolated-vm`](https://github.com/laverdet/isolated-vm)
-or similar so scripts run with a memory limit, an execution timeout, and no
-access to the host; the README has a worked example.
+`{js}` needs both `enableJs: true` and a `sandbox` you provide, since TagScript
+does not execute code itself. Use
+[`isolated-vm`](https://github.com/laverdet/isolated-vm) or similar so scripts
+run with a memory limit, an execution timeout, and no access to the host; the
+README has a worked example.
 
 ## Limits and safety
 
@@ -86,17 +87,18 @@ Tag output is literal. Whatever a handler returns (an argument, a variable, a
 fetched body, a sandbox result) goes into the output as plain text and is
 never executed as TagScript. The only ways rendered text runs as a template
 are `{eval}` and stored tags from a `tagStore`, and each of those expansions
-counts against `maxIterations`. This is what makes caller-controlled data safe
-to pass in as `args`, `variables`, or `discord` context.
+counts against `maxIterations`. Values passed in `args`, `variables`, or
+`discord` context therefore remain text unless a template explicitly
+evaluates them. Treat `{eval}` input and stored templates as executable
+TagScript.
 
 Every bound from the [reference](/tagscript/tags/#limits) is an option:
 `maxIterations`, `maxDepth`, `maxOutputLength`, `maxFetchRequests`,
 `regexPatternLength`, `maxRegexInputLength`, and `maxRegexOperations`.
 
-Regex-based tags are additionally screened for [ReDoS](https://en.wikipedia.org/wiki/ReDoS)
-with [recheck](https://www.npmjs.com/package/recheck) before running, and only
-patterns the analysis positively verifies as safe execute. No static check is
-perfect; for a hard guarantee, back the tags with
-[RE2](https://github.com/uhop/node-re2), which runs every pattern in linear
-time. The defaults are safe for trusted input; tighten them when templates
-come from your users.
+Regex-based tags are additionally screened for
+[ReDoS](https://en.wikipedia.org/wiki/ReDoS) with
+[recheck](https://www.npmjs.com/package/recheck) before running, and only
+patterns the analysis positively verifies as safe execute. This screening does
+not replace execution limits. Review the limits for your workload and tighten
+them when accepting templates from users.

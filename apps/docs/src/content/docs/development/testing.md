@@ -2,14 +2,13 @@
 title: Testing
 description: Running and writing tests for the WildBeast framework.
 sidebar:
-  order: 7
+  order: 8
 ---
 
-WildBeast's suite tests the bot's own logic against fakes or real backing
-services, and leaves library behavior to the libraries. Services take their
-collaborators as constructor arguments, so a service test needs no Discord,
-no framework, and no environment; a command test needs a fake `container.app`
-and a fake interaction.
+WildBeast's tests cover application behavior using fake dependencies or real
+PostgreSQL, Redis, and telemetry services. For service unit tests, pass fake
+dependencies to the constructor. For command tests, provide a fake
+`container.app` and interaction.
 
 ## Running tests
 
@@ -24,15 +23,16 @@ pnpm test
 pnpm test:integration
 ```
 
-Integration suites are gated on environment variables (`DATABASE_URL`,
-`REDIS_URL`, `OTEL_E2E_OUTPUT`) and skip cleanly when the services aren't
-available, so a plain `pnpm test` always works. The PostgreSQL suites
+Integration suites run when their environment variables are set:
+`DATABASE_URL`, `REDIS_URL`, and `OTEL_E2E_OUTPUT`. Leave these unset to run
+only unit tests; setting them requires the corresponding services to be
+available. The PostgreSQL suites
 replace whole tables, so `DATABASE_URL` must point at a disposable database
 with every migration applied. CI runs the full integration suite.
 
 ## What's covered
 
-The suite concentrates on the guarantees a silent failure would break:
+The suite covers these behaviors:
 
 - Runtime lifecycle: startup order, unwinding after a failed resource,
   draining before teardown, joined stop requests, drain deadlines, and the
@@ -44,7 +44,7 @@ The suite concentrates on the guarantees a silent failure would break:
   leases, the reconciler, and epoch migrations against a real Redis.
 - Tags and premium: concurrent caps, authorization, guild isolation, durable
   promotion intents across lost REST responses and failed commits, deferred
-  revocation, snapshot races, and freshness rules, against a real PostgreSQL
+  revocation, snapshot races, and freshness rules, against a real PostgreSQL database
   (`tags.integration.test.ts`, `premium.integration.test.ts`).
 - Commands and gates: the tag command's replies and upsells, autocomplete
   gating, draining behavior, the shared gate evaluation, and the
@@ -60,8 +60,9 @@ The suite concentrates on the guarantees a silent failure would break:
 - Telemetry: the analytics pipeline is verified end to end against a real
   OpenTelemetry collector over both OTLP/HTTP and OTLP/gRPC. Unit tests
   cover the logger bridge, the metrics listeners, and the metric helpers
-  with in-memory exporters. When changing a metric, update any dashboards,
-  alerts, and documentation that use it.
+  with in-memory exporters, and `tui.test.ts` covers the metric feed from
+  shard workers to the terminal dashboard. When changing a metric, update
+  any dashboards, alerts, and documentation that use it.
 - Environment validation: the zod schema, including the legacy `BOT_TOKEN`
   alias and coercion rules, and the locale files against every key the
   source resolves.
@@ -86,5 +87,5 @@ repositories and gateways; the tag integration suite shows how to combine
 a real repository with a fake Discord gateway.
 
 Integration test files share one Redis and flush it between tests, so
-vitest runs test files serially. Don't move suites to parallel execution
+Vitest runs test files serially. Don't move suites to parallel execution
 without also isolating their state.

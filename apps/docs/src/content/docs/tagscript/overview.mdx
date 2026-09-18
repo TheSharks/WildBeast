@@ -43,8 +43,9 @@ Multiple arguments are separated by `|`:
   examples={[{ template: '{if:5|>|3|yes|no}' }]}
 />
 
-Tags nest: an argument can itself be a tag, and it's rendered first. Here
-`{server}` resolves to the (simulated) server name before `{upper}` runs:
+Tags can contain other tags as arguments. Most tags render their arguments
+first. In this example, `{server}` resolves to the simulated server name
+before `{upper}` runs:
 
 <TagScriptPlayground
   variant="example"
@@ -66,10 +67,11 @@ compute something once and reuse it:
 
 ## How rendering works
 
-TagScript renders a template in one pass, innermost tags first. What a tag
-produces is plain text: it lands in the output exactly as returned, and is
-never read as more TagScript. A user argument or fetched response containing
-`{js:...}` renders as those characters instead of executing.
+TagScript walks the template once. Most tags render their arguments first;
+control-flow tags such as `{if}` choose which arguments to render. A tag returns
+plain text, which goes into the output without being parsed again. A user
+argument or fetched response containing `{js:...}` renders as those characters
+instead of executing.
 
 When you want rendered text to run as a template (say a variable holds
 `{upper:hi}` and you want `HI`), pass it through `{eval}`, the one tag whose
@@ -80,13 +82,12 @@ job is exactly that:
   examples={[{ template: '{set:tpl|{ignore:{upper:hi}}}{eval:{get:tpl}}' }]}
 />
 
-Rendering is bounded so a template can't run away: there are limits on the
-nesting depth, the output length, and the number of `{eval}` and stored-tag
-expansions (see the [reference](/tagscript/tags/#limits)).
+Rendering limits nesting depth, output length, and the number of `{eval}`
+and stored-tag expansions (see the [reference](/tagscript/tags/#limits)).
 
 ## Unknown tags
 
 By default, a tag TagScript doesn't recognize is left in the output exactly as
-written, so a stray `{` never breaks a message. Embedders can switch to a
+written. An unmatched `{` also remains literal text. Embedders can switch to a
 strict mode that rejects unknown tags instead, see
 [embedding](/tagscript/embedding/).

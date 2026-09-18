@@ -1,23 +1,39 @@
 ---
 title: Clustering
-description: Running WildBeast across multiple autonomous clusters.
+description: Sharding terminology and how to distribute WildBeast across clusters.
 sidebar:
   order: 6
 ---
 
-WildBeast can run as a fleet of independent **clusters** (one process per
-machine, container, or replica) that discover each other through a shared
-Redis and split the bot's shards among themselves. Clusters rebalance
-automatically as members join, leave, or crash, so you can restart or scale
-one machine without touching the rest.
+WildBeast runs each shard in a worker thread and groups those workers into
+clusters. You can keep everything in one process or spread the workload
+across machines as your bot grows.
 
-Every cluster runs the same code with the same configuration except for its
-`WILDBEAST_CLUSTER_ID`. There is no leader and no controller process.
+## Sharding terminology
+
+The distinction to keep in mind is worker, cluster, and fleet: a thread, a
+process, and the whole deployment. Here's how those fit together:
+
+| Term | Meaning in WildBeast |
+| --- | --- |
+| Shard worker | The Node.js worker thread that connects a shard to Discord and handles its commands, events, and scheduled tasks. |
+| Cluster | One WildBeast Node.js process containing a cluster manager and the shard workers assigned to it. You can run clusters on the same machine or on separate machines or containers. |
+| Cluster manager | The main thread of a cluster process. It starts and stops that cluster's shard workers and, in autonomous mode, coordinates their ownership through Redis. |
+| Fleet | All the clusters running the same bot together. A deployment with one cluster is a fleet of one. |
+| Shard total | The number of shards across the whole fleet. This is `WILDBEAST_SHARDING_TOTAL`, not the number of clusters or the number of shards assigned to one cluster. |
+
+For example, a fleet with eight shards and two clusters might assign shards
+`0` through `3` to `cluster-1` and shards `4` through `7` to `cluster-2`.
+Each cluster runs four shard workers.
+
+Adding a third cluster gives the fleet another process to run those same
+eight shards. Increasing the shard total changes how guilds map to shards
+and requires a [shard total migration](/self-hosting/resharding/).
 
 ## Modes
 
 The clustering mode decides how shards are assigned: fixed ranges you
-manage yourself, or automatic assignment negotiated through Redis.
+manage yourself, or automatic assignment calculated from shared Redis state.
 
 ### Static (default)
 
@@ -36,18 +52,21 @@ recommends. Scaling means editing ranges and redeploying.
 
 ### Autonomous
 
+Clusters discover each other through Redis and redistribute shards as
+clusters join, leave, or crash. Run the same code and fleet configuration on
+each cluster, with a different `WILDBEAST_CLUSTER_ID` for each one. Every
+cluster manager participates; there is no central leader.
+
 ```bash
 WILDBEAST_CLUSTERING_MODE=autonomous
 WILDBEAST_CLUSTER_ID=cluster-1   # stable per replica
 ```
 
-Clusters sharing a Redis form a fleet. Each one heartbeats a membership
-entry, computes its share of the shards with [rendezvous
-hashing](https://en.wikipedia.org/wiki/Rendezvous_hashing), and reconciles
-toward it, acquiring a lease per shard before serving it and releasing
-leases for shards it hands off. The assignment is a pure function of the
-live member list, so every cluster computes the same answer without any
-negotiation.
+Each cluster periodically updates its membership record in Redis, called a
+heartbeat. It uses [rendezvous hashing](https://en.wikipedia.org/wiki/Rendezvous_hashing)
+to calculate its shard assignment from the live member list. Every cluster
+calculates the same assignment. Its reconciler then starts or stops local
+workers to match that assignment.
 
 You can leave `WILDBEAST_SHARDING_TOTAL` unset. A new fleet uses Discord's
 recommended shard count and stores it in Redis. Simultaneous starters adopt
@@ -79,40 +98,40 @@ before, so rolling deploys cause minimal movement.
 
 ## Why handoffs are cheap
 
-Two fleet-wide coordination mechanisms make shard movement nearly free:
+Shard handoffs use a shared identify queue and saved gateway sessions to
+reduce reconnect delays.
 
 The first is a global identify queue. Discord allows one gateway identify
 per 5 seconds per rate-limit bucket, per bot token, across *all* processes.
-Every identify in the fleet is serialized through a Redis lock, so clusters
-can never trip each other into invalid sessions, no matter how many start
-at once.
+A Redis lock coordinates identifies within each rate-limit bucket so
+clusters sharing Redis follow the same pacing.
 
 The second is session resume. Each shard's gateway session (id, sequence,
 resume URL) is continuously persisted to Redis. When a shard moves between
-clusters, the old owner exits *without closing the gateway connection*, and
-the new owner resumes the session: no identify consumed, and Discord
-replays the events missed during the gap. A takeover typically completes in
-about one second with zero event loss. If a session turns out to be
-unusable (expired, corrupt, wrong shard total), the shard falls back to a
-fresh identify through the queue automatically.
+clusters, the old owner closes the gateway with a resumable close code and
+flushes its saved session before releasing ownership. If Discord accepts the
+session, the new owner resumes without an identify and receives replayed
+events. An expired, corrupt, or incompatible session requires a fresh
+identify through the queue.
 
 ## The safety model
 
 Correctness never depends on the assignment math alone:
 
-Leases are the ground truth: a shard is only served while its Redis lease
-is held, and a new owner's acquisition fails until the previous owner
-releases or expires. Two live sessions for one shard cannot happen.
+Leases are the ground truth: a shard is only served while its Redis lease is
+held, and a new owner's acquisition fails until the previous owner releases or
+expires. The fencing deadline stops a cluster that loses Redis access before its
+leases expire.
 
 Settle windows prevent churn. Membership must be stable for 10 seconds
 before shards move, so a flapping cluster or a rolling deploy doesn't cause
 a reshuffle storm.
 
-A cluster that cannot reach Redis for 15 seconds fences itself and stops
-serving its shards, before its leases can expire and another cluster picks
-them up. A single failed coordination round trip is not enough to fence:
-the deadline spans three 5-second liveness ticks, so a transient Redis
-blip never takes a healthy cluster's shards offline.
+A cluster that cannot reach Redis for 15 seconds fences itself and stops serving
+its shards, before its leases can expire and another cluster picks them up. A
+single failed coordination round trip is not enough to fence: the deadline spans
+three 5-second liveness ticks, allowing a brief Redis interruption to recover
+before fencing.
 
 Losing one lease fences that shard immediately: its local worker is stopped
 before reconciliation may try to acquire it again. Multi-shard drains happen
@@ -127,7 +146,7 @@ migrated safely.
 ## Operating notes
 
 - All clusters must share the same Redis (`REDIS_*` variables).
-- Shard readiness, ownership, handoffs and fleet membership are all exported
+- Shard readiness, ownership, handoffs, and fleet membership are all exported
   as metrics, see the [metrics reference](/self-hosting/metrics/). The
   `discord_manager_shard_up` gauge is the one to alert on.
 - Identify pacing means a cold fleet start takes roughly 5.5 seconds per

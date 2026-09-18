@@ -2,15 +2,15 @@
 title: Premium subscriptions
 description: Discord entitlements, premium tiers, the limit registry, and the entitlement mirror.
 sidebar:
-  order: 6
+  order: 7
 ---
 
 WildBeast monetizes through [Discord's premium app
 subscriptions](https://docs.discord.com/developers/monetization/overview):
-users buy a subscription inside Discord, Discord issues an **entitlement**,
-and the bot maps that entitlement to a **tier** that controls what the
-subscriber gets. The whole foundation lives in `apps/discord/src/premium/`;
-nothing outside it hardcodes a tier-dependent number.
+users buy a subscription inside Discord, and Discord issues an entitlement
+that records the subscription. The bot maps it to a tier, which determines
+the subscriber's limits and command access. The implementation lives in
+`apps/discord/src/premium/`, including the shared limit registry.
 
 Discord sells two kinds of subscription, and the framework supports both:
 
@@ -49,14 +49,15 @@ comma-separated `skuId:tier` or `skuId:tier:scope` entries:
 WILDBEAST_PREMIUM_SKUS=1315790123456789:premium:guild
 ```
 
-The optional scope (`user` or `guild`) states what kind of subscription the
-SKU is sold as. Tier resolution never consults it; it exists so the purchase
-button on a denial reply offers the SKU that matches the gate (see
+The optional scope (`user` or `guild`) states what kind of subscription the SKU
+is sold as. Tier resolution never consults it; it exists so the purchase button
+on a denial reply offers the SKU that matches the gate (see
 [Gating commands](#gating-commands)). Unset means premium is off: everything
 runs at the free tier and gated commands deny without a purchase button.
-Malformed values fail [validation](/self-hosting/configuration/#validation-behavior)
-at boot. The parsed catalog is part of `AppConfig` (`premiumSkus` for tier
-resolution, `premiumCatalog` for upsells).
+Malformed values fail
+[validation](/self-hosting/configuration/#validation-behavior) at boot. The
+parsed catalog is part of `AppConfig` (`premiumSkus` for tier resolution,
+`premiumCatalog` for upsells).
 
 ## The limit registry
 
@@ -85,8 +86,8 @@ Each limit declares whose subscription raises it:
 | `user` | Only the invoker's own subscription counts. |
 | `guild` | Only the current guild's subscription counts; free tier in DMs. |
 
-Enforcement never reads the registry directly. Services take a limits
-collaborator and ask for the cap they need; `PremiumTagLimits`
+Enforcement never reads the registry directly. Services receive a limits
+interface and request the cap they need; `PremiumTagLimits`
 (`premium/tag-limits.mts`) is the implementation the tag service uses:
 
 ```ts
@@ -98,12 +99,12 @@ return this.repository.withGuild(actor.guildId, async (tags) => {
 })
 ```
 
-`forActor` resolves the guild's tier from the grants Discord attached to
-the interaction, looks the value up, applies any
-[remote override](#remote-limit-overrides), and clamps the result to a sane
-integer. The count and the insert happen under the guild's advisory lock,
-so concurrent requests can't overshoot the cap. Adding a new limit is two
-steps: add the registry entry, then ask for it at the enforcement site.
+`forActor` resolves the guild's tier from the grants Discord attached to the
+interaction, looks the value up, applies any
+[remote override](#remote-limit-overrides), and validates the resulting cap.
+The count and the insert happen under the guild's advisory lock, so concurrent
+requests can't overshoot the cap. Adding a new limit is two steps: add the
+registry entry, then ask for it at the enforcement site.
 
 ## Upselling when a limit is hit
 
@@ -126,13 +127,13 @@ return interaction.reply({
 })
 ```
 
-`upsellForLimit` returns a premium-style button for the SKU granting the
-lowest tier with a higher cap. It returns `undefined`, and the reply stays
-informational, when nothing needs selling: the subject already holds the
-best applicable tier, no higher tier raises this particular cap, or no
+`upsellForLimit` returns a premium-style button for the SKU granting the lowest
+tier with a higher cap. It returns `undefined`, and the reply stays
+informational, when no applicable upgrade is available: the subject already
+holds the best applicable tier, no higher tier raises this particular cap, or no
 purchasable SKU is configured. The same rule keeps a premium guild at its
-premium cap from ever seeing a purchase button, and keeps guild SKUs out of
-DM replies.
+premium cap from ever seeing a purchase button, and keeps guild SKUs out of DM
+replies.
 
 The whole-command variant, `premiumUpsellComponents(catalog, tier, scope,
 guildId)`, backs the `Premium` precondition's denial reply and takes the
@@ -154,9 +155,9 @@ tierForSubject(premium, subject, 'guild') // the current guild's subscriptions
 tierForSubject(premium, subject, 'any')   // the best of either
 ```
 
-`any` is for flag targeting and display only. Limits and gates always use
-the scope the limit or command declares, which is what keeps a user
-subscription from lifting a guild cap.
+Use `any` for flag targeting, display, or commands that accept either
+subscription type. Limits always use their declared `user` or `guild` scope,
+so a user subscription cannot raise a guild cap.
 
 Outside interactions (scheduled tasks, background repair), there's no
 interaction to read grants from. `PremiumService.forBackground(scope, id)`
@@ -172,7 +173,8 @@ returns more than a tier:
 
 The freshness window is 24 hours. Background code that removes something
 from a guild (demoting over-cap promotions, for example) must check
-`mayRevoke` first; granting is always safe.
+`mayRevoke` first. A stale mirror does not provide enough evidence to revoke
+access.
 
 ## Gating commands
 
@@ -214,9 +216,10 @@ Two writers keep the mirror current:
   listing can start in the middle), then replaces the mirror in one
   transaction and records `completedAt`. It runs every six hours on the
   worker that owns shard 0, and the boot listener enqueues one run on every
-  ClientReady so a restart never waits for the next interval.
+  `ClientReady` event so a restart does not wait for the next interval.
 
-The two writers can't clobber each other. Every change to the `Entitlement`
+A revision check prevents a snapshot from overwriting concurrent gateway
+updates. Every change to the `Entitlement`
 table advances a revision counter through a database trigger, and a snapshot
 commits only if the revision it started from is unchanged. A gateway event
 that lands mid-fetch wins; the snapshot reports itself as superseded and the
@@ -236,14 +239,16 @@ both null) and behave like any other entitlement.
 
 ## Promoted tag commands and entitlement lapse
 
-`/tag promote` (capped by `tags.maxPromotedPerGuild`) creates real guild
-slash commands, which raises the question of what happens when the
-subscription that allowed 25 of them goes away. Promotion state is durable:
-every promote or demote records a `TagCommandIntent` row first, and the
-`TagReconciler` (`tags/reconciler.mts`) makes Discord match those intents.
+`/tag promote` creates guild slash commands up to the
+`tags.maxPromotedPerGuild` cap. When a subscription expires, new promotions
+use the lower cap, and nightly maintenance checks existing promotions.
 
-- New promotions are blocked immediately; the limit check reads fresh
-  entitlements from the interaction.
+Every promote or demote request first records a `TagCommandIntent` row.
+`TagReconciler` in `tags/reconciler.mts` then updates Discord to match those
+intents.
+
+- New promotions use the current limit from the interaction's entitlements.
+  A guild at or above that limit cannot promote another tag.
 - Existing commands keep working until the nightly
   `guildTagCommandReconcile` task resolves the guild's cap through
   `forBackground`. If the mirror is fresh and the guild is over its cap, the
@@ -251,11 +256,8 @@ every promote or demote records a `TagCommandIntent` row first, and the
   mirror is stale, never synced, or unreadable, revocation waits and the run
   reports itself as deferred (`discord_guild_tag_reconcile_deferred_total`).
 
-The daily cadence is the grace period: a billing hiccup or a stale mirror
-never demotes a paying guild. The same run heals drift in both directions.
-It recreates commands Discord lost, recovers a create whose response was
-lost before the id was stored, and removes commands whose tag no longer
-exists, and it only ever touches commands that an intent owns.
+The nightly run also recreates missing commands, recovers registrations whose
+responses were lost, and removes commands for deleted tags. It only changes commands tracked by an intent.
 
 ## Remote limit overrides
 
@@ -274,12 +276,13 @@ Evaluations carry a context the service can target rules at:
 | `tier` | The already-resolved premium tier, so rules can treat premium guilds differently. |
 | `environment` | `NODE_ENV`, so staging can run different numbers than production. |
 
-A rule matching none of these applies globally. The bot never depends on the
-provider: when it's unconfigured, down, slow, or has no matching flag, the
-tier's registry value applies. An override that isn't a non-negative integer
-at or below 10,000 is rejected, logged, and counted
-(`discord_premium_limit_override_fallbacks_total`), and the registry value
-applies.
+Configure targeting rules in your OFREP service. With no provider or no matching
+flag, the tier's registry value applies. During an outage, the
+[flag service](/development/features/#the-flag-service) can reuse a cached value
+or fall back to that default. Numeric overrides are rounded down to an integer.
+If the result is outside 0 to 10,000, or the value is not a finite number, the
+registry value applies. Adjusted or rejected values are logged and counted in
+`discord_premium_limit_override_fallbacks_total`.
 
 Evaluations are reported through the runtime-policy
 [metrics and Sentry

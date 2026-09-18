@@ -60,11 +60,11 @@ tells you which.
 
 ### `Joining epoch N (... shards); parked until the old fleet drains`
 
-This isn't an error. The cluster has joined a pending shard total migration and is
-waiting for the [rolling migration](/self-hosting/resharding/) to complete.
+This isn't an error. The cluster has joined a pending shard total migration and
+is waiting for the [rolling migration](/self-hosting/resharding/) to complete.
 It starts serving the moment the last old-total cluster exits. If it stays
-parked forever, some cluster is still running the old total. Find it via
-the `discord_cluster_epoch` metric.
+parked forever, some cluster is still running the old total. Find it via the
+`discord_cluster_epoch` metric.
 
 ### `Cluster fleet disagrees on total shards.`
 
@@ -87,18 +87,17 @@ share. Investigate the Redis side, not the bot.
 
 ## Shards are slow or crash
 
-Shard problems show up as slow readiness on cold starts, worker deaths, or
-workers that don't stop cleanly. Only the second one usually needs your
-attention.
+Check shard logs when workers crash, startup takes longer than expected, or
+shutdown repeatedly exceeds its deadline.
 
 ### Shards take a long time to become ready
 
-This is expected on cold starts. Identifies are rate-limited globally
-through Redis at roughly 5.5 seconds per shard per rate-limit bucket, and
-there is deliberately no spawn timeout. A 100-shard fleet identifying from
-scratch takes minutes. Handoffs and restarts within 15 minutes resume
-instead and skip the wait; see [Redis](/self-hosting/redis/) for how
-sessions make that work.
+This is expected on cold starts. Identifies are rate-limited globally through
+Redis at roughly 5.5 seconds per shard per rate-limit bucket, and there is
+deliberately no spawn timeout. A 100-shard fleet identifying from scratch takes
+minutes. Handoffs can resume a saved session and skip the wait if Discord still
+accepts it. Normal shutdowns invalidate saved sessions; see
+[Redis](/self-hosting/redis/) for how sessions make that work.
 
 ### `Shard N died unexpectedly.`
 
@@ -111,26 +110,26 @@ guild-specific payload or memory pressure.
 ### `Shard N did not exit in time; terminating it` during shutdown
 
 The worker didn't finish its graceful exit within the grace period and was
-killed. This is harmless during shutdown. If it happens every time, the
-shard is likely blocked on something during cleanup.
+terminated by the manager. Some work or telemetry may not have finished.
+If this happens repeatedly, inspect the preceding logs for blocked cleanup.
 
 ## Slash commands don't appear
 
 Missing commands are almost always a registration or scoping issue rather
 than a runtime failure. Check these causes in order:
 
-- The bot needs the `applications.commands` OAuth scope. Reinvite it with
-  the scope included; kicking it is not necessary.
-- During development, commands register to a specific development guild
-  (via `WILDBEAST_DEV_GUILD_ID`) rather than globally, so a self-hosted
-  instance won't see them in other servers until you adjust or unset that
-  variable.
-- Globally registered commands can take up to an hour to propagate;
-  guild-scoped ones appear immediately.
-- `/flags` only exists in the guilds listed in `WILDBEAST_OPERATOR_GUILD_IDS`
-  or the `operators.commandGuilds` runtime setting, and only server admins
-  see it there. If it appears but answers `This command is reserved for the
-  bot owner`, add your user id to `WILDBEAST_OWNER_IDS`.
+1. The bot needs the `applications.commands` OAuth scope. Reinvite it with
+   the scope included; kicking it is not necessary.
+2. During development, commands register to a specific development guild
+   (via `WILDBEAST_DEV_GUILD_ID`) rather than globally, so a self-hosted
+   instance won't see them in other servers until you adjust or unset that
+   variable.
+3. Registration can take time to appear in Discord. Check the registration
+   logs for errors before retrying.
+4. `/flags` only exists in the guilds listed in `WILDBEAST_OPERATOR_GUILD_IDS`
+   or the `operators.commandGuilds` runtime setting, and only server admins
+   see it there. If it appears but answers `This command is reserved for the
+   bot owner`, add your user id to `WILDBEAST_OWNER_IDS`.
 
 ## Background jobs don't run
 

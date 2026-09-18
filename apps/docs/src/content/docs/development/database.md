@@ -2,14 +2,13 @@
 title: Database
 description: The PostgreSQL layer, Drizzle ORM, and how to change the schema.
 sidebar:
-  order: 4
+  order: 5
 ---
 
 Database access goes through the `@thesharks/drizzle` workspace package: a
-[Drizzle ORM](https://orm.drizzle.team/) client over PostgreSQL. The rule
-from the [contributing guidelines](https://github.com/TheSharks/WildBeast/blob/master/.github/CONTRIBUTING.md)
-is absolute: never create your own database connection; use the package's
-client and schema.
+[Drizzle ORM](https://orm.drizzle.team/) client over PostgreSQL. Use this
+package's client and schema for database access, as required by the
+[contributing guidelines](https://github.com/TheSharks/WildBeast/blob/master/.github/CONTRIBUTING.md).
 
 In the bot, the runtime owns the connection. `composeApplication` opens one
 pool with `createDatabase(url)`, checks that the schema is current, and
@@ -34,13 +33,10 @@ string is a standard `postgres://user:password@host:port/database` URL. The
 [devcontainer](/development/environment/) sets it for you, pointing at its
 TimescaleDB service.
 
-:::note
-The schema started as a v8 carry-over and currently backs the
-[tag system](/using/commands/#tags) (now namespaced per guild, where v8
-tags were global) and the
-[premium entitlement mirror](/development/premium/#the-entitlement-mirror);
-the package exists so new features land on a shared client from day one.
-:::
+The schema stores [tags](/using/commands/#tags), command placements, and the
+[premium entitlement mirror](/development/premium/#the-entitlement-mirror). For
+tags inherited from v8, see
+[Legacy global tags](#legacy-global-tags-sentinel-guild-0).
 
 ## Operator command ownership
 
@@ -52,22 +48,19 @@ as operator-owned too; ordinary guild commands must stay unmarked.
 
 ## Extensions
 
-The schema relies on two stock PostgreSQL contrib extensions, enabled by
-the first migration (`CREATE EXTENSION IF NOT EXISTS`), so any user that
-owns the database can apply it:
+The schema requires two PostgreSQL extensions. The first migration enables
+them with `CREATE EXTENSION IF NOT EXISTS`:
 
-- **citext** makes `Tag.name` case-insensitive at the type level:
+- `citext` makes `Tag.name` case-insensitive at the type level:
   `hello` and `Hello` are the same tag, in lookups and in the unique
   constraint.
-- **pg_trgm** provides trigram matching. A GIN index on `Tag.name` backs
+- `pg_trgm` provides trigram matching. A GIN index on `Tag.name` backs
   substring autocomplete and the `similarity()`-based "did you mean"
   suggestion when a tag isn't found.
 
-Both ship with every PostgreSQL distribution, including managed ones, so
-they add no hosting constraints. The migration enables them itself with
-`CREATE EXTENSION IF NOT EXISTS`, so there is nothing to set up by hand:
-on managed providers (RDS, Cloud SQL, Azure, ...) both extensions are on
-the allowlist and installable by the database owner.
+Before migrating, check that your PostgreSQL installation provides both
+extensions and that the migration user can enable them. Managed database
+services may restrict extension installation.
 
 ## Current schema
 
@@ -140,10 +133,11 @@ Write those as custom migrations (`drizzle-kit generate --custom`) next to
 the generated ones; migrations `0006`, `0007`, `0010`, and `0011` are the
 existing examples.
 
-While iterating locally you can use `pnpm --filter @thesharks/drizzle push`
-to sync the schema directly without writing a migration, and `... studio`
-opens Drizzle Studio, a browser UI over the database. Both are development
-conveniences; anything that merges needs a real migration.
+While iterating locally you can use `pnpm --filter @thesharks/drizzle push` to
+sync the schema directly without writing a migration, and
+`pnpm --filter @thesharks/drizzle studio` opens Drizzle Studio, a browser UI
+over the database. Both are development conveniences; anything that merges needs
+a real migration.
 
 Migrations are forward-only: there is no down-migration support, so
 rolling back a schema change means writing a new migration that undoes it.

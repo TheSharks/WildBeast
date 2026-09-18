@@ -9,7 +9,7 @@ import {
   MessageFlags,
   TextDisplayBuilder,
 } from 'discord.js'
-import { fetchJson } from './http.mjs'
+import { fetchJson } from '../utils/http.mjs'
 
 export interface UrbanDefinition {
   word: string

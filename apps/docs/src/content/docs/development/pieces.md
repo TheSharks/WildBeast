@@ -6,13 +6,13 @@ sidebar:
 ---
 
 Commands, listeners, interaction handlers, and scheduled tasks are all
-Sapphire **pieces**: classes in the right directory that the framework
-discovers and loads. You add one by dropping a file in; the only central
-entry it needs is its default-on
-[runtime gate](/development/features/#command-and-task-gates).
+Sapphire pieces. These are classes the framework discovers and loads from
+their directories. Add a file to the matching directory, then register a
+[runtime gate](/development/features/#command-and-task-gates) if the piece
+is a command or scheduled task. For step-by-step recipes, see the
+[command cookbook](/development/command-cookbook/).
 
-Three project conventions sit on top of Sapphire's defaults, and all of them
-matter:
+Follow these project conventions when adding a piece:
 
 - Commands and scheduled tasks extend an app base class, not Sapphire's
   directly. The base class admits every run through the runtime, captures
@@ -20,8 +20,7 @@ matter:
 - A piece's name defaults to its file name, and names must be unique.
   Sapphire silently unloads a piece whose name collides with one already
   loaded. The [structure test](/development/testing/) asserts that every
-  exported piece registers, which catches this, but it's the single easiest
-  mistake to make.
+  exported piece registers and catches name collisions.
 - Every command and task has a typed runtime gate. Add
   `features.commands.<name>` or `features.tasks.<name>` to the flag
   registry; the structure test fails when it's missing.
@@ -29,9 +28,9 @@ matter:
 ## Commands
 
 Extend `AppCommand` from `structures/command.mjs`. Override the Sapphire
-handlers (`chatInputRun`, `contextMenuRun`) exactly as normal. The base class
-wraps whichever ones you define in a span named `discord.command.<name>`, so
-any database or HTTP call inside nests underneath.
+handlers `chatInputRun` and `contextMenuRun` as you would in Sapphire. The base
+class wraps whichever ones you define in a span named `discord.command.<name>`,
+so any database or HTTP call inside nests underneath.
 
 ```ts
 import type { Command } from '@sapphire/framework'
@@ -99,12 +98,12 @@ then hourly. Members of other guilds never see the command.
 ### Registration
 
 Never pass `idHints` or `guildIds` when registering; the base classes inject
-both. Ids Discord assigned on previous boots are loaded from the database
-and stored again after every registry sync, so Sapphire updates existing
-commands instead of recreating them. Registration targets the guild from
-`WILDBEAST_DEV_GUILD_ID` when set (instant updates during development) and
-is global otherwise. A new command needs nothing for either; it works from
-its first registration.
+both. Ids Discord assigned on previous boots are loaded from the database and
+stored again after every registry sync, so Sapphire updates existing commands
+instead of recreating them. Registration targets the guild from
+`WILDBEAST_DEV_GUILD_ID` when set (instant updates during development) and is
+global otherwise. The base classes apply this behavior to new commands
+automatically.
 
 ## Message formatting
 
@@ -152,6 +151,30 @@ denial when the command is disabled. The `close` button handler, which only
 removes buttons from an existing message, extends Sapphire's
 `InteractionHandler` directly.
 
+## Errors and denials
+
+The listeners in `listeners/reporting/` answer the user when a command fails
+or a precondition denies it, so pieces don't build those replies themselves.
+
+- A command that throws is counted in `discord_command_errors_total` and
+  captured in Sentry on an isolated scope. The user receives a generic
+  message with an error code. The code is the Sentry event id, and the
+  worker logs it next to the full error.
+- A denied command is counted in `discord_command_denied_total` with the
+  identifier of the precondition that denied it. Cooldowns and the
+  `Feature`, `Premium`, and `OwnerOnly` preconditions have localized replies
+  under `system/errors`; a premium denial adds a purchase button when a
+  matching SKU is configured, and its scope explanation is English-only
+  today. Any other precondition's message is sent as
+  written. When you add a precondition, add a `system/errors` key and a
+  branch in `describeDenial` (`listeners/reporting/commandDenied.mts`), and
+  update the precondition list the structure test expects. A precondition
+  can set `silent: true` in its error context to deny without a reply.
+- Errors from listeners, interaction handlers, and command registration are
+  counted in `framework_errors_total` and captured in Sentry. They produce
+  no reply, which is why interaction handlers
+  [catch their own failures](/development/command-cookbook/#add-a-button).
+
 ## Listeners
 
 Listeners extend Sapphire's `Listener` directly. Set the `event` and, when
@@ -172,7 +195,8 @@ export class RestRateLimitedListener extends Listener {
 }
 ```
 
-Group listeners by intent under `listeners/`; the subdirectory is cosmetic.
+Group listeners by purpose under `listeners/`. Subdirectories organize the
+files but do not affect how Sapphire loads them.
 Listeners that write to a service (the entitlement event listeners, for
 example) run that write through `this.container.app.work.run(...)` so
 draining waits for it. To emit a metric, pull a meter from
@@ -220,8 +244,8 @@ type if it takes no payload, matching the existing tasks.
 
 ## Localization
 
-The bot speaks through [i18next](https://www.i18next.com/) via
-`@sapphire/plugin-i18next`; user-facing text is never hard-coded.
+The bot resolves translated strings through [i18next](https://www.i18next.com/)
+via `@sapphire/plugin-i18next`; user-facing text is never hard-coded.
 Translation files live under `languages/<locale>/`, addressed as
 `namespace:key` where the namespace is the file path:
 
@@ -245,6 +269,8 @@ class.
 
 ## Next steps
 
+- The [command cookbook](/development/command-cookbook/) walks through adding
+  a command, buttons, autocomplete, and a test.
 - [Runtime flags and experiments](/development/features/) covers the gates
   every piece carries.
 - [Testing](/development/testing/) shows how to test a command's replies

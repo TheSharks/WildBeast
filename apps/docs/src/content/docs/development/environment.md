@@ -5,9 +5,8 @@ sidebar:
   order: 2
 ---
 
-Two ways to get a working environment: the devcontainer, which brings every
-backing service with it, or a local setup where you provide Node.js and
-Redis yourself.
+Use the devcontainer to start with PostgreSQL, Redis, and a telemetry
+collector already configured, or install the required services locally.
 
 ## The devcontainer (recommended)
 
@@ -24,9 +23,9 @@ repo in it gives you:
 - Editor extensions for Biome, `.env` files, SQL, and Sapphire's i18n
   key completion.
 
-The setup script waits for PostgreSQL and runs `pnpm install`, so the
-workspace is ready when the container is. The only thing you must add
-yourself is a `DISCORD_TOKEN` in `apps/discord/.env`.
+The setup script waits for PostgreSQL, installs dependencies, and applies
+the database migrations. Add your `DISCORD_TOKEN` to `apps/discord/.env`
+before starting the bot.
 
 ## Local setup
 
@@ -44,8 +43,9 @@ cd WildBeast
 pnpm install
 ```
 
-Create `apps/discord/.env` with your `DISCORD_TOKEN` (see
-[Configuration](/self-hosting/configuration/) for the rest).
+Follow [Getting started](/self-hosting/getting-started/#running-the-bot) to
+set `DISCORD_TOKEN` and `DATABASE_URL` in `apps/discord/.env`, configure Redis,
+and apply the database migrations before starting the bot.
 
 ## Everyday commands
 
@@ -69,8 +69,8 @@ as the cluster is back.
 For telemetry during development, `SENTRY_SPOTLIGHT=true` streams events to
 a local [Spotlight](https://spotlightjs.com/) sidecar, and the
 [observability stack](/self-hosting/dashboards/) under `contrib/grafana`
-gives you the full Grafana/Prometheus/Tempo/Loki experience against your
-local bot.
+lets you view local metrics in Grafana and Prometheus, traces in Tempo,
+and logs in Loki.
 
 ## The docs site
 

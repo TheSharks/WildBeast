@@ -5,14 +5,14 @@ sidebar:
   order: 1
 ---
 
-WildBeast speaks through Discord slash commands: type `/` in a channel the
+Use WildBeast through Discord slash commands. Type `/` in a channel the
 bot can see and pick a command from the list. Command names and descriptions
 are localized, so Discord shows them in your client's language when a
 translation exists.
 
 :::note
 WildBeast 9 is under active development, and commands are still being
-ported over from version 8. This page grows with each release.
+ported over from version 8. The reference lists the commands currently implemented.
 Screenshots below were captured during v9 development and may lag the
 current UI slightly; the text descriptions are authoritative.
 :::
@@ -21,35 +21,35 @@ current UI slightly; the text descriptions are authoritative.
 
 ### /ping
 
-Checks that the bot is alive and how fast it responds. The reply is
-ephemeral, only you can see it.
+Checks whether the bot responds and reports its latency. The reply is
+ephemeral, which means only you can see it.
 
 ```
 /ping
 ```
 
-The bot first answers "Pong!", then edits the reply with two numbers: how
-long the round trip to Discord took, and the websocket latency of the shard
-serving your server. Useful when the bot feels slow and you want to tell
-whether the delay is on Discord's side.
+The bot first answers "Pong!", then edits the reply with two numbers: how long
+the round trip to Discord took, and the websocket latency of the shard serving
+your server. Use these measurements as a starting point when investigating slow
+replies.
 
 ![The bot replying to /ping with how long the reply took and the websocket latency](../../../assets/screenshots/ping.png)
 
 ### /info
 
 Shows what the bot is running: guild count, uptime, shard and cluster,
-version, and resource usage. Ephemeral.
+version, and resource usage. Only you can see the reply.
 
 ### /invite
 
 Gives you a link to add the bot to your own server. If the bot is marked
-private, it tells you who to ask instead. Ephemeral.
+private, it tells you who to ask instead. Only you can see the reply.
 
 ## Fun
 
 ### /8ball
 
-Ask the magic 8-ball for advice. All the classic answers are in there.
+Returns a random magic 8-ball answer to your question.
 
 ### /advice
 
@@ -62,19 +62,19 @@ under the image fetches a new one.
 
 ### /dice
 
-Roll some dice.
+Rolls the number of dice you choose, with a configurable number of sides.
 
 ```
 /dice dice:2 sides:20
 ```
 
-Both options are optional; the default roll is 1d6. Up to 100 dice with up
-to 1,000 sides each.
+Both options are optional. By default, the command rolls one six-sided die.
+You can roll up to 100 dice with up to 1,000 sides each.
 
 ### /inspire
 
-A freshly generated motivational poster from inspirobot.me. Results may
-inspire confusion instead. The 🔄 button generates another.
+Generates a motivational poster through inspirobot.me. Use the 🔄 button
+to generate another.
 
 ### /booru
 
@@ -86,7 +86,7 @@ Searches imageboards, with tag autocompletion where the site supports it.
 /booru derpibooru query:pony
 ```
 
-Results page with the same ◀️ ▶️ 🔀 buttons as Urban Dictionary, plus ✖️
+Use ◀️ and ▶️ to move through results, 🔀 for a random result, and ✖️
 to dismiss the image. `rule34` (served by rule34.paheal.net) and
 `derpibooru` only work in NSFW-marked channels and DMs. `e621` works
 anywhere: in channels not marked NSFW it silently switches to e926, the
@@ -96,8 +96,7 @@ safe-rated mirror of the same site.
 
 Searches Urban Dictionary, with autocompletion while you type. Use the
 ◀️ ▶️ buttons to page through definitions and 🔀 to jump to a random one.
-Definitions are community-written and frequently crude; that's the site,
-not the bot.
+Definitions come from community submissions and may contain explicit language.
 
 ## Tags
 
@@ -137,8 +136,8 @@ raises that to 500.
 
 ### /tag edit and /tag delete
 
-Change or remove a tag. Only the person who created a tag can edit or
-delete it.
+Change or remove a tag. You must be its author or have the **Manage Server**
+permission.
 
 ### /tag list
 
@@ -150,7 +149,7 @@ made. Promoted tags show as the slash command they answer to, like
 
 ### /tag info
 
-Shows who made a tag and how long its content is, and whether it has been
+Shows who made a tag, how long its content is, and whether it has been
 promoted to a command.
 
 ### /tag raw
@@ -183,9 +182,9 @@ Members now run the tag like any other command:
 
 ![The bot replying "Hi, dougley!" after a member used /hello](../../../assets/screenshots/hello-run.png)
 
-You need the Manage Server permission to promote or demote. Command
+You need the **Manage Server** permission to promote or demote. Command
 names follow Discord's rules: up to 32 characters, letters, numbers,
-dashes and underscores only, and they can't shadow one of the bot's own
+dashes, and underscores only, and they can't shadow one of the bot's own
 commands. Tag names get lowercased on promotion; a name Discord won't
 accept is rejected with the reason.
 

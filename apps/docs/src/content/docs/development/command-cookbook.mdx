@@ -1,0 +1,761 @@
+---
+title: Command cookbook
+description: Build a /coinflip command, then extend it one recipe at a time.
+sidebar:
+  order: 4
+---
+
+import { Aside, FileTree, Steps, TabItem, Tabs } from '@astrojs/starlight/components'
+
+This page builds one command, `/coinflip`, and then extends it one recipe at
+a time. Every recipe after the first is a change to that base command and
+works on its own, so you can skip to the one you need.
+[Writing pieces](/development/pieces/) explains the conventions behind the
+steps. File paths are relative to `apps/discord/`.
+
+## Add the command
+
+A new command needs a piece, its English strings, and a runtime gate:
+
+<FileTree>
+
+- src
+  - commands
+    - **coinflip.mts** the piece
+  - features
+    - registry.mts gets the gate
+  - languages/en-US/commands
+    - names.json
+    - descriptions.json
+    - **coinflip.json** reply strings
+- test
+  - localeDrift.test.ts lists the placeholders
+  - **coinflipCommand.test.ts** the test
+
+</FileTree>
+
+<Steps>
+
+1. Create the piece. The file name becomes the piece name, which the gate
+   key and the telemetry use.
+
+   ```ts title="src/commands/coinflip.mts"
+   import type { Command } from '@sapphire/framework'
+   import { applyLocalizedBuilder, resolveKey } from '@sapphire/plugin-i18next'
+   import { AppCommand } from '../structures/command.mjs'
+
+   export class CoinflipCommand extends AppCommand {
+     public override registerApplicationCommands(registry: Command.Registry) {
+       registry.registerChatInputCommand((builder) => {
+         applyLocalizedBuilder(
+           builder,
+           'commands/names:coinflip',
+           'commands/descriptions:coinflip',
+         ).addIntegerOption((option) =>
+           applyLocalizedBuilder(
+             option,
+             'commands/names:coinflipOptionTimes',
+             'commands/descriptions:coinflipOptionTimes',
+           )
+             .setMinValue(1)
+             .setMaxValue(100),
+         )
+       })
+     }
+
+     public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+       const times = interaction.options.getInteger('times') ?? 1
+       let heads = 0
+       for (let i = 0; i < times; i++) if (Math.random() < 0.5) heads += 1
+       return interaction.reply(
+         (await resolveKey(interaction, 'commands/coinflip:result', {
+           heads,
+           tails: times - heads,
+         })) as string,
+       )
+     }
+   }
+   ```
+
+2. Add the English strings under `src/languages/en-US/commands/`. Command
+   and option names go in `names.json`, their descriptions in
+   `descriptions.json`, and reply text in a file named after the command.
+
+   <Tabs>
+     <TabItem label="names.json">
+       ```json
+       "coinflip": "coinflip",
+       "coinflipOptionTimes": "times"
+       ```
+     </TabItem>
+     <TabItem label="descriptions.json">
+       ```json
+       "coinflip": "Flip a coin",
+       "coinflipOptionTimes": "How many coins to flip (default: 1)"
+       ```
+     </TabItem>
+     <TabItem label="coinflip.json">
+       ```json
+       {
+         "result": "Heads: **{{heads}}**, tails: **{{tails}}**"
+       }
+       ```
+     </TabItem>
+   </Tabs>
+
+   Option keys follow the `<command>Option<Name>` pattern. Read an option
+   by its `en-US` name (`getInteger('times')`): Discord shows translated
+   names but always sends the base one.
+
+   <Aside type="caution" title="Don't translate by hand">
+     Only edit `en-US`; other locales come from
+     [Crowdin](/development/pieces/#localization).
+   </Aside>
+
+3. Add the gate. This declares the default-on `features.commands.coinflip`
+   flag that lets an operator
+   [turn the command off at runtime](/development/features/#command-and-task-gates).
+
+   ```ts title="src/features/registry.mts" ins={4}
+   ...commandGates([
+     // ...
+     'cat',
+     'coinflip',
+     'dice',
+     // ...
+   ]),
+   ```
+
+4. List the placeholders of every reply string that interpolates values:
+
+   ```ts title="test/localeDrift.test.ts" ins={3}
+   const expectedPlaceholders: Record<string, string[]> = {
+     'commands/8ball:prefix': ['response'],
+     'commands/coinflip:result': ['heads', 'tails'],
+     // ...
+   }
+   ```
+
+5. Build and test:
+
+   ```bash
+   pnpm build && pnpm test
+   ```
+
+   The structure test loads the compiled piece and fails with
+   `coinflip: expected undefined to be defined` when the gate from step 3
+   is missing. The locale test fails when a key you resolve doesn't exist in
+   `en-US`.
+
+6. Try it in Discord. With
+   [`WILDBEAST_DEV_GUILD_ID`](/self-hosting/configuration/#commands) set,
+   the command registers in that guild as soon as the cluster starts.
+   Restart `pnpm dev` after each change; the running process doesn't reload
+   compiled output.
+
+7. Describe the command for users in
+   [`using/commands.md`](/using/commands/).
+
+</Steps>
+
+You don't write any code for the behavior every command shares. The base
+class admits the run through the runtime, wraps it in a
+`discord.command.coinflip` span, checks the gate, reuses the command id
+Discord assigned on earlier boots, and records metrics. While a worker shuts
+down, the base class answers new invocations with a "temporarily
+unavailable" reply.
+
+## Echo user input safely
+
+Say `/coinflip` takes an optional `question` and repeats it above the
+result. Chain the option after `times`:
+
+```ts title="src/commands/coinflip.mts"
+.addStringOption((option) =>
+  applyLocalizedBuilder(
+    option,
+    'commands/names:coinflipOptionQuestion',
+    'commands/descriptions:coinflipOptionQuestion',
+  ).setMaxLength(200),
+)
+```
+
+Then resolve the result first and wrap it when there's a question. The
+`asked` string is `"> {{question}}\n{{result}}"`:
+
+```ts title="src/commands/coinflip.mts" ins={3,10-17}
+public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  const times = interaction.options.getInteger('times') ?? 1
+  const question = interaction.options.getString('question')
+  let heads = 0
+  for (let i = 0; i < times; i++) if (Math.random() < 0.5) heads += 1
+  const result = (await resolveKey(interaction, 'commands/coinflip:result', {
+    heads,
+    tails: times - heads,
+  })) as string
+  if (!question) return interaction.reply(result)
+  return interaction.reply({
+    content: (await resolveKey(interaction, 'commands/coinflip:asked', {
+      question,
+      result,
+    })) as string,
+    allowedMentions: { parse: [] },
+  })
+}
+```
+
+<Aside type="caution" title="Don't trust user input">
+  Set `allowedMentions: { parse: [] }` whenever a reply contains text you
+  didn't write: user input, stored content, or an API response. Without it, a
+  question such as `@everyone heads or tails?` pings the whole server through
+  the bot.
+</Aside>
+
+Replies are plain text or
+[Components V2](/development/pieces/#message-formatting); don't use embeds.
+Send errors, confirmations, and anything only the invoker needs with
+`flags: MessageFlags.Ephemeral`.
+
+<Aside type="note" title="Why not use embeds?" icon="question-circle">
+  We recommend Components V2 for every reply that needs structure, because
+  you control the layout. Text, images, separators, and buttons go in any
+  order inside a container, while an embed has one fixed arrangement and its
+  buttons can only sit below it. A media gallery shows several images where
+  an embed shows one. Using a single format also keeps every command's
+  replies looking alike.
+</Aside>
+
+## Call an external API
+
+Say the flips come from a service instead of `Math.random`. Use the helpers
+in `utils/http.mts` instead of calling `fetch` directly: `fetchJson`,
+`postJson`, and `fetchText` send an identifying `User-Agent`, give up after
+10 seconds, and throw on a non-2xx response. The URL below is a placeholder.
+
+```ts title="src/commands/coinflip.mts" ins={3-6}
+public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  const times = interaction.options.getInteger('times') ?? 1
+  await interaction.deferReply()
+  const { heads, tails } = await fetchJson<{ heads: number; tails: number }>(
+    `https://flips.example/v1/flip?times=${times}`,
+  )
+  return interaction.editReply(
+    (await resolveKey(interaction, 'commands/coinflip:result', {
+      heads,
+      tails,
+    })) as string,
+  )
+}
+```
+
+Discord expires an interaction that isn't acknowledged within three seconds,
+so the command defers before the request and edits the reply afterward.
+
+- Let a failed request throw. The [error reporting](#handle-errors) turns it
+  into a reply with an error code. Catch only when the data is optional, for
+  example to fall back to `Math.random` when the service is down.
+- Add a [cooldown](#add-a-cooldown) so one user can't spend your quota with
+  the service.
+- Trace headers are only sent to
+  [internal hosts](/self-hosting/telemetry/#sentry), so the service never
+  sees them.
+
+## Add a cooldown
+
+Set Sapphire's `cooldownDelay` (milliseconds) on the piece:
+
+```ts title="src/commands/coinflip.mts" ins={1,6}
+import { ApplyOptions } from '@sapphire/decorators'
+import type { Command } from '@sapphire/framework'
+import { applyLocalizedBuilder, resolveKey } from '@sapphire/plugin-i18next'
+import { AppCommand } from '../structures/command.mjs'
+
+@ApplyOptions<Command.Options>({ cooldownDelay: 3_000 })
+export class CoinflipCommand extends AppCommand {
+```
+
+By default the cooldown allows one use per user per delay;
+`cooldownLimit` and `cooldownScope` change that. A user on cooldown gets the
+localized `system/errors:cooldown` reply with a relative timestamp, and the
+denial counts in `discord_command_denied_total` with the
+`preconditionCooldown` identifier. Sapphire keeps cooldowns in each shard
+worker's memory, so they reset when the worker restarts.
+
+## Add a button
+
+A **Flip again** button can be clicked days after the message was sent, on
+a different worker than the one that sent it. Keep the button's state in its
+custom id instead of in memory, and build the message in one place so the
+command and the button produce the same reply:
+
+<FileTree>
+
+- src
+  - commands
+    - coinflip.mts calls the builder
+  - integrations
+    - **coinflip.mts** builds the reply and the button
+  - interaction-handlers
+    - **coinflipAgain.mts** handles the click
+
+</FileTree>
+
+`integrations/` is where a command keeps what it shares with its component
+handlers: the message builder, the custom id constants, and the API client
+when the command [calls a service](#call-an-external-api). It's one file per
+command, not a directory; `integrations/urban.mts` is an existing example.
+[Where new code goes](/development/architecture/#where-new-code-goes) has
+the rest of the layout rules.
+
+<Steps>
+
+1. Move the reply into a shared builder. The custom id is
+   `coinflip:<times>`, so the click carries everything the handler needs.
+
+   ```ts title="src/integrations/coinflip.mts"
+   import { resolveKey } from '@sapphire/plugin-i18next'
+   import {
+     ActionRowBuilder,
+     ButtonBuilder,
+     ButtonStyle,
+     type Interaction,
+   } from 'discord.js'
+
+   export const COINFLIP_CUSTOM_ID_PREFIX = 'coinflip:'
+   export const COINFLIP_MAX_TIMES = 100
+
+   /** Shared by /coinflip and its "flip again" button. */
+   export async function buildCoinflipMessage(
+     interaction: Interaction,
+     times: number,
+   ) {
+     let heads = 0
+     for (let i = 0; i < times; i++) if (Math.random() < 0.5) heads += 1
+     return {
+       content: (await resolveKey(interaction, 'commands/coinflip:result', {
+         heads,
+         tails: times - heads,
+       })) as string,
+       components: [
+         new ActionRowBuilder<ButtonBuilder>().addComponents(
+           new ButtonBuilder()
+             .setCustomId(`${COINFLIP_CUSTOM_ID_PREFIX}${times}`)
+             .setStyle(ButtonStyle.Secondary)
+             .setLabel(
+               (await resolveKey(
+                 interaction,
+                 'commands/coinflip:again',
+               )) as string,
+             ),
+         ),
+       ],
+     }
+   }
+   ```
+
+   Add `"again": "Flip again"` to `coinflip.json` for the label.
+
+2. Reply with the builder from the command, and reuse the shared maximum
+   for the option with `.setMaxValue(COINFLIP_MAX_TIMES)`:
+
+   ```ts title="src/commands/coinflip.mts" ins={1-4,10}
+   import {
+     buildCoinflipMessage,
+     COINFLIP_MAX_TIMES,
+   } from '../integrations/coinflip.mjs'
+
+   // ...
+
+   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+     const times = interaction.options.getInteger('times') ?? 1
+     return interaction.reply(await buildCoinflipMessage(interaction, times))
+   }
+   ```
+
+   <Aside type="caution" title="Don't export the builder from the command file">
+     Sapphire imports every piece file through a cache-busting URL. If the
+     handler imported the builder from `commands/coinflip.mjs`, Node would
+     evaluate that file a second time and keep two copies of the module.
+     Keep shared code outside the piece directories.
+   </Aside>
+
+3. Handle the click. Extend `GatedCommandInteractionHandler` and name the
+   command that owns the button; the base class re-checks that command's
+   gate and premium requirement on every click.
+
+   ```ts title="src/interaction-handlers/coinflipAgain.mts"
+   import { ApplyOptions } from '@sapphire/decorators'
+   import { InteractionHandlerTypes } from '@sapphire/framework'
+   import type { ButtonInteraction } from 'discord.js'
+   import {
+     buildCoinflipMessage,
+     COINFLIP_CUSTOM_ID_PREFIX,
+     COINFLIP_MAX_TIMES,
+   } from '../integrations/coinflip.mjs'
+   import {
+     GatedCommandInteractionHandler,
+     type GatedCommandInteractionHandlerOptions,
+   } from '../structures/interactionHandler.mjs'
+
+   @ApplyOptions<GatedCommandInteractionHandlerOptions>({
+     interactionHandlerType: InteractionHandlerTypes.Button,
+     command: 'coinflip',
+   })
+   export class CoinflipAgainHandler extends GatedCommandInteractionHandler {
+     public override parse(interaction: ButtonInteraction) {
+       if (!interaction.customId.startsWith(COINFLIP_CUSTOM_ID_PREFIX)) {
+         return this.none()
+       }
+       // A custom id is client input: validate it like an option.
+       const times = Number(
+         interaction.customId.slice(COINFLIP_CUSTOM_ID_PREFIX.length),
+       )
+       if (!Number.isInteger(times) || times < 1 || times > COINFLIP_MAX_TIMES) {
+         return this.none()
+       }
+       return this.some(times)
+     }
+
+     public async run(interaction: ButtonInteraction, times: number) {
+       return interaction.update(await buildCoinflipMessage(interaction, times))
+     }
+   }
+   ```
+
+</Steps>
+
+Keep these rules in mind for custom ids:
+
+- Format them as `<prefix>:<data>`. The
+  [interaction metrics](/self-hosting/metrics/#commands-and-interactions)
+  use the text before the first `:` as the `custom_id` label, so keep the
+  prefix short and fixed.
+- A custom id holds at most 100 characters, so cap any user input you put in
+  one.
+- Every button handler sees every button click. `parse` must return
+  `this.none()` for custom ids that belong to other handlers.
+
+<Aside type="caution" title="Handlers get no automatic error reply">
+  An error thrown from a handler's `run` is counted and sent to Sentry, but
+  the user gets no explanation. If the builder can fail, for example because
+  it [calls a service](#call-an-external-api), defer first and catch the
+  failure:
+
+  ```ts title="src/interaction-handlers/coinflipAgain.mts"
+  public async run(interaction: ButtonInteraction, times: number) {
+    await interaction.deferUpdate()
+    try {
+      return await interaction.editReply(
+        await buildCoinflipMessage(interaction, times),
+      )
+    } catch {
+      return interaction.editReply({
+        content: (await resolveKey(
+          interaction,
+          'system/errors:try_again',
+        )) as string,
+        components: [],
+      })
+    }
+  }
+  ```
+</Aside>
+
+<Aside type="tip" title="Close comes for free">
+  A button with the custom id `close` already has a handler: it removes the
+  interactive buttons from its message and keeps the content and link
+  buttons.
+</Aside>
+
+## Add autocomplete
+
+Say `/coinflip` lets the user pick which coin to flip. Call
+`.setAutocomplete(true)` on the option and override `autocompleteRun`. The
+base class admits and gates the run: a disabled command, an unmet premium
+requirement, or a stopping worker returns no choices.
+
+```ts title="src/commands/coinflip.mts"
+const COINS = ['dime', 'euro', 'loonie', 'nickel', 'penny', 'pound', 'quarter']
+
+// Inside CoinflipCommand:
+public override async autocompleteRun(
+  interaction: Command.AutocompleteInteraction,
+) {
+  const focused = interaction.options.getFocused().toLowerCase()
+  return interaction.respond(
+    COINS.filter((coin) => coin.startsWith(focused))
+      .slice(0, 25)
+      .map((coin) => ({ name: coin, value: coin })),
+  )
+}
+```
+
+Discord accepts at most 25 choices. When the choices come from a service or
+the database, answer a failed lookup with an empty list instead of throwing;
+Discord shows the user an error otherwise.
+
+Autocomplete only suggests. Discord still sends whatever the user typed, so
+validate the value in `chatInputRun` and answer an unknown coin with an
+ephemeral reply. The `unknownCoin` string interpolates `{{coin}}`, so it
+also goes in `expectedPlaceholders`:
+
+```ts title="src/commands/coinflip.mts"
+const coin = interaction.options.getString('coin') ?? 'quarter'
+if (!COINS.includes(coin)) {
+  return interaction.reply({
+    content: (await resolveKey(
+      interaction,
+      'commands/coinflip:unknownCoin',
+      { coin },
+    )) as string,
+    flags: MessageFlags.Ephemeral,
+    allowedMentions: { parse: [] },
+  })
+}
+```
+
+## Split the command into subcommands
+
+Say `/coinflip` becomes `/coinflip flip` and `/coinflip streak`, which flips
+until tails comes up. Extend `AppSubcommand` and map each subcommand name to
+a method:
+
+```ts title="src/commands/coinflip.mts" {9-14}
+import { ApplyOptions } from '@sapphire/decorators'
+import { applyLocalizedBuilder, resolveKey } from '@sapphire/plugin-i18next'
+import type { Subcommand } from '@sapphire/plugin-subcommands'
+import { AppSubcommand } from '../structures/command.mjs'
+
+const sub = (name: string) =>
+  [`commands/names:${name}`, `commands/descriptions:${name}`] as const
+
+@ApplyOptions<Subcommand.Options>({
+  subcommands: [
+    { name: 'flip', chatInputRun: 'chatInputFlip' },
+    { name: 'streak', chatInputRun: 'chatInputStreak' },
+  ],
+})
+export class CoinflipCommand extends AppSubcommand {
+  public override registerApplicationCommands(registry: Subcommand.Registry) {
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(builder, ...sub('coinflip'))
+        .addSubcommand((flip) =>
+          applyLocalizedBuilder(flip, ...sub('coinflipFlip')).addIntegerOption(
+            (option) =>
+              applyLocalizedBuilder(option, ...sub('coinflipOptionTimes'))
+                .setMinValue(1)
+                .setMaxValue(100),
+          ),
+        )
+        .addSubcommand((streak) =>
+          applyLocalizedBuilder(streak, ...sub('coinflipStreak')),
+        )
+    })
+  }
+
+  // chatInputFlip is the chatInputRun from the base command, renamed.
+
+  public async chatInputStreak(
+    interaction: Subcommand.ChatInputCommandInteraction,
+  ) {
+    let count = 0
+    while (Math.random() < 0.5) count += 1
+    return interaction.reply(
+      (await resolveKey(interaction, 'commands/coinflip:streak', {
+        count,
+      })) as string,
+    )
+  }
+}
+```
+
+Give each subcommand a `names.json` and `descriptions.json` key
+(`coinflipFlip`, `coinflipStreak`). The whole group shares one gate,
+`features.commands.coinflip`, and the span and metrics record which
+subcommand ran. `commands/tag.mts` is a larger example.
+
+## Restrict where the command runs
+
+To make `/coinflip` guild-only, set `runIn` on the piece and the contexts on
+the builder. The first makes Sapphire deny the command in DMs; the second
+hides it there in the first place.
+
+```ts title="src/commands/coinflip.mts" ins={1-3,11}
+@ApplyOptions<Command.Options>({
+  runIn: [CommandOptionsRunTypeEnum.GuildAny],
+})
+export class CoinflipCommand extends AppCommand {
+  public override registerApplicationCommands(registry: Command.Registry) {
+    registry.registerChatInputCommand((builder) => {
+      applyLocalizedBuilder(
+        builder,
+        'commands/names:coinflip',
+        'commands/descriptions:coinflip',
+      ).setContexts(InteractionContextType.Guild)
+    })
+  }
+```
+
+The options below are covered on their own pages:
+
+| Goal | How | Reference |
+| --- | --- | --- |
+| Require a subscription | `premium: { tier, scope }` on the piece | [Gating commands](/development/premium/#gating-commands) |
+| Cap usage by tier | Add a limit and ask for it where you enforce it | [The limit registry](/development/premium/#the-limit-registry) |
+| Offer an upgrade at the cap | `upsellForLimit` | [Upselling when a limit is hit](/development/premium/#upselling-when-a-limit-is-hit) |
+| Restrict to the bot's operators | `scope: 'operator'` on the piece | [Operator commands](/development/pieces/#operator-commands) |
+| Try a behavior on some users | Declare and read an experiment | [Experiments](/development/features/#experiments) |
+
+## Use services and the database
+
+Say `/coinflip` should keep a tally of heads and tails per guild. The
+command doesn't query the database itself:
+
+<Steps>
+
+1. Add the table and a migration, as described in
+   [Changing the schema](/development/database/#changing-the-schema).
+
+2. Declare a service with a repository interface in the directory for the
+   feature's domain, the way `tags/` and `operators/` do. Name a new
+   directory for the domain, not for the command. The service takes typed
+   values (`bigint` ids, numbers) and returns an outcome; it never receives
+   the interaction.
+
+3. Implement the repository in `src/adapters/`.
+
+4. Construct both in `runtime/composition.mts` and add the service to
+   `AppServices` in `runtime/services.mts`.
+
+5. Call it from the command through `this.container.app`, converting
+   interaction fields on the way in and turning the outcome into a reply.
+
+</Steps>
+
+The tag service (`tags/service.mts` with `adapters/tags-postgres.mts`) is
+the worked example.
+
+## Handle errors
+
+Separate expected outcomes from failures:
+
+- An expected outcome, such as the unknown coin in
+  [Add autocomplete](#add-autocomplete), is a normal localized reply,
+  usually ephemeral.
+- For anything else, let the error throw. When the flip service from
+  [Call an external API](#call-an-external-api) is down, the listeners in
+  `listeners/reporting/` count the failure in
+  `discord_command_errors_total`, capture it in Sentry, and send the user a
+  generic message with an error code. The code is the Sentry event id and
+  also appears in the worker's log line, so you can find the failure from a
+  user's screenshot.
+
+<Aside type="caution" title="Keep error text out of replies">
+  Don't put `error.message` in a reply. Error text can contain internal
+  details, and the locale test rejects an `{{error}}` placeholder in the
+  generic error string.
+</Aside>
+
+## Test the command
+
+Construct the piece with a minimal loader context, give `container.app` the
+services the run touches, and call the handler with a fake interaction. The
+base class wrapper needs `work` and `experiments` even when the command
+itself uses no services.
+
+```ts title="test/coinflipCommand.test.ts"
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { CommandStore, container } from '@sapphire/framework'
+import { silentLogger } from '@thesharks/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('@sapphire/plugin-i18next', async () => ({
+  ...(await vi.importActual('@sapphire/plugin-i18next')),
+  resolveKey: vi.fn(
+    async (_interaction: unknown, key: string, values?: unknown) =>
+      values ? `${key} ${JSON.stringify(values)}` : key,
+  ),
+  applyLocalizedBuilder: (builder: unknown) => builder,
+}))
+
+const { CoinflipCommand } = await import('../src/commands/coinflip.mjs')
+const { Experiments } = await import('../src/features/experiments.mjs')
+const { FeatureFlags } = await import('../src/features/flags.mjs')
+const { WorkScope } = await import('../src/runtime/work.mjs')
+
+container.client = { options: {} } as never
+container.logger = silentLogger
+
+function fakeInteraction(times: number | null) {
+  return {
+    guildId: '90001',
+    user: { id: '90002' },
+    options: { getInteger: () => times, getSubcommand: () => null },
+    replied: false,
+    deferred: false,
+    isChatInputCommand: () => true,
+    inGuild: () => true,
+    reply: vi.fn(async () => undefined),
+  }
+}
+
+let command: InstanceType<typeof CoinflipCommand>
+
+beforeEach(() => {
+  const work = new WorkScope()
+  work.open()
+  container.app = {
+    work,
+    experiments: new Experiments(new FeatureFlags()),
+  } as never
+  command = new CoinflipCommand(
+    {
+      name: 'coinflip',
+      path: fileURLToPath(import.meta.url),
+      root: dirname(fileURLToPath(import.meta.url)),
+      store: new CommandStore(),
+    } as never,
+    {},
+  )
+})
+
+describe('/coinflip', () => {
+  it('reports every flip as heads or tails', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.25)
+    const interaction = fakeInteraction(3)
+    await command.chatInputRun(interaction as never, {} as never)
+    expect(interaction.reply).toHaveBeenCalledWith(
+      'commands/coinflip:result {"heads":3,"tails":0}',
+    )
+  })
+})
+```
+
+The mocked `resolveKey` returns the key and its values, so assertions check
+which string was chosen without depending on the English text. Import the
+modules under test after `vi.mock` so they pick up the mock.
+
+<Aside type="note" title="Testing the button handler">
+  Testing the [button handler](#add-a-button) works the same way, with an
+  `InteractionHandlerStore` in the loader context. Its base class evaluates
+  the command's gate, so `container.app` also needs `flags` and `gates`.
+  `tagCommand.test.ts` shows how to construct them. See
+  [Testing](/development/testing/) for the rest of the toolkit.
+</Aside>
+
+## Checklist
+
+Before you open a pull request, check that:
+
+- The piece extends `AppCommand` or `AppSubcommand` and sits in
+  `src/commands/`.
+- `names.json`, `descriptions.json`, and the reply strings have `en-US`
+  entries, and interpolated keys are listed in `expectedPlaceholders`.
+- `features.commands.<name>` is in the flag registry.
+- Replies with outside text set `allowedMentions: { parse: [] }`.
+- Slow work defers first, and third-party calls have a cooldown.
+- Buttons keep their state in the custom id, validate it, and have a gated
+  handler.
+- `using/commands.md` describes the command.
+- `pnpm build && pnpm test` passes.

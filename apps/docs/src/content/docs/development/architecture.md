@@ -14,25 +14,28 @@ can test them, and in some cases publish them, on their own.
 | `apps/discord` | The bot: the cluster manager, shard workers, and all the pieces (commands, listeners, tasks). |
 | `apps/docs` | This documentation site ([Starlight](https://starlight.astro.build/)). |
 | `packages/analytics` | The telemetry layer: OpenTelemetry bootstrap, the Sapphire logger bridge, metric helpers. Has its own [README](https://github.com/TheSharks/WildBeast/tree/master/packages/analytics). |
+| `packages/tui` | The terminal dashboard the cluster manager shows in an interactive terminal, see [Terminal dashboard](/self-hosting/telemetry/#terminal-dashboard). Has its own [README](https://github.com/TheSharks/WildBeast/tree/master/packages/tui). |
 | `packages/tagscript` | A standalone templating interpreter, published as `@thesharks/tagscript`. Fully documented in its [README](https://github.com/TheSharks/WildBeast/tree/master/packages/tagscript). |
 | `packages/drizzle` | The database client and schema ([Drizzle ORM](https://orm.drizzle.team/)). |
 | `packages/test-utils` | Shared test helpers, see [Testing](/development/testing/). |
 | `packages/tsconfig` | Shared TypeScript configuration. |
 
-## Two kinds of process
+## Cluster manager and shard workers
 
 A running cluster is a single Node.js process with two roles inside it: one
-manager and one worker per shard.
+manager and one worker per shard. All clusters serving the same bot form its
+fleet. See [Sharding terminology](/self-hosting/clustering/#sharding-terminology)
+for how workers, clusters, and the fleet fit together.
 
-**The cluster manager** (`src/cluster.mts`) is the entry point. It validates
-the environment, sets up telemetry, and hands a discord.js `ShardingManager`
-in **worker mode** to the `FleetManager` (`src/fleet/`): every shard is a
-worker thread in this same process, not a child process. In autonomous mode
-the fleet manager joins the fleet epoch and runs the
+The cluster manager, `src/cluster.mts`, is the entry point. It validates the
+environment, sets up telemetry, and passes a discord.js `ShardingManager` in
+worker mode to `FleetManager` in `src/fleet/`. Each shard runs in a worker
+thread within the cluster process. In autonomous mode, the fleet manager
+joins the fleet epoch and runs the
 [sharding coordinator](/self-hosting/clustering/) that decides which shards
 this cluster owns.
 
-**Each shard worker** (`src/main.mts`) boots its own telemetry, builds its
+Each shard worker, `src/main.mts`, initializes its own telemetry, builds its
 configuration once (`AppConfig`), and composes the application
 (`composeApplication`). The database, Redis, feature flags, the session
 store, the Sapphire client, and the task queue open in that order and close
@@ -71,22 +74,45 @@ work.
 | `tags/` | `TagService` (guild-scoped workflows), durable promotion intents, and `TagReconciler`. |
 | `operators/` | Placement of operator commands into the configured guilds. |
 | `adapters/` | PostgreSQL repositories and Discord gateways behind the service interfaces. |
-| `integrations/` | Outbound HTTP clients for the fun and lookup commands. |
-| `telemetry/` | Span helpers, runtime gauges, tag metrics, and the error reply. |
+| `integrations/` | Code a command shares with its component handlers, one file per command: reply builders, custom ids, and API clients. |
+| `telemetry/` | Span helpers, runtime gauges, tag metrics, the error reply, and the worker-to-manager metric feed for the terminal dashboard. |
 
 Alongside these sit `env.mts` (the validated environment), `sharding/`
 (coordination, epochs, leases, session persistence, identify throttling, the
-reconciler), `utils/` (Redis options, cron slugs), and `languages/`.
+reconciler), `utils/` (Redis options, cron slugs, HTTP fetch helpers), and
+`languages/`.
 
 Pieces reach services through `this.container.app`, which the runtime
 installs before the client logs in. Services never reach back into pieces,
 read the container, or touch `process.env`.
 
+### Where new code goes
+
+Put new code in the directory that already holds its kind, and add a
+directory only for a new domain:
+
+- A piece goes in the directory Sapphire loads it from, such as `commands/`
+  or `interaction-handlers/`. Those directories hold nothing but pieces.
+- Code that a command shares with its component handlers goes in a single
+  file in `integrations/`: the message builder, the custom id constants, and
+  the API client when the command calls a service. `integrations/urban.mts`
+  serves `/urbandictionary` and its pagination buttons, and
+  `integrations/fun-messages.mts` serves `/cat`, `/dog`, and `/inspire`
+  together. The command cookbook's
+  [Add a button](/development/command-cookbook/#add-a-button) recipe walks
+  through it.
+- A top-level directory belongs to a domain with its own service, such as
+  `tags/` or `premium/`. Name it for the domain, and don't add a directory
+  for a single command.
+- Keep code that other modules import out of piece files. Sapphire loads
+  each piece file through a cache-busting URL, so a static import of a piece
+  file evaluates it a second time and leaves two copies of the module.
+
 ## How work is admitted
 
-Every command, component, event write, and task run enters the runtime's
-`WorkScope` before it touches a service. That gives the process one place
-to enforce its lifecycle guarantees.
+Commands, gated component handlers, event writes, and task runs enter the
+runtime's `WorkScope` before using services. The work scope tracks these
+operations so startup and shutdown can control when they run.
 
 - While the runtime is starting, work is rejected, so no command runs
   against a half-open database.
@@ -108,21 +134,22 @@ runs on every worker. Queue names include a hash of the bot identity, shard
 assignment, and epoch or static shard total, so restarts reuse the same queue
 without sharing jobs with unrelated workers. Retries stay on that queue.
 
-## How telemetry threads through
+## Telemetry initialization
 
-Telemetry initializes before anything else in both process roles
-(`initOpenTelemetry` is the first real statement in `cluster.mts` and
-`main.mts`), so auto-instrumentation hooks PostgreSQL, Redis, and outbound
-HTTP from the first call. Commands and scheduled tasks run inside spans
-because their base classes wrap them, and every listener that records a
-metric pulls its meter from the same `@thesharks/analytics` package. The
-[Telemetry](/self-hosting/telemetry/) page is the operator's view of the
+The cluster manager and each shard worker call `initOpenTelemetry` before
+opening application resources. This lets auto-instrumentation record PostgreSQL,
+Redis, and outbound HTTP calls from startup onward. Commands and scheduled tasks
+run inside spans because their base classes wrap them, and every listener that
+records a metric pulls its meter from the same `@thesharks/analytics` package.
+The [Telemetry](/self-hosting/telemetry/) page is the operator's view of the
 same system.
 
 ## Next steps
 
 - [Writing pieces](/development/pieces/) covers adding commands, listeners,
   and tasks.
+- The [command cookbook](/development/command-cookbook/) has step-by-step
+  recipes for new commands.
 - [Runtime flags and experiments](/development/features/) explains the
   shared gate and flag services.
 - [Premium subscriptions](/development/premium/) explains tiers, limits,

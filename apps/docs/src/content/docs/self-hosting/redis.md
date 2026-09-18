@@ -5,9 +5,9 @@ sidebar:
   order: 4
 ---
 
-Redis is WildBeast's only required external service. This page covers what
-lives in it, which keys to expect, and what happens when that data is lost,
-so you can make an informed call about persistence and sizing.
+WildBeast requires Redis as well as PostgreSQL. Redis stores task queues,
+gateway sessions, and fleet coordination state. This page explains how that
+data affects restarts, recovery, and sizing.
 
 A single-cluster deployment uses Redis for three things: the scheduled task
 queue, identify rate limiting, and persisted gateway sessions. In
@@ -33,7 +33,7 @@ for the full list.
 | Pending epoch proposal | `wildbeast:epoch:pending` | 45 seconds without refresh from a parked cluster |
 | Fleet membership | `wildbeast:e<N>:clusters` | 15 seconds without a heartbeat |
 | Shard total agreement | `wildbeast:e<N>:total_shards` | Life of the epoch |
-| Shard leases | `wildbeast:e<N>:shard:<id>:owner` | 30 seconds without renewal |
+| Shard leases | `wildbeast:e<N>:shard:<id>:owner` | 45 seconds without renewal |
 
 In autonomous mode, coordination and session keys are scoped to the current
 epoch (`wildbeast:e<N>:...`), so state from an old shard total can never
@@ -43,22 +43,24 @@ A few details behind the table:
 
 - Sessions hold the session id, sequence number, and resume URL of each
   shard's gateway connection. They let a shard moving to another cluster
-  resume instead of re-identifying, and they're what makes restarts cheap:
-  a shard that comes back within 15 minutes replays missed events rather
-  than starting a fresh session. Writes are debounced to once per second
-  per shard. Failed writes stay dirty for the next interval, and session
+  resume instead of re-identifying when Discord still accepts the session.
+  Session records expire after 15 minutes without a write. A normal shutdown
+  invalidates its sessions; a shard handoff preserves them for the new owner.
+  Writes are debounced to once per second per shard. Failed writes stay dirty for the next interval, and session
   invalidations retry so a transient Redis error cannot leave a known-dead
   resume token behind for its full TTL.
 - Membership is a sorted set scored by Redis server time, so clusters
   on hosts with skewed clocks still agree on who's alive.
-- Leases guarantee a shard never has two owners: the value is the
-  owning cluster's id, and another cluster's acquire fails until the lease
-  is released or expires.
+- A lease records the owning cluster's ID. Another cluster cannot acquire
+  that lease until it is released or expires. The
+  [fencing deadline](/self-hosting/clustering/#the-safety-model) stops a
+  cluster that loses Redis access before its leases expire.
 
 ## If Redis restarts or is flushed
 
-Nothing in Redis is precious; all of it can be rebuilt. The cost of losing
-it is connection churn, not data loss:
+Losing Redis data forces the fleet to rebuild its coordination state and
+gateway sessions. PostgreSQL data, including tags and entitlements, remains
+intact, but queued one-off jobs can be lost:
 
 - Persisted sessions disappear, so every shard identifies fresh on its
   next reconnect instead of resuming. For a large fleet that means a slow,
@@ -77,16 +79,16 @@ it is connection churn, not data loss:
   [shard total migration](/self-hosting/resharding/); the pending proposal
   would be lost.
 
-We recommend enabling Redis persistence (AOF with `everysec` is plenty) in
-production. It isn't required for correctness, but it turns a Redis restart
-into a non-event instead of a fleet-wide re-identify.
+We recommend enabling Redis persistence in production, such as an append-only
+file with `appendfsync everysec`. This helps preserve sessions and queued jobs
+across Redis restarts. Recovery still depends on which writes reached disk
+and whether Discord accepts the saved sessions.
 
 ## Sizing
 
-The footprint is small: a handful of keys per shard plus the task queue.
-Even large fleets use megabytes, not gigabytes. Latency matters more than
-memory; keep Redis close to the clusters, since leases and identify pacing
-sit on the hot path of shard lifecycle operations.
+Redis stores a few coordination and session keys per shard, plus the task
+queues. Monitor memory use as queue sizes grow. Keep Redis close to the
+clusters to reduce latency for lease renewals and identify requests.
 
 ## Next steps
 

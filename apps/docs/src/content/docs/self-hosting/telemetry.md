@@ -5,15 +5,13 @@ sidebar:
   order: 8
 ---
 
-WildBeast is instrumented end to end with OpenTelemetry (traces, metrics,
-and logs), with optional Sentry error reporting layered on the same
-pipeline. With no configuration, telemetry stays in-process and costs
-nothing; setting a single variable exports everything.
+WildBeast records traces, metrics, and logs through OpenTelemetry. Configure
+an OTLP collector endpoint to export them, and add a Sentry DSN if you want
+Sentry error reporting. Without an endpoint, OTLP export is disabled.
 
 ## Enabling export
 
-Point the standard OTLP endpoint variable at your collector and everything
-flows:
+Set `OTEL_EXPORTER_OTLP_ENDPOINT` to your collector address:
 
 ```bash
 # OTLP over HTTP (collector's 4318 port)
@@ -45,10 +43,12 @@ Every signal carries the resource identity used for grouping in dashboards:
 
 Setting `SENTRY_DSN` enables error capture and performance tracing through
 the same OpenTelemetry pipeline. Command failures are reported with the
-interaction's user, guild and channel attached on an isolated scope, and the
-Sentry event id is shown to the user in the error reply for support
-lookups. Every event is tagged with `cluster.id` and `shard.id`, so you can
-filter issues to the cluster or shard that produced them.
+interaction's user, guild, and channel ids attached on an isolated scope, and
+the Sentry event id is shown to the user in the error reply for support
+lookups. Usernames, guild names, and channel names are left out unless you
+set `SENTRY_INCLUDE_PII=true`. Every event is tagged with `cluster.id` and
+`shard.id`, so you can filter issues to the cluster or shard that produced
+them.
 
 Trace sampling is error-biased: command traces are always kept (that's
 where user-facing failures live), recurring scheduled tasks are sampled at
@@ -61,8 +61,7 @@ example). If you run from source, set `SENTRY_RELEASE` yourself, or events
 fall back to the package version when launched through pnpm scripts, then
 the `GIT_COMMIT` environment variable, then `dev`.
 
-Beyond errors and traces, the SDK is wired for the rest of the Sentry
-platform:
+The Sentry integration also reports the following data:
 
 - Scheduled tasks report [cron check-ins](https://docs.sentry.io/product/crons/)
   under a monitor named after the task, so a run that never happens alerts
@@ -71,11 +70,11 @@ platform:
   owner; per-worker jobs, such as metrics collection, check in on each worker.
 - Error events include the local variables of every stack frame and any
   non-standard properties on the error object. discord.js API errors carry
-  their status code, method and route this way, and `ZodError` issues are
+  their status code, method, and route this way, and `ZodError` issues are
   flattened into readable context.
 - Continuous profiling attaches CPU profiles to sampled traces in shard
-  workers. `SENTRY_PROFILE_SESSION_SAMPLE_RATE` (0 to 1, default 1) scales
-  it; trace sampling already bounds the volume, since profiles are only
+  workers. `SENTRY_PROFILE_SESSION_SAMPLE_RATE` (0 to 1, default 0) enables
+  and sets the profiling rate; trace sampling already bounds the volume, since profiles are only
   collected while a sampled trace is active.
 - A watchdog thread reports when any thread in the cluster process blocks
   its event loop for more than a second, with a stack trace of where it was
@@ -94,10 +93,21 @@ platform:
   keep the high-volume series, and nothing is reported to both. Set
   `enableMetrics: false` in the telemetry config to turn them off.
 
-Outgoing HTTP requests do not carry `sentry-trace` or `baggage` headers:
-nothing downstream of the bot continues our traces, and user-controlled
-fetches must not see trace metadata. Pass `tracePropagationTargets` to the
-telemetry config if you add an internal service that should join traces.
+Requests to third-party hosts never carry trace headers, so user-controlled
+fetches and outside APIs can't see trace metadata. Two rules decide which
+hosts do receive them:
+
+- Sentry's `sentry-trace` and `baggage` headers are sent only to hosts in
+  `tracePropagationTargets`, which is empty by default. Pass it to the
+  telemetry config if you add an internal service that should join Sentry
+  traces.
+- W3C `traceparent` and `baggage` headers are sent only to internal targets,
+  so a sidecar or internal service can join traces. Internal means
+  loopback, private, and link-local addresses, `localhost`, single-label
+  hostnames such as Docker Compose service names, and suffixes such as
+  `.internal`, `.local`, `.lan`, and `.svc.cluster.local`. To treat more
+  hosts as internal, list their hostnames, hostname suffixes, or IP
+  addresses in `OTEL_TRACE_INTERNAL_TARGETS`, separated by commas.
 
 :::note
 For local development, set `SENTRY_SPOTLIGHT=true` to stream events to a
@@ -106,9 +116,9 @@ For local development, set `SENTRY_SPOTLIGHT=true` to stream events to a
 
 ## What is instrumented
 
-Commands and scheduled tasks run inside real spans (`discord.command.<name>`,
+Commands and scheduled tasks run inside spans (`discord.command.<name>`,
 `discord.task.<name>`), so database and HTTP calls made during them nest as
-child spans. Auto-instrumentation covers Postgres, Redis and outbound HTTP,
+child spans. Auto-instrumentation covers PostgreSQL, Redis, and outbound HTTP,
 plus Node runtime metrics (event loop delay and utilization, GC pauses,
 heap spaces); each can be disabled with
 `OTEL_INSTRUMENTATION_<PG|UNDICI|IOREDIS|FS|RUNTIME_NODE>_ENABLED=false`.
@@ -118,9 +128,40 @@ logs, with the configured log level applied to all three. Metrics cover the
 full lifecycle of the bot; see the
 [metrics reference](/self-hosting/metrics/).
 
+## Terminal dashboard
+
+When you start a cluster in an interactive terminal, for example with
+`pnpm --filter @thesharks/discord start`, the cluster manager shows a
+terminal dashboard instead of the plain log stream. It has an overview of
+this cluster's shard workers, a searchable view of every metric the manager
+and its workers have emitted, and the captured logs. The dashboard reads
+metrics in-process every two seconds, so it works without a collector and
+doesn't change what's exported over OTLP. It shows only the local cluster,
+not other members of the fleet.
+
+[`WILDBEAST_TUI`](/self-hosting/configuration/#core) controls it:
+
+| Value | Behavior |
+| --- | --- |
+| `auto` (default) | Show the dashboard when both stdin and stdout are terminals and `CI` isn't set. |
+| `on` | Same as `auto`, but also when `CI` is set. |
+| `off` | Always write plain logs. |
+
+Every mode falls back to plain logs when output is piped, stdin isn't a
+terminal, or `TERM=dumb`. That covers process supervisors, containers
+started without a TTY, and `pnpm dev`, which pipes the bot's output. Running
+a shard worker directly with `start:worker` never shows the dashboard.
+
+Press `?` for the key bindings. `q` detaches the dashboard and returns to
+plain logs while the bot keeps running, and Ctrl+C starts the normal
+[graceful shutdown](/self-hosting/running-in-production/). No key restarts
+shards or changes configuration. The
+[package README](https://github.com/TheSharks/WildBeast/tree/master/packages/tui)
+lists every key and explains how the numbers are calculated.
+
 ## Troubleshooting
 
-Set `OTEL_DIAGNOSTIC_LOG_LEVEL` (`error` … `debug`) to surface the
+Set `OTEL_DIAGNOSTIC_LOG_LEVEL` (`error` … `debug`) to view the
 OpenTelemetry SDK's own diagnostics, for example when the collector isn't
 receiving data. On shutdown, pending telemetry uses a 10-second deadline by
 default; shard workers use 5 seconds so their OpenTelemetry and Sentry flushes

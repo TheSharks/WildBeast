@@ -1,6 +1,6 @@
 ---
 title: Metrics reference
-description: WildBeast metrics for commands, runtime health, and shard coordination.
+description: WildBeast metrics for commands, premium, runtime health, and shard coordination.
 sidebar:
   order: 9
 ---
@@ -14,7 +14,7 @@ not listed here.
 
 ## Commands and interactions
 
-Emitted by shard processes (`service.name = @thesharks/discord`).
+Emitted by shard workers (`service.name = @thesharks/discord`).
 
 | Metric | Type | Labels |
 | --- | --- | --- |
@@ -32,7 +32,10 @@ Emitted by shard processes (`service.name = @thesharks/discord`).
 
 `scope` is `guild` or `dm`; `identifier` is the precondition that denied the
 command; component `custom_id` labels use the prefix before the first `:`
-so dynamic ids don't explode cardinality.
+to limit the number of distinct label values. Commands with subcommands add
+a `subcommand` label to the command counters and the duration histogram.
+Command durations also carry `duration_scope="interaction"`: they're
+measured from the moment Discord created the interaction.
 
 ## Runtime flags and experiments
 
@@ -42,7 +45,7 @@ are targeting context and never metric labels.
 
 | Metric | Type | Labels |
 | --- | --- | --- |
-| `discord_feature_flag_evaluations_total` | counter | `flag`, `kind` (`gate`, `experiment`, `limit`), `source` (`default`, `provider`, `cache`, `error`), and `state` for boolean gates |
+| `discord_feature_flag_evaluations_total` | counter | `flag`, `kind` (`gate`, `experiment`, `setting`, `limit`), `source` (`default`, `provider`, `cache`, `error`), and `state` for boolean gates |
 | `discord_feature_flag_evaluation_duration_seconds` | histogram | same as the evaluation counter |
 | `discord_experiment_exposures_total` | counter | `experiment`, `variant`, `source` (`default`, `provider`, `cache`, `error`, `invalid`) |
 | `discord_experiment_outcomes_total` | counter | `experiment`, `variant`, `outcome` (`success`, `error`), `operation_kind`, `operation` |
@@ -74,8 +77,8 @@ between clusters, which resume instead of identifying.
 
 ## Errors and process health
 
-Failures at every level, from Discord API errors down to uncaught
-exceptions, plus the process vitals.
+These metrics track Discord API errors, uncaught exceptions, and process
+resource use.
 
 | Metric | Type | Labels |
 | --- | --- | --- |
@@ -103,6 +106,28 @@ it isn't a failure. Each worker reports its own queue's counts.
 | `discord_task_duration_seconds` | histogram | `task`, `status` |
 | `bullmq_queue_size` / `_active` / `_waiting` / `_delayed` / `_failed` / `_completed` | gauge | `queue_name` |
 
+## Premium and tags
+
+These track the [entitlement mirror](/development/premium/#the-entitlement-mirror)
+and the repair of
+[promoted tag commands](/development/premium/#promoted-tag-commands-and-entitlement-lapse).
+The worker that owns shard 0 emits the two entitlement counters.
+
+| Metric | Type | Labels |
+| --- | --- | --- |
+| `discord_entitlement_reconcile_total` | counter | `result` (`completed`, `superseded`) |
+| `discord_entitlement_backfill_errors_total` | counter | `outcome` (`retry`) |
+| `discord_guild_tag_reconcile_deferred_total` | counter | `reason` (`stale-mirror`, `policy-error`) |
+| `discord_premium_limit_override_fallbacks_total` | counter | `key` (the limit, such as `tags.maxPerGuild`) |
+
+A `superseded` snapshot was overtaken by a concurrent gateway update, and
+the next run retries it; a `retry` error means the snapshot failed and the
+task queue runs it again. A deferred reconciliation postponed demotions because the
+mirror wasn't fresh (`stale-mirror`) or the guild's cap couldn't be resolved
+(`policy-error`). A limit override fallback means a
+[remote limit override](/development/premium/#remote-limit-overrides) was
+adjusted or rejected as invalid.
+
 ## Cluster manager
 
 Emitted by manager processes (`service.name = @thesharks/discord-manager`).
@@ -118,7 +143,7 @@ Emitted by manager processes (`service.name = @thesharks/discord-manager`).
 | `discord_cluster_fenced` | gauge | — |
 | `discord_cluster_epoch` / `discord_cluster_epoch_parked` | gauge | — |
 
-Good alerting starters: `discord_manager_shard_up == 0` for any shard,
+Start with alerts for: `discord_manager_shard_up == 0` for any shard,
 `discord_cluster_fenced == 1`, a rising
 `discord_cluster_coordination_errors_total`, and
 `discord_rest_rate_limited_total{global="true"}`.

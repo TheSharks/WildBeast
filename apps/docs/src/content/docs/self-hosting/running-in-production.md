@@ -19,23 +19,23 @@ Configuration comes from the environment or `apps/discord/.env`, see
 ## Database migrations
 
 The bot never migrates on boot. Apply the schema explicitly before
-starting or restarting the fleet:
+starting or restarting the fleet. Export `DATABASE_URL` in the shell that
+runs the migration command; it does not load `apps/discord/.env`.
 
 ```bash
 pnpm --filter @thesharks/drizzle migrate
 ```
 
-Every cluster must run against the same schema version, and in a fleet
-clusters start, stop, and upgrade at different times: a boot-time migrate
-would race across clusters and tie schema changes to process restarts.
-Migrating once, up front, keeps the rollout order obvious (migrate, then
-roll the clusters) and is safe to re-run; an already-migrated database is a
-no-op. A worker checks for the current schema before it opens Redis or logs
-in. Against an unmigrated database it logs
+Apply migrations once before rolling out the clusters so workers do not race to
+change the schema during startup. You can rerun the command; it skips migrations
+already applied. A worker checks for the current schema before it opens Redis or
+logs in. Against an unmigrated database it logs
 `Database schema is out of date: run migrations` and exits, so a missed
 migration fails the rollout instead of the first command.
 
-Prebuilt multi-arch images (amd64 and arm64) are published to GitHub
+## Container images
+
+Prebuilt multi-architecture images (amd64 and arm64) are published to GitHub
 Container Registry:
 
 ```bash
@@ -61,10 +61,10 @@ else counts as development.
 
 ## Process model
 
-The entry point is the cluster manager. It validates the environment,
-resolves the cluster identity, and runs every shard as a **worker thread**
-inside the same process: one pid per cluster, no child processes. Two
-consequences worth knowing:
+The entry point is the cluster manager. It validates the environment, resolves
+the cluster identity, and runs every shard as a **worker thread** inside the
+same process: one pid per cluster, no child processes. This affects resource
+limits and telemetry:
 
 - Memory and CPU limits apply to the cluster as a whole, not per shard.
   Size containers for the sum of the shards they run.
@@ -94,15 +94,15 @@ maintenance work. Keep the old queue until you've verified the upgrade.
 Queues from previous shard totals or epochs are also left untouched.
 :::
 
-A worker opens its resources in a fixed order and treats any failure as
-fatal for the whole boot. It validates the environment first, then opens
-the database and checks the schema, connects to Redis, initializes the
-feature flag provider (a failed provider is logged and skipped, never
-fatal), prepares the session store, logs in to Discord, and finally starts
-taking scheduled jobs. If any step fails, every resource opened so far is
-closed in reverse order and the worker exits with code 1 and a
-`WildBeast startup failed:` line naming the cause. Commands are not
-accepted until every resource is open.
+A worker opens its resources in a fixed order. A failure stops startup, except
+when the optional feature flag provider is unavailable. It validates the
+environment first, then opens the database and checks the schema, connects to
+Redis, initializes the feature flag provider (a failed provider is logged and
+skipped, never fatal), prepares the session store, logs in to Discord, and
+finally starts taking scheduled jobs. If any step fails, every resource opened
+so far is closed in reverse order and the worker exits with code 1 and a
+`WildBeast startup failed:` line naming the cause. Commands are not accepted
+until every resource is open.
 
 ## Shutdown
 
@@ -137,11 +137,11 @@ default `terminationGracePeriodSeconds` is fine).
 ## Supervision
 
 Run the process under a supervisor (systemd, Kubernetes, Docker restart
-policies) that restarts on non-zero exit. The manager exits `1` in two
-cases, and both want a restart:
+policies) that restarts on non-zero exit. The manager exits with code `1` when
+startup fails or its fleet configuration becomes stale:
 
 - It failed to start: invalid environment, unreachable Discord, or a
-  genuinely conflicting live [epoch proposal](/self-hosting/resharding/).
+  conflicting live [epoch proposal](/self-hosting/resharding/).
 - Its configuration went stale: the fleet migrated to a new epoch while
   this cluster was fenced off. It logs a fatal message and exits so it can
   come back with fresh state.

@@ -5,7 +5,8 @@ sidebar:
   order: 1
 ---
 
-WildBeast is a modular Discord bot developed by The Sharks.
+Set up a local WildBeast instance with PostgreSQL and Redis, then start the
+bot in development mode. Run the commands below from the repository root.
 
 ## Prerequisites
 
@@ -38,14 +39,27 @@ DISCORD_TOKEN=your-bot-token
 DATABASE_URL=postgresql://user:password@localhost:5432/wildbeast
 ```
 
-Then build the workspace and start the Discord app in watch mode:
+Replace `your-bot-token` and the database credentials with your own values.
+The example uses Redis at `localhost:6379`; set `REDIS_URL` if yours runs
+elsewhere.
+
+Apply the database migrations before starting the bot. The migration command
+reads `DATABASE_URL` from your shell environment, so export the same URL you
+put in `apps/discord/.env`:
+
+```bash
+export DATABASE_URL=postgresql://user:password@localhost:5432/wildbeast
+pnpm --filter @thesharks/drizzle migrate
+```
+
+Then build the workspace and start the development processes:
 
 ```bash
 pnpm build
 pnpm dev
 ```
 
-For a real deployment, see
+For deployment and supervision, see
 [Running in production](/self-hosting/running-in-production/).
 
 ## Next steps
@@ -66,6 +80,3 @@ For a real deployment, see
   something misbehaves.
 - [Development environment](/development/environment/) is the place to
   start for contributors.
-
-The [GitHub repository](https://github.com/TheSharks/WildBeast) is the best
-place to explore the codebase or ask questions.

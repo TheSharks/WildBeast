@@ -11,7 +11,7 @@ import {
   MessageFlags,
   TextDisplayBuilder,
 } from 'discord.js'
-import { fetchJson, postJson } from './http.mjs'
+import { fetchJson, postJson } from '../utils/http.mjs'
 
 /** One adapter per booru normalizing APIs to a shared post shape. */
 export interface BooruPost {

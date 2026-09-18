@@ -5,12 +5,12 @@ sidebar:
   order: 2
 ---
 
-Answers to the questions we get most often. If yours isn't here, the
-[Discord server](https://discord.gg/wildbot) is the fastest place to ask.
+Find answers about hosting, commands, and contributing. You can ask other
+questions in the [Discord server](https://discord.gg/wildbot).
 
 ## Do I need to host WildBeast myself?
 
-No. The Sharks run a public instance called **WildBot** that you can invite
+No. The Sharks run a public instance called WildBot that you can invite
 to your server at [invite.thesharks.xyz](https://invite.thesharks.xyz). It
 runs this same open-source codebase.
 
@@ -29,14 +29,14 @@ running their own instance.
 ## Which commands does the bot have?
 
 See the [command reference](/using/commands/). Version 9 is a rewrite in
-progress, so the set is small right now and grows with each release. If
-you're hosting a v8 instance, [Upgrading from v8](/self-hosting/upgrading-from-v8/)
+progress, so the set is small right now and grows with each release. If you're
+hosting a v8 instance, [Upgrading from v8](/self-hosting/upgrading-from-v8/)
 explains what changed.
 
 ## What is TagScript?
 
-A small templating language for writing messages that change based on
-context: who ran the command, which server it ran in, arguments, time, and
+TagScript is a small templating language for writing messages that change based
+on context: who ran the command, which server it ran in, arguments, time, and
 math. Start with the [overview](/tagscript/overview/), which includes a live
 playground, or grab a ready-made template from the
 [cookbook](/tagscript/cookbook/).
@@ -48,16 +48,15 @@ Yes. Translations are managed on
 translate the strings for your language. New source strings are always
 written in English (`en-US`).
 
-Crowdin locales ship incrementally, so a partially translated locale
-falls back to `en-US` per string: any key missing in your language
-resolves in English rather than erroring. The bot prefers your own
+Translations can ship before a language is complete. If a string is missing
+in your language, the bot uses the `en-US` version. The bot prefers your own
 client locale over the server locale when picking a language.
 
 ## Where do I report bugs or request features?
 
-Open an issue on [GitHub](https://github.com/TheSharks/WildBeast/issues).
-For quick questions, the [Discord server](https://discord.gg/wildbot) works
-too. If you want to contribute code, read the
+Open an issue on [GitHub](https://github.com/TheSharks/WildBeast/issues). For
+quick questions, the [Discord server](https://discord.gg/wildbot) works too. If
+you want to contribute code, read the
 [contributing guidelines](https://github.com/TheSharks/WildBeast/blob/master/.github/CONTRIBUTING.md)
 and the [Development](/development/architecture/) section.
 

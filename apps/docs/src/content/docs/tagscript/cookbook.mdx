@@ -7,8 +7,8 @@ sidebar:
 
 import TagScriptPlayground from '../../../components/TagScriptPlayground.astro'
 
-Working templates for common situations. Every example on this page is
-live: edit the template and the output updates as you type. The Discord
+Use these templates for greetings, argument handling, and other common
+tasks. Edit an example to see its output update as you type. The Discord
 context (user, server) is simulated, so tags like `{usertag}` and `{server}`
 produce example values.
 
@@ -32,7 +32,7 @@ The Discord tags fill in who triggered the template and where:
 
 When a template is invoked with arguments, `{arg:n}`, `{args}`, and
 `{argslen}` read them. Combine them with `{if}` to handle the case where no
-argument was given (these examples run with the args `pizza sushi`):
+argument was given. These examples use the arguments `pizza sushi`:
 
 <TagScriptPlayground
   variant="example"
@@ -75,7 +75,8 @@ branch never runs.
 ## A bit of math
 
 `{math}` evaluates a chain of operands and operators. Nest other tags to
-compute with dynamic values (this example runs with the args `7 10`):
+compute with values passed to the template. This example uses the arguments
+`7 10`:
 
 <TagScriptPlayground
   variant="example"

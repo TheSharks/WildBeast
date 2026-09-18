@@ -2,17 +2,18 @@
 title: Runtime flags and experiments
 description: Typed OFREP flags, command and task gates, settings, and experiment telemetry.
 sidebar:
-  order: 5
+  order: 6
 ---
 
-WildBeast uses [OpenFeature](https://openfeature.dev/) for runtime policy:
-you can stop a feature, change a limit, move an operator command, or assign
-an experiment variant without deploying the bot. An optional OFREP service
-makes those decisions remotely. Without one, every evaluation uses its
-in-code default and the bot behaves like a normal self-hosted installation.
+WildBeast uses [OpenFeature](https://openfeature.dev/) for runtime policy: you
+can stop a feature, change a limit, move an operator command, or assign an
+experiment variant without deploying the bot. An optional service implementing
+the OpenFeature Remote Evaluation Protocol (OFREP) makes those decisions
+remotely. Without one, every evaluation uses its in-code default.
 
 Flags are operator-owned runtime controls. Persistent server preferences
-belong in guild settings, and subscription benefits belong in the
+belong in the [database](/development/database/), and subscription benefits
+belong in the
 [premium tier and limit registries](/development/premium/); don't model
 either as a long-lived flag.
 
@@ -75,8 +76,9 @@ Two mechanisms keep flag lookups off the interaction's critical path:
 Point `WILDBEAST_OFREP_URL` at any service implementing OpenFeature's
 [Remote Evaluation Protocol](https://openfeature.dev/specification/appendix-c/).
 Set `WILDBEAST_OFREP_TOKEN` as well when the service expects a bearer token.
-An unavailable or unconfigured provider returns the registry default rather
-than preventing login or command execution.
+An unconfigured provider uses registry defaults. If a configured provider
+fails, evaluations use a cached value or the registry default, as described
+in [The flag service](#the-flag-service).
 
 Interaction evaluations send a consistent targeting context, built by
 `CommandGates.flagContext` from the interaction's premium subject:
@@ -103,12 +105,11 @@ Autocomplete and components are gated through the same `CommandGates`
 service, because Sapphire doesn't run preconditions for them: a disabled
 command returns no choices and its buttons answer with the same denial.
 
-`CommandGates` (`features/gates.mts`) resolves both slices of a decision in
-one call: whether the flag is on, and whether the invoker's or guild's tier
-satisfies the command's premium requirement. Preconditions, autocomplete,
-component handlers, and the denial reply all read from that one evaluation,
-so a feature denial always wins over a premium denial and every surface
-agrees.
+`CommandGates` (`features/gates.mts`) checks two requirements in one evaluation:
+whether the flag is on, and whether the invoker's or guild's tier satisfies the
+command's premium requirement. Preconditions, autocomplete, component handlers,
+and the denial reply all read from that one evaluation, so a feature denial
+takes precedence over a premium denial across all interaction types.
 
 Scheduled tasks use `features.tasks.<piece-name>`. A false value skips the
 task body inside its normal trace and Sentry cron check-in. The run stays
@@ -117,10 +118,10 @@ evaluation metrics show that the gate resolved disabled.
 
 Adding a command or task requires adding its key to the registry. The
 structure test loads every compiled piece and fails when a piece has no
-matching gate, so an unmanageable production feature can't slip in
-silently.
+matching gate, so new commands and tasks must support runtime control.
 
-Surfaces that run outside any Sapphire piece need a standalone gate.
+Code that handles interactions outside a gated Sapphire piece needs a
+standalone gate.
 `features.tags.guildCommands` is the worked example: promoted guild tag
 commands arrive as unknown chat input interactions, so the listener
 executing them evaluates that key itself before rendering anything.
@@ -151,8 +152,8 @@ guilds, so you can add a support server without a restart.
 
 ## The /flags operator command
 
-`/flags` gives operators live visibility into the whole flag surface without
-touching the OFREP service. It's an operator-scoped command: it exists only
+Use `/flags` to inspect registered flags and their evaluated values from
+Discord. It's an operator-scoped command: it exists only
 in the guilds listed in `WILDBEAST_OPERATOR_GUILD_IDS` and
 `operators.commandGuilds`, only server admins see it there, and only the
 owners in [`WILDBEAST_OWNER_IDS`](/self-hosting/configuration/#commands)
@@ -167,8 +168,7 @@ shows one flag in full: definition metadata, default, variants, and any
 evaluation error.
 
 Expired flags also feed the `discord_feature_flags_expired` gauge, so
-dashboards and alerting see a forgotten temporary flag continuously rather
-than only in a boot log line.
+you can monitor expired flags and alert on them between restarts.
 
 ## Experiments
 

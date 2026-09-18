@@ -5,11 +5,11 @@ sidebar:
   order: 2
 ---
 
-WildBeast is configured entirely through environment variables. On startup
-the cluster manager loads `apps/discord/.env` (when present) with Node's
-built-in env-file support and validates the result against a
-[zod](https://zod.dev) schema, so misconfiguration fails at boot with a
-readable error instead of surfacing deep inside discord.js or Redis.
+WildBeast is configured entirely through environment variables. On startup the
+cluster manager loads `apps/discord/.env` (when present) with Node's built-in
+env-file support and validates the result against a [zod](https://zod.dev)
+schema, so invalid configuration produces a startup error naming the affected
+variables.
 
 Variables already present in the real environment take precedence over the
 `.env` file, so containerized deployments can inject configuration without a
@@ -17,7 +17,7 @@ file at all.
 
 ## Core
 
-The essentials: the token, database, and runtime mode.
+The essentials: the token, database, runtime mode, and console output.
 
 | Variable | Required | Description |
 | --- | --- | --- |
@@ -25,15 +25,17 @@ The essentials: the token, database, and runtime mode.
 | `DATABASE_URL` | yes | PostgreSQL connection URL. It is validated before the bot logs in. |
 | `NODE_ENV` | no | `development` enables debug logging and full trace sampling. |
 | `TRACE` | no | Any value raises the log level to trace. |
+| `WILDBEAST_TUI` | no | `auto` (default), `on`, or `off`. Controls the [terminal dashboard](/self-hosting/telemetry/#terminal-dashboard) the cluster manager shows in an interactive terminal. Non-interactive environments always get plain logs. |
 
 ## Commands
 
-Where slash commands register and what `/invite` hands out.
+Use these variables to choose where commands register, who can run operator
+commands, and which link `/invite` returns.
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `WILDBEAST_DEV_GUILD_ID` | no | When set, slash commands register in this guild instead of globally. Guild commands update instantly, so development environments want this; production leaves it unset. Boot refuses the combination with `NODE_ENV=production`, because bulk-overwrite registration would remove every global command. |
-| `WILDBEAST_INVITE_OVERRIDE` | no | A URL for `/invite` to hand out instead of the generated OAuth link. |
+| `WILDBEAST_DEV_GUILD_ID` | no | When set, slash commands register in this guild instead of globally. We recommend setting this during development and leaving it unset in production. Boot refuses the combination with `NODE_ENV=production`, because bulk-overwrite registration would remove every global command. |
+| `WILDBEAST_INVITE_OVERRIDE` | no | A URL for `/invite` to return instead of the generated OAuth link. |
 | `WILDBEAST_OPERATOR_GUILD_IDS` | no | Comma-separated guild ids where operator commands like [`/flags`](/development/features/#the-flags-operator-command) are placed. Merged with the `operators.commandGuilds` runtime setting, which changes the list without a restart. Operator commands are never registered globally. |
 | `WILDBEAST_OWNER_IDS` | no | Comma-separated user ids allowed to run owner-only commands like [`/flags`](/development/features/#the-flags-operator-command). Unset means owner-only commands deny everyone. |
 
@@ -59,7 +61,7 @@ registry, targeting context, command/task gates, and experiment behavior.
 
 ## Redis
 
-Redis is required in practice, even for a single cluster: it backs the
+Redis is required, even for a single cluster: it backs the
 scheduled task queue, identify rate limiting, and persisted gateway
 sessions, plus all coordination state in multi-cluster setups (see
 [Redis](/self-hosting/redis/)).
@@ -70,7 +72,7 @@ sessions, plus all coordination state in multi-cluster setups (see
 | `REDIS_HOST` | `localhost` | Redis host. |
 | `REDIS_PORT` | `6379` | Redis port (1–65535). |
 | `REDIS_PASSWORD` | — | Optional password. |
-| `REDIS_DB` | — | Optional logical database index, 0–15 (Redis ships with 16 databases by default). |
+| `REDIS_DB` | — | Optional logical database index, 0–16383. The index must exist on your Redis server; the default server configuration provides indexes 0–15. |
 
 ## Sharding and clustering
 
@@ -86,15 +88,18 @@ See [Clustering](/self-hosting/clustering/) for what these mean in practice.
 
 ## Telemetry
 
-See [Telemetry](/self-hosting/telemetry/) for the full story.
+See [Telemetry](/self-hosting/telemetry/) for export configuration and
+instrumentation details.
 
 | Variable | Description |
 | --- | --- |
 | `SENTRY_DSN` | Enables Sentry error reporting and tracing. |
 | `SENTRY_PROFILE_SESSION_SAMPLE_RATE` | Continuous profiling session rate for shard workers, 0 to 1. Defaults to 0 (profiler off); the cluster manager never profiles. |
 | `SENTRY_SPOTLIGHT` | `true` streams events to a local Spotlight sidecar for development. |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Enables OTLP export of traces, metrics and logs. |
+| `SENTRY_INCLUDE_PII` | `true` adds usernames, guild names, and channel names to command error reports. By default only ids are attached. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Enables OTLP export of traces, metrics, and logs. |
 | `OTEL_SERVICE_NAME` | Overrides the reported service name. |
+| `OTEL_TRACE_INTERNAL_TARGETS` | Comma-separated hostnames, hostname suffixes, or IP addresses that receive W3C trace headers in addition to the [built-in internal targets](/self-hosting/telemetry/#sentry). |
 
 ## Validation behavior
 

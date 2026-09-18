@@ -15,7 +15,10 @@ guides and reference pages.
   and why. Keep each paragraph focused on one idea. Include enough context to
   make instructions understandable without repeating the introduction.
 - Prefer familiar words and concrete descriptions. Explain technical terms on
-  first use. Avoid marketing claims, grand terminology, jokes, idioms, and
+  first use when they're specific to WildBeast or its operations. Assume the
+  reader knows Discord bots; don't re-explain guilds, the Gateway, or other
+  Discord basics. A little conversational flavor is welcome when it helps
+  the text flow. Avoid marketing claims, grand terminology, and
   anthropomorphizing the software.
 - Be precise about requirements and uncertainty. Use "must" for a requirement,
   "we recommend" for advice, and "can" for an option. State relevant conditions

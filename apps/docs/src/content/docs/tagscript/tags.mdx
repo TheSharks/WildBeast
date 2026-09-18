@@ -18,8 +18,8 @@ playground drawer at the bottom of the page to try tags as you read.
 
 | Tag | What it does |
 | --- | --- |
-| `{upper:text}` | Uppercase. |
-| `{lower:text}` | Lowercase. |
+| `{upper:text}` | Convert text to uppercase. |
+| `{lower:text}` | Convert text to lowercase. |
 | `{length:text}` | Length in UTF-16 code units, matching JagTag (an emoji like 😀 counts as 2). |
 | `{reverse:text}` | Reverse the string (grapheme-aware, so emoji stay intact). |
 | `{oneline:text}` | Replace newlines with spaces. |
@@ -114,19 +114,18 @@ that context isn't available (for example, `{server}` in a direct message).
 
 ## Requires opt-in
 
-These two are off unless the person running TagScript enables them, because
-they reach outside the template. See [embedding](/tagscript/embedding/).
+The application embedding TagScript must enable these tags before templates
+can use them. See [embedding](/tagscript/embedding/).
 
 | Tag | What it does |
 | --- | --- |
-| `{fetch:url\|method}` | Fetch content from a URL. Restricted to `http`/`https`, blocks private addresses (including on every redirect hop), and is size- and time-limited. |
+| `{fetch:url\|method}` | Fetch content from a URL. Restricted to `http`/`https`, blocks private IP literals on each redirect hop; hostnames need an allowlist to restrict access, and is size- and time-limited. |
 | `{js:code}` (alias `{javascript:code}`) | Run JavaScript in a sandbox. |
 
 ## Limits
 
-Rendering is bounded so no template can exhaust resources: a maximum number
-of `{eval}` and stored-tag expansions, nesting depth, total output length,
-fetch requests per render, regex operations per render, and regex sizes.
+Rendering limits constrain `{eval}` and stored-tag expansions, nesting depth,
+total output length, fetch requests, regex operations, and regex sizes.
 Exceeding a bound raises an error rather than returning half-rendered text.
 Embedders can tune every bound, see
 [embedding](/tagscript/embedding/#limits-and-safety).

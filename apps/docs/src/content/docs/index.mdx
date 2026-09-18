@@ -1,10 +1,12 @@
 ---
 title: WildBeast
-description: A feature-rich, modular Discord bot built by The Sharks.
+description: Set up WildBeast, use its commands, and extend the Discord bot.
+sidebar:
+  order: 0
 template: splash
 hero:
   title: WildBeast
-  tagline: A modular Discord bot that stays fast, observable, and easy to extend.
+  tagline: A Discord bot with slash commands, custom tags, and tools for self-hosting.
   image:
     alt: Geometric wildebeest head mark in the WildBeast blurple.
     file: ../../assets/hero-illustration.svg
@@ -25,12 +27,13 @@ import { Card, CardGrid } from '@astrojs/starlight/components'
     Commands and features are organized as pieces that can be loaded and
     reloaded independently.
   </Card>
-  <Card title="Built to scale" icon="rocket">
-    Autonomous sharding and clustering keep the bot responsive as it grows.
+  <Card title="Sharding and clustering" icon="rocket">
+    Distribute shards across clusters and rebalance them as clusters join or
+    leave the fleet.
   </Card>
   <Card title="Observable" icon="magnifier">
-    OpenTelemetry instrumentation throughout, with metrics and traces out of
-    the box.
+    Export metrics, traces, and logs to an OpenTelemetry collector to monitor
+    your deployment.
   </Card>
   <Card title="Open source" icon="github">
     Developed in the open on GitHub. Contributions are welcome.
@@ -39,15 +42,16 @@ import { Card, CardGrid } from '@astrojs/starlight/components'
 
 <div style="max-width: 46rem; margin: 3rem auto 0;">
 
-## Up and running in minutes
+## Set up your instance
 
 ```bash
 git clone https://github.com/TheSharks/WildBeast.git
 cd WildBeast
-pnpm install && pnpm build && pnpm dev
+pnpm install
 ```
 
-Read the [getting started guide](/self-hosting/getting-started/) for the full setup,
-including configuring your Discord bot token.
+Then follow the [getting started guide](/self-hosting/getting-started/) to
+configure your bot token, connect PostgreSQL and Redis, apply migrations, and
+start the bot.
 
 </div>

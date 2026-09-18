@@ -11,7 +11,7 @@ import {
   MessageFlags,
   TextDisplayBuilder,
 } from 'discord.js'
-import { fetchJson, fetchText } from './http.mjs'
+import { fetchJson, fetchText } from '../utils/http.mjs'
 
 /** Shared builders for refreshable image commands (Components V2). */
 export type RefreshableKind = 'cat' | 'dog' | 'inspire'

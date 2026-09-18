@@ -2,11 +2,11 @@
 title: TagScript internals
 description: How the interpreter works, and how to add a tag.
 sidebar:
-  order: 8
+  order: 9
 ---
 
-How `@thesharks/tagscript` works under the hood, for anyone changing the
-language or adding tags. For using the package, see
+Use this guide when changing the `@thesharks/tagscript` interpreter or
+adding built-in tags. To use the package in your application, see
 [embedding](/tagscript/embedding/); for the language itself, the
 [overview](/tagscript/overview/).
 
@@ -16,11 +16,11 @@ Everything lives in `packages/tagscript/src`:
 
 | Path | What it is |
 | --- | --- |
-| `parser.ts` | Template text to AST, single pass. |
+| `parser.ts` | Parses template text into an abstract syntax tree (AST) in one pass. |
 | `runtime/renderer.ts` | The renderer: walks the AST, calls handlers. |
 | `runtime/registry.ts`, `default-registry.ts` | Tag name to handler mapping. |
 | `runtime/limits.ts` | Default limits and their validation. |
-| `runtime/regex-safety.ts` | ReDoS analysis and the per-render regex budget. |
+| `runtime/regex-safety.ts` | Checks for regular expression denial of service (ReDoS) and enforces the per-render regex limit. |
 | `runtime/entry.ts` | Turns public `RenderOptions` into a `RenderContext`. |
 | `tags/` | The built-in handlers, one file per category. |
 | `index.ts`, `web.ts` | The two entry points (Node and browser). |
@@ -54,7 +54,7 @@ handler returns is literal text: it goes into the output verbatim and is
 never parsed as TagScript again. This is the interpreter's trust boundary.
 Arguments, variables, Discord context, fetched bodies, and sandbox results
 are all data, so a caller-supplied argument containing `{js:...}` renders
-as those nine characters instead of executing.
+as literal text instead of executing.
 
 Each tag node resolves in this order:
 
@@ -99,8 +99,8 @@ A registry is two maps, normal and lazy handlers, built with
   everything except `{fetch}`. This is what the documentation's live
   playground imports, straight from source via a Vite alias.
 
-Embedders can pass their own registry per render, so the defaults are just
-that.
+Pass a custom registry to `render` when your application needs a different
+set of handlers.
 
 ## Adding a built-in tag
 
@@ -111,7 +111,7 @@ that.
    only Node-specific tags (like `{fetch}`) are added separately in
    `index.ts`.
 3. Add tests in `packages/tagscript/test`. The public API tests assert the
-   exported surface, so new exports need updating there too.
+   public exports, so new exports need updating there too.
 4. Document it: the [tag reference](/tagscript/tags/) and the package
    README both list every tag, and this documentation is the contract.
 
