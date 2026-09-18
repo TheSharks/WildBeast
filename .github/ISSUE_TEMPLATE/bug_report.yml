@@ -1,0 +1,57 @@
+name: Bug report
+description: Something in WildBeast or WildBot doesn't work the way it should
+type: Bug
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Security issues don't belong here: report those privately through the [security policy](https://github.com/TheSharks/WildBeast/security/policy).
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, and what you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The command you ran with its options, or the steps that lead to the problem.
+      placeholder: |
+        1. Run `/tag create name:hello content:world`
+        2. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: instance
+    attributes:
+      label: Where did this happen?
+      options:
+        - WildBot, the public instance
+        - A self-hosted instance
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Self-hosted only. The image tag or commit you're running; `/info` shows the version.
+      placeholder: ghcr.io/thesharks/wildbeast:9.0.0
+  - type: input
+    id: error-code
+    attributes:
+      label: Error code
+      description: If the bot replied with an error code, paste it here. It lets us find the failure in our logs.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Self-hosted only. Remove tokens and other secrets first.
+      render: shell
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: Screenshots, configuration details, or anything else that helps.

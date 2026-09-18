@@ -1,5 +1,15 @@
-blank_issues_enabled: true
+# Maintainers can still open a blank issue.
+blank_issues_enabled: false
 contact_links:
-  - name: Discord Support Server
+  - name: Questions and help
+    url: https://github.com/TheSharks/WildBeast/discussions/categories/q-a
+    about: Ask about self-hosting or developing WildBeast in Discussions
+  - name: Discord support server
     url: https://discord.gg/wildbot
     about: Want more direct support? Join our Discord server
+  - name: Documentation
+    url: https://wildbeast.guide/
+    about: Guides for using, self-hosting, and developing WildBeast
+  - name: Report a security issue
+    url: https://github.com/TheSharks/WildBeast/security/policy
+    about: Please report security issues privately, not in a public issue

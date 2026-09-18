@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest an idea for WildBeast
+type: Feature
+labels: [feature request]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What's your feature request about?
+      description: A short one-to-two-sentence description of your feature request.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is it related to a problem you're having?
+      description: A clear description of the problem. For example, "I'm always frustrated when [...]".
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear description of what you want to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
