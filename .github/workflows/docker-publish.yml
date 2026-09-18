@@ -1,11 +1,9 @@
 name: Docker publish
 
-# @thesharks/discord is private, so changesets only bumps its version and
-# pushes a tag (see privatePackages in .changeset/config.json): it never
-# creates a GitHub release for it. The tag push below is therefore the
-# normal release path; the release trigger is a backstop for a manually
-# created GitHub release, and workflow_dispatch allows rebuilding an image
-# for an existing ref without pushing an empty commit.
+# The release workflow explicitly dispatches private bot tags because tag
+# pushes made with GITHUB_TOKEN cannot trigger workflows. External tag pushes
+# and manually published GitHub releases also publish images; dispatch can
+# rebuild any existing ref. Master pushes publish the moving edge image.
 on:
   push:
     branches: [master]
@@ -38,7 +36,7 @@ jobs:
         include:
           - platform: linux/amd64
             arch: amd64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
           - platform: linux/arm64
             arch: arm64
             runner: ubuntu-24.04-arm
@@ -118,7 +116,7 @@ jobs:
 
   publish:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -209,7 +207,7 @@ jobs:
   sentry:
     needs: publish
     if: vars.SENTRY_ORG != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7

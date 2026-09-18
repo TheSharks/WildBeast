@@ -18,7 +18,7 @@ concurrency:
 jobs:
   dependency-review:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -29,7 +29,7 @@ jobs:
           fail-on-severity: moderate
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -53,7 +53,7 @@ jobs:
   # The Pages deploy only runs on master; this catches docs breakage on
   # branches and PRs before it gets there.
   docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -75,7 +75,7 @@ jobs:
         run: pnpm exec turbo run build --filter=@thesharks/docs
 
   migrations:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -109,7 +109,7 @@ jobs:
   # The self-hosting docs point users at this Dockerfile; make sure it
   # builds. Publishing to GHCR happens in docker-publish.yml.
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7

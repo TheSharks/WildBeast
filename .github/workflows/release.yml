@@ -9,6 +9,8 @@ permissions:
   contents: write
   # Open and update the "Version Packages" PR.
   pull-requests: write
+  # Explicitly dispatch images for tags created with GITHUB_TOKEN.
+  actions: write
   # npm trusted publishing (OIDC) and provenance attestation.
   id-token: write
 
@@ -16,7 +18,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
@@ -49,8 +51,28 @@ jobs:
       # (authenticated via the OIDC trusted publisher, no token secret) and
       # creates the release tags.
       - name: Version or publish
+        id: changesets
         uses: changesets/action@v1
         with:
           publish: pnpm changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # GITHUB_TOKEN tag pushes do not trigger other workflows. Dispatch the
+      # bot image explicitly, including private-package-only releases.
+      - name: Publish tagged bot image
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(node -p "require('./apps/discord/package.json').version")
+          tag="@thesharks/discord@$version"
+          if ! git show-ref --verify --quiet "refs/tags/$tag"; then
+            echo "No bot release tag for this version; skipping image dispatch"
+            exit 0
+          fi
+          if [ "$(git rev-list -n 1 "$tag")" != "$GITHUB_SHA" ]; then
+            echo "Bot version was released by an earlier commit; skipping image dispatch"
+            exit 0
+          fi
+          gh workflow run docker-publish.yml --ref "$tag"
