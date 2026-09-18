@@ -11,9 +11,7 @@ import {
 import { canStartDashboard, startDashboard } from '@thesharks/tui'
 import { fetchRecommendedShardCount, ShardingManager } from 'discord.js'
 import { loadEnv } from './env.mjs'
-import { discordShardingHost } from './fleet/discord.mjs'
 import { FleetManager } from './fleet/manager.mjs'
-import { logLevelFor } from './runtime/client.mjs'
 import { parseClusteringConfig } from './sharding/config.mjs'
 import { connectLocalMetrics } from './telemetry/tui.mjs'
 import { redisConnectionOptions } from './utils/redis.mjs'
@@ -37,6 +35,12 @@ const telemetry = initOpenTelemetry({
   resourceAttributes: { 'cluster.id': clusterId },
   sentry: { tags: { 'cluster.id': clusterId }, profileSessionSampleRate: 0 },
 })
+// Load these only now. They create metric instruments as they load, and an
+// instrument created before the provider above is registered never records.
+// test/telemetryOrder.test.ts guards this.
+const { discordShardingHost } = await import('./fleet/discord.mjs')
+const { logLevelFor } = await import('./runtime/client.mjs')
+
 const logger = new AnalyticsLogger({
   level: logLevelFor({
     trace: Boolean(env.TRACE),

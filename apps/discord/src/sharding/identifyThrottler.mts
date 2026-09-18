@@ -1,9 +1,9 @@
-import { createHash } from 'node:crypto'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { DURATION_SECONDS_BOUNDARIES } from '@thesharks/analytics'
 import type { IIdentifyThrottler, WebSocketOptions } from 'discord.js'
 import { meter } from '../telemetry/meter.mjs'
 import { getSharedWorkerRedis } from '../utils/redis.mjs'
+import { identifyKeyPrefix } from './keys.mjs'
 
 const identifyCounter = meter.createCounter('discord_identifies_total', {
   description: 'Gateway identifies performed, by rate limit bucket',
@@ -34,21 +34,6 @@ export interface IdentifyThrottlerOptions {
   keyPrefix?: string
   /** Sink for PTTL anomalies; defaults to console.warn. */
   onWarn?: (message: string) => void
-}
-
-// Per-bot lock namespace (hashed token, never raw — PII); WILDBEAST_CLUSTER wins when set.
-// feat/v9 changed this prefix: interim mixed fleets throttle independently (accepted, no fallback).
-export function identifyKeyPrefix(
-  token?: string,
-  namespaceEnv?: string,
-  base = 'wildbeast',
-): string {
-  const namespace = namespaceEnv ?? process.env.WILDBEAST_CLUSTER
-  if (namespace) return `${base}:${namespace}:identify`
-  const secret = token ?? process.env.DISCORD_TOKEN
-  if (!secret) return `${base}:identify`
-  const hash = createHash('sha256').update(secret).digest('hex').slice(0, 12)
-  return `${base}:${hash}:identify`
 }
 
 // Fleet-wide identify pacing per bucket; lock expiry is the spacing, never released early.

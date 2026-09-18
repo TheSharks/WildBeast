@@ -2,7 +2,7 @@ import type { Env } from '../env.mjs'
 import type { Tier } from '../premium/model.mjs'
 import { type PremiumSku, parsePremiumSkus } from '../premium/skus.mjs'
 import { epochKeyPrefix } from '../sharding/epochs.mjs'
-import { identifyKeyPrefix } from '../sharding/identifyThrottler.mjs'
+import { identifyKeyPrefix } from '../sharding/keys.mjs'
 import {
   type RedisConnectionOptions,
   redisConnectionOptions,

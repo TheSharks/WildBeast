@@ -6,8 +6,6 @@ import {
   LocalMetricReader,
 } from '@thesharks/analytics'
 import { validateEnv } from './env.mjs'
-import { logLevelFor } from './runtime/client.mjs'
-import { composeApplication } from './runtime/composition.mjs'
 import { configFromEnv } from './runtime/config.mjs'
 import { WORKER_TELEMETRY_SHUTDOWN_TIMEOUT_MILLIS } from './sharding/lifecycle.mjs'
 import { publishLocalMetrics } from './telemetry/tui.mjs'
@@ -62,6 +60,12 @@ const telemetry = initOpenTelemetry({
 const stopLocalMetrics = localMetrics
   ? publishLocalMetrics(localMetrics)
   : undefined
+
+// Load the application only now. Its modules create metric instruments as
+// they load, and an instrument created before the provider above is
+// registered never records. test/telemetryOrder.test.ts guards this.
+const { logLevelFor } = await import('./runtime/client.mjs')
+const { composeApplication } = await import('./runtime/composition.mjs')
 
 const logger = new AnalyticsLogger({ level: logLevelFor(config) })
 const { runtime } = composeApplication(config, { logger, telemetry })

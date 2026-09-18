@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   type IdentifyLockStore,
-  identifyKeyPrefix,
   RedisIdentifyThrottler,
 } from '../src/sharding/identifyThrottler.mjs'
+import { identifyKeyPrefix } from '../src/sharding/keys.mjs'
 
 class FakeLockStore implements IdentifyLockStore {
   private readonly locks = new Map<
