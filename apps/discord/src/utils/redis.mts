@@ -1,4 +1,3 @@
-import { Redis } from 'ioredis'
 import type { Env } from '../env.mjs'
 
 export interface RedisConnectionOptions {
@@ -141,22 +140,5 @@ export function redisConnectionOptions(
     port,
     ...(password ? { password } : {}),
     ...(db !== undefined ? { db } : {}),
-  }
-}
-
-let sharedWorkerRedis: Redis | undefined
-
-/** One connection per shard worker (throttler + session store). */
-export function getSharedWorkerRedis(env?: Env | NodeJS.ProcessEnv): Redis {
-  sharedWorkerRedis ??= new Redis(redisConnectionOptions(env))
-  return sharedWorkerRedis
-}
-
-/** Disconnect shared worker connection. */
-export async function closeSharedWorkerRedis(): Promise<void> {
-  const current = sharedWorkerRedis
-  sharedWorkerRedis = undefined
-  if (current) {
-    current.disconnect()
   }
 }

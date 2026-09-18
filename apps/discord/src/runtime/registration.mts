@@ -6,7 +6,7 @@ export interface RegistrationDefaults {
   devGuildId: bigint | null
 }
 
-export function withRegistrationDefaults(
+function withRegistrationDefaults(
   registry: ApplicationCommandRegistry,
   defaults: RegistrationDefaults,
 ): ApplicationCommandRegistry {

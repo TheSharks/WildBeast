@@ -57,7 +57,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig = {
   entitlementStaleAfterMs: 24 * 60 * 60 * 1000,
 }
 
-export function parseShardIds(raw: string | undefined): number[] {
+function parseShardIds(raw: string | undefined): number[] {
   if (!raw) return []
   const ids = raw
     .split(',')

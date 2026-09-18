@@ -7,7 +7,7 @@ const pkg = createRequire(import.meta.url)('../../package.json') as {
 }
 
 /** Identifiable UA so API operators can contact us about traffic. */
-export const USER_AGENT = [
+const USER_AGENT = [
   `WildBeast/${pkg.version}`,
   `(+${pkg.homepage}; +${pkg.repository.url.replace(/\.git$/, '')};)`,
 ].join(' ')

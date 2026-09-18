@@ -131,9 +131,6 @@ importers:
 
   apps/discord:
     dependencies:
-      '@discordjs/builders':
-        specifier: ^1.14.1
-        version: 1.14.1
       '@openfeature/ofrep-provider':
         specifier: ^0.2.5
         version: 0.2.5(@openfeature/core@1.12.0)(@openfeature/server-sdk@1.23.0(@openfeature/core@1.12.0))
@@ -155,9 +152,6 @@ importers:
       '@sapphire/plugin-i18next':
         specifier: ^8.0.0
         version: 8.0.0(typescript@6.0.3)
-      '@sapphire/plugin-logger':
-        specifier: ^4.1.0
-        version: 4.1.0
       '@sapphire/plugin-scheduled-tasks':
         specifier: ^10.0.4
         version: 10.0.4(supports-color@10.2.2)
@@ -212,7 +206,7 @@ importers:
         version: 6.1.3
       vitest:
         specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.1)(vite@8.2.2(@types/node@26.6.1)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.0))
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.1)(@vitest/coverage-v8@5.0.1)(vite@8.2.2(@types/node@26.6.1)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.0))
 
   apps/docs:
     dependencies:
@@ -7973,28 +7967,6 @@ snapshots:
       '@opentelemetry/api': 1.9.1
       '@types/node': 26.6.1
       '@vitest/coverage-v8': 5.0.1(vitest@5.0.1)
-    transitivePeerDependencies:
-      - msw
-
-  vitest@5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.1)(vite@8.2.2(@types/node@26.6.1)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.0)):
-    dependencies:
-      '@types/chai': 5.2.3
-      '@vitest/mocker': 5.0.1(vite@8.2.2(@types/node@26.6.1)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.0))
-      chai: 6.2.2
-      es-module-lexer: 2.3.2
-      expect-type: 1.4.0
-      magic-string: 1.3.1
-      obug: 2.2.1
-      picomatch: 4.0.7
-      std-env: 4.2.0
-      tinybench: 6.1.4
-      tinyexec: 1.3.0
-      tinyglobby: 0.2.17
-      vite: 8.2.2(@types/node@26.6.1)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.0)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.1
-      '@types/node': 26.6.1
     transitivePeerDependencies:
       - msw
 

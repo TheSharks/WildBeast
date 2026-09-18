@@ -7,7 +7,10 @@ import {
 } from '@thesharks/analytics'
 import { validateEnv } from './env.mjs'
 import { configFromEnv } from './runtime/config.mjs'
-import { WORKER_TELEMETRY_SHUTDOWN_TIMEOUT_MILLIS } from './sharding/lifecycle.mjs'
+import {
+  WORKER_SENTRY_FLUSH_TIMEOUT_MILLIS,
+  WORKER_TELEMETRY_SHUTDOWN_TIMEOUT_MILLIS,
+} from './sharding/lifecycle.mjs'
 import { publishLocalMetrics } from './telemetry/tui.mjs'
 
 // Validate before anything opens a connection; a direct `node dist/next/main.mjs`
@@ -80,7 +83,9 @@ async function stop(reason: 'shutdown' | 'handoff'): Promise<never> {
     // must not treat this worker as cleanly gone.
     logger.error(`Stop (${reason}) failed:`, error)
     Sentry.captureException(error)
-    await Sentry.flush(2_000).catch(() => undefined)
+    await Sentry.flush(WORKER_SENTRY_FLUSH_TIMEOUT_MILLIS).catch(
+      () => undefined,
+    )
     code = 1
   }
   process.exit(code)
@@ -110,7 +115,7 @@ try {
   for (const cause of error instanceof AggregateError ? error.errors : [error])
     logger.fatal('WildBeast startup failed:', cause)
   Sentry.captureException(error)
-  await Sentry.flush(2_000).catch(() => undefined)
+  await Sentry.flush(WORKER_SENTRY_FLUSH_TIMEOUT_MILLIS).catch(() => undefined)
   stopLocalMetrics?.()
   await telemetry.shutdown().catch(() => undefined)
   process.exit(1)

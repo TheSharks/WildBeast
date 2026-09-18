@@ -3,7 +3,7 @@
   "type": "module",
   "name": "@thesharks/discord",
   "version": "9.0.0-dev",
-  "main": "dist/index.mjs",
+  "main": "dist/cluster.mjs",
   "scripts": {
     "dev": "turbo build && concurrently \"npm:dev:*\"",
     "dev:watch": "tsc --watch",
@@ -28,7 +28,6 @@
   "license": "SEE LICENSE IN LICENSE.md",
   "homepage": "https://wildbeast.guide/",
   "dependencies": {
-    "@discordjs/builders": "^1.14.1",
     "@openfeature/ofrep-provider": "^0.2.5",
     "@openfeature/server-sdk": "^1.23.0",
     "@sapphire/decorators": "^6.2.0",
@@ -36,7 +35,6 @@
     "@sapphire/framework": "^5.5.1",
     "@sapphire/plugin-hmr": "^3.0.2",
     "@sapphire/plugin-i18next": "^8.0.0",
-    "@sapphire/plugin-logger": "^4.1.0",
     "@sapphire/plugin-scheduled-tasks": "^10.0.4",
     "@sapphire/plugin-subcommands": "^7.0.1",
     "@sentry/node": "^10.75.0",

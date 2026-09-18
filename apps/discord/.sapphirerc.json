@@ -7,12 +7,12 @@
     "commands": "commands",
     "listeners": "listeners",
     "preconditions": "preconditions",
-    "tasks": "tasks",
+    "tasks": "scheduled-tasks",
     "interaction-handlers": "interaction-handlers",
     "routes": "routes"
   },
   "customFileTemplates": {
-    "enabled": true,
+    "enabled": false,
     "location": "templates"
   }
 }

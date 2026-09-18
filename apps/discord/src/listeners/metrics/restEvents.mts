@@ -2,7 +2,6 @@ import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
 import * as Sentry from '@sentry/node'
-import { metrics } from '@thesharks/analytics'
 import { type RateLimitData, RESTEvents } from 'discord.js'
 import { meter } from '../../telemetry/meter.mjs'
 

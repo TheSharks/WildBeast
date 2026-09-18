@@ -1,9 +1,7 @@
 import { setTimeout as sleep } from 'node:timers/promises'
 import { DURATION_SECONDS_BOUNDARIES } from '@thesharks/analytics'
-import type { IIdentifyThrottler, WebSocketOptions } from 'discord.js'
+import type { IIdentifyThrottler } from 'discord.js'
 import { meter } from '../telemetry/meter.mjs'
-import { getSharedWorkerRedis } from '../utils/redis.mjs'
-import { identifyKeyPrefix } from './keys.mjs'
 
 const identifyCounter = meter.createCounter('discord_identifies_total', {
   description: 'Gateway identifies performed, by rate limit bucket',
@@ -93,17 +91,4 @@ export class RedisIdentifyThrottler implements IIdentifyThrottler {
       await sleep(delay, undefined, { signal })
     }
   }
-}
-
-// discord.js `ClientOptions#ws.buildIdentifyThrottler` entrypoint.
-export const buildRedisIdentifyThrottler: NonNullable<
-  WebSocketOptions['buildIdentifyThrottler']
-> = async (manager) => {
-  const info = await manager.fetchGatewayInformation()
-  return new RedisIdentifyThrottler(
-    getSharedWorkerRedis(),
-    info.session_start_limit.max_concurrency,
-    IDENTIFY_WINDOW_MILLIS,
-    { keyPrefix: identifyKeyPrefix() },
-  )
 }
