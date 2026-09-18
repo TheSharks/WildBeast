@@ -12,6 +12,13 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 10
+    ignore:
+      # Sapphire's scheduled-task plugin still requires BullMQ 5 repeat APIs.
+      - dependency-name: bullmq
+        update-types: [version-update:semver-major]
+      # Revisit after validating protocol, reconnect, and Sapphire compatibility.
+      - dependency-name: ioredis
+        update-types: [version-update:semver-major]
     commit-message:
       prefix: chore
       include: scope

@@ -51,7 +51,7 @@ This is a pnpm workspace managed with [Turborepo](https://turborepo.dev/):
 
 ## Development
 
-Requirements: Node.js 22 or newer and [pnpm](https://pnpm.io/). A [devcontainer](.devcontainer) is included that provides PostgreSQL (TimescaleDB), Redis, and an OpenTelemetry collector out of the box.
+Requirements: Node.js 22.12+ within the 22.x line, 24.x, or 26+ and [pnpm](https://pnpm.io/). A [devcontainer](.devcontainer) is included that provides PostgreSQL (TimescaleDB), Redis, and an OpenTelemetry collector out of the box.
 
 ```bash
 pnpm install   # install dependencies
