@@ -32,6 +32,15 @@ keep plain logging. Non-interactive runs keep plain logging automatically.
 See [the TUI package](../../packages/tui/README.md) for controls, data semantics,
 and a standalone demo that works without bot credentials.
 
+## Local development
+
+The [development environment](https://wildbeast.guide/development/environment/)
+guide covers the devcontainer and a local setup with PostgreSQL and Redis.
+Copy `.env.example` to `.env`. `DISCORD_TOKEN` and `DATABASE_URL` are the only
+required variables, and Redis works on its defaults. Set
+`WILDBEAST_DEV_GUILD_ID` so command changes show up instantly. To add a
+command, follow the [command cookbook](https://wildbeast.guide/development/command-cookbook/).
+
 ## Configuration
 
 The bot reads its configuration from environment variables, loads

@@ -37,7 +37,10 @@ A new command needs a piece, its English strings, and a runtime gate:
 <Steps>
 
 1. Create the piece. The file name becomes the piece name, which the gate
-   key and the telemetry use.
+   key and the telemetry use. Describe the command in
+   `registerApplicationCommands`, as in any Sapphire bot, and put the body in
+   `chatInput`. The base class owns Sapphire's `chatInputRun`: it admits the
+   run, opens its span, and then calls your `chatInput`.
 
    ```ts title="src/commands/coinflip.mts"
    import type { Command } from '@sapphire/framework'
@@ -63,7 +66,9 @@ A new command needs a piece, its English strings, and a runtime gate:
        })
      }
 
-     public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+     protected override async chatInput(
+       interaction: Command.ChatInputCommandInteraction,
+     ) {
        const times = interaction.options.getInteger('times') ?? 1
        let heads = 0
        for (let i = 0; i < times; i++) if (Math.random() < 0.5) heads += 1
@@ -184,7 +189,9 @@ Then resolve the result first and wrap it when there's a question. The
 `asked` string is `"> {{question}}\n{{result}}"`:
 
 ```ts title="src/commands/coinflip.mts" ins={3,10-17}
-public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+protected override async chatInput(
+  interaction: Command.ChatInputCommandInteraction,
+) {
   const times = interaction.options.getInteger('times') ?? 1
   const question = interaction.options.getString('question')
   let heads = 0
@@ -233,7 +240,9 @@ in `utils/http.mts` instead of calling `fetch` directly: `fetchJson`,
 10 seconds, and throw on a non-2xx response. The URL below is a placeholder.
 
 ```ts title="src/commands/coinflip.mts" ins={3-6}
-public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+protected override async chatInput(
+  interaction: Command.ChatInputCommandInteraction,
+) {
   const times = interaction.options.getInteger('times') ?? 1
   await interaction.deferReply()
   const { heads, tails } = await fetchJson<{ heads: number; tails: number }>(
@@ -366,7 +375,9 @@ the rest of the layout rules.
 
    // ...
 
-   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+   protected override async chatInput(
+     interaction: Command.ChatInputCommandInteraction,
+   ) {
      const times = interaction.options.getInteger('times') ?? 1
      return interaction.reply(await buildCoinflipMessage(interaction, times))
    }
@@ -416,7 +427,10 @@ the rest of the layout rules.
        return this.some(times)
      }
 
-     public async run(interaction: ButtonInteraction, times: number) {
+     protected override async execute(
+       interaction: ButtonInteraction,
+       times: number,
+     ) {
        return interaction.update(await buildCoinflipMessage(interaction, times))
      }
    }
@@ -436,13 +450,16 @@ Keep these rules in mind for custom ids:
   `this.none()` for custom ids that belong to other handlers.
 
 <Aside type="caution" title="Handlers get no automatic error reply">
-  An error thrown from a handler's `run` is counted and sent to Sentry, but
+  An error thrown from a handler's `execute` is counted and sent to Sentry, but
   the user gets no explanation. If the builder can fail, for example because
   it [calls a service](#call-an-external-api), defer first and catch the
   failure:
 
   ```ts title="src/interaction-handlers/coinflipAgain.mts"
-  public async run(interaction: ButtonInteraction, times: number) {
+  protected override async execute(
+    interaction: ButtonInteraction,
+    times: number,
+  ) {
     await interaction.deferUpdate()
     try {
       return await interaction.editReply(
@@ -470,15 +487,16 @@ Keep these rules in mind for custom ids:
 ## Add autocomplete
 
 Say `/coinflip` lets the user pick which coin to flip. Call
-`.setAutocomplete(true)` on the option and override `autocompleteRun`. The
-base class admits and gates the run: a disabled command, an unmet premium
-requirement, or a stopping worker returns no choices.
+`.setAutocomplete(true)` on the option and implement `autocomplete`. The
+base class owns Sapphire's `autocompleteRun` and admits and gates the run:
+a disabled command, an unmet premium requirement, or a stopping worker
+returns no choices.
 
 ```ts title="src/commands/coinflip.mts"
 const COINS = ['dime', 'euro', 'loonie', 'nickel', 'penny', 'pound', 'quarter']
 
 // Inside CoinflipCommand:
-public override async autocompleteRun(
+protected override async autocomplete(
   interaction: Command.AutocompleteInteraction,
 ) {
   const focused = interaction.options.getFocused().toLowerCase()
@@ -495,7 +513,7 @@ the database, answer a failed lookup with an empty list instead of throwing;
 Discord shows the user an error otherwise.
 
 Autocomplete only suggests. Discord still sends whatever the user typed, so
-validate the value in `chatInputRun` and answer an unknown coin with an
+validate the value in `chatInput` and answer an unknown coin with an
 ephemeral reply. The `unknownCoin` string interpolates `{{coin}}`, so it
 also goes in `expectedPlaceholders`:
 
@@ -553,7 +571,7 @@ export class CoinflipCommand extends AppSubcommand {
     })
   }
 
-  // chatInputFlip is the chatInputRun from the base command, renamed.
+  // chatInputFlip is the chatInput from the base command, renamed.
 
   public async chatInputStreak(
     interaction: Subcommand.ChatInputCommandInteraction,
@@ -658,17 +676,17 @@ Separate expected outcomes from failures:
 
 ## Test the command
 
-Construct the piece with a minimal loader context, give `container.app` the
-services the run touches, and call the handler with a fake interaction. The
-base class wrapper needs `work` and `experiments` even when the command
-itself uses no services.
+`test/helpers.mts` does the setup. `installFakeApp()` gives `container.app`
+an open work scope and real flags, gates, experiments, and premium, which is
+everything the base class needs. `loaderContext()` builds the context a piece
+constructor expects. Call Sapphire's `chatInputRun` with a fake interaction,
+so the test covers the base class as well as your `chatInput`.
 
 ```ts title="test/coinflipCommand.test.ts"
-import { dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { CommandStore, container } from '@sapphire/framework'
 import { silentLogger } from '@thesharks/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { installFakeApp, loaderContext } from './helpers.mjs'
 
 vi.mock('@sapphire/plugin-i18next', async () => ({
   ...(await vi.importActual('@sapphire/plugin-i18next')),
@@ -680,9 +698,6 @@ vi.mock('@sapphire/plugin-i18next', async () => ({
 }))
 
 const { CoinflipCommand } = await import('../src/commands/coinflip.mjs')
-const { Experiments } = await import('../src/features/experiments.mjs')
-const { FeatureFlags } = await import('../src/features/flags.mjs')
-const { WorkScope } = await import('../src/runtime/work.mjs')
 
 container.client = { options: {} } as never
 container.logger = silentLogger
@@ -702,20 +717,10 @@ function fakeInteraction(times: number | null) {
 
 let command: InstanceType<typeof CoinflipCommand>
 
-beforeEach(() => {
-  const work = new WorkScope()
-  work.open()
-  container.app = {
-    work,
-    experiments: new Experiments(new FeatureFlags()),
-  } as never
+beforeEach(async () => {
+  await installFakeApp()
   command = new CoinflipCommand(
-    {
-      name: 'coinflip',
-      path: fileURLToPath(import.meta.url),
-      root: dirname(fileURLToPath(import.meta.url)),
-      store: new CommandStore(),
-    } as never,
+    loaderContext('coinflip', new CommandStore()),
     {},
   )
 })
@@ -732,6 +737,11 @@ describe('/coinflip', () => {
 })
 ```
 
+When the command calls a service, pass a fake as an override, for example
+`installFakeApp({ tags: fakeTags })`. `config` overrides merge into the
+defaults, so `installFakeApp({ config: { ownerIds: new Set([900n]) } })`
+changes one field.
+
 The mocked `resolveKey` returns the key and its values, so assertions check
 which string was chosen without depending on the English text. Import the
 modules under test after `vi.mock` so they pick up the mock.
@@ -739,9 +749,9 @@ modules under test after `vi.mock` so they pick up the mock.
 <Aside type="note" title="Testing the button handler">
   Testing the [button handler](#add-a-button) works the same way, with an
   `InteractionHandlerStore` in the loader context. Its base class evaluates
-  the command's gate, so `container.app` also needs `flags` and `gates`.
-  `tagCommand.test.ts` shows how to construct them. See
-  [Testing](/development/testing/) for the rest of the toolkit.
+  the command's gate, which `installFakeApp()` already provides. Call the
+  handler's `run`, not `execute`. See [Testing](/development/testing/) for
+  the rest of the toolkit.
 </Aside>
 
 ## Checklist

@@ -80,9 +80,14 @@ The `@thesharks/test-utils` workspace package provides the shared toolkit:
 - `snapshotEnv(prefixes)` removes and later restores environment variables.
 - `connectionPool(factory)` tracks connections for one-call teardown.
 
-To test a command, construct the piece with a minimal loader context, set
-`container.app` to fake services, and call its handler with a fake
-interaction whose `reply` is a spy. To test a service, pass fake
+To test a command, use the two helpers in `test/helpers.mts`.
+`installFakeApp(overrides)` sets `container.app` to an open work scope with
+real flags, gates, experiments, and premium, plus whatever fake services you
+pass. `loaderContext(name, store)` builds the context for the piece
+constructor. Then call the piece's Sapphire entry point (`chatInputRun`,
+`run`) with a fake interaction whose `reply` is a spy. The
+[cookbook](/development/command-cookbook/#test-the-command) has a full
+example. To test a service, pass fake
 repositories and gateways; the tag integration suite shows how to combine
 a real repository with a fake Discord gateway.
 

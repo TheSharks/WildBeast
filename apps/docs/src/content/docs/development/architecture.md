@@ -75,11 +75,11 @@ work.
 | `operators/` | Placement of operator commands into the configured guilds. |
 | `adapters/` | PostgreSQL repositories and Discord gateways behind the service interfaces. |
 | `integrations/` | Code a command shares with its component handlers, one file per command: reply builders, custom ids, and API clients. |
-| `telemetry/` | Span helpers, runtime gauges, tag metrics, the error reply, and the worker-to-manager metric feed for the terminal dashboard. |
+| `telemetry/` | The shared `meter`, span helpers, runtime gauges, tag metrics, the error reply, and the worker-to-manager metric feed for the terminal dashboard. |
 
 Alongside these sit `env.mts` (the validated environment), `sharding/`
 (coordination, epochs, leases, session persistence, identify throttling, the
-reconciler), `utils/` (Redis options, cron slugs, HTTP fetch helpers), and
+reconciler), `utils/` (Redis options, cron slugs, HTTP fetch helpers, shared replies), and
 `languages/`.
 
 Pieces reach services through `this.container.app`, which the runtime
@@ -138,9 +138,20 @@ without sharing jobs with unrelated workers. Retries stay on that queue.
 
 The cluster manager and each shard worker call `initOpenTelemetry` before
 opening application resources. This lets auto-instrumentation record PostgreSQL,
-Redis, and outbound HTTP calls from startup onward. Commands and scheduled tasks
-run inside spans because their base classes wrap them, and every listener that
-records a metric pulls its meter from the same `@thesharks/analytics` package.
+Redis, and outbound HTTP calls from startup onward.
+
+Both entry points (`cluster.mts` and `main.mts`) also load the application
+with `await import()` after that call, not with a static import. A metric
+instrument created before the meter provider is registered never records, and
+static imports run before an entry point's own code. `telemetryOrder.test.ts`
+fails when an entry point statically imports a module that creates
+instruments. The environment and `AppConfig` load first, so the modules they
+import, such as `sharding/keys.mts`, must stay free of instruments.
+
+Commands and scheduled tasks
+run inside spans because their base classes wrap them, and every module that
+records a metric creates its instruments from the one `meter` in
+`telemetry/meter.mjs`.
 The [Telemetry](/self-hosting/telemetry/) page is the operator's view of the
 same system.
 

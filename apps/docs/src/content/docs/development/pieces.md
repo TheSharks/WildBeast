@@ -14,23 +14,34 @@ is a command or scheduled task. For step-by-step recipes, see the
 
 Follow these project conventions when adding a piece:
 
-- Commands and scheduled tasks extend an app base class, not Sapphire's
-  directly. The base class admits every run through the runtime, captures
-  it as a span with an isolated Sentry scope, and attaches the piece's gate.
+- Commands, scheduled tasks, and gated component handlers extend an app base
+  class, not Sapphire's directly. The base class owns Sapphire's entry point
+  (`chatInputRun`, `autocompleteRun`, or `run`) and calls the method you
+  implement (`chatInput`, `autocomplete`, or `execute`). Before it does, it
+  admits the run through the runtime, captures it as a span with an isolated
+  Sentry scope, and checks the piece's gate. Never define the Sapphire entry
+  point in your piece: that skips all of this, and the
+  [structure test](/development/testing/) fails.
 - A piece's name defaults to its file name, and names must be unique.
   Sapphire silently unloads a piece whose name collides with one already
-  loaded. The [structure test](/development/testing/) asserts that every
-  exported piece registers and catches name collisions.
+  loaded. A file that exports more than one piece, as several listener files
+  do, must give each an explicit `name` in `@ApplyOptions`; otherwise they
+  all take the file name and only the last one stays loaded. The structure
+  test asserts that every exported piece registers and catches name
+  collisions.
 - Every command and task has a typed runtime gate. Add
   `features.commands.<name>` or `features.tasks.<name>` to the flag
   registry; the structure test fails when it's missing.
 
 ## Commands
 
-Extend `AppCommand` from `structures/command.mjs`. Override the Sapphire
-handlers `chatInputRun` and `contextMenuRun` as you would in Sapphire. The base
-class wraps whichever ones you define in a span named `discord.command.<name>`,
-so any database or HTTP call inside nests underneath.
+Extend `AppCommand` from `structures/command.mjs`. Describe the command in
+`registerApplicationCommands` as you would in Sapphire, and implement
+`chatInput` for the body. A command with autocompleted options also
+implements `autocomplete`, and one that registers a context menu implements
+`contextMenu`. The base class runs each of them inside a span named
+`discord.command.<name>`, so any database or HTTP call inside nests
+underneath.
 
 ```ts
 import type { Command } from '@sapphire/framework'
@@ -48,7 +59,9 @@ export class PingCommand extends AppCommand {
     })
   }
 
-  public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+  protected override async chatInput(
+    interaction: Command.ChatInputCommandInteraction,
+  ) {
     return interaction.reply(await resolveKey(interaction, 'commands/ping:success'))
   }
 }
@@ -65,7 +78,8 @@ A command with subcommands extends `AppSubcommand` from the same module,
 built on `@sapphire/plugin-subcommands`. Declare the mapping from subcommand
 name to method with `@ApplyOptions` and the same treatment applies, with the
 matched subcommand recorded on the span. The tag command is the pattern to
-copy.
+copy. The subcommands plugin owns `chatInputRun` there and the base class
+wraps its dispatch, so the mapped methods are the bodies.
 
 Two options on the piece change how a command is gated and placed:
 
@@ -143,11 +157,15 @@ in `telemetry/error-reply.mts` is a worked example.
 
 Component handlers (buttons, select menus) extend
 `GatedCommandInteractionHandler` from `structures/interactionHandler.mjs`
-and name the command that owns the component. A button can be clicked long
+and name the command that owns the component. Implement `parse` as in
+Sapphire and `execute` for the body; the base class owns `run`. A button can
+be clicked long
 after its command ran, so the command's preconditions can't protect it; the
 base class re-checks the command's gate and premium requirement through the
 shared gates, admits the run through the runtime, and answers a localized
-denial when the command is disabled. The `close` button handler, which only
+denial when the command is disabled. When the body can fail after deferring,
+catch the failure and call `editReplyTryAgain` from `utils/replies.mjs`. The
+`close` button handler, which only
 removes buttons from an existing message, extends Sapphire's
 `InteractionHandler` directly.
 
@@ -199,15 +217,16 @@ Group listeners by purpose under `listeners/`. Subdirectories organize the
 files but do not affect how Sapphire loads them.
 Listeners that write to a service (the entitlement event listeners, for
 example) run that write through `this.container.app.work.run(...)` so
-draining waits for it. To emit a metric, pull a meter from
-`@thesharks/analytics` at module scope and record inside `run`; the existing
-metrics listeners are the pattern to copy.
+draining waits for it. To emit a metric, create the instrument from the
+shared `meter` in `telemetry/meter.mjs` at module scope and record inside
+`run`; the existing metrics listeners are the pattern to copy.
 
 ## Scheduled tasks
 
 Extend `AppScheduledTask` from `structures/task.mjs` and set a schedule,
-either an `interval` in milliseconds or a `pattern` (cron). The base class
-wraps `run` in a `discord.task.<name>` span, and when the schedule is
+either an `interval` in milliseconds or a `pattern` (cron). Implement
+`execute` for the body. The base class owns `run` and calls `execute` inside
+a `discord.task.<name>` span, and when the schedule is
 expressible as a Sentry monitor (a cron pattern, or a whole-minute interval)
 it also reports [cron check-ins](/self-hosting/telemetry/#sentry), so a run
 that never happens alerts like one that throws.
@@ -224,7 +243,7 @@ export class MetricsCollectionTask extends AppScheduledTask {
     super(context, { ...options, interval: 60_000 })
   }
 
-  public run() {
+  protected override execute() {
     // ...
   }
 }
