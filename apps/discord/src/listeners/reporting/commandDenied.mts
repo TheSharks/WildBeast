@@ -34,7 +34,7 @@ interface DenialReply {
   components?: ActionRowBuilder<ButtonBuilder>[]
 }
 
-/** Scope-aware denial detail: who needs the subscription, and at which scope. */
+/** Scope-aware denial detail: who needs the subscription, and at which scope. Exported for tests. */
 export function premiumDenialDetail(
   interaction: Pick<DeniedInteraction, 'guildId'>,
   tier: string,
@@ -51,6 +51,7 @@ export function premiumDenialDetail(
   return `You or this server need ${tier} to use this command.`
 }
 
+/** Exported for tests; add a branch here when you add a precondition. */
 export async function describeDenial(
   app: Pick<AppServices, 'config'>,
   interaction: DeniedInteraction,
