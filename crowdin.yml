@@ -62,7 +62,11 @@ files:
       two_letters_code:
         en-GB: en-gb
         es-419: es-419
+        # The Crowdin project maps these two to "es-ES" and "sv-SE" for the
+        # bot's benefit; the docs use the short form.
+        es-ES: es
         pt-BR: pt-br
+        sv-SE: sv
         zh-CN: zh-cn
         zh-TW: zh-tw
 
