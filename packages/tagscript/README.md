@@ -103,9 +103,13 @@ TagScript maintains compatibility modes for some tags to help with migration:
 
 ```ts
 import { render } from '@thesharks/tagscript'
+// Regex tags need a safety checker. This one uses `recheck`, an optional
+// peer dependency: npm install recheck
+import { recheckSafety } from '@thesharks/tagscript/recheck'
 
 const regexResult = await render(
-  String.raw`{replaceregex:\d+|with:X|in:I have 5 cats and 23 shirts}`
+  String.raw`{replaceregex:\d+|with:X|in:I have 5 cats and 23 shirts}`,
+  { regexSafety: recheckSafety },
 )
 console.log(regexResult.output) // I have X cats and X shirts
 

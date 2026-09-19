@@ -54,7 +54,7 @@ which ones to render. This is how control-flow
 tags like `{if}` avoid evaluating the branch they don't take. Pass lazy
 handlers as the second argument to `createRegistry`.
 
-## The `{fetch}` and `{js}` tags
+## The `{fetch}`, `{js}`, and regex tags
 
 Both are disabled by default because they reach outside the template. Turn them
 on only when you trust the source of the template, or with the guardrails
@@ -81,6 +81,38 @@ does not execute code itself. Use
 run with a memory limit, an execution timeout, and no access to the host; the
 README has a worked example.
 
+The regex tags, `{replaceregex}` and the `?` operator of `{if}`, also need
+something from you: a `regexSafety` checker. A crafted pattern can keep a CPU
+busy for minutes
+([ReDoS](https://en.wikipedia.org/wiki/ReDoS)), so TagScript only runs a
+user-supplied pattern after a checker confirms it's safe. The package ships
+one built on [recheck](https://www.npmjs.com/package/recheck):
+
+```sh
+npm install recheck
+```
+
+```ts
+import { render } from '@thesharks/tagscript'
+import { recheckSafety } from '@thesharks/tagscript/recheck'
+
+const { output } = await render('{replaceregex:hello world|o+|0}', {
+  regexSafety: recheckSafety,
+})
+// output === 'hell0 w0rld'
+```
+
+`recheck` is an optional peer dependency, and only the
+`@thesharks/tagscript/recheck` entry point imports it. If your templates
+don't use regex, skip it: it's a large analyzer that also downloads
+platform binaries. Without a checker every other tag works, and a regex tag
+fails with an error that names the missing option.
+
+`createRecheckSafety({ timeout })` changes the 500 ms analysis budget. To use
+another analyzer, pass any object with an
+`isSafe(pattern, flags): Promise<boolean>` method. Resolve `true` only when
+the pattern is known to be safe; a checker that throws counts as unsafe.
+
 ## Limits and safety
 
 Tag output is literal. Whatever a handler returns (an argument, a variable, a
@@ -96,9 +128,7 @@ Every bound from the [reference](/tagscript/tags/#limits) is an option:
 `maxIterations`, `maxDepth`, `maxOutputLength`, `maxFetchRequests`,
 `regexPatternLength`, `maxRegexInputLength`, and `maxRegexOperations`.
 
-Regex-based tags are additionally screened for
-[ReDoS](https://en.wikipedia.org/wiki/ReDoS) with
-[recheck](https://www.npmjs.com/package/recheck) before running, and only
-patterns the analysis positively verifies as safe execute. This screening does
-not replace execution limits. Review the limits for your workload and tighten
+Regex-based tags only run patterns that your
+[`regexSafety` checker](#the-fetch-js-and-regex-tags) positively verifies as
+safe. This screening does not replace execution limits. Review the limits for your workload and tighten
 them when accepting templates from users.

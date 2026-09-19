@@ -20,7 +20,8 @@ Everything lives in `packages/tagscript/src`:
 | `runtime/renderer.ts` | The renderer: walks the AST, calls handlers. |
 | `runtime/registry.ts`, `default-registry.ts` | Tag name to handler mapping. |
 | `runtime/limits.ts` | Default limits and their validation. |
-| `runtime/regex-safety.ts` | Checks for regular expression denial of service (ReDoS) and enforces the per-render regex limit. |
+| `recheck.ts` | The `./recheck` entry point: a `regexSafety` checker built on recheck. The only module that imports `recheck`. |
+| `runtime/regex-safety.ts` | Asks the configured `regexSafety` checker about regular expression denial of service (ReDoS) and enforces the per-render regex limit. |
 | `runtime/entry.ts` | Turns public `RenderOptions` into a `RenderContext`. |
 | `tags/` | The built-in handlers, one file per category. |
 | `index.ts`, `web.ts` | The two entry points (Node and browser). |
