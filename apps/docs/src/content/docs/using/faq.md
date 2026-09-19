@@ -52,6 +52,11 @@ Translations can ship before a language is complete. If a string is missing
 in your language, the bot uses the `en-US` version. The bot prefers your own
 client locale over the server locale when picking a language.
 
+This documentation is translated in the same Crowdin project. A language
+shows up in the site's language picker once its first page is fully
+translated. Pages that aren't translated yet appear in English with a
+notice.
+
 ## Where do I report bugs or request features?
 
 Open an issue on [GitHub](https://github.com/TheSharks/WildBeast/issues). For

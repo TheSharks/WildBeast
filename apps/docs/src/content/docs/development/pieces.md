@@ -278,6 +278,13 @@ Add the English strings under `languages/en-US/`; other locales are managed
 through [Crowdin](https://crowdin.com/project/wildbeast). A locale-drift
 test checks that every key used in the source exists in `en-US`.
 
+Only `en-US` is committed. Pushing to `master` uploads the English strings
+to Crowdin, and the image build downloads the finished translations into
+`languages/` before compiling, so don't add other locales by hand: git
+ignores them. A source checkout runs in English unless you download them
+yourself with the [Crowdin CLI](https://crowdin.github.io/crowdin-cli/) and
+the `crowdin.yml` at the repository root.
+
 ## Before you commit
 
 Run `pnpm build && pnpm test`. The structure test loads your compiled piece
