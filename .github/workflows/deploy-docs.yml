@@ -6,6 +6,10 @@ on:
     paths:
       - 'apps/docs/**'
       - 'packages/tagscript/**'
+      # The changelog pages render these files; redeploy when a release
+      # rewrites them. packages/tagscript/** already covers TagScript's.
+      - 'apps/discord/CHANGELOG.md'
+      - 'packages/analytics/CHANGELOG.md'
       - '.github/workflows/deploy-docs.yml'
   # PR preview: build the site to validate docs changes without deploying.
   # The deploy job below is skipped on pull_request, so PRs are build-only.
@@ -13,6 +17,8 @@ on:
     paths:
       - 'apps/docs/**'
       - 'packages/tagscript/**'
+      - 'apps/discord/CHANGELOG.md'
+      - 'packages/analytics/CHANGELOG.md'
       - '.github/workflows/deploy-docs.yml'
   # Deploy on demand for changes outside the watched paths.
   workflow_dispatch:
