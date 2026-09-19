@@ -1,0 +1,90 @@
+---
+title: Sapphire logging
+description: Send Sapphire framework logs to the console, OpenTelemetry, and Sentry.
+sidebar:
+  order: 4
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components'
+
+If your bot runs on [Sapphire](https://www.sapphirejs.dev/), as `hello-bot`
+does, `AnalyticsLogger` replaces the framework's logger. Every
+`container.logger` call still prints to the console, and also becomes an
+OpenTelemetry log record and a Sentry log.
+
+## Register the logger
+
+There are two ways to install it. The plugin is the shorter one, and the
+explicit instance is there for when you build the client options yourself.
+
+<Tabs>
+  <TabItem label="Plugin">
+    Import the `register` entry point once, before you construct the client.
+    It sets `logger.instance` for you and keeps any other logger options you
+    pass.
+
+    ```ts title="src/app.ts"
+    import '@thesharks/analytics/register'
+    import { SapphireClient } from '@sapphire/framework'
+
+    export const client = new SapphireClient({ intents: [] })
+    ```
+  </TabItem>
+  <TabItem label="Explicit instance">
+    ```ts title="src/app.ts"
+    import { AnalyticsLogger } from '@thesharks/analytics'
+    import { LogLevel, SapphireClient } from '@sapphire/framework'
+
+    export const client = new SapphireClient({
+      intents: [],
+      logger: { instance: new AnalyticsLogger({ level: LogLevel.Info }) },
+    })
+    ```
+  </TabItem>
+</Tabs>
+
+`AnalyticsLogger` extends the logger from `@sapphire/plugin-logger` and
+takes the same options. The
+`@thesharks/analytics/bridges/sapphire-logger` entry point re-exports that
+plugin's API alongside the class.
+
+## What gets sent
+
+The logger's level applies to all three destinations. A message below the
+level is dropped everywhere, so a noisy `debug` line can't flood your
+collector while the console stays quiet.
+
+| Sapphire level | OpenTelemetry severity | Sentry method |
+| --- | --- | --- |
+| `Trace`, `Debug` | `DEBUG` | `trace`, `debug` |
+| `Info` | `INFO` | `info` |
+| `Warn` | `WARN` | `warn` |
+| `Error` | `ERROR` | `error` |
+| `Fatal` | `FATAL` | `fatal` |
+
+Records carry a `source` attribute of `sapphire-logger`, so you can filter
+them from logs you emit yourself. A failure to reach OpenTelemetry or
+Sentry is printed with `console.error` and never thrown.
+
+## What gets redacted
+
+Before a message leaves the process, the logger removes likely secrets and
+personal data. The console output goes through Sapphire's own formatting
+and isn't changed.
+
+- Object keys named `token`, `authorization`, `password`, `secret`, `email`,
+  `username`, `tag`, `globalName`, `displayName`, `guild_name`, or
+  `channel_name` have their values replaced with `[Redacted]`. A key that
+  ends with `_` and one of those names, such as `bot_token`, matches too.
+- Anything shaped like a Discord bot token, and the credential after
+  `Bearer`, is replaced inside strings.
+- Objects are inspected three levels deep.
+
+<Aside type="caution" title="Redaction is best effort">
+  The logger matches key names and token shapes. It can't recognize a
+  secret in free text or under an unexpected key. Log IDs, not names or
+  credentials.
+</Aside>
+
+The list is exported as `LOGGER_PII_DENYLIST` from the
+`bridges/sapphire-logger` entry point.

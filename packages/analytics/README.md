@@ -1,5 +1,7 @@
 # @thesharks/analytics
 
+Full documentation: <https://wildbeast.guide/analytics/overview/>
+
 OpenTelemetry-first analytics helpers for WildBeast. This package provides:
 - `initOpenTelemetry` bootstrap for traces/metrics/logs
 - Sapphire logger bridge (`AnalyticsLogger`)

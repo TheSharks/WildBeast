@@ -1,0 +1,142 @@
+---
+title: Exporting telemetry
+description: Configure OTLP endpoints, protocols, headers, and multiple collectors.
+sidebar:
+  order: 2
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components'
+
+`initOpenTelemetry` exports traces, metrics, and logs over OTLP. You can
+configure export with environment variables, in code, or both. This page
+keeps following `hello-bot`.
+
+## When export is on
+
+Export turns on when at least one signal has an endpoint, from either the
+environment or the `exporters` option. With no endpoint, the SDK still runs,
+so your instruments and spans work, but nothing leaves the process.
+
+Set `enableExport` to override that: `false` keeps a configured service
+quiet, for example in tests. Setting it to `true` without any endpoint
+doesn't export anything; the package logs a warning instead.
+
+## Choose an endpoint and protocol
+
+Both OTLP transports are supported. The quickest way to pick one is the
+endpoint's scheme:
+
+<Tabs>
+  <TabItem label="Environment">
+    ```sh
+    # OTLP over HTTP, the collector's 4318 port
+    OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4318
+
+    # OTLP over gRPC, detected from the scheme
+    OTEL_EXPORTER_OTLP_ENDPOINT=grpc://collector:4317
+    ```
+  </TabItem>
+  <TabItem label="Code">
+    ```ts title="src/main.ts"
+    const telemetry = initOpenTelemetry({
+      serviceName: 'hello-bot',
+      namespace: 'hello',
+      exporters: {
+        otlp: { endpoint: 'grpc://collector:4317' },
+      },
+    })
+    ```
+  </TabItem>
+</Tabs>
+
+The protocol for a signal is the first of these that is set:
+
+1. The `protocol` field in code: `'http'` or `'grpc'`.
+2. The signal's variable, such as `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL`.
+3. `OTEL_EXPORTER_OTLP_PROTOCOL`.
+4. The endpoint's scheme: `grpc://` or `grpcs://` means gRPC, anything else
+   means HTTP.
+
+The protocol variables take `http/protobuf` or `grpc`.
+
+## Configure one signal differently
+
+`exporters.otlp` applies to every signal. The `traces`, `metrics`, and `logs`
+keys replace it for one signal. Here `hello-bot` sends traces to a separate
+gRPC collector with a longer timeout, and everything else to the default:
+
+```ts title="src/main.ts" {9-14}
+const telemetry = initOpenTelemetry({
+  serviceName: 'hello-bot',
+  namespace: 'hello',
+  exporters: {
+    otlp: {
+      endpoint: 'http://collector:4318',
+      headers: { Authorization: 'Bearer token' },
+    },
+    traces: {
+      endpoint: 'grpc://traces:4317',
+      headers: { Authorization: 'Bearer token' },
+      timeout: 30_000,
+      compression: 'gzip',
+    },
+  },
+})
+```
+
+A per-signal entry only falls back to `otlp` for a missing `endpoint`. Its
+headers, timeout, and compression come from the entry itself and the
+environment, not from `otlp`, which is why the example repeats the
+`Authorization` header.
+
+The same split works from the environment with
+`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`,
+and `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`.
+
+<Aside type="caution" title="Per-signal HTTP endpoints need the full path">
+  A shared endpoint, from `exporters.otlp` or `OTEL_EXPORTER_OTLP_ENDPOINT`,
+  gets the signal path added for you: `/v1/traces`, `/v1/metrics`, or
+  `/v1/logs`. A per-signal endpoint is used exactly as written, following
+  the OTLP specification, so over HTTP you must include the path yourself.
+  gRPC endpoints never take a path.
+</Aside>
+
+## Send a signal to several collectors
+
+Every `exporters` key also accepts an array. Each entry gets its own
+exporter, so `hello-bot` can keep a second copy of its traces:
+
+```ts title="src/main.ts"
+const telemetry = initOpenTelemetry({
+  serviceName: 'hello-bot',
+  namespace: 'hello',
+  exporters: {
+    traces: [
+      { endpoint: 'http://primary:4318/v1/traces' },
+      {
+        endpoint: 'http://secondary:4318/v1/traces',
+        headers: { 'X-Copy': 'true' },
+      },
+    ],
+  },
+})
+```
+
+## Headers from the environment
+
+Header variables hold comma-separated `key=value` pairs.
+`OTEL_EXPORTER_OTLP_HEADERS` applies to every signal, and a signal's own
+variable, such as `OTEL_EXPORTER_OTLP_TRACES_HEADERS`, is merged on top:
+
+```sh
+OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer token,X-Team=hello"
+```
+
+<Aside type="tip" title="Debugging a silent exporter">
+  Set `OTEL_DIAGNOSTIC_LOG_LEVEL=debug` to print the OpenTelemetry SDK's own
+  diagnostics, including export failures. Accepted levels are `none`,
+  `error`, `warn`, `info`, `debug`, and `verbose`.
+</Aside>
+
+The [configuration reference](/analytics/reference/) lists every exporter
+option and variable.

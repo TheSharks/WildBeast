@@ -1,0 +1,179 @@
+---
+title: Instrumenting your code
+description: Record metrics, spans, and logs, and read metrics in-process without a collector.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components'
+
+Once `initOpenTelemetry` has run, you instrument your code with the standard
+OpenTelemetry API. The package re-exports the parts you need, so
+`hello-bot` doesn't have to depend on `@opentelemetry/api` directly or keep
+its version in step.
+
+```ts title="src/telemetry.ts"
+import { logs, metrics, trace } from '@thesharks/analytics'
+
+export const meter = metrics.getMeter('hello-bot')
+export const tracer = trace.getTracer('hello-bot')
+export const logger = logs.getLogger('hello-bot')
+```
+
+Create instruments from one shared meter, as this module does. It keeps
+names unique and gives you one place to import from.
+
+<Aside type="caution" title="Load this module after initOpenTelemetry">
+  An instrument created before the meter provider is registered never
+  records. Import `src/telemetry.ts` only from code loaded after
+  `initOpenTelemetry`, as shown in the
+  [overview](/analytics/overview/#set-it-up).
+</Aside>
+
+## Count and time things
+
+Counters and histograms come straight from the meter. For durations in
+seconds, pass `DURATION_SECONDS_BOUNDARIES` as the bucket boundaries. The
+SDK's default buckets are sized for milliseconds, so they put every
+sub-five-second measurement in the same few buckets.
+
+```ts title="src/greet.ts"
+import { DURATION_SECONDS_BOUNDARIES } from '@thesharks/analytics'
+import { meter } from './telemetry.js'
+
+const greetings = meter.createCounter('hello_greetings_total', {
+  description: 'Greetings sent',
+})
+
+const greetDuration = meter.createHistogram('hello_greet_duration_seconds', {
+  description: 'Time taken to send a greeting',
+  unit: 's',
+  advice: { explicitBucketBoundaries: DURATION_SECONDS_BOUNDARIES },
+})
+
+export async function greet(send: () => Promise<void>, locale: string) {
+  const started = performance.now()
+  await send()
+  greetings.add(1, { locale })
+  greetDuration.record((performance.now() - started) / 1000, { locale })
+}
+```
+
+The boundaries run from 0.05 to 60 seconds.
+
+## Track a current value
+
+OpenTelemetry gauges are observable: the SDK calls you back when it
+collects. `createGauge` wraps that in a value you can set from anywhere. It
+keeps one value per attribute set and reports them all on each collection.
+
+```ts title="src/presence.ts"
+import { createGauge } from '@thesharks/analytics'
+
+const guilds = createGauge(
+  'hello-bot',
+  'hello_guilds',
+  'Guilds the bot is in',
+)
+
+guilds.set(42, { shard: '0' })
+```
+
+The returned object has three methods:
+
+| Method | Effect |
+| --- | --- |
+| `set(value, attributes)` | Stores the value for that attribute set. |
+| `clear(attributes)` | Stops reporting that attribute set. |
+| `reset()` | Stops reporting every attribute set. |
+
+<Aside type="tip" title="Prefer set(0) over clear for dashboards">
+  Cumulative readers keep showing the last value of a series that stops
+  reporting. When a shard goes away, `set(0, { shard: '0' })` reads
+  correctly on a dashboard, while `clear` leaves the old number behind.
+</Aside>
+
+## Trace an operation
+
+Spans use the OpenTelemetry tracer as-is. `SpanStatusCode` is re-exported
+for marking failures:
+
+```ts title="src/greet.ts"
+import { SpanStatusCode } from '@thesharks/analytics'
+import { tracer } from './telemetry.js'
+
+export function tracedGreet(send: () => Promise<void>) {
+  return tracer.startActiveSpan('hello.greet', async (span) => {
+    try {
+      await send()
+    } catch (error) {
+      span.setStatus({ code: SpanStatusCode.ERROR })
+      span.recordException(error as Error)
+      throw error
+    } finally {
+      span.end()
+    }
+  })
+}
+```
+
+Calls to PostgreSQL, Redis, and `fetch` made inside the span appear as its
+children, because auto-instrumentation is on by default.
+
+<Aside type="note" title="Trace headers only go to internal hosts">
+  Outbound requests carry `traceparent` and `baggage` headers only when the
+  target is a loopback, private-range, or link-local address, so
+  third-party APIs never see your trace IDs. To treat more hosts as
+  internal, list them in `OTEL_TRACE_INTERNAL_TARGETS`, separated by commas.
+  A hostname entry also matches names that end with it.
+</Aside>
+
+## Emit a log record
+
+```ts title="src/greet.ts"
+import { logger } from './telemetry.js'
+
+logger.emit({ severityText: 'info', body: 'Greeting sent' })
+```
+
+If you use Sapphire, you don't need to call this yourself: the
+[logger bridge](/analytics/sapphire/) forwards the framework's logs.
+
+## Read metrics without a collector
+
+`LocalMetricReader` collects metrics in-process, which is useful for a
+status command, a terminal dashboard, or a test. Pass it to
+`initOpenTelemetry`, then take a snapshot whenever you need one:
+
+```ts title="src/main.ts" {1,3,7}
+import { initOpenTelemetry, LocalMetricReader } from '@thesharks/analytics'
+
+const reader = new LocalMetricReader()
+const telemetry = initOpenTelemetry({
+  serviceName: 'hello-bot',
+  namespace: 'hello',
+  metricReaders: [reader],
+})
+
+// Later, after instruments have recorded data:
+const snapshot = await reader.snapshot()
+for (const point of snapshot.points) {
+  console.log(point.name, point.kind, point.value, point.attributes)
+}
+```
+
+The reader works whether or not OTLP export is on, and taking a snapshot
+doesn't drain other readers. Snapshots are cumulative and safe to send
+through `postMessage`, which is how WildBeast's shard workers feed the
+cluster manager's dashboard.
+
+Each point has a `kind` of `counter`, `gauge`, or `histogram`. For a
+histogram, `value` is the mean, and `count`, `sum`, `min`, and `max` are
+also set.
+
+A snapshot is bounded, so check `errors` and `truncated` before trusting a
+partial result:
+
+- Observable callbacks get one second to respond.
+- Each instrument keeps at most 200 attribute sets.
+- A snapshot holds at most 2,000 points, and sets `truncated` beyond that.

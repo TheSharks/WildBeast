@@ -1,0 +1,121 @@
+---
+title: Analytics overview
+description: What @thesharks/analytics sets up, and how to add it to a Node.js service.
+sidebar:
+  order: 1
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components'
+
+`@thesharks/analytics` is the telemetry layer WildBeast runs on, published
+as its own package. One call sets up OpenTelemetry traces, metrics, and logs
+with OTLP export, wires Sentry into the same pipeline, and turns on
+auto-instrumentation for PostgreSQL, Redis, and outbound HTTP.
+
+Use it when you want the same setup in your own service. The examples in
+this section follow one service, a Discord bot called `hello-bot`.
+
+<Aside type="note" title="Looking for the operator's view?">
+  This section is for developers who call the package from code. If you run
+  WildBeast and want to point it at a collector, read
+  [Telemetry](/self-hosting/telemetry/) instead.
+</Aside>
+
+## What you get
+
+- **Traces, metrics, and logs** through the OpenTelemetry SDK, exported over
+  OTLP/HTTP or OTLP/gRPC to one or more collectors.
+- **Sentry** error reporting that shares trace context with OpenTelemetry,
+  with event scrubbing that keeps names and tokens out of reports.
+- **Auto-instrumentation** for `pg`, `undici` (Node.js `fetch`), `ioredis`,
+  and Node.js runtime metrics.
+- **A Sapphire logger** that sends framework logs to the console,
+  OpenTelemetry, and Sentry.
+- **Helpers** for gauges, histogram buckets, and reading metrics in-process
+  without a collector.
+
+## Set it up
+
+<Steps>
+
+1. Install the package. It requires Node.js 22 or later and ships as ESM
+   only.
+
+   <Tabs syncKey="pkg">
+     <TabItem label="pnpm">
+       ```sh
+       pnpm add @thesharks/analytics
+       ```
+     </TabItem>
+     <TabItem label="npm">
+       ```sh
+       npm install @thesharks/analytics
+       ```
+     </TabItem>
+   </Tabs>
+
+2. Call `initOpenTelemetry` at the very top of your entry point, then load
+   the rest of the application with `await import()`.
+
+   ```ts title="src/main.ts"
+   import { initOpenTelemetry } from '@thesharks/analytics'
+
+   const telemetry = initOpenTelemetry({
+     serviceName: 'hello-bot',
+     namespace: 'hello',
+   })
+
+   const { start } = await import('./app.js')
+   await start()
+   ```
+
+3. Flush telemetry when the process stops. `shutdown` waits up to 10 seconds
+   for pending exports, then flushes Sentry.
+
+   ```ts title="src/main.ts" ins={11-12}
+   import { initOpenTelemetry } from '@thesharks/analytics'
+
+   const telemetry = initOpenTelemetry({
+     serviceName: 'hello-bot',
+     namespace: 'hello',
+   })
+
+   const { start } = await import('./app.js')
+   await start()
+
+   process.once('SIGINT', () => telemetry.shutdown())
+   process.once('SIGTERM', () => telemetry.shutdown())
+   ```
+
+4. Point it at a collector. Without an endpoint, nothing is exported.
+
+   ```sh
+   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 node dist/main.js
+   ```
+
+</Steps>
+
+<Aside type="caution" title="Why the dynamic import matters">
+  A metric instrument created before `initOpenTelemetry` registers the meter
+  provider never records anything. Static imports run before your entry
+  point's own code, so a statically imported module that creates instruments
+  at load time is always too early. Loading the application with `await
+  import()` after the call avoids that, and lets auto-instrumentation see
+  database and HTTP calls from startup onward.
+</Aside>
+
+<Aside type="caution" title="Set your own service name">
+  The defaults are WildBeast's: `serviceName` falls back to
+  `OTEL_SERVICE_NAME` and then to `@thesharks/discord`, and `namespace`
+  defaults to `@thesharks`. Set both, or your telemetry is labeled as
+  WildBeast's.
+</Aside>
+
+## Next steps
+
+- [Exporting telemetry](/analytics/exporting/) covers endpoints, protocols,
+  and sending a signal to more than one collector.
+- [Instrumenting your code](/analytics/instrumenting/) shows how to record
+  metrics, spans, and logs.
+- [Configuration reference](/analytics/reference/) lists every option and
+  environment variable.
