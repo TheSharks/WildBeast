@@ -13,6 +13,9 @@ files:
     languages_mapping:
       two_letters_code:
         en-GB: en-GB
+        # Both Spanish variants share the two-letter code "es"; keep them
+        # apart. Discord sends "es-419", so the bot needs that exact name.
+        es-419: es-419
         es-ES: es-ES
         pt-BR: pt-BR
         sv-SE: sv-SE
@@ -58,6 +61,7 @@ files:
     languages_mapping: &docs_codes
       two_letters_code:
         en-GB: en-gb
+        es-419: es-419
         pt-BR: pt-br
         zh-CN: zh-cn
         zh-TW: zh-tw
