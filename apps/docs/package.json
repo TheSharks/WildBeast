@@ -15,6 +15,7 @@
     "@astrojs/starlight": "^0.42.1",
     "@thesharks/tagscript": "workspace:^",
     "astro": "^7.3.3",
+    "recheck": "^4.5.0",
     "sharp": "^0.35.4",
     "starlight-changelogs": "^0.7.0",
     "starlight-links-validator": "^0.26.0",

@@ -219,6 +219,9 @@ importers:
       astro:
         specifier: ^7.3.3
         version: 7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@26.5.1)(ioredis@5.11.1(supports-color@10.2.2))(tsx@4.23.13)(yaml@2.9.0)
+      recheck:
+        specifier: ^4.5.0
+        version: 4.5.0
       sharp:
         specifier: ^0.35.4
         version: 0.35.4(@types/node@26.5.1)
