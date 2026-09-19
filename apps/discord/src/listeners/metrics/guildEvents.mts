@@ -1,7 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
-import * as Sentry from '@sentry/node'
+import { Sentry } from '@thesharks/analytics'
 import { Events, type Guild } from 'discord.js'
 
 // Sentry per-item metrics fit rare join/leave events; OTel already gauges totals.

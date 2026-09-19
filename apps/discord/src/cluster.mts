@@ -1,13 +1,13 @@
 import { hostname } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import * as Sentry from '@sentry/node'
 import {
-  AnalyticsLogger,
   createGauge,
   initOpenTelemetry,
   LocalMetricReader,
+  Sentry,
 } from '@thesharks/analytics'
+import { AnalyticsLogger } from '@thesharks/analytics/bridges/sapphire-logger'
 import { canStartDashboard, startDashboard } from '@thesharks/tui'
 import { fetchRecommendedShardCount, ShardingManager } from 'discord.js'
 import { loadEnv } from './env.mjs'

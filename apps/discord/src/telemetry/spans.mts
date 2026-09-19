@@ -1,11 +1,11 @@
 import type { Listener } from '@sapphire/framework'
-import * as Sentry from '@sentry/node'
 import {
   type Attributes,
   context,
   type OTelLink,
   type OTelSpanContext,
   resolveShardId,
+  Sentry,
   type Span,
   SpanStatusCode,
   trace,

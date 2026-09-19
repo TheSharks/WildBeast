@@ -1,4 +1,4 @@
-import type * as Sentry from '@sentry/node'
+import type { Sentry } from '@thesharks/analytics'
 
 export type MonitorConfig = NonNullable<
   Parameters<typeof Sentry.withMonitor>[2]

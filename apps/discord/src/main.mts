@@ -1,10 +1,10 @@
 import { parentPort, workerData } from 'node:worker_threads'
-import * as Sentry from '@sentry/node'
 import {
-  AnalyticsLogger,
   initOpenTelemetry,
   LocalMetricReader,
+  Sentry,
 } from '@thesharks/analytics'
+import { AnalyticsLogger } from '@thesharks/analytics/bridges/sapphire-logger'
 import { validateEnv } from './env.mjs'
 import { configFromEnv } from './runtime/config.mjs'
 import {

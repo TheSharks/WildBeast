@@ -2,7 +2,7 @@ import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Listener } from '@sapphire/framework'
 import { ScheduledTaskEvents } from '@sapphire/plugin-scheduled-tasks'
-import * as Sentry from '@sentry/node'
+import { Sentry } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
 import { TaskDeferred } from '../../structures/task.mjs'
 

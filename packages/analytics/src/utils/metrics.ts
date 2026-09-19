@@ -1,6 +1,4 @@
 import { type Attributes, metrics } from '@opentelemetry/api'
-import type { Listener } from '@sapphire/framework'
-import type { Guild } from 'discord.js'
 
 export type {
   Context as OTelContext,
@@ -18,9 +16,13 @@ export const DURATION_SECONDS_BOUNDARIES = [
 ]
 
 /** Shard id from interaction guild, else piece container. */
+// Structural on purpose: the main entry must not pull in discord.js or
+// Sapphire types, which are optional peers.
 export function resolveShardId(
-  interaction?: { guild?: Guild | null },
-  piece?: Pick<Listener, 'container'>,
+  interaction?: { guild?: { shardId: number } | null },
+  piece?: {
+    container: { client: { shard?: { ids?: readonly number[] } | null } }
+  },
 ): string {
   // Interaction guild is per-interaction accurate.
   if (interaction?.guild?.shardId !== undefined) {

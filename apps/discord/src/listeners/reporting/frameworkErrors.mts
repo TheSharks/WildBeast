@@ -1,7 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators'
 import type { ListenerOptions } from '@sapphire/framework'
 import { Events, Listener } from '@sapphire/framework'
-import * as Sentry from '@sentry/node'
+import { Sentry } from '@thesharks/analytics'
 import type { ClientEvents } from 'discord.js'
 import { meter } from '../../telemetry/meter.mjs'
 

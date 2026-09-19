@@ -10,8 +10,7 @@ import {
   type Provider,
   StandardResolutionReasons,
 } from '@openfeature/server-sdk'
-import * as Sentry from '@sentry/node'
-import { DURATION_SECONDS_BOUNDARIES } from '@thesharks/analytics'
+import { DURATION_SECONDS_BOUNDARIES, Sentry } from '@thesharks/analytics'
 import type { LimitFlagKey } from '../premium/limits.mjs'
 import { meter } from '../telemetry/meter.mjs'
 import {

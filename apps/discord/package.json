@@ -37,7 +37,6 @@
     "@sapphire/plugin-i18next": "^8.0.0",
     "@sapphire/plugin-scheduled-tasks": "^10.0.4",
     "@sapphire/plugin-subcommands": "^7.0.1",
-    "@sentry/node": "^10.75.0",
     "@thesharks/analytics": "workspace:^",
     "@thesharks/drizzle": "workspace:^",
     "@thesharks/tagscript": "workspace:^",

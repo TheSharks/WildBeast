@@ -1,5 +1,4 @@
-import * as Sentry from '@sentry/node'
-import { createGauge, metrics } from '@thesharks/analytics'
+import { createGauge, metrics, Sentry } from '@thesharks/analytics'
 import type { Shard, ShardingManager } from 'discord.js'
 import type { FleetLogger, ShardingHost } from './manager.mjs'
 

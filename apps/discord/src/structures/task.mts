@@ -1,6 +1,6 @@
 import { type Awaitable, container } from '@sapphire/framework'
 import { ScheduledTask } from '@sapphire/plugin-scheduled-tasks'
-import * as Sentry from '@sentry/node'
+import { Sentry } from '@thesharks/analytics'
 import { taskGateKey } from '../features/registry.mjs'
 import { ownsTask } from '../runtime/task-queue.mjs'
 import { WorkRejected } from '../runtime/work.mjs'

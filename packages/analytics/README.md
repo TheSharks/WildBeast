@@ -133,7 +133,7 @@ logger.emit({
 The `AnalyticsLogger` extends Sapphire's logger to automatically send logs to both OpenTelemetry and Sentry:
 
 ```typescript
-import { AnalyticsLogger } from "@thesharks/analytics";
+import { AnalyticsLogger } from "@thesharks/analytics/bridges/sapphire-logger";
 
 const client = new SapphireClient({
   logger: {

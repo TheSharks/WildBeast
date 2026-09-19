@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { container, ListenerStore } from '@sapphire/framework'
-import * as Sentry from '@sentry/node'
+import { Sentry } from '@thesharks/analytics'
 import { captureMetrics, silentLogger } from '@thesharks/test-utils'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 

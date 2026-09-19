@@ -31,14 +31,16 @@ vi.mock('../src/fleet/manager.mjs', () => ({
   },
 }))
 vi.mock('discord.js', () => ({ ShardingManager: class {} }))
-vi.mock('@sentry/node', () => ({ captureException: vi.fn() }))
 vi.mock('@thesharks/tui', () => ({ canStartDashboard: () => false }))
-vi.mock('@thesharks/analytics', () => ({
+vi.mock('@thesharks/analytics/bridges/sapphire-logger', () => ({
   AnalyticsLogger: class {
     info = vi.fn()
     error = vi.fn()
     fatal = vi.fn()
   },
+}))
+vi.mock('@thesharks/analytics', () => ({
+  Sentry: { captureException: vi.fn() },
   createGauge: () => ({ set: vi.fn() }),
   initOpenTelemetry: () => ({ shutdown: state.flush }),
 }))

@@ -2,8 +2,8 @@
 // flushes and exits. Spawned as a child process by the e2e test so every
 // scenario gets a fresh set of global providers.
 import { LogLevel } from '@sapphire/framework'
+import { AnalyticsLogger } from '../../dist/bridges/sapphire-logger.js'
 import {
-  AnalyticsLogger,
   DURATION_SECONDS_BOUNDARIES,
   initOpenTelemetry,
   logs,
