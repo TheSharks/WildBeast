@@ -28,7 +28,7 @@ cd ../..
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 pnpm --filter @thesharks/discord start
 ```
 
-Open [Grafana](http://localhost:3000) and select the **WildBeast** folder to
+Open Grafana at `http://localhost:3000` and select the **WildBeast** folder to
 find the dashboards. The local stack does not require a login.
 
 ## What each dashboard shows

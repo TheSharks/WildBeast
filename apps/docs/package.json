@@ -17,6 +17,7 @@
     "astro": "^7.3.3",
     "sharp": "^0.35.4",
     "starlight-changelogs": "^0.7.0",
+    "starlight-links-validator": "^0.26.0",
     "starlight-sidebar-topics": "^0.9.0"
   },
   "devDependencies": {

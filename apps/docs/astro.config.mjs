@@ -1,12 +1,11 @@
 // @ts-check
-// TODO: add a link checker (e.g. starlight-links-validator) to CI so
-// renamed pages and asset moves fail the build instead of rotting.
 import starlight from '@astrojs/starlight'
 import { defineConfig } from 'astro/config'
 import { fileURLToPath } from 'node:url'
 import starlightChangelogs, {
   makeChangelogsSidebarLinks,
 } from 'starlight-changelogs'
+import starlightLinksValidator from 'starlight-links-validator'
 import starlightSidebarTopics from 'starlight-sidebar-topics'
 
 export default defineConfig({
@@ -36,6 +35,8 @@ export default defineConfig({
   integrations: [
     starlight({
       plugins: [
+        // Fails the build on a broken internal link or anchor.
+        starlightLinksValidator(),
         starlightChangelogs(),
         // One sidebar per audience: the bot, and each package that ships
         // on its own. The current page decides which sidebar shows.
