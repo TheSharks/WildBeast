@@ -57,7 +57,11 @@ formatting and link conventions.
 - Link between site pages with site-absolute paths and trailing slashes, such
   as `/self-hosting/configuration/#redis`. Use descriptive link text.
 - When changing headings or moving pages, update incoming links and anchors.
-  The sidebar is generated from the directory layout in `astro.config.mjs`.
+  The sidebar is split into topics (WildBeast, TagScript, Analytics) with
+  `starlight-sidebar-topics` in `astro.config.mjs`. Every page must belong to
+  a topic: the WildBeast and Analytics topics autogenerate from their
+  directories, while TagScript pages are listed by slug, so add new ones
+  there.
 - Keep examples and operator references consistent with the implementation.
   When a metric changes, update affected dashboard queries, alerts, and docs.
 - Preserve useful upgrade instructions when removing historical material.

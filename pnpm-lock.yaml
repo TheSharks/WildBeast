@@ -225,6 +225,9 @@ importers:
       starlight-changelogs:
         specifier: ^0.7.0
         version: 0.7.0(@astrojs/starlight@0.42.1(astro@7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@26.5.1)(ioredis@5.11.1(supports-color@10.2.2))(tsx@4.23.13)(yaml@2.9.0))(supports-color@10.2.2)(typescript@6.0.3))(astro@7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@26.5.1)(ioredis@5.11.1(supports-color@10.2.2))(tsx@4.23.13)(yaml@2.9.0))(supports-color@10.2.2)
+      starlight-sidebar-topics:
+        specifier: ^0.9.0
+        version: 0.9.0(@astrojs/starlight@0.42.1(astro@7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@26.5.1)(ioredis@5.11.1(supports-color@10.2.2))(tsx@4.23.13)(yaml@2.9.0))(supports-color@10.2.2)(typescript@6.0.3))(astro@7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@26.5.1)(ioredis@5.11.1(supports-color@10.2.2))(tsx@4.23.13)(yaml@2.9.0))
     devDependencies:
       '@astrojs/check':
         specifier: ^0.9.10
@@ -3791,6 +3794,13 @@ packages:
     engines: {node: '>=22.12.0'}
     peerDependencies:
       '@astrojs/starlight': '>=0.38.0'
+
+  starlight-sidebar-topics@0.9.0:
+    resolution: {integrity: sha512-xFwMAAtTVyqsO5DZ8Ldk0vN+2QoPdtjtDi8fbrzvQATIJvIvfaBLL9JzfXAjNHI9vMkj35VMWMd8tTICeO6RIA==}
+    engines: {node: '>=22.12.0'}
+    peerDependencies:
+      '@astrojs/starlight': '>=0.42.0'
+      astro: ^7.2.10
 
   std-env@4.2.0:
     resolution: {integrity: sha512-oCUKSupKTHX53EyjDtuZQ64pjLJ6yYCtpmEw0goYxtjG9KpbRe8KAsl2tBUGU9DyMcJ0RwJ8GqJAFzMXcXW1Rw==}
@@ -7697,6 +7707,12 @@ snapshots:
     transitivePeerDependencies:
       - astro
       - supports-color
+
+  starlight-sidebar-topics@0.9.0(@astrojs/starlight@0.42.1(astro@7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@26.5.1)(ioredis@5.11.1(supports-color@10.2.2))(tsx@4.23.13)(yaml@2.9.0))(supports-color@10.2.2)(typescript@6.0.3))(astro@7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@26.5.1)(ioredis@5.11.1(supports-color@10.2.2))(tsx@4.23.13)(yaml@2.9.0)):
+    dependencies:
+      '@astrojs/starlight': 0.42.1(astro@7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@26.5.1)(ioredis@5.11.1(supports-color@10.2.2))(tsx@4.23.13)(yaml@2.9.0))(supports-color@10.2.2)(typescript@6.0.3)
+      astro: 7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@26.5.1)(ioredis@5.11.1(supports-color@10.2.2))(tsx@4.23.13)(yaml@2.9.0)
+      picomatch: 4.0.7
 
   std-env@4.2.0: {}
 
