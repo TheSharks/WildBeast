@@ -23,6 +23,8 @@ TagScript is a templating engine for chatbots that need flexible message generat
 
 Inspired by [JagTag-JS](https://github.com/TheSharks/JagTag-JS/), TagScript is WildBeast's modern, extensible, and secure successor.
 
+Full documentation, with a live playground: <https://wildbeast.guide/tagscript/overview/>
+
 ## Install TagScript
 
 ```bash

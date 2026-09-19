@@ -20,7 +20,7 @@ hero:
       variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components'
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components'
 
 <CardGrid stagger>
   <Card title="Modular by design" icon="puzzle">
@@ -53,5 +53,23 @@ pnpm install
 Then follow the [getting started guide](/self-hosting/getting-started/) to
 configure your bot token, connect PostgreSQL and Redis, apply migrations, and
 start the bot.
+
+## Use the packages on their own
+
+Two parts of WildBeast are published as standalone packages, each with its
+own section of this site.
+
+<CardGrid>
+  <LinkCard
+    title="TagScript"
+    description="The templating language behind tags, and how to embed it in your own code."
+    href="/tagscript/overview/"
+  />
+  <LinkCard
+    title="Analytics"
+    description="OpenTelemetry and Sentry setup for Node.js services, in one call."
+    href="/analytics/overview/"
+  />
+</CardGrid>
 
 </div>
