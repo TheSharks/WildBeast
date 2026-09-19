@@ -2,6 +2,7 @@
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "paths": {
+      "~/*": ["./src/*"],
       "@thesharks/tagscript/web": ["../../packages/tagscript/src/web.ts"]
     }
   },

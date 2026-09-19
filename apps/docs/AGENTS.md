@@ -62,6 +62,9 @@ formatting and link conventions.
   a topic: the WildBeast and Analytics topics autogenerate from their
   directories, while TagScript pages are listed by slug, so add new ones
   there.
+- Reference assets and components with the `~/` alias (`~/assets/...`,
+  `~/components/...`), never a relative path. Crowdin writes a translated
+  page one directory deeper, where `../` paths break the build.
 - Write pages in English only. Translations come from Crowdin at deploy
   time and are never committed; `locales.mjs` lists the languages, and a
   language turns on when its directory exists. When adding a language,
