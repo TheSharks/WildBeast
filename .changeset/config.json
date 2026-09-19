@@ -10,6 +10,12 @@
   "access": "public",
   "baseBranch": "master",
   "updateInternalDependencies": "patch",
-  "ignore": [],
+  "ignore": [
+    "@thesharks/docs",
+    "@thesharks/drizzle",
+    "@thesharks/test-utils",
+    "@thesharks/tsconfig",
+    "@thesharks/tui"
+  ],
   "privatePackages": { "version": true, "tag": true }
 }

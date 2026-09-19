@@ -1,6 +1,6 @@
 {
   "name": "@thesharks/analytics",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Opinionated Sentry-on-OpenTelemetry telemetry bootstrap for Sapphire Discord bots: traces, metrics and logs over OTLP, with a Sapphire logger bridge",
   "keywords": [
     "opentelemetry",

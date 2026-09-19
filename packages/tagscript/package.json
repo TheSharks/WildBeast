@@ -1,6 +1,6 @@
 {
   "name": "@thesharks/tagscript",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "The TagScript templating language: a safe, limit-bounded interpreter for user-authored message templates, in Node and the browser",
   "keywords": [
     "tagscript",
