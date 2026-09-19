@@ -6,7 +6,9 @@ import { fileURLToPath } from 'node:url'
  * Languages the docs can be translated into, keyed by the directory and URL
  * segment Starlight uses. The set mirrors Discord's locale list, which is
  * also what the bot's translations follow; `crowdin.yml` at the repo root
- * maps Crowdin's language codes onto these keys.
+ * maps Crowdin's language codes onto these keys. Labels are Discord's native
+ * names, except Russian (Discord's starts with a Latin "P") and Simplified
+ * Chinese (Discord's bare "中文" is ambiguous next to Traditional).
  *
  * Translations aren't committed. Crowdin writes them to
  * `src/content/docs/<key>/` at build time, and only a language whose
@@ -16,14 +18,14 @@ import { fileURLToPath } from 'node:url'
  * @type {Record<string, { label: string, lang: string }>}
  */
 export const translatedLocales = {
-  bg: { label: 'Български', lang: 'bg' },
+  bg: { label: 'български', lang: 'bg' },
   cs: { label: 'Čeština', lang: 'cs' },
   da: { label: 'Dansk', lang: 'da' },
   de: { label: 'Deutsch', lang: 'de' },
   el: { label: 'Ελληνικά', lang: 'el' },
-  'en-gb': { label: 'English (UK)', lang: 'en-GB' },
+  'en-gb': { label: 'English, UK', lang: 'en-GB' },
   es: { label: 'Español', lang: 'es' },
-  'es-419': { label: 'Español (Latinoamérica)', lang: 'es-419' },
+  'es-419': { label: 'Español, LATAM', lang: 'es-419' },
   fi: { label: 'Suomi', lang: 'fi' },
   fr: { label: 'Français', lang: 'fr' },
   hi: { label: 'हिन्दी', lang: 'hi' },
@@ -33,11 +35,11 @@ export const translatedLocales = {
   it: { label: 'Italiano', lang: 'it' },
   ja: { label: '日本語', lang: 'ja' },
   ko: { label: '한국어', lang: 'ko' },
-  lt: { label: 'Lietuvių', lang: 'lt' },
+  lt: { label: 'Lietuviškai', lang: 'lt' },
   nl: { label: 'Nederlands', lang: 'nl' },
   no: { label: 'Norsk', lang: 'no' },
   pl: { label: 'Polski', lang: 'pl' },
-  'pt-br': { label: 'Português (Brasil)', lang: 'pt-BR' },
+  'pt-br': { label: 'Português do Brasil', lang: 'pt-BR' },
   ro: { label: 'Română', lang: 'ro' },
   ru: { label: 'Русский', lang: 'ru' },
   sv: { label: 'Svenska', lang: 'sv' },
@@ -46,7 +48,7 @@ export const translatedLocales = {
   uk: { label: 'Українська', lang: 'uk' },
   vi: { label: 'Tiếng Việt', lang: 'vi' },
   'zh-cn': { label: '简体中文', lang: 'zh-CN' },
-  'zh-tw': { label: '正體中文', lang: 'zh-TW' },
+  'zh-tw': { label: '繁體中文', lang: 'zh-TW' },
 }
 
 /** English at the site root, plus every language Crowdin has delivered. */
