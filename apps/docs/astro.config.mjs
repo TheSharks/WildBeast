@@ -8,6 +8,21 @@ import starlightChangelogs, {
 import starlightLinksValidator from 'starlight-links-validator'
 import starlightLlmsTxt from 'starlight-llms-txt'
 import starlightSidebarTopics from 'starlight-sidebar-topics'
+import { availableLocales } from './locales.mjs'
+
+const locales = availableLocales()
+const translated = Object.keys(locales).filter((key) => key !== 'root')
+
+/**
+ * Changelog pages come from a plugin, so topics find them by path. Cover
+ * each page at the root and under every translated locale.
+ * @param {string} base
+ */
+const changelogPaths = (base) =>
+  ['', ...translated.map((key) => `/${key}`)].flatMap((prefix) => [
+    `${prefix}/${base}`,
+    `${prefix}/${base}/**/*`,
+  ])
 
 export default defineConfig({
   site: 'https://wildbeast.guide',
@@ -36,8 +51,14 @@ export default defineConfig({
   integrations: [
     starlight({
       plugins: [
-        // Fails the build on a broken internal link or anchor.
-        starlightLinksValidator(),
+        // Fails the build on a broken internal link or anchor. Untranslated
+        // pages fall back to English, so links to them are fine. Once
+        // translations are present, problems are only reported: a mistake
+        // made on Crowdin can't be fixed in git and mustn't block a deploy.
+        starlightLinksValidator({
+          errorOnFallbackPages: false,
+          failOnError: translated.length === 0,
+        }),
         starlightChangelogs(),
         // Markdown copies of the docs for coding assistants, with one set
         // per audience so a TagScript question doesn't load the bot's docs.
@@ -153,14 +174,18 @@ export default defineConfig({
             // Version pages come from starlight-changelogs, not content
             // files, so tie each changelog to its topic by path.
             topics: {
-              wildbeast: ['/changelog', '/changelog/**/*'],
-              tagscript: ['/tagscript/changelog', '/tagscript/changelog/**/*'],
-              analytics: ['/analytics/changelog', '/analytics/changelog/**/*'],
+              wildbeast: changelogPaths('changelog'),
+              tagscript: changelogPaths('tagscript/changelog'),
+              analytics: changelogPaths('analytics/changelog'),
             },
           },
         ),
       ],
       title: 'WildBeast',
+      // English stays at the site root so existing URLs don't move.
+      defaultLocale: 'root',
+      locales,
+      routeMiddleware: './src/routeData.ts',
       favicon: '/favicon.png',
       logo: {
         replacesTitle: true,

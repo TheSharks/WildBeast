@@ -62,6 +62,11 @@ formatting and link conventions.
   a topic: the WildBeast and Analytics topics autogenerate from their
   directories, while TagScript pages are listed by slug, so add new ones
   there.
+- Write pages in English only. Translations come from Crowdin at deploy
+  time and are never committed; `locales.mjs` lists the languages, and a
+  language turns on when its directory exists. When adding a language,
+  update `locales.mjs`, the `ignore` list in the root `crowdin.yml`, and
+  `.gitignore` together.
 - Keep examples and operator references consistent with the implementation.
   When a metric changes, update affected dashboard queries, alerts, and docs.
 - Preserve useful upgrade instructions when removing historical material.

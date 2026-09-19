@@ -11,6 +11,7 @@
       "outputs": ["dist/**"],
       "inputs": [
         "$TURBO_DEFAULT$",
+        "src/content/docs/**",
         "$TURBO_ROOT$/apps/discord/CHANGELOG.md",
         "$TURBO_ROOT$/packages/analytics/CHANGELOG.md"
       ]
