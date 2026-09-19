@@ -213,7 +213,7 @@ export default defineConfig({
         },
       ],
       editLink: {
-        baseUrl: 'https://github.com/TheSharks/WildBeast/edit/feat/v9/apps/docs/',
+        baseUrl: 'https://github.com/TheSharks/WildBeast/edit/master/apps/docs/',
       },
     }),
   ],
