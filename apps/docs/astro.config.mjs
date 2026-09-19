@@ -57,6 +57,9 @@ export default defineConfig({
         // made on Crowdin can't be fixed in git and mustn't block a deploy.
         starlightLinksValidator({
           errorOnFallbackPages: false,
+          // A translated page linking to /using/... instead of
+          // /nl/using/... drops the reader back into English.
+          errorOnInconsistentLocale: true,
           failOnError: translated.length === 0,
         }),
         starlightChangelogs(),
