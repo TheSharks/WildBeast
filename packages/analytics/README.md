@@ -2,6 +2,8 @@
 
 Full documentation: <https://wildbeast.guide/analytics/overview/>
 
+Using a coding assistant? Give it the docs as one Markdown file: <https://wildbeast.guide/_llms-txt/analytics.txt>
+
 OpenTelemetry-first analytics helpers for WildBeast. This package provides:
 - `initOpenTelemetry` bootstrap for traces/metrics/logs
 - Sapphire logger bridge (`AnalyticsLogger`)

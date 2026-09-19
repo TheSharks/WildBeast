@@ -6,6 +6,7 @@ import starlightChangelogs, {
   makeChangelogsSidebarLinks,
 } from 'starlight-changelogs'
 import starlightLinksValidator from 'starlight-links-validator'
+import starlightLlmsTxt from 'starlight-llms-txt'
 import starlightSidebarTopics from 'starlight-sidebar-topics'
 
 export default defineConfig({
@@ -38,6 +39,42 @@ export default defineConfig({
         // Fails the build on a broken internal link or anchor.
         starlightLinksValidator(),
         starlightChangelogs(),
+        // Markdown copies of the docs for coding assistants, with one set
+        // per audience so a TagScript question doesn't load the bot's docs.
+        starlightLlmsTxt({
+          projectName: 'WildBeast',
+          description:
+            'WildBeast is a self-hostable Discord bot with slash commands and custom tags. Two parts are published as standalone npm packages: @thesharks/tagscript, a templating language for user-authored messages, and @thesharks/analytics, an OpenTelemetry and Sentry setup for Node.js services.',
+          // Emit the Markdown source as written. Rendering to HTML and
+          // converting back loses headings and paragraph breaks on this
+          // site, and the source keeps the playground's templates readable.
+          rawContent: true,
+          customSets: [
+            {
+              label: 'TagScript',
+              description:
+                'the TagScript language, its built-in tags, and embedding @thesharks/tagscript in your own code',
+              paths: ['tagscript/**'],
+            },
+            {
+              label: 'Analytics',
+              description:
+                'setting up and using @thesharks/analytics for OpenTelemetry and Sentry',
+              paths: ['analytics/**'],
+            },
+            {
+              label: 'Self-hosting',
+              description:
+                'installing, configuring, scaling, and monitoring your own WildBeast instance',
+              paths: ['self-hosting/**'],
+            },
+            {
+              label: 'Using WildBeast',
+              description: 'the slash commands the bot provides',
+              paths: ['using/**'],
+            },
+          ],
+        }),
         // One sidebar per audience: the bot, and each package that ships
         // on its own. The current page decides which sidebar shows.
         starlightSidebarTopics(

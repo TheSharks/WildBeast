@@ -25,6 +25,8 @@ Inspired by [JagTag-JS](https://github.com/TheSharks/JagTag-JS/), TagScript is W
 
 Full documentation, with a live playground: <https://wildbeast.guide/tagscript/overview/>
 
+Using a coding assistant? Give it the docs as one Markdown file: <https://wildbeast.guide/_llms-txt/tagscript.txt>
+
 ## Install TagScript
 
 ```bash
