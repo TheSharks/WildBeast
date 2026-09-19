@@ -137,3 +137,41 @@ dist
 
 # pnpm
 .pnpm-store/
+
+# Translations are pulled from Crowdin at build time, never committed.
+# English is the source and stays tracked.
+apps/discord/src/languages/*
+!apps/discord/src/languages/en-US/
+# One line per key in apps/docs/locales.mjs. Listed explicitly so a new docs
+# section is never ignored by accident.
+apps/docs/src/content/docs/bg/
+apps/docs/src/content/docs/cs/
+apps/docs/src/content/docs/da/
+apps/docs/src/content/docs/de/
+apps/docs/src/content/docs/el/
+apps/docs/src/content/docs/en-gb/
+apps/docs/src/content/docs/es/
+apps/docs/src/content/docs/es-419/
+apps/docs/src/content/docs/fi/
+apps/docs/src/content/docs/fr/
+apps/docs/src/content/docs/hi/
+apps/docs/src/content/docs/hr/
+apps/docs/src/content/docs/hu/
+apps/docs/src/content/docs/id/
+apps/docs/src/content/docs/it/
+apps/docs/src/content/docs/ja/
+apps/docs/src/content/docs/ko/
+apps/docs/src/content/docs/lt/
+apps/docs/src/content/docs/nl/
+apps/docs/src/content/docs/no/
+apps/docs/src/content/docs/pl/
+apps/docs/src/content/docs/pt-br/
+apps/docs/src/content/docs/ro/
+apps/docs/src/content/docs/ru/
+apps/docs/src/content/docs/sv/
+apps/docs/src/content/docs/th/
+apps/docs/src/content/docs/tr/
+apps/docs/src/content/docs/uk/
+apps/docs/src/content/docs/vi/
+apps/docs/src/content/docs/zh-cn/
+apps/docs/src/content/docs/zh-tw/

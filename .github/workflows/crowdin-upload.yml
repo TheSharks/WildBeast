@@ -1,0 +1,38 @@
+name: Upload sources to Crowdin
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/discord/src/languages/en-US/**'
+      - 'apps/docs/src/content/docs/**'
+      - 'crowdin.yml'
+      - '.github/workflows/crowdin-upload.yml'
+  # Re-sync on demand, for example after changing crowdin.yml.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Uploads are whole-project syncs; never run two at once.
+concurrency: ${{ github.workflow }}
+
+jobs:
+  upload:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      # Sources only. Translations are pulled at build time by the docs
+      # deploy and the image build, and are never pushed back to git.
+      - name: Upload source strings
+        uses: crowdin/github-action@v3
+        with:
+          upload_sources: true
+          upload_translations: false
+          download_translations: false
+          push_translations: false
+          create_pull_request: false
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}

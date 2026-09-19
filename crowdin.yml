@@ -1,0 +1,68 @@
+# Source strings go up from master; translations come down at build time and
+# are never committed (see .gitignore). Both file groups write Discord's
+# locale codes, because the bot matches a guild's locale against its language
+# directory names. The docs lowercase them for URLs; apps/docs/locales.mjs
+# lists the same set.
+project_id_env: CROWDIN_PROJECT_ID
+api_token_env: CROWDIN_PERSONAL_TOKEN
+preserve_hierarchy: true
+
+files:
+  - source: /apps/discord/src/languages/en-US/**/*.json
+    translation: /apps/discord/src/languages/%two_letters_code%/**/%original_file_name%
+    languages_mapping:
+      two_letters_code:
+        en-GB: en-GB
+        es-ES: es-ES
+        pt-BR: pt-BR
+        sv-SE: sv-SE
+        zh-CN: zh-CN
+        zh-TW: zh-TW
+
+  - source: /apps/docs/src/content/docs/**/*.md
+    translation: /apps/docs/src/content/docs/%two_letters_code%/**/%original_file_name%
+    # Downloaded translations sit inside the source tree; don't send them
+    # back up as sources. One line per key in apps/docs/locales.mjs.
+    ignore: &docs_translations
+      - /apps/docs/src/content/docs/bg/**/*
+      - /apps/docs/src/content/docs/cs/**/*
+      - /apps/docs/src/content/docs/da/**/*
+      - /apps/docs/src/content/docs/de/**/*
+      - /apps/docs/src/content/docs/el/**/*
+      - /apps/docs/src/content/docs/en-gb/**/*
+      - /apps/docs/src/content/docs/es/**/*
+      - /apps/docs/src/content/docs/es-419/**/*
+      - /apps/docs/src/content/docs/fi/**/*
+      - /apps/docs/src/content/docs/fr/**/*
+      - /apps/docs/src/content/docs/hi/**/*
+      - /apps/docs/src/content/docs/hr/**/*
+      - /apps/docs/src/content/docs/hu/**/*
+      - /apps/docs/src/content/docs/id/**/*
+      - /apps/docs/src/content/docs/it/**/*
+      - /apps/docs/src/content/docs/ja/**/*
+      - /apps/docs/src/content/docs/ko/**/*
+      - /apps/docs/src/content/docs/lt/**/*
+      - /apps/docs/src/content/docs/nl/**/*
+      - /apps/docs/src/content/docs/no/**/*
+      - /apps/docs/src/content/docs/pl/**/*
+      - /apps/docs/src/content/docs/pt-br/**/*
+      - /apps/docs/src/content/docs/ro/**/*
+      - /apps/docs/src/content/docs/ru/**/*
+      - /apps/docs/src/content/docs/sv/**/*
+      - /apps/docs/src/content/docs/th/**/*
+      - /apps/docs/src/content/docs/tr/**/*
+      - /apps/docs/src/content/docs/uk/**/*
+      - /apps/docs/src/content/docs/vi/**/*
+      - /apps/docs/src/content/docs/zh-cn/**/*
+      - /apps/docs/src/content/docs/zh-tw/**/*
+    languages_mapping: &docs_codes
+      two_letters_code:
+        en-GB: en-gb
+        pt-BR: pt-br
+        zh-CN: zh-cn
+        zh-TW: zh-tw
+
+  - source: /apps/docs/src/content/docs/**/*.mdx
+    translation: /apps/docs/src/content/docs/%two_letters_code%/**/%original_file_name%
+    ignore: *docs_translations
+    languages_mapping: *docs_codes
