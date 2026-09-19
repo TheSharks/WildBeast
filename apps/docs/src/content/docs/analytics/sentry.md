@@ -24,6 +24,23 @@ const telemetry = initOpenTelemetry({
 Sentry doesn't depend on OTLP export. It reports with or without a
 collector endpoint.
 
+## Use the same Sentry instance
+
+To call Sentry yourself, import it from this package instead of installing
+`@sentry/node`:
+
+```ts title="src/greet.ts"
+import { Sentry } from '@thesharks/analytics'
+
+Sentry.captureException(new Error('Greeting failed'))
+```
+
+Sentry keeps its state per installed copy, and all `@sentry/*` packages must
+be the same version. A second `@sentry/node` in your own dependencies can
+resolve to a different version, and calls made through it never reach the
+client that `initOpenTelemetry` set up. The re-export is always the right
+one.
+
 ## Defaults worth knowing
 
 - **Sampling**: 20% of traces when the environment is `production`, and all

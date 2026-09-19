@@ -12,6 +12,13 @@ does, `AnalyticsLogger` replaces the framework's logger. Every
 `container.logger` call still prints to the console, and also becomes an
 OpenTelemetry log record and a Sentry log.
 
+Both entry points on this page need `@sapphire/framework`, which is an
+optional peer dependency: the package uses the copy your bot already has.
+Sharing one copy matters, because the plugin registers itself on Sapphire's
+`SapphireClient` class, and a second copy of the framework would be a
+different class that your bot never sees. The main
+`@thesharks/analytics` entry point doesn't load Sapphire at all.
+
 ## Register the logger
 
 There are two ways to install it. The plugin is the shorter one, and the
@@ -32,7 +39,7 @@ explicit instance is there for when you build the client options yourself.
   </TabItem>
   <TabItem label="Explicit instance">
     ```ts title="src/app.ts"
-    import { AnalyticsLogger } from '@thesharks/analytics'
+    import { AnalyticsLogger } from '@thesharks/analytics/bridges/sapphire-logger'
     import { LogLevel, SapphireClient } from '@sapphire/framework'
 
     export const client = new SapphireClient({
@@ -44,9 +51,8 @@ explicit instance is there for when you build the client options yourself.
 </Tabs>
 
 `AnalyticsLogger` extends the logger from `@sapphire/plugin-logger` and
-takes the same options. The
-`@thesharks/analytics/bridges/sapphire-logger` entry point re-exports that
-plugin's API alongside the class.
+takes the same options. The `bridges/sapphire-logger` entry point re-exports
+that plugin's API alongside the class.
 
 ## What gets sent
 

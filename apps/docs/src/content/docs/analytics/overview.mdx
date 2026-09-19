@@ -30,7 +30,8 @@ this section follow one service, a Discord bot called `hello-bot`.
 - **Auto-instrumentation** for `pg`, `undici` (Node.js `fetch`), `ioredis`,
   and Node.js runtime metrics.
 - **A Sapphire logger** that sends framework logs to the console,
-  OpenTelemetry, and Sentry.
+  OpenTelemetry, and Sentry. It lives in its own entry points, so services
+  that don't use Sapphire never load it.
 - **Helpers** for gauges, histogram buckets, and reading metrics in-process
   without a collector.
 

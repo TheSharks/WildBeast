@@ -13,11 +13,13 @@ cover the same setting, the option wins.
 
 | Import | Contents |
 | --- | --- |
-| `@thesharks/analytics` | `initOpenTelemetry`, `LocalMetricReader`, `AnalyticsLogger`, the metric helpers, the OpenTelemetry API re-exports, and the config types. |
-| `@thesharks/analytics/register` | Side-effect import that installs `AnalyticsLogger` on every `SapphireClient`. |
-| `@thesharks/analytics/bridges/sapphire-logger` | `AnalyticsLogger`, `LOGGER_PII_DENYLIST`, and the `@sapphire/plugin-logger` API. |
+| `@thesharks/analytics` | `initOpenTelemetry`, `LocalMetricReader`, `Sentry`, the metric helpers, the OpenTelemetry API re-exports, and the config types. Doesn't load Sapphire or discord.js. |
+| `@thesharks/analytics/register` | Side-effect import that installs `AnalyticsLogger` on every `SapphireClient`. Needs `@sapphire/framework`. |
+| `@thesharks/analytics/bridges/sapphire-logger` | `AnalyticsLogger`, `LOGGER_PII_DENYLIST`, and the `@sapphire/plugin-logger` API. Needs `@sapphire/framework`. |
 
 The package is ESM only and requires Node.js 22 or later.
+`@sapphire/framework` and `discord.js` are optional peer dependencies, used
+only by the two Sapphire entry points.
 
 ## Options
 
