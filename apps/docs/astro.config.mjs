@@ -55,7 +55,7 @@ export default defineConfig({
         {
           icon: 'discord',
           label: 'Discord',
-          href: 'https://discord.gg/8wjT9Av',
+          href: 'https://discord.gg/wildbot',
         },
       ],
       editLink: {
