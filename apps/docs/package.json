@@ -15,7 +15,8 @@
     "@astrojs/starlight": "^0.42.1",
     "@thesharks/tagscript": "workspace:^",
     "astro": "^7.3.3",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "starlight-changelogs": "^0.7.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

@@ -6,6 +6,15 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+    "@thesharks/docs#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/discord/CHANGELOG.md",
+        "$TURBO_ROOT$/packages/analytics/CHANGELOG.md"
+      ]
+    },
     "lint": {
       "outputs": []
     },

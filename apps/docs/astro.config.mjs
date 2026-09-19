@@ -4,6 +4,9 @@
 import starlight from '@astrojs/starlight'
 import { defineConfig } from 'astro/config'
 import { fileURLToPath } from 'node:url'
+import starlightChangelogs, {
+  makeChangelogsSidebarLinks,
+} from 'starlight-changelogs'
 
 export default defineConfig({
   site: 'https://wildbeast.guide',
@@ -30,6 +33,7 @@ export default defineConfig({
   },
   integrations: [
     starlight({
+      plugins: [starlightChangelogs()],
       title: 'WildBeast',
       favicon: '/favicon.png',
       logo: {
@@ -73,6 +77,14 @@ export default defineConfig({
         {
           label: 'Development',
           items: [{ autogenerate: { directory: 'development' } }],
+        },
+        {
+          label: 'Changelog',
+          items: makeChangelogsSidebarLinks([
+            { type: 'all', base: 'changelog', label: 'WildBeast' },
+            { type: 'all', base: 'tagscript/changelog', label: 'TagScript' },
+            { type: 'all', base: 'analytics/changelog', label: 'Analytics' },
+          ]),
         },
       ],
     }),
