@@ -38,25 +38,36 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
       "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "require": null
     },
     "./web": {
-      "import": "./dist/web.js",
       "types": "./dist/web.d.ts",
+      "import": "./dist/web.js",
       "require": null
+    },
+    "./recheck": {
+      "types": "./dist/recheck.d.ts",
+      "import": "./dist/recheck.js",
+      "require": null
+    }
+  },
+  "peerDependencies": {
+    "recheck": "^4.5.0"
+  },
+  "peerDependenciesMeta": {
+    "recheck": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@thesharks/tsconfig": "workspace:^",
     "@types/node": "^26.6.1",
     "@vitest/coverage-v8": "^5.0.1",
+    "recheck": "^4.5.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.1"
-  },
-  "dependencies": {
-    "recheck": "^4.5.0"
   },
   "engines": {
     "node": ">=22.0.0"

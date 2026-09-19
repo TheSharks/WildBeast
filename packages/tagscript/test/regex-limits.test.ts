@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { render } from '../src/index.js'
 import type { RenderOptions } from '../src/types.js'
+import { render } from './helpers/render.js'
 
 describe('replaceregex limits', () => {
   describe('limit compliance', () => {
@@ -140,5 +140,51 @@ describe('replaceregex limits', () => {
       } as RenderOptions)
       expect(result.output).toBe('b'.repeat(100))
     })
+  })
+})
+
+describe('regex tags without a safety checker', () => {
+  it('names the missing option instead of blaming the pattern', async () => {
+    const { render: bareRender } = await import('../src/index.js')
+    await expect(
+      bareRender('{replaceregex:hello|l+|L}', { mode: 'strict' }),
+    ).rejects.toThrow(/Regex tags are not enabled.*regexSafety/)
+  })
+
+  it('fails closed when the checker itself throws', async () => {
+    const { render: bareRender } = await import('../src/index.js')
+    const broken = {
+      isSafe: async () => {
+        throw new Error('analyzer crashed')
+      },
+    }
+    await expect(
+      bareRender('{replaceregex:hello|l+|L}', {
+        mode: 'strict',
+        regexSafety: broken,
+      }),
+    ).rejects.toThrow('Potentially unsafe regex pattern')
+  })
+
+  it('leaves every other tag working', async () => {
+    const { render: bareRender } = await import('../src/index.js')
+    expect((await bareRender('{upper:hi}')).output).toBe('HI')
+  })
+})
+
+describe('a checker reporting its own setup problem', () => {
+  it('passes a RenderError from the checker through unchanged', async () => {
+    const { render: bareRender, RenderError } = await import('../src/index.js')
+    const unconfigured = {
+      isSafe: async () => {
+        throw new RenderError('analyzer is not installed')
+      },
+    }
+    await expect(
+      bareRender('{replaceregex:hello|l+|L}', {
+        mode: 'strict',
+        regexSafety: unconfigured,
+      }),
+    ).rejects.toThrow('analyzer is not installed')
   })
 })

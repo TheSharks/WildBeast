@@ -40,6 +40,7 @@ export async function renderWithDefaultRegistry(
     discord: options.discord,
     tagStore: options.tagStore,
     sandbox: enableJs ? sandbox : undefined,
+    regexSafety: options.regexSafety,
     options: normalizedOptions,
     fetchRequests: 0,
     expansions: 0,

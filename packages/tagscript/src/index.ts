@@ -18,6 +18,7 @@ export type {
   LazyTagHandler,
   Limits,
   Node,
+  RegexSafety,
   RenderContext,
   RenderMode,
   RenderOptions,

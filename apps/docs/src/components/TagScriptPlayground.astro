@@ -312,6 +312,7 @@ const tokenizeTemplate = (source: string): Token[] => {
 </section>
 
 <script>
+  import { recheckSafety } from '@thesharks/tagscript/recheck'
   import { parse, render } from '@thesharks/tagscript/web'
   import type { Ast } from '@thesharks/tagscript/web'
 
@@ -539,6 +540,7 @@ const tokenizeTemplate = (source: string): Token[] => {
           const currentRender = ++renderId
           try {
             const result = await render(field.value, {
+              regexSafety: recheckSafety,
               args: splitArgs(config.args),
               discord: config.discord,
               variables: { ...config.variables },
@@ -676,6 +678,7 @@ const tokenizeTemplate = (source: string): Token[] => {
 
         const started = performance.now()
         const result = await render(template, {
+          regexSafety: recheckSafety,
           args: splitArgs(argsInput.value),
           discord,
           mode: strictInput.checked ? 'strict' : 'ignore',

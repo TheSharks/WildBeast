@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createRegistry, render } from '../src/index.js'
+import { createRegistry } from '../src/index.js'
+import { render } from './helpers/render.js'
 
 describe('JagTag-JS Compatibility', () => {
   describe('Args tags', () => {

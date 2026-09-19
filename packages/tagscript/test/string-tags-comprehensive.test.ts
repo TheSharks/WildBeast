@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { RenderError, render } from '../src/index.js'
+import { RenderError } from '../src/index.js'
+import { render } from './helpers/render.js'
 
 describe('string tags comprehensive', () => {
   describe('upper and lower', () => {

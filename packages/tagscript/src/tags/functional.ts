@@ -142,7 +142,7 @@ export const ifHandler: LazyTagHandler = async (
       // The budget is a hard limit and throws; an unverifiable pattern just
       // evaluates to false, matching the operator's tolerant behavior.
       consumeRegexBudget(ctx, limitsToUse)
-      if (!(await isRegexSafe(value, 'g'))) {
+      if (!(await isRegexSafe(ctx, value, 'g'))) {
         conditionResult = false
         break
       }

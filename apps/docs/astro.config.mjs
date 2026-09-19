@@ -45,6 +45,9 @@ export default defineConfig({
         '@thesharks/tagscript/web': fileURLToPath(
           new URL('../../packages/tagscript/src/web.ts', import.meta.url),
         ),
+        '@thesharks/tagscript/recheck': fileURLToPath(
+          new URL('../../packages/tagscript/src/recheck.ts', import.meta.url),
+        ),
       },
     },
   },

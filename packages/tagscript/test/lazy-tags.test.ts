@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createRegistry, defaultRegistry, render } from '../src/index.js'
+import { createRegistry, defaultRegistry } from '../src/index.js'
+import { render } from './helpers/render.js'
 
 describe('lazy tags', () => {
   it('if chooses then branch', async () => {

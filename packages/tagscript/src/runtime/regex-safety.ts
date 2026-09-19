@@ -2,19 +2,6 @@ import type { RenderContext } from '../types.js'
 import { RenderError } from './errors.js'
 import type { Limits } from './limits.js'
 
-const RECHECK_TIMEOUT_MS = 500
-
-type RecheckModule = typeof import('recheck')
-let recheckModule: Promise<RecheckModule> | undefined
-
-// Loaded on demand so bundlers can split recheck (a large compiled analyzer)
-// out of entrypoint chunks; browsers only pay for it when a template actually
-// uses a regex tag.
-function loadRecheck(): Promise<RecheckModule> {
-  recheckModule ??= import('recheck')
-  return recheckModule
-}
-
 /**
  * Count one regex evaluation against the per-render budget. ReDoS analysis
  * itself costs real time, so the number of analyses a template can trigger
@@ -30,21 +17,27 @@ export function consumeRegexBudget(ctx: RenderContext, limits: Limits): void {
 }
 
 /**
- * True only when recheck positively verifies the pattern as safe. Anything
- * else — vulnerable, unknown, analysis timeout, analyzer failure — fails
- * closed.
+ * True only when the configured checker positively verifies the pattern as
+ * safe. A checker that throws fails closed. No checker at all is a setup
+ * problem, not a verdict on the pattern, so it gets its own error; a checker
+ * can report a setup problem of its own the same way, by throwing a
+ * RenderError.
  */
 export async function isRegexSafe(
+  ctx: RenderContext,
   pattern: string,
   flags: string,
 ): Promise<boolean> {
+  const checker = ctx.regexSafety
+  if (!checker) {
+    throw new RenderError(
+      'Regex tags are not enabled. Pass a regexSafety option, for example recheckSafety from @thesharks/tagscript/recheck.',
+    )
+  }
   try {
-    const { check } = await loadRecheck()
-    const diagnostics = await check(pattern, flags, {
-      timeout: RECHECK_TIMEOUT_MS,
-    })
-    return diagnostics.status === 'safe'
-  } catch {
+    return await checker.isSafe(pattern, flags)
+  } catch (error) {
+    if (error instanceof RenderError) throw error
     return false
   }
 }

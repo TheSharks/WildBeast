@@ -3,12 +3,12 @@ import {
   createDefaultRegistry,
   DEFAULT_LIMITS,
   defaultRegistry,
-  render,
   renderSegment,
   serializeSegment,
 } from '../src/index.js'
 import { parse } from '../src/parser.js'
 import type { Sandbox } from '../src/sandbox/types.js'
+import { render } from './helpers/render.js'
 
 describe('review hardening', () => {
   describe('parser complexity', () => {

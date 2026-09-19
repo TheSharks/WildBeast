@@ -38,6 +38,16 @@ export interface TagStore {
   getTagContents: (tagName: string) => string | undefined
 }
 
+/**
+ * Decides whether a user-supplied regular expression is safe to run. The
+ * regex tags refuse to run without one, because a crafted pattern can pin a
+ * CPU (ReDoS). `@thesharks/tagscript/recheck` provides an implementation.
+ */
+export interface RegexSafety {
+  /** Resolve true only when the pattern is positively known to be safe. */
+  isSafe(pattern: string, flags: string): Promise<boolean>
+}
+
 export interface RenderContext {
   mode: RenderMode
   options: RenderOptions
@@ -47,6 +57,7 @@ export interface RenderContext {
   discord?: DiscordContext
   tagStore?: TagStore
   sandbox?: import('./sandbox/types.js').Sandbox
+  regexSafety?: RegexSafety
   fetchRequests: number
   /** Expansions so far (bounded by maxIterations). */
   expansions: number
@@ -90,6 +101,8 @@ export interface RenderOptions extends Partial<Limits> {
    */
   fetchAllowedHosts?: string[]
   sandbox?: import('./sandbox/types.js').Sandbox
+  /** Required by the regex tags; see `@thesharks/tagscript/recheck`. */
+  regexSafety?: RegexSafety
 }
 
 export interface Span {

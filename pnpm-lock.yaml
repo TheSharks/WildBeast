@@ -179,6 +179,9 @@ importers:
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1(supports-color@10.2.2)
+      recheck:
+        specifier: ^4.5.0
+        version: 4.5.0
       zod:
         specifier: ^4.6.5
         version: 4.6.5
@@ -365,10 +368,6 @@ importers:
         version: 0.31.10
 
   packages/tagscript:
-    dependencies:
-      recheck:
-        specifier: ^4.5.0
-        version: 4.5.0
     devDependencies:
       '@thesharks/tsconfig':
         specifier: workspace:^
@@ -379,6 +378,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^5.0.1
         version: 5.0.1(vitest@5.0.1)
+      recheck:
+        specifier: ^4.5.0
+        version: 4.5.0
       typescript:
         specifier: ^7.0.2
         version: 7.0.2

@@ -1,5 +1,6 @@
 import { resolveKey } from '@sapphire/plugin-i18next'
 import { RenderError, render } from '@thesharks/tagscript'
+import { recheckSafety } from '@thesharks/tagscript/recheck'
 import { type ChatInputCommandInteraction, MessageFlags } from 'discord.js'
 
 export type TagRenderOutcome = 'success' | 'renderError' | 'emptyOutput'
@@ -13,6 +14,9 @@ export async function replyWithRenderedTag(
   try {
     const result = await render(content, {
       maxOutputLength: 2000,
+      // Without a checker the regex tags refuse to run. recheck is a direct
+      // dependency of the bot for this; TagScript only peers on it.
+      regexSafety: recheckSafety,
       args:
         interaction.options.getString('args')?.split(/\s+/).filter(Boolean) ??
         [],

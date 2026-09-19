@@ -137,9 +137,9 @@ export const replaceregexHandler: TagHandler = async (
     throw new RenderError('Invalid regex: Unknown error')
   }
 
-  // Fail closed: only recheck-verified patterns run.
+  // Fail closed: only patterns the configured checker verifies run.
   consumeRegexBudget(ctx, limits)
-  if (!(await isRegexSafe(patternBody, flags))) {
+  if (!(await isRegexSafe(ctx, patternBody, flags))) {
     throw new RenderError('Potentially unsafe regex pattern')
   }
 

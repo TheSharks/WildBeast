@@ -3,7 +3,10 @@
   "compilerOptions": {
     "paths": {
       "~/*": ["./src/*"],
-      "@thesharks/tagscript/web": ["../../packages/tagscript/src/web.ts"]
+      "@thesharks/tagscript/web": ["../../packages/tagscript/src/web.ts"],
+      "@thesharks/tagscript/recheck": [
+        "../../packages/tagscript/src/recheck.ts"
+      ]
     }
   },
   "include": [".astro/types.d.ts", "**/*"],
