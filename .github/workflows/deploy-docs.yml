@@ -22,6 +22,10 @@ on:
       - '.github/workflows/deploy-docs.yml'
   # Deploy on demand for changes outside the watched paths.
   workflow_dispatch:
+  # New translations on Crowdin touch nothing in git, so nothing above would
+  # ever publish them. Rebuild daily to pick them up.
+  schedule:
+    - cron: '30 5 * * *'
 
 permissions:
   contents: read
@@ -51,6 +55,25 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Translations aren't committed; pull the finished ones into the
+      # workspace. A file that isn't fully translated is skipped, so the
+      # page falls back to English with a notice instead of mixing languages.
+      # If Crowdin is unreachable, the site deploys in English.
+      - name: Download translations
+        # Secrets aren't available to pull requests; previews stay English.
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: crowdin/github-action@v3
+        with:
+          upload_sources: false
+          download_translations: true
+          skip_untranslated_files: true
+          push_translations: false
+          create_pull_request: false
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
       # turbo builds @thesharks/tagscript first (dependsOn ^build); the
       # docs playground imports it.
