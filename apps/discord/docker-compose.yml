@@ -1,0 +1,105 @@
+# WildBeast with the PostgreSQL and Redis it needs. One cluster by default;
+# add `--scale bot=3` to spread the shards over more.
+# From the repository root:
+#   docker compose -f apps/discord/docker-compose.yml up -d
+#
+# Put DISCORD_TOKEN and any optional settings in apps/discord/.env first
+# (see .env.example). The observability stack is separate: start
+# contrib/grafana/docker-compose.yaml and set
+# OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318.
+name: wildbeast
+
+services:
+  bot:
+    # Built from this checkout. To run a published image instead, remove
+    # `build` and set `image: ghcr.io/thesharks/wildbeast:9`; keep the
+    # migrate service as it is, since the published image cannot migrate.
+    image: wildbeast
+    build:
+      # The monorepo root, so pnpm can resolve the workspace packages.
+      context: ../..
+      dockerfile: apps/discord/Dockerfile
+    restart: unless-stopped
+    # Graceful shutdown drains for up to 20 seconds; compose defaults to 10.
+    stop_grace_period: 30s
+    # The image sets NODE_ENV=production, so boot refuses a .env that still
+    # carries WILDBEAST_DEV_GUILD_ID.
+    env_file: .env
+    # These override .env on purpose: inside the compose network the
+    # services are reached by name, not localhost.
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/wildbeast
+      REDIS_URL: redis://redis:6379
+      # Autonomous clustering, even for one replica. Replicas share out the
+      # shards through Redis, so `up -d --scale bot=3` needs nothing else,
+      # and a stopping cluster keeps its gateway sessions resumable, so a
+      # rebuild resumes them instead of identifying again. Static mode
+      # would run every shard on every replica. WILDBEAST_SHARDING_START
+      # and _END in .env are static-mode settings and fail boot here.
+      WILDBEAST_CLUSTERING_MODE: autonomous
+      # Plain logs for `docker compose logs`. Without a TTY the dashboard
+      # stays off anyway; this also covers `docker compose run`.
+      WILDBEAST_TUI: 'off'
+    # Lets http://host.docker.internal:4318 reach a collector on the host,
+    # such as the contrib/grafana stack. localhost is the container itself.
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  migrate:
+    # The bot never migrates on boot, and the runtime image ships without
+    # drizzle-kit, so migrations run from the Dockerfile's build stage. It
+    # shares every layer with the bot build.
+    image: wildbeast-migrate
+    build:
+      context: ../..
+      dockerfile: apps/discord/Dockerfile
+      target: build
+    # Calls drizzle-kit directly: in this image `pnpm run` reinstalls first,
+    # and drizzle-kit does not survive that reinstall.
+    working_dir: /workspace/packages/drizzle
+    command: ./node_modules/.bin/drizzle-kit migrate
+    restart: 'no'
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/wildbeast
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    # Pinned to major 17 to match CI and the devcontainer.
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: wildbeast
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d wildbeast']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    # Matches CI and the devcontainer. The volume keeps the task queue and
+    # gateway sessions across restarts, so shards resume instead of
+    # re-identifying.
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
