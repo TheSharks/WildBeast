@@ -60,7 +60,10 @@ pnpm dev
 ```
 
 For deployment and supervision, see
-[Running in production](/self-hosting/running-in-production/).
+[Running in production](/self-hosting/running-in-production/). If you only
+want a running bot and have Docker, its
+[Docker Compose](/self-hosting/running-in-production/#docker-compose) section
+starts the bot, PostgreSQL, and Redis with one command.
 
 ## Next steps
 

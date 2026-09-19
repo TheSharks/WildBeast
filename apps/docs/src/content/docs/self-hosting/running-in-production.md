@@ -55,6 +55,53 @@ docker build -f apps/discord/Dockerfile -t wildbeast .
 docker run --env-file apps/discord/.env wildbeast
 ```
 
+### Docker Compose
+
+`apps/discord/docker-compose.yml` runs the bot together with the PostgreSQL
+and Redis it needs. Put `DISCORD_TOKEN` in `apps/discord/.env`,
+then from the repository root:
+
+```bash
+docker compose -f apps/discord/docker-compose.yml up -d
+```
+
+The file builds the image from your checkout, applies the database
+migrations in a one-shot `migrate` service, and starts the bot only after
+that service succeeds. It runs again on every `up`, so pulling a new version
+and running `up -d --build` also migrates.
+
+Compose sets `DATABASE_URL` and `REDIS_URL` itself, pointing at the bundled
+services, and those values win over the ones in `.env`. Everything else in
+`.env` applies as usual. The image runs with `NODE_ENV=production`, so remove
+`WILDBEAST_DEV_GUILD_ID` from `.env` first; boot refuses the combination.
+
+The file runs the bot in [autonomous clustering mode](/self-hosting/clustering/#autonomous),
+even with one replica. To spread the shards over more processes, raise the
+replica count; the replicas find each other through Redis and you don't need
+to set `WILDBEAST_CLUSTER_ID`:
+
+```bash
+docker compose -f apps/discord/docker-compose.yml up -d --scale bot=3
+```
+
+Compose leaves the running replicas alone and starts the new ones. After the
+10-second settle window, the shards that now belong to a new replica are
+handed over, and the new owner resumes their gateway sessions instead of
+identifying again. A rebuild resumes sessions the same way, because a
+stopping autonomous cluster keeps its sessions resumable. Compose replaces
+every replica at once, so all shards are briefly offline during a rebuild.
+`WILDBEAST_SHARDING_START` and `WILDBEAST_SHARDING_END` are static-mode
+settings and fail boot here, so remove them from `.env`.
+
+Inside the container, `localhost` is the container itself. To send telemetry
+to a collector on the host, such as the bundled
+[dashboards stack](/self-hosting/dashboards/), set
+`OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318`.
+
+The database password in the file is a default that is only reachable
+inside the Compose network, because no ports are published. Change it
+before you publish the database port.
+
 `NODE_ENV=production` sets the log level to info and lowers trace sampling
 to production rates (see [Telemetry](/self-hosting/telemetry/)). Anything
 else counts as development.
